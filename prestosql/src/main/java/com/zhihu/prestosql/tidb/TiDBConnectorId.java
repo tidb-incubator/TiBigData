@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.zhihu.presto.tidb.ClientSession;
 import com.zhihu.presto.tidb.Wrapper;
 
-import javax.inject.Inject;
-
-public final class TiDBSession
-        extends Wrapper<ClientSession>
+public final class TiDBConnectorId
+        extends Wrapper<String>
 {
-    @Inject
-    public TiDBSession(TiDBConfig config)
+    public TiDBConnectorId(String connectorId)
     {
-        super(new ClientSession(config.getInternal()));
+        super(connectorId);
     }
 }

@@ -40,6 +40,7 @@
     <modules>
         <module>tidb</module>
         <module>prestodb</module>
+        <module>prestosql</module>
     </modules>
 
     <build>

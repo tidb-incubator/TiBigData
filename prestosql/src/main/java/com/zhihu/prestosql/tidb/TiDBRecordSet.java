@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.facebook.presto.spi.RecordCursor;
-import com.facebook.presto.spi.RecordSet;
-import com.facebook.presto.spi.type.Type;
+import io.prestosql.spi.connector.RecordCursor;
+import io.prestosql.spi.connector.RecordSet;
+import io.prestosql.spi.type.Type;
 import com.zhihu.presto.tidb.Expressions;
 import com.zhihu.presto.tidb.RecordSetInternal;
 import com.zhihu.presto.tidb.Wrapper;
 
 import java.util.List;
 
-import static com.zhihu.prestodb.tidb.TiDBColumnHandle.internalHandles;
+import static com.zhihu.prestosql.tidb.TiDBColumnHandle.internalHandles;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
 public final class TiDBRecordSet

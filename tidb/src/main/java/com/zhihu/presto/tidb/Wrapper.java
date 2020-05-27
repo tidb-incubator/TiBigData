@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.presto.tidb;
 
 import java.util.Objects;
 
-class Wrapper<T>
+public class Wrapper<T>
 {
-    final T internal;
+    private final T internal;
 
-    Wrapper(T internal)
+    protected Wrapper(T internal)
     {
         this.internal = internal;
     }
 
-    T getInternal()
+    public T getInternal()
     {
         return internal;
     }

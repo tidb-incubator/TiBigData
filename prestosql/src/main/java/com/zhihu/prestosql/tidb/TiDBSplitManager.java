@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorSplitSource;
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
-import com.facebook.presto.spi.FixedSplitSource;
-import com.facebook.presto.spi.connector.ConnectorSplitManager;
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.prestosql.spi.connector.ConnectorSession;
+import io.prestosql.spi.connector.ConnectorSplitSource;
+import io.prestosql.spi.connector.FixedSplitSource;
+import io.prestosql.spi.connector.ConnectorSplitManager;
+import io.prestosql.spi.connector.ConnectorTransactionHandle;
+import io.prestosql.spi.connector.ConnectorTableHandle;
 import com.zhihu.presto.tidb.SplitInternal;
 import com.zhihu.presto.tidb.SplitManagerInternal;
 import com.zhihu.presto.tidb.Wrapper;
@@ -28,6 +28,7 @@ import com.zhihu.presto.tidb.Wrapper;
 import javax.inject.Inject;
 
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
@@ -44,14 +45,13 @@ public final class TiDBSplitManager
 
     @Override
     public ConnectorSplitSource getSplits(
-            ConnectorTransactionHandle handle,
+            ConnectorTransactionHandle transaction,
             ConnectorSession session,
-            ConnectorTableLayoutHandle layout,
-            SplitSchedulingContext splitSchedulingContext)
+            ConnectorTableHandle table,
+            SplitSchedulingStrategy splitSchedulingStrategy)
     {
-        TiDBTableLayoutHandle layoutHandle = (TiDBTableLayoutHandle) layout;
-        TiDBTableHandle tableHandle = layoutHandle.getTable();
+        TiDBTableHandle tableHandle = (TiDBTableHandle) table;
         List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
-        return new FixedSplitSource(splits.stream().map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate())).collect(toImmutableList()));
+        return new FixedSplitSource(splits.stream().map(s -> new TiDBSplit(s, Optional.empty())).collect(toImmutableList()));
     }
 }

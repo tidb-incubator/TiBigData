@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.HostAddress;
-import com.facebook.presto.spi.schedule.NodeSelectionStrategy;
+import io.prestosql.spi.connector.ConnectorSplit;
+import io.prestosql.spi.HostAddress;
 import com.google.common.collect.ImmutableList;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,15 +63,15 @@ public final class TiDBSplit
     }
 
     @Override
-    public List<HostAddress> getPreferredNodes(List<HostAddress> sortedCandidates)
+    public boolean isRemotelyAccessible()
     {
-        return ImmutableList.of();
+        return true;
     }
 
     @Override
-    public NodeSelectionStrategy getNodeSelectionStrategy()
+    public List<HostAddress> getAddresses()
     {
-        return NodeSelectionStrategy.SOFT_AFFINITY;
+        return ImmutableList.of();
     }
 
     @JsonProperty

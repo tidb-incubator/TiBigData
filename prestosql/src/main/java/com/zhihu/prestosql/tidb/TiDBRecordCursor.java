@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.facebook.presto.spi.RecordCursor;
-import com.facebook.presto.spi.type.Type;
+import io.prestosql.spi.connector.RecordCursor;
+import io.prestosql.spi.type.Type;
 import com.pingcap.tikv.types.DataType;
 import com.zhihu.presto.tidb.RecordCursorInternal;
 import com.zhihu.presto.tidb.Wrapper;
@@ -24,7 +24,7 @@ import io.airlift.slice.Slice;
 
 import java.util.List;
 
-import static com.zhihu.prestodb.tidb.TypeHelper.*;
+import static com.zhihu.prestosql.tidb.TypeHelper.*;
 import static java.lang.String.format;
 
 public final class TiDBRecordCursor

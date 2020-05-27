@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql;
 
-import com.zhihu.presto.tidb.ClientSession;
-import com.zhihu.presto.tidb.Wrapper;
+import com.zhihu.prestosql.tidb.TiDBConnectorFactory;
+import com.google.common.collect.ImmutableList;
+import io.prestosql.spi.Plugin;
+import io.prestosql.spi.connector.ConnectorFactory;
 
-import javax.inject.Inject;
-
-public final class TiDBSession
-        extends Wrapper<ClientSession>
+public class ConnectorsPlugin
+        implements Plugin
 {
-    @Inject
-    public TiDBSession(TiDBConfig config)
+    @Override
+    public Iterable<ConnectorFactory> getConnectorFactories()
     {
-        super(new ClientSession(config.getInternal()));
+        return ImmutableList.of(new TiDBConnectorFactory());
     }
 }

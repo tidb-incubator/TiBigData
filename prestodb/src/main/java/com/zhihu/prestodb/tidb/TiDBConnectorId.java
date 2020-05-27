@@ -15,6 +15,8 @@
  */
 package com.zhihu.prestodb.tidb;
 
+import com.zhihu.presto.tidb.Wrapper;
+
 public final class TiDBConnectorId
         extends Wrapper<String>
 {

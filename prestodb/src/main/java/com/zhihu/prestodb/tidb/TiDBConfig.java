@@ -17,6 +17,7 @@ package com.zhihu.prestodb.tidb;
 
 import com.facebook.airlift.configuration.Config;
 import com.zhihu.presto.tidb.ClientConfig;
+import com.zhihu.presto.tidb.Wrapper;
 
 public final class TiDBConfig
         extends Wrapper<ClientConfig>

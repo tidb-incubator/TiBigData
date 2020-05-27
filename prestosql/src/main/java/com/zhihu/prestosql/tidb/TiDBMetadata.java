@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
-import com.facebook.presto.spi.*;
-import com.facebook.presto.spi.connector.ConnectorMetadata;
+import io.prestosql.spi.connector.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.zhihu.presto.tidb.ColumnHandleInternal;
@@ -35,7 +34,7 @@ import java.util.stream.Stream;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.zhihu.prestodb.tidb.TypeHelpers.getHelper;
+import static com.zhihu.prestosql.tidb.TypeHelpers.getHelper;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -73,18 +72,10 @@ public final class TiDBMetadata
     }
 
     @Override
-    public List<ConnectorTableLayoutResult> getTableLayouts(ConnectorSession session, ConnectorTableHandle table, Constraint<ColumnHandle> constraint, Optional<Set<ColumnHandle>> desiredColumns)
+    public boolean usesLegacyTableLayouts()
     {
-        TiDBTableHandle tableHandle = (TiDBTableHandle) table;
-        ConnectorTableLayout layout = new ConnectorTableLayout(new TiDBTableLayoutHandle(tableHandle, Optional.of(constraint.getSummary()), Optional.empty()));
-        return ImmutableList.of(new ConnectorTableLayoutResult(layout, constraint.getSummary()));
-    }
-
-    @Override
-    public ConnectorTableLayout getTableLayout(ConnectorSession session, ConnectorTableLayoutHandle handle)
-    {
-        return new ConnectorTableLayout(handle);
-    }
+        return false;
+    } 
 
     @Override
     public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table)
@@ -95,9 +86,9 @@ public final class TiDBMetadata
     }
 
     @Override
-    public List<SchemaTableName> listTables(ConnectorSession session, String schemaName)
+    public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaName)
     {
-        return getInternal().listTables(Optional.ofNullable(schemaName)).entrySet().stream().flatMap(entry -> {
+        return getInternal().listTables(schemaName).entrySet().stream().flatMap(entry -> {
             String schema = entry.getKey();
             return entry.getValue().stream().map(table -> new SchemaTableName(schema, table));
         }).collect(toImmutableList());
@@ -143,17 +134,19 @@ public final class TiDBMetadata
 
     private List<SchemaTableName> listTables(ConnectorSession session, SchemaTablePrefix prefix)
     {
-        List<SchemaTableName> tables = listTables(session, prefix.getSchemaName());
-        String tablePrefix = prefix.getTableName();
-        if (tablePrefix != null) {
-            return tables.stream().filter(t -> t.getTableName().startsWith(tablePrefix)).collect(toImmutableList());
-        }
-        return tables;
+        List<SchemaTableName> tables = listTables(session, prefix.getSchema());
+        return prefix.getTable().map(tablePrefix -> (List<SchemaTableName>) tables.stream().filter(t -> t.getTableName().startsWith(tablePrefix)).collect(toImmutableList())).orElse(tables);
     }
 
     @Override
     public ColumnMetadata getColumnMetadata(ConnectorSession session, ConnectorTableHandle tableHandle, ColumnHandle columnHandle)
     {
         return createColumnMetadata((TiDBColumnHandle) columnHandle);
+    }
+
+    @Override
+    public ConnectorTableProperties getTableProperties(ConnectorSession session, ConnectorTableHandle table)
+    {
+        return new ConnectorTableProperties();
     }
 }

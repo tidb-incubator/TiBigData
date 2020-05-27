@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestodb.tidb;
+package com.zhihu.prestosql.tidb;
 
 import com.zhihu.presto.tidb.ClientSession;
 import com.zhihu.presto.tidb.Wrapper;
