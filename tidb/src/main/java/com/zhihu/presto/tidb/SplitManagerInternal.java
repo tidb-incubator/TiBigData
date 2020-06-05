@@ -17,10 +17,11 @@ package com.zhihu.presto.tidb;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.stream.Collectors.toCollection;
 
 public final class SplitManagerInternal
 {
@@ -36,9 +37,9 @@ public final class SplitManagerInternal
         List<SplitInternal> splits = session.getTableRanges(tableHandle)
                 .stream()
                 .map(range -> new SplitInternal(tableHandle, range))
-                .collect(toImmutableList());
+                .collect(toCollection(ArrayList::new));
         Collections.shuffle(splits);
-        return splits;
+        return Collections.unmodifiableList(splits);
     }
 
     @Override
