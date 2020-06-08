@@ -3,15 +3,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.zhihu.presto</groupId>
-        <artifactId>presto-connectors</artifactId>
+        <groupId>com.zhihu.tibigdata</groupId>
+        <artifactId>tibigdata</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>prestosql-connectors</artifactId>
+    <artifactId>prestosql-connector</artifactId>
     <packaging>jar</packaging>
-    <name>PrestoSQL Connectors</name>
-    <url>http://github.copm/zhihu/presto-connectors</url>
+    <name>PrestoSQL Connector</name>
+    <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <properties>
         <dep.airlift.version>0.197</dep.airlift.version>
@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>presto-connectors-tidb</artifactId>
+            <artifactId>tibigdata-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

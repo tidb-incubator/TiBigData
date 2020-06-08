@@ -3,12 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.zhihu.presto</groupId>
-    <artifactId>presto-connectors</artifactId>
+    <groupId>com.zhihu.tibigdata</groupId>
+    <artifactId>tibigdata</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Presto Connectors</name>
-    <url>http://github.copm/zhihu/presto-connectors</url>
+    <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <licenses>
         <license>
