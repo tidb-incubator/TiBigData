@@ -41,6 +41,7 @@
         <module>tidb</module>
         <module>prestodb</module>
         <module>prestosql</module>
+        <module>flink</module>
     </modules>
 
     <build>

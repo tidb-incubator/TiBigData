@@ -19,6 +19,7 @@ import com.pingcap.tikv.operation.iterator.CoprocessIterator;
 import com.pingcap.tikv.row.Row;
 import com.pingcap.tikv.types.DataType;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
@@ -28,7 +29,7 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
-public class RecordCursorInternal
+public class RecordCursorInternal implements Serializable
 {
     private final List<ColumnHandleInternal> columnHandles;
     private final CoprocessIterator<Row> iterator;
@@ -59,6 +60,11 @@ public class RecordCursorInternal
 
     public void close()
     {
+    }
+
+    public Object getObject(int field)
+    {
+        return row.get(field, null);
     }
 
     public BigDecimal getBigDecimal(int field)

@@ -17,12 +17,13 @@ package com.zhihu.presto.tidb;
 
 import com.google.common.base.Joiner;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public class TableHandleInternal
+public class TableHandleInternal implements Serializable
 {
     private final String connectorId;
     private final String schemaName;
