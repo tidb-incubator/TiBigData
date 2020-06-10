@@ -43,11 +43,11 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
-public final class ClientSession
+public final class ClientSession implements AutoCloseable
 {
     private ClientConfig config;
 
-    private TiSession session;
+    private final TiSession session;
     private Catalog catalog;
 
     @Inject
@@ -189,5 +189,11 @@ public final class ClientSession
         return toStringHelper(this)
                 .add("config", config)
                 .toString();
+    }
+
+    @Override
+    public void close() throws Exception
+    {
+        session.close();
     }
 }

@@ -17,12 +17,13 @@ package com.zhihu.presto.tidb;
 
 import com.pingcap.tikv.types.DataType;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
-public final class ColumnHandleInternal
+public final class ColumnHandleInternal implements Serializable
 {
     private final String name;
     private final DataType type;
