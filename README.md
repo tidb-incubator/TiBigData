@@ -13,25 +13,24 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 #### Use TiDBCatalog
 ```java
 public class TestTiDBCatalog{
-    public static void main(String[] args) throws Exception {
-      EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
-      StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-      StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
-  
-      // register TiDBCatalog
-      String pdAddresses="host1:port1,host2:port2,host3:port3";
-      TiDBCatalog tiDBCatalog = new TiDBCatalog("tiDBCatalog", pdAddresses);
-      tiDBCatalog.open();
-      tEnv.registerCatalog("tiDBCatalog", tiDBCatalog);
-      // query and print
-      tEnv.useCatalog("tiDBCatalog");
-      tEnv.useDatabase("default");
-      Table table = tEnv.sqlQuery("SELECT * FROM `tiDBCatalog`.`default`.`tableName`");
-      table.printSchema();
-      tEnv.toAppendStream(table, Row.class).print();
-      // execute
-      tEnv.execute("Test TiDB Catalog");
-    }
+  public static void main(String[] args) throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
+    // register TiDBCatalog
+    String pdAddresses="host1:port1,host2:port2,host3:port3";
+    TiDBCatalog tiDBCatalog = new TiDBCatalog("TiDB", pdAddresses);
+    tiDBCatalog.open();
+    tEnv.registerCatalog("TiDB", tiDBCatalog);
+    // query and print
+    tEnv.useCatalog("TiDB");
+    tEnv.useDatabase("default");
+    Table table = tEnv.sqlQuery("SELECT * FROM `TiDB`.`default`.`tableName`");
+    table.printSchema();
+    tEnv.toAppendStream(table, Row.class).print();
+    // execute
+    tEnv.execute("Test TiDB Catalog");
+  }
 }
 ```
 
@@ -59,9 +58,9 @@ public class TestTiDBTableSource {
         .build();
     // register TiDB table
     Table table = tEnv.fromTableSource(tiDBTableSource);
-    tEnv.createTemporaryView("tidb", table);
+    tEnv.createTemporaryView("TiDB", table);
     // query and print
-    Table resTable = tEnv.sqlQuery("SELECT * FROM tidb");
+    Table resTable = tEnv.sqlQuery("SELECT * FROM TiDB");
     resTable.printSchema();
     DataStream<Row> rowDataStream = tEnv.toAppendStream(resTable, Row.class);
     rowDataStream.print();

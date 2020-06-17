@@ -78,13 +78,18 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     this.fieldNames = fieldNames;
     this.fieldTypes = fieldTypes;
     ClientConfig clientConfig = new ClientConfig(this.pdAddresses);
-    ClientSession clientSession = new ClientSession(clientConfig);
+    ClientSession splitSession = new ClientSession(clientConfig);
     TableHandleInternal tableHandleInternal = new TableHandleInternal(UUID.randomUUID().toString(),
         this.databaseName, this.tableName);
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
+    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
     this.splits = splitManagerInternal.getSplits(tableHandleInternal);
-    this.columnHandleInternals = clientSession.getTableColumns(tableHandleInternal)
+    this.columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
         .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    try {
+      splitSession.close();
+    } catch (Exception e) {
+      LOG.warn("can not close tmp session");
+    }
   }
 
   @Override
@@ -152,7 +157,8 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     for (int i = 0; i < row.getArity(); i++) {
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);
-      row.setField(i, DataTypeMappingUtil.getObjectWithDataType(object, fieldType));
+      // data can be null here
+      row.setField(i, DataTypeMappingUtil.getObjectWithDataType(object, fieldType).orElse(null));
     }
     return row;
   }
@@ -208,7 +214,7 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     }
 
     public TiDBInputFormat build() {
-      return new TiDBInputFormat(pdAddresses, databaseName, tableName, fieldNames, fieldTypes);
+      return new TiDBInputFormat(pdAddresses, databaseName, tableName, fieldNames.clone(), fieldTypes.clone());
     }
   }
 }

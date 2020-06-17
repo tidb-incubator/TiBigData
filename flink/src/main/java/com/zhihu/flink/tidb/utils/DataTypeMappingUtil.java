@@ -3,6 +3,7 @@ package com.zhihu.flink.tidb.utils;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalTime;
+import java.util.Optional;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.types.DataType;
 
@@ -51,36 +52,34 @@ public class DataTypeMappingUtil {
    * @param dataType Flink datatype
    * @return
    */
-  public static Object getObjectWithDataType(Object object, DataType dataType) {
+  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType) {
     if (object == null) {
-      return null;
+      return Optional.empty();
     }
     switch (dataType.toString()) {
       case "FLOAT":
-        return (float) (double) object;
+        object = (float) (double) object;
+        break;
       case "DATE":
-        return ((Date) object).toLocalDate();
+        object = ((Date) object).toLocalDate();
+        break;
       case "TIMESTAMP(6)":
-        return ((Timestamp) object).toLocalDateTime();
+        object = ((Timestamp) object).toLocalDateTime();
+        break;
       case "TIME(0)":
-        return LocalTime.ofNanoOfDay(((long) object));
+        object = LocalTime.ofNanoOfDay(((long) object));
+        break;
       case "STRING":
         if (object instanceof byte[]) {
-          return new String((byte[]) object);
-        } else {
-          return object;
+          object = new String((byte[]) object);
         }
+        break;
       case "BOOLEAN":
-        switch ((int) (long) object) {
-          case 0:
-            return false;
-          case 1:
-            return true;
-          default:
-            throw new IllegalArgumentException();
+        if (object instanceof Long) {
+          object = (Long) object != 0;
         }
-      default:
-        return object;
+        break;
     }
+    return Optional.of(object);
   }
 }

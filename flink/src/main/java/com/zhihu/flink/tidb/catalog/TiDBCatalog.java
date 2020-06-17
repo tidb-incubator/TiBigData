@@ -15,11 +15,10 @@
  */
 package com.zhihu.flink.tidb.catalog;
 
+import com.google.common.collect.ImmutableMap;
 import com.zhihu.flink.tidb.utils.DataTypeMappingUtil;
 import com.zhihu.presto.tidb.ClientConfig;
 import com.zhihu.presto.tidb.ClientSession;
-import com.zhihu.presto.tidb.ColumnHandleInternal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import org.apache.flink.table.api.TableSchema;
@@ -41,7 +40,7 @@ public class TiDBCatalog extends AbstractCatalog {
 
   private final String pdAddresses;
 
-  private Optional<ClientSession> clientSessionOptional = Optional.empty();
+  private Optional<ClientSession> clientSession = Optional.empty();
 
   public TiDBCatalog(String name, String pdAddresses) {
     this(name, DEFAULT_DATABASE, pdAddresses);
@@ -54,12 +53,12 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public void open() throws CatalogException {
-    clientSessionOptional = Optional.of(new ClientSession(new ClientConfig(pdAddresses)));
+    clientSession = Optional.of(new ClientSession(new ClientConfig(pdAddresses)));
   }
 
   @Override
   public void close() throws CatalogException {
-    clientSessionOptional.ifPresent(clientSession -> {
+    clientSession.ifPresent(clientSession -> {
       try {
         clientSession.close();
       } catch (Exception e) {
@@ -70,7 +69,7 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public List<String> listDatabases() throws CatalogException {
-    return clientSessionOptional.orElseThrow(IllegalStateException::new).getSchemaNames();
+    return getClientSession().getSchemaNames();
   }
 
   @Override
@@ -78,13 +77,13 @@ public class TiDBCatalog extends AbstractCatalog {
     if (databaseExists(databaseName)) {
       throw new DatabaseNotExistException(getName(), databaseName);
     }
-    return new CatalogDatabaseImpl(new HashMap<>(), "");
+    return new CatalogDatabaseImpl(ImmutableMap.of(), "");
   }
 
   @Override
   public boolean databaseExists(String databaseName) throws CatalogException {
     Preconditions.checkNotNull(databaseName);
-    return clientSessionOptional.orElseThrow(IllegalStateException::new).getSchemaNames().contains(databaseName);
+    return getClientSession().getSchemaNames().contains(databaseName);
   }
 
   @Override
@@ -104,7 +103,7 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public List<String> listTables(String databaseName) throws DatabaseNotExistException, CatalogException {
-    return clientSessionOptional.orElseThrow(IllegalStateException::new).getTableNames(databaseName);
+    return getClientSession().getTableNames(databaseName);
   }
 
   @Override
@@ -118,7 +117,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   public CatalogBaseTable getTable(String databaseName, String tableName) throws TableNotExistException, CatalogException {
-    return new CatalogTableImpl(getTableSchema(databaseName, tableName), new HashMap<>(), "");
+    return new CatalogTableImpl(getTableSchema(databaseName, tableName), ImmutableMap.of(), "");
   }
 
   @Override
@@ -127,8 +126,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   public boolean tableExists(String databaseName, String tableName) throws CatalogException {
-    return databaseExists(databaseName) &&
-        clientSessionOptional.orElseThrow(IllegalStateException::new).getTableNames(databaseName).contains(tableName);
+    return databaseExists(databaseName) && getClientSession().getTableNames(databaseName).contains(tableName);
   }
 
   @Override
@@ -262,16 +260,20 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   public TableSchema getTableSchema(String databaseName, String tableName) {
-    List<ColumnHandleInternal> columnHandleInternals = clientSessionOptional.orElseThrow(IllegalStateException::new)
+    return getClientSession()
         .getTableColumns(databaseName, tableName)
-        .orElseThrow(() -> new NullPointerException("can not get table columns"));
-    TableSchema.Builder builder = TableSchema.builder();
-    columnHandleInternals.forEach(c -> builder.field(c.getName(), DataTypeMappingUtil.mapToFlinkType(c.getType())));
-    return builder.build();
+        .orElseThrow(() -> new NullPointerException("can not get table columns"))
+        .stream()
+        .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
+            DataTypeMappingUtil.mapToFlinkType(c.getType())), (builder1, builder2) -> null).build();
   }
 
   @Override
   public Optional<TableFactory> getTableFactory() {
     return Optional.of(new TiDBTableFactory(pdAddresses));
+  }
+
+  private ClientSession getClientSession() {
+    return clientSession.orElseThrow(IllegalStateException::new);
   }
 }

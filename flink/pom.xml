@@ -31,6 +31,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>tibigdata-core</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
