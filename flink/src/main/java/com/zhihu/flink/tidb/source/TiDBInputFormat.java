@@ -77,19 +77,22 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     this.tableName = tableName;
     this.fieldNames = fieldNames;
     this.fieldTypes = fieldTypes;
-    ClientConfig clientConfig = new ClientConfig(this.pdAddresses);
-    ClientSession splitSession = new ClientSession(clientConfig);
-    TableHandleInternal tableHandleInternal = new TableHandleInternal(UUID.randomUUID().toString(),
-        this.databaseName, this.tableName);
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
-    this.splits = splitManagerInternal.getSplits(tableHandleInternal);
-    this.columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
-        .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
-    try {
-      splitSession.close();
+    List<SplitInternal> splits = null;
+    List<ColumnHandleInternal> columnHandleInternals = null;
+    // get split
+    try (ClientSession splitSession = new ClientSession(new ClientConfig(this.pdAddresses))) {
+      TableHandleInternal tableHandleInternal = new TableHandleInternal(UUID.randomUUID().toString(),
+          this.databaseName, this.tableName);
+      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
+      splits = splitManagerInternal.getSplits(tableHandleInternal);
+      columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
+          .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
     } catch (Exception e) {
-      LOG.warn("can not close tmp session");
+      LOG.error("can not get split", e);
+      System.exit(1);
     }
+    this.splits = splits;
+    this.columnHandleInternals = columnHandleInternals;
   }
 
   @Override

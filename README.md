@@ -19,13 +19,13 @@ public class TestTiDBCatalog{
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
     // register TiDBCatalog
     String pdAddresses="host1:port1,host2:port2,host3:port3";
-    TiDBCatalog tiDBCatalog = new TiDBCatalog("TiDB", pdAddresses);
+    TiDBCatalog catalog = new TiDBCatalog("tidb", pdAddresses);
     tiDBCatalog.open();
-    tEnv.registerCatalog("TiDB", tiDBCatalog);
+    tEnv.registerCatalog("tidb", catalog);
     // query and print
-    tEnv.useCatalog("TiDB");
+    tEnv.useCatalog("tidb");
     tEnv.useDatabase("default");
-    Table table = tEnv.sqlQuery("SELECT * FROM `TiDB`.`default`.`tableName`");
+    Table table = tEnv.sqlQuery("SELECT * FROM `tidb`.`default`.`tableName`");
     table.printSchema();
     tEnv.toAppendStream(table, Row.class).print();
     // execute
@@ -58,9 +58,9 @@ public class TestTiDBTableSource {
         .build();
     // register TiDB table
     Table table = tEnv.fromTableSource(tiDBTableSource);
-    tEnv.createTemporaryView("TiDB", table);
+    tEnv.createTemporaryView("tidb", table);
     // query and print
-    Table resTable = tEnv.sqlQuery("SELECT * FROM TiDB");
+    Table resTable = tEnv.sqlQuery("SELECT * FROM tidb");
     resTable.printSchema();
     DataStream<Row> rowDataStream = tEnv.toAppendStream(resTable, Row.class);
     rowDataStream.print();
