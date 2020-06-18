@@ -20,7 +20,7 @@ public class TestTiDBCatalog{
     // register TiDBCatalog
     String pdAddresses="host1:port1,host2:port2,host3:port3";
     TiDBCatalog catalog = new TiDBCatalog("tidb", pdAddresses);
-    tiDBCatalog.open();
+    catalog.open();
     tEnv.registerCatalog("tidb", catalog);
     // query and print
     tEnv.useCatalog("tidb");
@@ -43,21 +43,21 @@ public class TestTiDBTableSource {
     String tableName = "people";
     String[] fieldNames = {"id", "name", "sex"};
     DataType[] fieldTypes = {DataTypes.BIGINT(), DataTypes.STRING(), DataTypes.STRING()};
-    
+    // get env
     EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
     // build TableSchema
     TableSchema tableSchema = TableSchema.builder().fields(fieldNames, fieldTypes).build();
     // build TiDBTableSource
-    TiDBTableSource tiDBTableSource = TiDBTableSource.builder()
+    TiDBTableSource tableSource = TiDBTableSource.builder()
         .setPdAddresses(pdAddresses)
         .setDatabaseName(databaseName)
         .setTableName(tableName)
         .setTableSchema(tableSchema)
         .build();
     // register TiDB table
-    Table table = tEnv.fromTableSource(tiDBTableSource);
+    Table table = tEnv.fromTableSource(tableSource);
     tEnv.createTemporaryView("tidb", table);
     // query and print
     Table resTable = tEnv.sqlQuery("SELECT * FROM tidb");
