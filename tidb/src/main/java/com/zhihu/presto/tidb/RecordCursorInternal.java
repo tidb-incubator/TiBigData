@@ -61,6 +61,11 @@ public class RecordCursorInternal
     {
     }
 
+    public Object getObject(int field)
+    {
+        return row.get(field, null);
+    }
+
     public BigDecimal getBigDecimal(int field)
     {
         return (BigDecimal) row.get(field, null);

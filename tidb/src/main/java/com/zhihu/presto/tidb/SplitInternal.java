@@ -15,12 +15,13 @@
  */
 package com.zhihu.presto.tidb;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
 
-public final class SplitInternal
+public final class SplitInternal implements Serializable
 {
     private final TableHandleInternal table;
     private final String startKey;

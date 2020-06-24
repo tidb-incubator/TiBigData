@@ -54,7 +54,7 @@ public final class TiDBColumnHandle
     {
         this.name = name;
         this.type = type;
-        this.typeHelper = TypeHelpers.getHelper(dataType).orElseThrow();
+        this.typeHelper = TypeHelpers.getHelper(dataType).orElseThrow(IllegalStateException::new);
         this.ordinalPosition = ordinalPosition;
     }
 
