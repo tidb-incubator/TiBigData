@@ -13,158 +13,150 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
-
-import io.prestosql.spi.type.Type;
-import com.pingcap.tikv.types.DataType;
-import com.zhihu.presto.tidb.RecordCursorInternal;
-import io.airlift.slice.Slice;
-
-import java.util.function.Function;
-import java.util.Objects;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public final class TypeHelper
-{
-    private final Type prestoType;
-    private final DataType tidbType;
-    private final RecordCursorReader cursorReader;
-    private final Function toTiDBConverter;
+import com.pingcap.tikv.types.DataType;
+import com.zhihu.presto.tidb.RecordCursorInternal;
+import io.airlift.slice.Slice;
+import io.prestosql.spi.type.Type;
+import java.util.Objects;
+import java.util.function.Function;
 
-    private TypeHelper(DataType tidbType, Type prestoType, RecordCursorReader cursorReader, Function toTiDBConverter)
-    {
-        this.prestoType = requireNonNull(prestoType, "prestoType is null");
-        this.cursorReader = requireNonNull(cursorReader, "cursorReader is null");
-        this.tidbType = requireNonNull(tidbType, "tidbType is null");
-        this.toTiDBConverter = requireNonNull(toTiDBConverter, "toTiDBConverter is null");
+public final class TypeHelper {
+
+  private final Type prestoType;
+  private final DataType tidbType;
+  private final RecordCursorReader cursorReader;
+  private final Function toTiDBConverter;
+
+  private TypeHelper(DataType tidbType, Type prestoType, RecordCursorReader cursorReader,
+      Function toTiDBConverter) {
+    this.prestoType = requireNonNull(prestoType, "prestoType is null");
+    this.cursorReader = requireNonNull(cursorReader, "cursorReader is null");
+    this.tidbType = requireNonNull(tidbType, "tidbType is null");
+    this.toTiDBConverter = requireNonNull(toTiDBConverter, "toTiDBConverter is null");
+  }
+
+  static TypeHelper booleanHelper(DataType tidbType, Type prestoType,
+      BooleanRecordCursorReader cursorReader, Function<Boolean, Object> toTiDBConverter) {
+    return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
+  }
+
+  static TypeHelper booleanHelper(DataType tidbType, Type prestoType,
+      BooleanRecordCursorReader cursorReader) {
+    return booleanHelper(tidbType, prestoType, cursorReader, f -> f);
+  }
+
+  static TypeHelper longHelper(DataType tidbType, Type prestoType,
+      LongRecordCursorReader cursorReader, Function<Long, Object> toTiDBConverter) {
+    return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
+  }
+
+  static TypeHelper longHelper(DataType tidbType, Type prestoType,
+      LongRecordCursorReader cursorReader) {
+    return longHelper(tidbType, prestoType, cursorReader, f -> f);
+  }
+
+  static TypeHelper doubleHelper(DataType tidbType, Type prestoType,
+      DoubleRecordCursorReader cursorReader, Function<Double, Object> toTiDBConverter) {
+    return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
+  }
+
+  static TypeHelper doubleHelper(DataType tidbType, Type prestoType,
+      DoubleRecordCursorReader cursorReader) {
+    return doubleHelper(tidbType, prestoType, cursorReader, f -> f);
+  }
+
+  static TypeHelper sliceHelper(DataType tidbType, Type prestoType,
+      SliceRecordCursorReader cursorReader, Function<Slice, Object> toTiDBConverter) {
+    return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
+  }
+
+  static TypeHelper sliceHelper(DataType tidbType, Type prestoType,
+      SliceRecordCursorReader cursorReader) {
+    return sliceHelper(tidbType, prestoType, cursorReader, Slice::toStringUtf8);
+  }
+
+  public Type getPrestoType() {
+    return prestoType;
+  }
+
+  public DataType getTiDBType() {
+    return tidbType;
+  }
+
+  public RecordCursorReader getReader() {
+    return cursorReader;
+  }
+
+  public Function getConverter() {
+    return toTiDBConverter;
+  }
+
+  public Object toTiDB(Object from) {
+    return toTiDBConverter.apply(from);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(prestoType, tidbType, cursorReader, toTiDBConverter);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
     }
 
-    static TypeHelper booleanHelper(DataType tidbType, Type prestoType, BooleanRecordCursorReader cursorReader, Function<Boolean, Object> toTiDBConverter)
-    {
-        return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
-    }
+    TypeHelper other = (TypeHelper) obj;
+    return Objects.equals(this.prestoType, other.prestoType)
+        && Objects.equals(this.tidbType, other.tidbType)
+        && Objects.equals(this.cursorReader, other.cursorReader)
+        && Objects.equals(this.toTiDBConverter, other.toTiDBConverter);
+  }
 
-    static TypeHelper longHelper(DataType tidbType, Type prestoType, LongRecordCursorReader cursorReader, Function<Long, Object> toTiDBConverter)
-    {
-        return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
-    }
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("tidbType", tidbType)
+        .add("prestoType", prestoType)
+        .add("cursorReader", cursorReader)
+        .add("toTiDBConverter", toTiDBConverter)
+        .toString();
+  }
 
-    static TypeHelper doubleHelper(DataType tidbType, Type prestoType, DoubleRecordCursorReader cursorReader, Function<Double, Object> toTiDBConverter)
-    {
-        return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
-    }
+  static interface RecordCursorReader {
 
-    static TypeHelper sliceHelper(DataType tidbType, Type prestoType, SliceRecordCursorReader cursorReader, Function<Slice, Object> toTiDBConverter)
-    {
-        return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
-    }
+  }
 
-    static TypeHelper booleanHelper(DataType tidbType, Type prestoType, BooleanRecordCursorReader cursorReader)
-    {
-        return booleanHelper(tidbType, prestoType, cursorReader, f -> f);
-    }
+  static interface BooleanRecordCursorReader
+      extends RecordCursorReader {
 
-    static TypeHelper longHelper(DataType tidbType, Type prestoType, LongRecordCursorReader cursorReader)
-    {
-        return longHelper(tidbType, prestoType, cursorReader, f -> f);
-    }
+    boolean read(RecordCursorInternal cursor, int index);
+  }
 
-    static TypeHelper doubleHelper(DataType tidbType, Type prestoType, DoubleRecordCursorReader cursorReader)
-    {
-        return doubleHelper(tidbType, prestoType, cursorReader, f -> f);
-    }
+  static interface DoubleRecordCursorReader
+      extends RecordCursorReader {
 
-    static TypeHelper sliceHelper(DataType tidbType, Type prestoType, SliceRecordCursorReader cursorReader)
-    {
-        return sliceHelper(tidbType, prestoType, cursorReader, Slice::toStringUtf8);
-    }
+    double read(RecordCursorInternal cursor, int index);
+  }
 
-    public Type getPrestoType()
-    {
-        return prestoType;
-    }
+  static interface LongRecordCursorReader
+      extends RecordCursorReader {
 
-    public DataType getTiDBType()
-    {
-        return tidbType;
-    }
+    long read(RecordCursorInternal cursor, int index);
+  }
 
-    public RecordCursorReader getReader()
-    {
-        return cursorReader;
-    }
+  static interface SliceRecordCursorReader
+      extends RecordCursorReader {
 
-    public Function getConverter()
-    {
-        return toTiDBConverter;
-    }
-
-    public Object toTiDB(Object from)
-    {
-        return toTiDBConverter.apply(from);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(prestoType, tidbType, cursorReader, toTiDBConverter);
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || (getClass() != obj.getClass())) {
-            return false;
-        }
-
-        TypeHelper other = (TypeHelper) obj;
-        return Objects.equals(this.prestoType, other.prestoType) &&
-                Objects.equals(this.tidbType, other.tidbType) &&
-                Objects.equals(this.cursorReader, other.cursorReader) &&
-                Objects.equals(this.toTiDBConverter, other.toTiDBConverter);
-    }
-
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("tidbType", tidbType)
-                .add("prestoType", prestoType)
-                .add("cursorReader", cursorReader)
-                .add("toTiDBConverter", toTiDBConverter)
-                .toString();
-    }
-
-    static interface RecordCursorReader
-    {
-    }
-
-    static interface BooleanRecordCursorReader
-            extends RecordCursorReader
-    {
-        boolean read(RecordCursorInternal cursor, int index);
-    }
-
-    static interface DoubleRecordCursorReader
-            extends RecordCursorReader
-    {
-        double read(RecordCursorInternal cursor, int index);
-    }
-
-    static interface LongRecordCursorReader
-            extends RecordCursorReader
-    {
-        long read(RecordCursorInternal cursor, int index);
-    }
-
-    static interface SliceRecordCursorReader
-            extends RecordCursorReader
-    {
-        Slice read(RecordCursorInternal cursor, int index);
-    }
-} 
+    Slice read(RecordCursorInternal cursor, int index);
+  }
+}

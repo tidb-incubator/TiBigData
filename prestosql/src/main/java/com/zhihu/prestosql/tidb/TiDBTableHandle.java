@@ -13,49 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
-import io.prestosql.spi.connector.ConnectorTableHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zhihu.presto.tidb.TableHandleInternal;
 import com.zhihu.presto.tidb.Wrapper;
+import io.prestosql.spi.connector.ConnectorTableHandle;
 
-import java.util.Objects;
+public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
+    ConnectorTableHandle {
 
-public final class TiDBTableHandle
-        extends Wrapper<TableHandleInternal>
-        implements ConnectorTableHandle
-{
-    @JsonCreator
-    public TiDBTableHandle(
-            @JsonProperty("connectorId") String connectorId,
-            @JsonProperty("schemaName") String schemaName,
-            @JsonProperty("tableName") String tableName)
-    {
-        super(new TableHandleInternal(connectorId, schemaName, tableName));
-    }
+  @JsonCreator
+  public TiDBTableHandle(
+      @JsonProperty("connectorId") String connectorId,
+      @JsonProperty("schemaName") String schemaName,
+      @JsonProperty("tableName") String tableName) {
+    super(new TableHandleInternal(connectorId, schemaName, tableName));
+  }
 
-    TiDBTableHandle(TableHandleInternal internal)
-    {
-        super(internal);
-    }
+  TiDBTableHandle(TableHandleInternal internal) {
+    super(internal);
+  }
 
-    @JsonProperty
-    public String getConnectorId()
-    {
-        return getInternal().getConnectorId();
-    }
+  @JsonProperty
+  public String getConnectorId() {
+    return getInternal().getConnectorId();
+  }
 
-    @JsonProperty
-    public String getSchemaName()
-    {
-        return getInternal().getSchemaName();
-    }
+  @JsonProperty
+  public String getSchemaName() {
+    return getInternal().getSchemaName();
+  }
 
-    @JsonProperty
-    public String getTableName()
-    {
-        return getInternal().getTableName();
-    }
+  @JsonProperty
+  public String getTableName() {
+    return getInternal().getTableName();
+  }
 }

@@ -13,64 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
-
-import io.prestosql.spi.connector.ConnectorTransactionHandle;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Objects;
-import java.util.UUID;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-public final class TiDBTransactionHandle
-        implements ConnectorTransactionHandle
-{
-    private final UUID uuid;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.prestosql.spi.connector.ConnectorTransactionHandle;
+import java.util.Objects;
+import java.util.UUID;
 
-    public TiDBTransactionHandle()
-    {
-        this(UUID.randomUUID());
-    }
+public final class TiDBTransactionHandle implements ConnectorTransactionHandle {
 
-    @JsonCreator
-    public TiDBTransactionHandle(@JsonProperty("uuid") UUID uuid)
-    {
-        this.uuid = requireNonNull(uuid, "uuid is null");
-    }
+  private final UUID uuid;
 
-    @JsonProperty
-    public UUID getUuid()
-    {
-        return uuid;
-    }
+  public TiDBTransactionHandle() {
+    this(UUID.randomUUID());
+  }
 
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || getClass() != obj.getClass()) {
-            return false;
-        }
-        TiDBTransactionHandle other = (TiDBTransactionHandle) obj;
-        return Objects.equals(uuid, other.uuid);
-    }
+  @JsonCreator
+  public TiDBTransactionHandle(@JsonProperty("uuid") UUID uuid) {
+    this.uuid = requireNonNull(uuid, "uuid is null");
+  }
 
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(uuid);
-    }
+  @JsonProperty
+  public UUID getUuid() {
+    return uuid;
+  }
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("uuid", uuid)
-                .toString();
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
     }
+    if ((obj == null) || getClass() != obj.getClass()) {
+      return false;
+    }
+    TiDBTransactionHandle other = (TiDBTransactionHandle) obj;
+    return Objects.equals(uuid, other.uuid);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(uuid);
+  }
+
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("uuid", uuid)
+        .toString();
+  }
 }

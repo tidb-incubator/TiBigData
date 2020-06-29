@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.flink.tidb.source;
 
 import org.apache.flink.api.common.io.InputFormat;
@@ -35,13 +36,9 @@ public class TiDBTableSource extends InputFormatTableSource<Row> {
 
   /**
    * see {@link TiDBTableSource#builder()}
-   *
-   * @param tableSchema
-   * @param pdAddresses
-   * @param databaseName
-   * @param tableName
    */
-  private TiDBTableSource(TableSchema tableSchema, String pdAddresses, String databaseName, String tableName) {
+  private TiDBTableSource(TableSchema tableSchema, String pdAddresses, String databaseName,
+      String tableName) {
 
     this.tableSchema = tableSchema;
     this.pdAddresses = pdAddresses;

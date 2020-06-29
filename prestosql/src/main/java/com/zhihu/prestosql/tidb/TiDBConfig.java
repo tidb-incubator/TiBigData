@@ -13,29 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
-import io.airlift.configuration.Config;
 import com.zhihu.presto.tidb.ClientConfig;
 import com.zhihu.presto.tidb.Wrapper;
+import io.airlift.configuration.Config;
 
-public final class TiDBConfig
-        extends Wrapper<ClientConfig>
-{
-    public TiDBConfig()
-    {
-        super(new ClientConfig());
-    }
+public final class TiDBConfig extends Wrapper<ClientConfig> {
 
-    public String getPdAddresses()
-    {
-        return getInternal().getPdAddresses();
-    }
+  public TiDBConfig() {
+    super(new ClientConfig());
+  }
 
-    @Config("presto.tidb.pd.addresses")
-    public TiDBConfig setPdAddresses(String addresses)
-    {
-        getInternal().setPdAddresses(addresses);
-        return this;
-    }
+  public String getPdAddresses() {
+    return getInternal().getPdAddresses();
+  }
+
+  @Config("presto.tidb.pd.addresses")
+  public TiDBConfig setPdAddresses(String addresses) {
+    getInternal().setPdAddresses(addresses);
+    return this;
+  }
 }

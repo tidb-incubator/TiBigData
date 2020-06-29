@@ -13,64 +13,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
-
-import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import java.util.Objects;
-import java.util.UUID;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Objects;
+import java.util.UUID;
+
 public final class TiDBTransactionHandle
-        implements ConnectorTransactionHandle
-{
-    private final UUID uuid;
+    implements ConnectorTransactionHandle {
 
-    public TiDBTransactionHandle()
-    {
-        this(UUID.randomUUID());
-    }
+  private final UUID uuid;
 
-    @JsonCreator
-    public TiDBTransactionHandle(@JsonProperty("uuid") UUID uuid)
-    {
-        this.uuid = requireNonNull(uuid, "uuid is null");
-    }
+  public TiDBTransactionHandle() {
+    this(UUID.randomUUID());
+  }
 
-    @JsonProperty
-    public UUID getUuid()
-    {
-        return uuid;
-    }
+  @JsonCreator
+  public TiDBTransactionHandle(@JsonProperty("uuid") UUID uuid) {
+    this.uuid = requireNonNull(uuid, "uuid is null");
+  }
 
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || getClass() != obj.getClass()) {
-            return false;
-        }
-        TiDBTransactionHandle other = (TiDBTransactionHandle) obj;
-        return Objects.equals(uuid, other.uuid);
-    }
+  @JsonProperty
+  public UUID getUuid() {
+    return uuid;
+  }
 
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(uuid);
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
     }
+    if ((obj == null) || getClass() != obj.getClass()) {
+      return false;
+    }
+    TiDBTransactionHandle other = (TiDBTransactionHandle) obj;
+    return Objects.equals(uuid, other.uuid);
+  }
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("uuid", uuid)
-                .toString();
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(uuid);
+  }
+
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("uuid", uuid)
+        .toString();
+  }
 }

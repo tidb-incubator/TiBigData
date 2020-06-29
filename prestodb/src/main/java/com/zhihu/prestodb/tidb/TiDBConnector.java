@@ -13,85 +13,83 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
-
-import com.facebook.airlift.bootstrap.LifeCycleManager;
-import com.facebook.airlift.log.Logger;
-import com.facebook.presto.spi.connector.*;
-import com.facebook.presto.spi.transaction.IsolationLevel;
-import com.zhihu.prestodb.tidb.optimization.TiDBPlanOptimizerProvider;
-
-import javax.inject.Inject;
 
 import static com.facebook.presto.spi.transaction.IsolationLevel.REPEATABLE_READ;
 import static com.facebook.presto.spi.transaction.IsolationLevel.checkConnectorSupports;
 import static java.util.Objects.requireNonNull;
 
-public final class TiDBConnector
-        implements Connector
-{
-    private static final Logger log = Logger.get(TiDBConnector.class);
+import com.facebook.airlift.bootstrap.LifeCycleManager;
+import com.facebook.airlift.log.Logger;
+import com.facebook.presto.spi.connector.Connector;
+import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.facebook.presto.spi.connector.ConnectorPlanOptimizerProvider;
+import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
+import com.facebook.presto.spi.connector.ConnectorSplitManager;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.facebook.presto.spi.transaction.IsolationLevel;
+import com.zhihu.prestodb.tidb.optimization.TiDBPlanOptimizerProvider;
+import javax.inject.Inject;
 
-    private final LifeCycleManager lifeCycleManager;
-    private final TiDBMetadata metadata;
-    private final TiDBSplitManager splitManager;
-    private final TiDBRecordSetProvider recordSetProvider;
-    private final ConnectorPlanOptimizerProvider planOptimizerProvider;
+public final class TiDBConnector implements Connector {
 
-    @Inject
-    public TiDBConnector(
-            LifeCycleManager lifeCycleManager,
-            TiDBMetadata metadata,
-            TiDBSplitManager splitManager,
-            TiDBRecordSetProvider recordSetProvider,
-            TiDBPlanOptimizerProvider planOptimizerProvider)
-    {
-        this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
-        this.metadata = requireNonNull(metadata, "metadata is null");
-        this.splitManager = requireNonNull(splitManager, "splitManager is null");
-        this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
-        this.planOptimizerProvider = requireNonNull(planOptimizerProvider, "planOptimizerProvider is null");
+  private static final Logger log = Logger.get(TiDBConnector.class);
+
+  private final LifeCycleManager lifeCycleManager;
+  private final TiDBMetadata metadata;
+  private final TiDBSplitManager splitManager;
+  private final TiDBRecordSetProvider recordSetProvider;
+  private final ConnectorPlanOptimizerProvider planOptimizerProvider;
+
+  @Inject
+  public TiDBConnector(
+      LifeCycleManager lifeCycleManager,
+      TiDBMetadata metadata,
+      TiDBSplitManager splitManager,
+      TiDBRecordSetProvider recordSetProvider,
+      TiDBPlanOptimizerProvider planOptimizerProvider) {
+    this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
+    this.metadata = requireNonNull(metadata, "metadata is null");
+    this.splitManager = requireNonNull(splitManager, "splitManager is null");
+    this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
+    this.planOptimizerProvider = requireNonNull(planOptimizerProvider,
+        "planOptimizerProvider is null");
+  }
+
+  @Override
+  public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel,
+      boolean readOnly) {
+    checkConnectorSupports(REPEATABLE_READ, isolationLevel);
+    return new TiDBTransactionHandle();
+  }
+
+  @Override
+  public ConnectorMetadata getMetadata(ConnectorTransactionHandle transactionHandle) {
+    return metadata;
+  }
+
+  @Override
+  public ConnectorSplitManager getSplitManager() {
+    return splitManager;
+  }
+
+  @Override
+  public ConnectorRecordSetProvider getRecordSetProvider() {
+    return recordSetProvider;
+  }
+
+  @Override
+  public ConnectorPlanOptimizerProvider getConnectorPlanOptimizerProvider() {
+    return planOptimizerProvider;
+  }
+
+  @Override
+  public final void shutdown() {
+    try {
+      lifeCycleManager.stop();
+    } catch (Exception e) {
+      log.error(e, "Error shutting down connector");
     }
-
-    @Override
-    public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly)
-    {
-        checkConnectorSupports(REPEATABLE_READ, isolationLevel);
-        return new TiDBTransactionHandle();
-    }
-
-    @Override
-    public ConnectorMetadata getMetadata(ConnectorTransactionHandle transactionHandle)
-    {
-        return metadata;
-    }
-
-    @Override
-    public ConnectorSplitManager getSplitManager()
-    {
-        return splitManager;
-    }
-
-    @Override
-    public ConnectorRecordSetProvider getRecordSetProvider()
-    {
-        return recordSetProvider;
-    }
-
-    @Override
-    public ConnectorPlanOptimizerProvider getConnectorPlanOptimizerProvider()
-    {
-        return planOptimizerProvider;
-    }
-
-    @Override
-    public final void shutdown()
-    {
-        try {
-            lifeCycleManager.stop();
-        }
-        catch (Exception e) {
-            log.error(e, "Error shutting down connector");
-        }
-    }
+  }
 }

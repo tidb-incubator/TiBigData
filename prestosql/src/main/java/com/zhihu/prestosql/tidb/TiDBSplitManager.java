@@ -13,45 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
-
-import io.prestosql.spi.connector.ConnectorSession;
-import io.prestosql.spi.connector.ConnectorSplitSource;
-import io.prestosql.spi.connector.FixedSplitSource;
-import io.prestosql.spi.connector.ConnectorSplitManager;
-import io.prestosql.spi.connector.ConnectorTransactionHandle;
-import io.prestosql.spi.connector.ConnectorTableHandle;
-import com.zhihu.presto.tidb.SplitInternal;
-import com.zhihu.presto.tidb.SplitManagerInternal;
-import com.zhihu.presto.tidb.Wrapper;
-
-import javax.inject.Inject;
-
-import java.util.List;
-import java.util.Optional;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 
+import com.zhihu.presto.tidb.SplitInternal;
+import com.zhihu.presto.tidb.SplitManagerInternal;
+import com.zhihu.presto.tidb.Wrapper;
+import io.prestosql.spi.connector.ConnectorSession;
+import io.prestosql.spi.connector.ConnectorSplitManager;
+import io.prestosql.spi.connector.ConnectorSplitSource;
+import io.prestosql.spi.connector.ConnectorTableHandle;
+import io.prestosql.spi.connector.ConnectorTransactionHandle;
+import io.prestosql.spi.connector.FixedSplitSource;
+import java.util.List;
+import java.util.Optional;
+import javax.inject.Inject;
+
 public final class TiDBSplitManager
-        extends Wrapper<SplitManagerInternal>
-        implements ConnectorSplitManager
-{
+    extends Wrapper<SplitManagerInternal>
+    implements ConnectorSplitManager {
 
-    @Inject
-    public TiDBSplitManager(TiDBSession session)
-    {
-        super(new SplitManagerInternal(session.getInternal()));
-    }
+  @Inject
+  public TiDBSplitManager(TiDBSession session) {
+    super(new SplitManagerInternal(session.getInternal()));
+  }
 
-    @Override
-    public ConnectorSplitSource getSplits(
-            ConnectorTransactionHandle transaction,
-            ConnectorSession session,
-            ConnectorTableHandle table,
-            SplitSchedulingStrategy splitSchedulingStrategy)
-    {
-        TiDBTableHandle tableHandle = (TiDBTableHandle) table;
-        List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
-        return new FixedSplitSource(splits.stream().map(s -> new TiDBSplit(s, Optional.empty())).collect(toImmutableList()));
-    }
+  @Override
+  public ConnectorSplitSource getSplits(
+      ConnectorTransactionHandle transaction,
+      ConnectorSession session,
+      ConnectorTableHandle table,
+      SplitSchedulingStrategy splitSchedulingStrategy) {
+    TiDBTableHandle tableHandle = (TiDBTableHandle) table;
+    List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
+    return new FixedSplitSource(
+        splits.stream().map(s -> new TiDBSplit(s, Optional.empty())).collect(toImmutableList()));
+  }
 }

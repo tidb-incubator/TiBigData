@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
 
 import com.pingcap.tikv.types.DataType;
 
-public final class DataTypes
-{
-    public static String serialize(DataType type)
-    {
-        return Serialization.serialize(type);
-    }
+public final class DataTypes {
 
-    public static DataType deserialize(String base64)
-    {
-        return Serialization.deserialize(base64);
-    }
+  public static String serialize(DataType type) {
+    return Serialization.serialize(type);
+  }
+
+  public static DataType deserialize(String base64) {
+    return Serialization.deserialize(base64);
+  }
 }

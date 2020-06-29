@@ -13,45 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
+
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Objects.requireNonNull;
 
 import com.pingcap.tikv.expression.Expression;
 import com.pingcap.tikv.meta.TiDAGRequest;
 import com.pingcap.tikv.operation.iterator.CoprocessIterator;
 import com.pingcap.tikv.row.Row;
 import com.pingcap.tikv.types.DataType;
-
 import java.util.List;
 import java.util.Optional;
 
-import static java.util.Objects.requireNonNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+public final class RecordSetInternal {
 
-public final class RecordSetInternal
-{
-    private final List<ColumnHandleInternal> columnHandles;
-    private final List<DataType> columnTypes;
-    private final CoprocessIterator<Row> iterator;
+  private final List<ColumnHandleInternal> columnHandles;
+  private final List<DataType> columnTypes;
+  private final CoprocessIterator<Row> iterator;
 
-    public RecordSetInternal(ClientSession session, SplitInternal split, List<ColumnHandleInternal> columnHandles, Optional<Expression> expression)
-    {
-        requireNonNull(split, "split is null");
-        this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
-        this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType).collect(toImmutableList());
-        List<String> columns = columnHandles.stream().map(ColumnHandleInternal::getName).collect(toImmutableList());
+  public RecordSetInternal(ClientSession session, SplitInternal split,
+      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression) {
+    requireNonNull(split, "split is null");
+    this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
+    this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType)
+        .collect(toImmutableList());
+    List<String> columns = columnHandles.stream().map(ColumnHandleInternal::getName)
+        .collect(toImmutableList());
 
-        TiDAGRequest.Builder request = session.request(split.getTable(), columns);
-        expression.ifPresent(e -> request.addFilter(e));
-        iterator = session.iterate(request, new Base64KeyRange(split.getStartKey(), split.getEndKey()));
-    }
+    TiDAGRequest.Builder request = session.request(split.getTable(), columns);
+    expression.ifPresent(e -> request.addFilter(e));
+    iterator = session.iterate(request, new Base64KeyRange(split.getStartKey(), split.getEndKey()));
+  }
 
-    public List<DataType> getColumnTypes()
-    {
-        return columnTypes;
-    }
+  public List<DataType> getColumnTypes() {
+    return columnTypes;
+  }
 
-    public RecordCursorInternal cursor()
-    {
-        return new RecordCursorInternal(columnHandles, iterator);
-    }
+  public RecordCursorInternal cursor() {
+    return new RecordCursorInternal(columnHandles, iterator);
+  }
 }

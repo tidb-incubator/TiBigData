@@ -13,40 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.ArrayList;
-
-import static java.util.Objects.requireNonNull;
 import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 
-public final class SplitManagerInternal
-{
-    private final ClientSession session;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-    public SplitManagerInternal(ClientSession session)
-    {
-        this.session = requireNonNull(session, "session is null");
-    }
+public final class SplitManagerInternal {
 
-    public List<SplitInternal> getSplits(TableHandleInternal tableHandle)
-    {
-        List<SplitInternal> splits = session.getTableRanges(tableHandle)
-                .stream()
-                .map(range -> new SplitInternal(tableHandle, range))
-                .collect(toCollection(ArrayList::new));
-        Collections.shuffle(splits);
-        return Collections.unmodifiableList(splits);
-    }
+  private final ClientSession session;
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("session", session)
-                .toString();
-    }
+  public SplitManagerInternal(ClientSession session) {
+    this.session = requireNonNull(session, "session is null");
+  }
+
+  public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
+    List<SplitInternal> splits = session.getTableRanges(tableHandle)
+        .stream()
+        .map(range -> new SplitInternal(tableHandle, range))
+        .collect(toCollection(ArrayList::new));
+    Collections.shuffle(splits);
+    return Collections.unmodifiableList(splits);
+  }
+
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("session", session)
+        .toString();
+  }
 }

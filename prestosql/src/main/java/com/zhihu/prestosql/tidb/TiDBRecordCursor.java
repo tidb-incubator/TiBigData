@@ -13,126 +13,113 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
-import io.prestosql.spi.connector.RecordCursor;
-import io.prestosql.spi.type.Type;
+import static java.lang.String.format;
+
 import com.pingcap.tikv.types.DataType;
 import com.zhihu.presto.tidb.RecordCursorInternal;
 import com.zhihu.presto.tidb.Wrapper;
+import com.zhihu.prestosql.tidb.TypeHelper.BooleanRecordCursorReader;
+import com.zhihu.prestosql.tidb.TypeHelper.DoubleRecordCursorReader;
+import com.zhihu.prestosql.tidb.TypeHelper.LongRecordCursorReader;
+import com.zhihu.prestosql.tidb.TypeHelper.RecordCursorReader;
+import com.zhihu.prestosql.tidb.TypeHelper.SliceRecordCursorReader;
 import io.airlift.slice.Slice;
-
+import io.prestosql.spi.connector.RecordCursor;
+import io.prestosql.spi.type.Type;
 import java.util.List;
 
-import static com.zhihu.prestosql.tidb.TypeHelper.*;
-import static java.lang.String.format;
+public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implements RecordCursor {
 
-public final class TiDBRecordCursor
-        extends Wrapper<RecordCursorInternal>
-        implements RecordCursor
-{
-    private final BooleanRecordCursorReader[] booleanReaders;
-    private final DoubleRecordCursorReader[] doubleReaders;
-    private final LongRecordCursorReader[] longReaders;
-    private final SliceRecordCursorReader[] sliceReaders;
+  private final BooleanRecordCursorReader[] booleanReaders;
+  private final DoubleRecordCursorReader[] doubleReaders;
+  private final LongRecordCursorReader[] longReaders;
+  private final SliceRecordCursorReader[] sliceReaders;
 
-    private TiDBColumnHandle[] columnHandles;
+  private TiDBColumnHandle[] columnHandles;
 
-    public TiDBRecordCursor(List<TiDBColumnHandle> columnHandles, List<DataType> columnTypes, RecordCursorInternal internal)
-    {
-        super(internal);
-        int numColumns = columnHandles.size();
-        this.columnHandles = columnHandles.toArray(new TiDBColumnHandle[numColumns]);
-        booleanReaders = new BooleanRecordCursorReader[numColumns];
-        doubleReaders = new DoubleRecordCursorReader[numColumns];
-        longReaders = new LongRecordCursorReader[numColumns];
-        sliceReaders = new SliceRecordCursorReader[numColumns];
+  public TiDBRecordCursor(List<TiDBColumnHandle> columnHandles, List<DataType> columnTypes,
+      RecordCursorInternal internal) {
+    super(internal);
+    int numColumns = columnHandles.size();
+    this.columnHandles = columnHandles.toArray(new TiDBColumnHandle[numColumns]);
+    booleanReaders = new BooleanRecordCursorReader[numColumns];
+    doubleReaders = new DoubleRecordCursorReader[numColumns];
+    longReaders = new LongRecordCursorReader[numColumns];
+    sliceReaders = new SliceRecordCursorReader[numColumns];
 
-        for (int idx = 0; idx < numColumns; idx++) {
-            TiDBColumnHandle column = this.columnHandles[idx];
-            Class<?> javaType = column.getPrestoType().getJavaType();
-            RecordCursorReader reader = column.getTypeHelper().getReader();
+    for (int idx = 0; idx < numColumns; idx++) {
+      TiDBColumnHandle column = this.columnHandles[idx];
+      Class<?> javaType = column.getPrestoType().getJavaType();
+      RecordCursorReader reader = column.getTypeHelper().getReader();
 
-            if (javaType == boolean.class) {
-                booleanReaders[idx] = (BooleanRecordCursorReader) reader;
-            }
-            else if (javaType == double.class) {
-                doubleReaders[idx] = (DoubleRecordCursorReader) reader;
-            }
-            else if (javaType == long.class) {
-                longReaders[idx] = (LongRecordCursorReader) reader;
-            }
-            else if (javaType == Slice.class) {
-                sliceReaders[idx] = (SliceRecordCursorReader) reader;
-            }
-            else {
-                throw new IllegalStateException(format("Unsupported java type %s", javaType));
-            }
-        }
+      if (javaType == boolean.class) {
+        booleanReaders[idx] = (BooleanRecordCursorReader) reader;
+      } else if (javaType == double.class) {
+        doubleReaders[idx] = (DoubleRecordCursorReader) reader;
+      } else if (javaType == long.class) {
+        longReaders[idx] = (LongRecordCursorReader) reader;
+      } else if (javaType == Slice.class) {
+        sliceReaders[idx] = (SliceRecordCursorReader) reader;
+      } else {
+        throw new IllegalStateException(format("Unsupported java type %s", javaType));
+      }
     }
+  }
 
-    @Override
-    public long getCompletedBytes()
-    {
-        return 0;
-    }
+  @Override
+  public long getCompletedBytes() {
+    return 0;
+  }
 
-    @Override
-    public long getReadTimeNanos()
-    {
-        return 0;
-    }
+  @Override
+  public long getReadTimeNanos() {
+    return 0;
+  }
 
-    @Override
-    public Type getType(int field)
-    {
-        return columnHandles[field].getPrestoType();
-    }
+  @Override
+  public Type getType(int field) {
+    return columnHandles[field].getPrestoType();
+  }
 
-    @Override
-    public boolean advanceNextPosition()
-    {
-        return getInternal().advanceNextPosition();
-    }
+  @Override
+  public boolean advanceNextPosition() {
+    return getInternal().advanceNextPosition();
+  }
 
-    @Override
-    public boolean getBoolean(int field)
-    {
-        return booleanReaders[field].read(getInternal(), field);
-    }
+  @Override
+  public boolean getBoolean(int field) {
+    return booleanReaders[field].read(getInternal(), field);
+  }
 
-    @Override
-    public long getLong(int field)
-    {
-        return longReaders[field].read(getInternal(), field);
-    }
+  @Override
+  public long getLong(int field) {
+    return longReaders[field].read(getInternal(), field);
+  }
 
-    @Override
-    public double getDouble(int field)
-    {
-        return doubleReaders[field].read(getInternal(), field);
-    }
+  @Override
+  public double getDouble(int field) {
+    return doubleReaders[field].read(getInternal(), field);
+  }
 
-    @Override
-    public Slice getSlice(int field)
-    {
-        return sliceReaders[field].read(getInternal(), field);
-    }
+  @Override
+  public Slice getSlice(int field) {
+    return sliceReaders[field].read(getInternal(), field);
+  }
 
-    @Override
-    public Object getObject(int field)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public Object getObject(int field) {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean isNull(int field)
-    {
-        return getInternal().isNull(field);
-    }
+  @Override
+  public boolean isNull(int field) {
+    return getInternal().isNull(field);
+  }
 
-    @Override
-    public void close()
-    {
-    }
+  @Override
+  public void close() {
+  }
 }

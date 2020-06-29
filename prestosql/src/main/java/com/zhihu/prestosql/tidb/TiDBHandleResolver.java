@@ -13,38 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
-import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.prestosql.spi.connector.ColumnHandle;
-import io.prestosql.spi.connector.ConnectorSplit;
 import io.prestosql.spi.connector.ConnectorHandleResolver;
+import io.prestosql.spi.connector.ConnectorSplit;
+import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.prestosql.spi.connector.ConnectorTransactionHandle;
 
-public final class TiDBHandleResolver
-        implements ConnectorHandleResolver
-{
-    @Override
-    public Class<? extends ConnectorTableHandle> getTableHandleClass()
-    {
-        return TiDBTableHandle.class;
-    }
+public final class TiDBHandleResolver implements ConnectorHandleResolver {
 
-    @Override
-    public Class<? extends ColumnHandle> getColumnHandleClass()
-    {
-        return TiDBColumnHandle.class;
-    }
+  @Override
+  public Class<? extends ConnectorTableHandle> getTableHandleClass() {
+    return TiDBTableHandle.class;
+  }
 
-    @Override
-    public Class<? extends ConnectorSplit> getSplitClass()
-    {
-        return TiDBSplit.class;
-    }
+  @Override
+  public Class<? extends ColumnHandle> getColumnHandleClass() {
+    return TiDBColumnHandle.class;
+  }
 
-    @Override
-    public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass()
-    {
-        return TiDBTransactionHandle.class;
-    }
+  @Override
+  public Class<? extends ConnectorSplit> getSplitClass() {
+    return TiDBSplit.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass() {
+    return TiDBTransactionHandle.class;
+  }
 }

@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb;
 
 import com.facebook.presto.spi.Plugin;
 import com.facebook.presto.spi.connector.ConnectorFactory;
-import com.zhihu.prestodb.tidb.TiDBConnectorFactory;
 import com.google.common.collect.ImmutableList;
+import com.zhihu.prestodb.tidb.TiDBConnectorFactory;
 
-public class ConnectorsPlugin
-        implements Plugin
-{
-    @Override
-    public Iterable<ConnectorFactory> getConnectorFactories()
-    {
-        return ImmutableList.of(new TiDBConnectorFactory());
-    }
+public class ConnectorsPlugin implements Plugin {
+
+  @Override
+  public Iterable<ConnectorFactory> getConnectorFactories() {
+    return ImmutableList.of(new TiDBConnectorFactory());
+  }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb.optimization;
 
 import com.facebook.presto.spi.ConnectorPlanOptimizer;
@@ -20,7 +21,6 @@ import com.facebook.presto.spi.connector.ConnectorPlanOptimizerProvider;
 import com.facebook.presto.spi.function.FunctionMetadataManager;
 import com.facebook.presto.spi.function.StandardFunctionResolution;
 import com.facebook.presto.spi.relation.RowExpressionService;
-import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.BigintType;
 import com.facebook.presto.spi.type.BooleanType;
 import com.facebook.presto.spi.type.CharType;
@@ -36,71 +36,64 @@ import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.VarcharType;
 import com.google.common.collect.ImmutableSet;
 import com.zhihu.prestodb.tidb.TiDBSession;
-
+import java.util.Set;
 import javax.inject.Inject;
 
-import java.util.Set;
+public final class TiDBPlanOptimizerProvider implements ConnectorPlanOptimizerProvider {
 
-public final class TiDBPlanOptimizerProvider
-        implements ConnectorPlanOptimizerProvider
-{
+  private static final Set<Class<?>> functionTranslators = ImmutableSet
+      .of(OperatorTranslators.class);
+  private final FunctionMetadataManager functionMetadataManager;
+  private final StandardFunctionResolution standardFunctionResolution;
+  private final RowExpressionService rowExpressionService;
+  private TiDBSession session;
 
-    private final static Set<Class<?>> functionTranslators = ImmutableSet.of(OperatorTranslators.class);
-    private final FunctionMetadataManager functionMetadataManager;
-    private final StandardFunctionResolution standardFunctionResolution;
-    private final RowExpressionService rowExpressionService;
-    private TiDBSession session;
+  @Inject
+  public TiDBPlanOptimizerProvider(
+      TiDBSession session,
+      FunctionMetadataManager functionMetadataManager,
+      StandardFunctionResolution standardFunctionResolution,
+      RowExpressionService rowExpressionService) {
+    this.session = session;
+    this.functionMetadataManager = functionMetadataManager;
+    this.standardFunctionResolution = standardFunctionResolution;
+    this.rowExpressionService = rowExpressionService;
+  }
 
-    @Inject
-    public TiDBPlanOptimizerProvider(
-            TiDBSession session,
-            FunctionMetadataManager functionMetadataManager,
-            StandardFunctionResolution standardFunctionResolution,
-            RowExpressionService rowExpressionService)
-    {
-        this.session = session;
-        this.functionMetadataManager = functionMetadataManager;
-        this.standardFunctionResolution = standardFunctionResolution;
-        this.rowExpressionService = rowExpressionService;
-    }
+  public static boolean isPushdownType(Type type) {
+    return type.isOrderable() && (type.equals(BigintType.BIGINT)
+        || type.equals(TinyintType.TINYINT)
+        || type.equals(SmallintType.SMALLINT)
+        || type.equals(IntegerType.INTEGER)
+        || type.equals(DoubleType.DOUBLE)
+        || type.equals(RealType.REAL)
+        || type.equals(BooleanType.BOOLEAN)
+        || type.equals(DateType.DATE)
+        || type.equals(TimeType.TIME)
+        || type.equals(TimestampType.TIMESTAMP)
+        || type instanceof VarcharType
+        || type instanceof CharType);
+  }
 
-    public static boolean isPushdownType(Type type)
-    {
-        return type.isOrderable() && (type.equals(BigintType.BIGINT) ||
-                type.equals(TinyintType.TINYINT) ||
-                type.equals(SmallintType.SMALLINT) ||
-                type.equals(IntegerType.INTEGER) ||
-                type.equals(DoubleType.DOUBLE) ||
-                type.equals(RealType.REAL) ||
-                type.equals(BooleanType.BOOLEAN) ||
-                type.equals(DateType.DATE) ||
-                type.equals(TimeType.TIME) ||
-                type.equals(TimestampType.TIMESTAMP) ||
-                type instanceof VarcharType ||
-                type instanceof CharType);
-    }
+  /**
+   * The plan optimizers to be applied before having the notion of distribution.
+   */
+  public Set<ConnectorPlanOptimizer> getLogicalPlanOptimizers() {
+    return ImmutableSet.of();
+  }
 
-    /**
-     * The plan optimizers to be applied before having the notion of distribution.
-     */
-    public Set<ConnectorPlanOptimizer> getLogicalPlanOptimizers()
-    {
-        return ImmutableSet.of();
-    }
-
-    /**
-     * The plan optimizers to be applied after having the notion of distribution.
-     * The plan will be only executed on a single node.
-     */
-    public Set<ConnectorPlanOptimizer> getPhysicalPlanOptimizers()
-    {
-        return ImmutableSet.of(
-                new TiDBComputePushdown(
-                        session,
-                        functionMetadataManager,
-                        standardFunctionResolution,
-                        rowExpressionService.getDeterminismEvaluator(),
-                        rowExpressionService.getExpressionOptimizer(),
-                        functionTranslators));
-    }
+  /**
+   * The plan optimizers to be applied after having the notion of distribution. The plan will be
+   * only executed on a single node.
+   */
+  public Set<ConnectorPlanOptimizer> getPhysicalPlanOptimizers() {
+    return ImmutableSet.of(
+        new TiDBComputePushdown(
+            session,
+            functionMetadataManager,
+            standardFunctionResolution,
+            rowExpressionService.getDeterminismEvaluator(),
+            rowExpressionService.getExpressionOptimizer(),
+            functionTranslators));
+  }
 }

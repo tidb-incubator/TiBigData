@@ -13,7 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static java.util.Objects.requireNonNull;
+import static java.util.function.Function.identity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
@@ -28,172 +36,157 @@ import com.pingcap.tikv.operation.iterator.CoprocessIterator;
 import com.pingcap.tikv.row.Row;
 import com.pingcap.tikv.util.KeyRangeUtils;
 import com.pingcap.tikv.util.RangeSplitter;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
+import javax.inject.Inject;
 import org.tikv.kvproto.Coprocessor;
 import shade.com.google.protobuf.ByteString;
 
-import javax.inject.Inject;
+public final class ClientSession implements AutoCloseable {
 
-import java.util.*;
-import java.util.stream.Stream;
+  private ClientConfig config;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
-import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static com.google.common.base.MoreObjects.toStringHelper;
-import static java.util.Objects.requireNonNull;
-import static java.util.function.Function.identity;
+  private final TiSession session;
+  private Catalog catalog;
 
-public final class ClientSession implements AutoCloseable
-{
-    private ClientConfig config;
+  @Inject
+  public ClientSession(ClientConfig config) {
+    this.config = requireNonNull(config, "config is null");
 
-    private final TiSession session;
-    private Catalog catalog;
+    session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()));
+    catalog = session.getCatalog();
+  }
 
-    @Inject
-    public ClientSession(ClientConfig config)
-    {
-        this.config = requireNonNull(config, "config is null");
+  public List<String> getSchemaNames() {
+    return catalog.listDatabases().stream().map(TiDBInfo::getName).collect(toImmutableList());
+  }
 
-        session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()));
-        catalog = session.getCatalog();
+  public List<String> getTableNames(String schema) {
+    requireNonNull(schema, "schema is null");
+    TiDBInfo db = catalog.getDatabase(schema);
+    if (db == null) {
+      return ImmutableList.of();
     }
+    return catalog.listTables(db).stream().map(TiTableInfo::getName).collect(toImmutableList());
+  }
 
-    private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table)
-    {
-        Stream<Integer> indexStream = Stream.iterate(0, i -> i + 1);
-        return Streams.mapWithIndex(table.getColumns().stream(), (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i)).collect(toImmutableList());
-    }
+  public Optional<TiTableInfo> getTable(TableHandleInternal handle) {
+    return getTable(handle.getSchemaName(), handle.getTableName());
+  }
 
-    public List<String> getSchemaNames()
-    {
-        return catalog.listDatabases().stream().map(TiDBInfo::getName).collect(toImmutableList());
-    }
+  public Optional<TiTableInfo> getTable(String schema, String tableName) {
+    requireNonNull(schema, "schema is null");
+    requireNonNull(tableName, "tableName is null");
+    return Optional.ofNullable(catalog.getTable(schema, tableName));
+  }
 
-    public List<String> getTableNames(String schema)
-    {
-        requireNonNull(schema, "schema is null");
-        TiDBInfo db = catalog.getDatabase(schema);
-        if (db == null) {
-            return ImmutableList.of();
-        }
-        return catalog.listTables(db).stream().map(TiTableInfo::getName).collect(toImmutableList());
-    }
+  public TiTableInfo getTableMust(TableHandleInternal handle) {
+    return getTableMust(handle.getSchemaName(), handle.getTableName());
+  }
 
-    public Optional<TiTableInfo> getTable(TableHandleInternal handle)
-    {
-        return getTable(handle.getSchemaName(), handle.getTableName());
-    }
+  public TiTableInfo getTableMust(String schema, String tableName) {
+    return getTable(schema, tableName).orElseThrow(
+        () -> new IllegalStateException("Table " + schema + "." + tableName + " no longer exists"));
+  }
 
-    public Optional<TiTableInfo> getTable(String schema, String tableName)
-    {
-        requireNonNull(schema, "schema is null");
-        requireNonNull(tableName, "tableName is null");
-        return Optional.ofNullable(catalog.getTable(schema, tableName));
-    }
+  public Map<String, List<String>> listTables(Optional<String> schemaName) {
+    List<String> schemaNames = schemaName
+        .map(s -> (List<String>) ImmutableList.of(s))
+        .orElseGet(() -> getSchemaNames());
+    return schemaNames.stream().collect(toImmutableMap(identity(), name -> getTableNames(name)));
+  }
 
-    public TiTableInfo getTableMust(TableHandleInternal handle)
-    {
-        return getTableMust(handle.getSchemaName(), handle.getTableName());
-    }
+  private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
+    Stream<Integer> indexStream = Stream.iterate(0, i -> i + 1);
+    return Streams.mapWithIndex(table.getColumns().stream(),
+        (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i))
+        .collect(toImmutableList());
+  }
 
-    public TiTableInfo getTableMust(String schema, String tableName)
-    {
-        return getTable(schema, tableName).orElseThrow(() -> new IllegalStateException("Table " + schema + "." + tableName + " no longer exists"));
-    }
+  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName) {
+    return getTable(schema, tableName).map(ClientSession::getTableColumns);
+  }
 
-    public Map<String, List<String>> listTables(Optional<String> schemaName)
-    {
-        List<String> schemaNames = schemaName
-                .map(s -> (List<String>) ImmutableList.of(s))
-                .orElseGet(() -> getSchemaNames());
-        return schemaNames.stream().collect(toImmutableMap(identity(), name -> getTableNames(name)));
-    }
+  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
+      List<String> columns) {
+    Set<String> columnsSet = columns.stream().collect(toImmutableSet());
+    return getTableColumns(schema, tableName).map(
+        r -> r.stream().filter(column -> columnsSet.contains(column.getName()))
+            .collect(toImmutableList()));
+  }
 
-    public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName)
-    {
-        return getTable(schema, tableName).map(ClientSession::getTableColumns);
-    }
+  public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle) {
+    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName());
+  }
 
-    public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName, List<String> columns)
-    {
-        Set<String> columnsSet = columns.stream().collect(toImmutableSet());
-        return getTableColumns(schema, tableName).map(r -> r.stream().filter(column -> columnsSet.contains(column.getName())).collect(toImmutableList()));
-    }
+  public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle,
+      List<String> columns) {
+    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
+  }
 
-    public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle)
-    {
-        return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName());
-    }
+  private List<RangeSplitter.RegionTask> getRangeRegionTasks(ByteString startKey,
+      ByteString endKey) {
+    List<Coprocessor.KeyRange> keyRanges =
+        ImmutableList.of(KeyRangeUtils.makeCoprocRange(startKey, endKey));
+    return RangeSplitter.newSplitter(session.getRegionManager()).splitRangeByRegion(keyRanges);
+  }
 
-    public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle, List<String> columns)
-    {
-        return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
-    }
+  private List<RangeSplitter.RegionTask> getRangeRegionTasks(Base64KeyRange range) {
+    ByteString startKey = ByteString.copyFrom(Base64.getDecoder().decode(range.getStartKey()));
+    ByteString endKey = ByteString.copyFrom(Base64.getDecoder().decode(range.getEndKey()));
+    return getRangeRegionTasks(startKey, endKey);
+  }
 
-    private List<RangeSplitter.RegionTask> getRangeRegionTasks(ByteString startKey, ByteString endKey)
-    {
-        List<Coprocessor.KeyRange> keyRanges =
-                ImmutableList.of(KeyRangeUtils.makeCoprocRange(startKey, endKey));
-        return RangeSplitter.newSplitter(session.getRegionManager()).splitRangeByRegion(keyRanges);
-    }
+  private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
+    return getTable(tableHandle).map(table -> {
+      long tableId = table.getId();
+      RowKey start = RowKey.createMin(tableId);
+      RowKey end = RowKey.createBeyondMax(tableId);
+      return getRangeRegionTasks(start.toByteString(), end.toByteString());
+    }).orElseGet(ImmutableList::of);
+  }
 
-    private List<RangeSplitter.RegionTask> getRangeRegionTasks(Base64KeyRange range)
-    {
-        ByteString startKey = ByteString.copyFrom(Base64.getDecoder().decode(range.getStartKey()));
-        ByteString endKey = ByteString.copyFrom(Base64.getDecoder().decode(range.getEndKey()));
-        return getRangeRegionTasks(startKey, endKey);
-    }
-
-    private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle)
-    {
-        return getTable(tableHandle).map(table -> {
-            long tableId = table.getId();
-            RowKey start = RowKey.createMin(tableId);
-            RowKey end = RowKey.createBeyondMax(tableId);
-            return getRangeRegionTasks(start.toByteString(), end.toByteString());
-        }).orElseGet(ImmutableList::of);
-    }
-
-    public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle)
-    {
-        Base64.Encoder encoder = Base64.getEncoder();
-        return getTableRegionTasks(tableHandle).stream().flatMap(task -> task.getRanges().stream().map(range -> {
-            String taskStart = encoder.encodeToString(range.getStart().toByteArray());
-            String taskEnd = encoder.encodeToString(range.getEnd().toByteArray());
-            return new Base64KeyRange(taskStart, taskEnd);
+  public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle) {
+    Base64.Encoder encoder = Base64.getEncoder();
+    return getTableRegionTasks(tableHandle).stream()
+        .flatMap(task -> task.getRanges().stream().map(range -> {
+          String taskStart = encoder.encodeToString(range.getStart().toByteArray());
+          String taskEnd = encoder.encodeToString(range.getEnd().toByteArray());
+          return new Base64KeyRange(taskStart, taskEnd);
         })).collect(toImmutableList());
-    }
+  }
 
-    public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns)
-    {
-        TiTableInfo tableInfo = getTableMust(table);
-        if (columns.isEmpty()) {
-            columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
-        }
-        return TiDAGRequest.Builder
-                .newBuilder()
-                .setFullTableScan(tableInfo)
-                .addRequiredCols(columns)
-                .setStartTs(session.getTimestamp());
+  public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns) {
+    TiTableInfo tableInfo = getTableMust(table);
+    if (columns.isEmpty()) {
+      columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
     }
+    return TiDAGRequest.Builder
+        .newBuilder()
+        .setFullTableScan(tableInfo)
+        .addRequiredCols(columns)
+        .setStartTs(session.getTimestamp());
+  }
 
-    public CoprocessIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range)
-    {
-        return CoprocessIterator.getRowIterator(request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
-    }
+  public CoprocessIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
+    return CoprocessIterator
+        .getRowIterator(request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range),
+            session);
+  }
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("config", config)
-                .toString();
-    }
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("config", config)
+        .toString();
+  }
 
-    @Override
-    public void close() throws Exception
-    {
-        session.close();
-    }
+  @Override
+  public void close() throws Exception {
+    session.close();
+  }
 }
