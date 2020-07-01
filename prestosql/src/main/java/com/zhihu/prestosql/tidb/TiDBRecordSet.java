@@ -13,43 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
-import io.prestosql.spi.connector.RecordCursor;
-import io.prestosql.spi.connector.RecordSet;
-import io.prestosql.spi.type.Type;
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.zhihu.prestosql.tidb.TiDBColumnHandle.internalHandles;
+
 import com.zhihu.presto.tidb.Expressions;
 import com.zhihu.presto.tidb.RecordSetInternal;
 import com.zhihu.presto.tidb.Wrapper;
-
+import io.prestosql.spi.connector.RecordCursor;
+import io.prestosql.spi.connector.RecordSet;
+import io.prestosql.spi.type.Type;
 import java.util.List;
 
-import static com.zhihu.prestosql.tidb.TiDBColumnHandle.internalHandles;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements RecordSet {
 
-public final class TiDBRecordSet
-        extends Wrapper<RecordSetInternal>
-        implements RecordSet
-{
-    private final List<TiDBColumnHandle> columnHandles;
-    private final List<Type> columnTypes;
+  private final List<TiDBColumnHandle> columnHandles;
+  private final List<Type> columnTypes;
 
-    public TiDBRecordSet(TiDBSession session, TiDBSplit split, List<TiDBColumnHandle> columnHandles)
-    {
-        super(new RecordSetInternal(session.getInternal(), split.toInternal(), internalHandles(columnHandles), split.getAdditionalPredicate().map(Expressions::deserialize)));
-        this.columnHandles = columnHandles;
-        this.columnTypes = columnHandles.stream().map(TiDBColumnHandle::getPrestoType).collect(toImmutableList());
-    }
+  public TiDBRecordSet(TiDBSession session, TiDBSplit split, List<TiDBColumnHandle> columnHandles) {
+    super(new RecordSetInternal(session.getInternal(), split.toInternal(),
+        internalHandles(columnHandles),
+        split.getAdditionalPredicate().map(Expressions::deserialize)));
+    this.columnHandles = columnHandles;
+    this.columnTypes = columnHandles.stream().map(TiDBColumnHandle::getPrestoType)
+        .collect(toImmutableList());
+  }
 
-    @Override
-    public List<Type> getColumnTypes()
-    {
-        return columnTypes;
-    }
+  @Override
+  public List<Type> getColumnTypes() {
+    return columnTypes;
+  }
 
-    @Override
-    public RecordCursor cursor()
-    {
-        return new TiDBRecordCursor(columnHandles, getInternal().getColumnTypes(), getInternal().cursor());
-    }
+  @Override
+  public RecordCursor cursor() {
+    return new TiDBRecordCursor(columnHandles, getInternal().getColumnTypes(),
+        getInternal().cursor());
+  }
 }

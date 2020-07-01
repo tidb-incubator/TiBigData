@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
+
+import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
+import static java.util.Objects.requireNonNull;
 
 import com.facebook.presto.spi.function.FunctionMetadataManager;
 import com.facebook.presto.spi.function.StandardFunctionResolution;
@@ -24,47 +28,41 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.zhihu.prestodb.tidb.optimization.TiDBPlanOptimizerProvider;
 
-import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
-import static java.util.Objects.requireNonNull;
+public final class TiDBModule implements Module {
 
-public final class TiDBModule
-        implements Module
-{
-    private final String connectorId;
-    private final TypeManager typeManager;
-    private final FunctionMetadataManager functionMetadataManager;
-    private final StandardFunctionResolution standardFunctionResolution;
-    private final RowExpressionService rowExpressionService;
+  private final String connectorId;
+  private final TypeManager typeManager;
+  private final FunctionMetadataManager functionMetadataManager;
+  private final StandardFunctionResolution standardFunctionResolution;
+  private final RowExpressionService rowExpressionService;
 
-    public TiDBModule(String connectorId,
-            TypeManager typeManager,
-            FunctionMetadataManager functionMetadataManager,
-            StandardFunctionResolution standardFunctionResolution,
-            RowExpressionService rowExpressionService)
-    {
-        this.connectorId = requireNonNull(connectorId, "connector id is null");
-        this.typeManager = requireNonNull(typeManager, "typeManager is null");
-        this.functionMetadataManager = functionMetadataManager;
-        this.standardFunctionResolution = standardFunctionResolution;
-        this.rowExpressionService = rowExpressionService;
-    }
+  public TiDBModule(String connectorId,
+      TypeManager typeManager,
+      FunctionMetadataManager functionMetadataManager,
+      StandardFunctionResolution standardFunctionResolution,
+      RowExpressionService rowExpressionService) {
+    this.connectorId = requireNonNull(connectorId, "connector id is null");
+    this.typeManager = requireNonNull(typeManager, "typeManager is null");
+    this.functionMetadataManager = functionMetadataManager;
+    this.standardFunctionResolution = standardFunctionResolution;
+    this.rowExpressionService = rowExpressionService;
+  }
 
-    @Override
-    public void configure(Binder binder)
-    {
-        binder.bind(TypeManager.class).toInstance(typeManager);
+  @Override
+  public void configure(Binder binder) {
+    binder.bind(TypeManager.class).toInstance(typeManager);
 
-        binder.bind(TiDBConnector.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBConnectorId.class).toInstance(new TiDBConnectorId(connectorId));
-        binder.bind(TiDBMetadata.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBSession.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBSplitManager.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBRecordSetProvider.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBPlanOptimizerProvider.class).in(Scopes.SINGLETON);
-        binder.bind(FunctionMetadataManager.class).toInstance(functionMetadataManager);
-        binder.bind(StandardFunctionResolution.class).toInstance(standardFunctionResolution);
-        binder.bind(RowExpressionService.class).toInstance(rowExpressionService);
+    binder.bind(TiDBConnector.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBConnectorId.class).toInstance(new TiDBConnectorId(connectorId));
+    binder.bind(TiDBMetadata.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBSession.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBSplitManager.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBRecordSetProvider.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBPlanOptimizerProvider.class).in(Scopes.SINGLETON);
+    binder.bind(FunctionMetadataManager.class).toInstance(functionMetadataManager);
+    binder.bind(StandardFunctionResolution.class).toInstance(standardFunctionResolution);
+    binder.bind(RowExpressionService.class).toInstance(rowExpressionService);
 
-        configBinder(binder).bindConfig(TiDBConfig.class);
-    }
+    configBinder(binder).bindConfig(TiDBConfig.class);
+  }
 }

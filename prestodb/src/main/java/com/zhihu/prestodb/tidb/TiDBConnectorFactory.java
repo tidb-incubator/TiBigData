@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
+
+import static com.google.common.base.Throwables.throwIfUnchecked;
+import static java.util.Objects.requireNonNull;
 
 import com.facebook.airlift.bootstrap.Bootstrap;
 import com.facebook.airlift.json.JsonModule;
@@ -22,51 +26,43 @@ import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.connector.ConnectorContext;
 import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.google.inject.Injector;
-
 import java.util.Map;
 
-import static com.google.common.base.Throwables.throwIfUnchecked;
-import static java.util.Objects.requireNonNull;
+public final class TiDBConnectorFactory implements ConnectorFactory {
 
-public final class TiDBConnectorFactory
-        implements ConnectorFactory
-{
-    @Override
-    public String getName()
-    {
-        return "tidb";
+  @Override
+  public String getName() {
+    return "tidb";
+  }
+
+  @Override
+  public ConnectorHandleResolver getHandleResolver() {
+    return new TiDBHandleResolver();
+  }
+
+  @Override
+  public Connector create(String catalogName, Map<String, String> config,
+      ConnectorContext context) {
+    requireNonNull(config, "config is null");
+
+    try {
+      Bootstrap app = new Bootstrap(
+          new JsonModule(),
+          new TiDBModule(catalogName, context.getTypeManager(),
+              context.getFunctionMetadataManager(),
+              context.getStandardFunctionResolution(),
+              context.getRowExpressionService()));
+
+      Injector injector = app
+          .strictConfig()
+          .doNotInitializeLogging()
+          .setRequiredConfigurationProperties(config)
+          .initialize();
+
+      return injector.getInstance(TiDBConnector.class);
+    } catch (Exception e) {
+      throwIfUnchecked(e);
+      throw new RuntimeException(e);
     }
-
-    @Override
-    public ConnectorHandleResolver getHandleResolver()
-    {
-        return new TiDBHandleResolver();
-    }
-
-    @Override
-    public Connector create(String catalogName, Map<String, String> config, ConnectorContext context)
-    {
-        requireNonNull(config, "config is null");
-
-        try {
-            Bootstrap app = new Bootstrap(
-                    new JsonModule(),
-                    new TiDBModule(catalogName, context.getTypeManager(),
-                            context.getFunctionMetadataManager(),
-                            context.getStandardFunctionResolution(),
-                            context.getRowExpressionService()));
-
-            Injector injector = app
-                    .strictConfig()
-                    .doNotInitializeLogging()
-                    .setRequiredConfigurationProperties(config)
-                    .initialize();
-
-            return injector.getInstance(TiDBConnector.class);
-        }
-        catch (Exception e) {
-            throwIfUnchecked(e);
-            throw new RuntimeException(e);
-        }
-    }
+  }
 }

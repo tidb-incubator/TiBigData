@@ -48,9 +48,8 @@ public class DataTypeMappingUtil {
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
-   * @param object   TiKV java object
+   * @param object TiKV java object
    * @param dataType Flink datatype
-   * @return
    */
   public static Optional<Object> getObjectWithDataType(Object object, DataType dataType) {
     if (object == null) {
@@ -78,6 +77,8 @@ public class DataTypeMappingUtil {
         if (object instanceof Long) {
           object = (Long) object != 0;
         }
+        break;
+      default:
         break;
     }
     return Optional.of(object);

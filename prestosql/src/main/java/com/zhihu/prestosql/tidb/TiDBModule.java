@@ -13,40 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.zhihu.prestosql.tidb;
 
-import io.prestosql.spi.type.TypeManager;
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import com.google.inject.Scopes;
+package com.zhihu.prestosql.tidb;
 
 import static io.airlift.configuration.ConfigBinder.configBinder;
 import static java.util.Objects.requireNonNull;
 
+import com.google.inject.Binder;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
+import io.prestosql.spi.type.TypeManager;
+
 public final class TiDBModule
-        implements Module
-{
-    private final String connectorId;
-    private final TypeManager typeManager;
+    implements Module {
 
-    public TiDBModule(String connectorId, TypeManager typeManager)
-    {
-        this.connectorId = requireNonNull(connectorId, "connector id is null");
-        this.typeManager = requireNonNull(typeManager, "typeManager is null");
-    }
+  private final String connectorId;
+  private final TypeManager typeManager;
 
-    @Override
-    public void configure(Binder binder)
-    {
-        binder.bind(TypeManager.class).toInstance(typeManager);
+  public TiDBModule(String connectorId, TypeManager typeManager) {
+    this.connectorId = requireNonNull(connectorId, "connector id is null");
+    this.typeManager = requireNonNull(typeManager, "typeManager is null");
+  }
 
-        binder.bind(TiDBConnector.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBConnectorId.class).toInstance(new TiDBConnectorId(connectorId));
-        binder.bind(TiDBMetadata.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBSession.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBSplitManager.class).in(Scopes.SINGLETON);
-        binder.bind(TiDBRecordSetProvider.class).in(Scopes.SINGLETON);
+  @Override
+  public void configure(Binder binder) {
+    binder.bind(TypeManager.class).toInstance(typeManager);
 
-        configBinder(binder).bindConfig(TiDBConfig.class);
-    }
+    binder.bind(TiDBConnector.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBConnectorId.class).toInstance(new TiDBConnectorId(connectorId));
+    binder.bind(TiDBMetadata.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBSession.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBSplitManager.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBRecordSetProvider.class).in(Scopes.SINGLETON);
+
+    configBinder(binder).bindConfig(TiDBConfig.class);
+  }
 }

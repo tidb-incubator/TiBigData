@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.flink.tidb.source;
 
 
 import com.zhihu.flink.tidb.utils.DataTypeMappingUtil;
-import com.zhihu.presto.tidb.*;
+import com.zhihu.presto.tidb.ClientConfig;
+import com.zhihu.presto.tidb.ClientSession;
+import com.zhihu.presto.tidb.ColumnHandleInternal;
+import com.zhihu.presto.tidb.RecordCursorInternal;
+import com.zhihu.presto.tidb.RecordSetInternal;
+import com.zhihu.presto.tidb.SplitInternal;
+import com.zhihu.presto.tidb.SplitManagerInternal;
+import com.zhihu.presto.tidb.TableHandleInternal;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +46,8 @@ import org.apache.flink.types.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements ResultTypeQueryable<Row> {
+public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
+    ResultTypeQueryable<Row> {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBInputFormat.class);
 
@@ -63,15 +72,9 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
 
   /**
    * see {@link TiDBInputFormat#builder()}
-   *
-   * @param pdAddresses
-   * @param databaseName
-   * @param tableName
-   * @param fieldNames
-   * @param fieldTypes
    */
   private TiDBInputFormat(String pdAddresses, String databaseName, String tableName,
-                          String[] fieldNames, DataType[] fieldTypes) {
+      String[] fieldNames, DataType[] fieldTypes) {
     this.pdAddresses = pdAddresses;
     this.databaseName = databaseName;
     this.tableName = tableName;
@@ -81,7 +84,8 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     List<ColumnHandleInternal> columnHandleInternals = null;
     // get split
     try (ClientSession splitSession = new ClientSession(new ClientConfig(this.pdAddresses))) {
-      TableHandleInternal tableHandleInternal = new TableHandleInternal(UUID.randomUUID().toString(),
+      TableHandleInternal tableHandleInternal = new TableHandleInternal(
+          UUID.randomUUID().toString(),
           this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
       splits = splitManagerInternal.getSplits(tableHandleInternal);
@@ -217,7 +221,8 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     }
 
     public TiDBInputFormat build() {
-      return new TiDBInputFormat(pdAddresses, databaseName, tableName, fieldNames.clone(), fieldTypes.clone());
+      return new TiDBInputFormat(pdAddresses, databaseName, tableName, fieldNames.clone(),
+          fieldTypes.clone());
     }
   }
 }

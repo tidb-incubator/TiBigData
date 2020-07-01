@@ -13,61 +13,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-import static com.google.common.base.MoreObjects.toStringHelper;
+public final class ClientConfig {
 
-public final class ClientConfig
-{
-    private String pdAddresses;
+  private String pdAddresses;
 
-    public ClientConfig(String pdAddresses)
-    {
-        this.pdAddresses = requireNonNull(pdAddresses, "pdAddresses is null");
+  public ClientConfig(String pdAddresses) {
+    this.pdAddresses = requireNonNull(pdAddresses, "pdAddresses is null");
+  }
+
+  public ClientConfig() {
+  }
+
+  public String getPdAddresses() {
+    return pdAddresses;
+  }
+
+  public void setPdAddresses(String addresses) {
+    this.pdAddresses = addresses;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pdAddresses);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
     }
 
-    public ClientConfig()
-    {
-    }
+    ClientConfig other = (ClientConfig) obj;
+    return Objects.equals(this.pdAddresses, other.pdAddresses);
+  }
 
-    public String getPdAddresses()
-    {
-        return pdAddresses;
-    }
-
-    public void setPdAddresses(String addresses)
-    {
-        this.pdAddresses = addresses;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(pdAddresses);
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || (getClass() != obj.getClass())) {
-            return false;
-        }
-
-        ClientConfig other = (ClientConfig) obj;
-        return Objects.equals(this.pdAddresses, other.pdAddresses);
-    }
-
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("pdAddresses", pdAddresses)
-                .toString();
-    }
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("pdAddresses", pdAddresses)
+        .toString();
+  }
 }

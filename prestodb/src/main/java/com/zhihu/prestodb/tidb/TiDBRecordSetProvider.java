@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
+
+import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Objects.requireNonNull;
 
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorSession;
@@ -21,29 +25,23 @@ import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
-
+import java.util.List;
 import javax.inject.Inject;
 
-import java.util.List;
+public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
 
-import static java.util.Objects.requireNonNull;
-import static com.google.common.collect.ImmutableList.toImmutableList;
+  private TiDBSession session;
 
-public final class TiDBRecordSetProvider
-        implements ConnectorRecordSetProvider
-{
-    private TiDBSession session;
+  @Inject
+  public TiDBRecordSetProvider(TiDBSession session) {
+    this.session = session;
+  }
 
-    @Inject
-    public TiDBRecordSetProvider(TiDBSession session)
-    {
-        this.session = session;
-    }
-
-    @Override
-    public RecordSet getRecordSet(ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns)
-    {
-        requireNonNull(split, "split is null");
-        return new TiDBRecordSet(this.session, (TiDBSplit) split, columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()));
-    }
+  @Override
+  public RecordSet getRecordSet(ConnectorTransactionHandle transactionHandle,
+      ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns) {
+    requireNonNull(split, "split is null");
+    return new TiDBRecordSet(this.session, (TiDBSplit) split,
+        columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()));
+  }
 }

@@ -13,62 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static java.util.Objects.requireNonNull;
-import static com.google.common.base.MoreObjects.toStringHelper;
+public final class MetadataInternal {
 
-public final class MetadataInternal
-{
-    private final String connectorId;
-    private final ClientSession session;
+  private final String connectorId;
+  private final ClientSession session;
 
-    public MetadataInternal(String connectorId, ClientSession session)
-    {
-        this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
-        this.session = requireNonNull(session, "session is null");
-    }
+  public MetadataInternal(String connectorId, ClientSession session) {
+    this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
+    this.session = requireNonNull(session, "session is null");
+  }
 
-    public List<String> listSchemaNames()
-    {
-        return session.getSchemaNames();
-    }
+  public List<String> listSchemaNames() {
+    return session.getSchemaNames();
+  }
 
-    public Optional<TableHandleInternal> getTableHandle(String schemaName, String tableName)
-    {
-        return session.getTable(schemaName, tableName).map(t -> new TableHandleInternal(connectorId, schemaName, tableName));
-    }
+  public Optional<TableHandleInternal> getTableHandle(String schemaName, String tableName) {
+    return session.getTable(schemaName, tableName)
+        .map(t -> new TableHandleInternal(connectorId, schemaName, tableName));
+  }
 
-    public Map<String, List<String>> listTables(Optional<String> schemaName)
-    {
-        return session.listTables(schemaName);
-    }
+  public Map<String, List<String>> listTables(Optional<String> schemaName) {
+    return session.listTables(schemaName);
+  }
 
-    public Optional<List<ColumnHandleInternal>> getColumnHandles(TableHandleInternal tableHandle)
-    {
-        return session.getTableColumns(tableHandle);
-    }
+  public Optional<List<ColumnHandleInternal>> getColumnHandles(TableHandleInternal tableHandle) {
+    return session.getTableColumns(tableHandle);
+  }
 
-    public Optional<List<ColumnHandleInternal>> getColumnHandles(String schemaName, String tableName)
-    {
-        return session.getTableColumns(schemaName, tableName);
-    }
+  public Optional<List<ColumnHandleInternal>> getColumnHandles(String schemaName,
+      String tableName) {
+    return session.getTableColumns(schemaName, tableName);
+  }
 
-    public String getConnectorId()
-    {
-        return connectorId;
-    }
+  public String getConnectorId() {
+    return connectorId;
+  }
 
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("connectorId", connectorId)
-                .add("session", session)
-                .toString();
-    }
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("connectorId", connectorId)
+        .add("session", session)
+        .toString();
+  }
 }

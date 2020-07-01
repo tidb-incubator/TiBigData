@@ -13,47 +13,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
 
 import java.util.Objects;
 
-public class Wrapper<T>
-{
-    private final T internal;
+public class Wrapper<T> {
 
-    protected Wrapper(T internal)
-    {
-        this.internal = internal;
+  private final T internal;
+
+  protected Wrapper(T internal) {
+    this.internal = internal;
+  }
+
+  public T getInternal() {
+    return internal;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
     }
 
-    public T getInternal()
-    {
-        return internal;
-    }
+    Wrapper<T> other = (Wrapper<T>) obj;
+    return Objects.equals(this.internal, other.internal);
+  }
 
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || (getClass() != obj.getClass())) {
-            return false;
-        }
+  @Override
+  public int hashCode() {
+    return internal.hashCode();
+  }
 
-        Wrapper<T> other = (Wrapper<T>) obj;
-        return Objects.equals(this.internal, other.internal);
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return internal.hashCode();
-    }
-
-    @Override
-    public String toString()
-    {
-        return internal.toString();
-    }
+  @Override
+  public String toString() {
+    return internal.toString();
+  }
 }

@@ -13,60 +13,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.presto.tidb;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
 
-import static java.util.Objects.requireNonNull;
-import static com.google.common.base.MoreObjects.toStringHelper;
+public final class Base64KeyRange {
 
-public final class Base64KeyRange
-{
-    private String startKey;
-    private String endKey;
+  private String startKey;
+  private String endKey;
 
-    public Base64KeyRange(String startKey, String endKey)
-    {
-        this.startKey = requireNonNull(startKey, "startKey is null");
-        this.endKey = requireNonNull(endKey, "endKey is null");
+  public Base64KeyRange(String startKey, String endKey) {
+    this.startKey = requireNonNull(startKey, "startKey is null");
+    this.endKey = requireNonNull(endKey, "endKey is null");
+  }
+
+  public String getStartKey() {
+    return startKey;
+  }
+
+  public String getEndKey() {
+    return endKey;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(startKey, endKey);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+    if ((obj == null) || (getClass() != obj.getClass())) {
+      return false;
     }
 
-    public String getStartKey()
-    {
-        return startKey;
-    }
+    Base64KeyRange other = (Base64KeyRange) obj;
+    return Objects.equals(this.startKey, other.startKey) && Objects
+        .equals(this.endKey, other.endKey);
+  }
 
-    public String getEndKey()
-    {
-        return endKey;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return Objects.hash(startKey, endKey);
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) {
-            return true;
-        }
-        if ((obj == null) || (getClass() != obj.getClass())) {
-            return false;
-        }
-
-        Base64KeyRange other = (Base64KeyRange) obj;
-        return Objects.equals(this.startKey, other.startKey) && Objects.equals(this.endKey, other.endKey);
-    }
-
-    @Override
-    public String toString()
-    {
-        return toStringHelper(this)
-                .add("startKey", startKey)
-                .add("endKey", endKey)
-                .toString();
-    }
+  @Override
+  public String toString() {
+    return toStringHelper(this)
+        .add("startKey", startKey)
+        .add("endKey", endKey)
+        .toString();
+  }
 }

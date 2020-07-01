@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
+
+import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.ConnectorSplitSource;
@@ -24,34 +27,28 @@ import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.zhihu.presto.tidb.SplitInternal;
 import com.zhihu.presto.tidb.SplitManagerInternal;
 import com.zhihu.presto.tidb.Wrapper;
-
+import java.util.List;
 import javax.inject.Inject;
 
-import java.util.List;
+public final class TiDBSplitManager extends Wrapper<SplitManagerInternal> implements
+    ConnectorSplitManager {
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+  @Inject
+  public TiDBSplitManager(TiDBSession session) {
+    super(new SplitManagerInternal(session.getInternal()));
+  }
 
-public final class TiDBSplitManager
-        extends Wrapper<SplitManagerInternal>
-        implements ConnectorSplitManager
-{
-
-    @Inject
-    public TiDBSplitManager(TiDBSession session)
-    {
-        super(new SplitManagerInternal(session.getInternal()));
-    }
-
-    @Override
-    public ConnectorSplitSource getSplits(
-            ConnectorTransactionHandle handle,
-            ConnectorSession session,
-            ConnectorTableLayoutHandle layout,
-            SplitSchedulingContext splitSchedulingContext)
-    {
-        TiDBTableLayoutHandle layoutHandle = (TiDBTableLayoutHandle) layout;
-        TiDBTableHandle tableHandle = layoutHandle.getTable();
-        List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
-        return new FixedSplitSource(splits.stream().map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate())).collect(toImmutableList()));
-    }
+  @Override
+  public ConnectorSplitSource getSplits(
+      ConnectorTransactionHandle handle,
+      ConnectorSession session,
+      ConnectorTableLayoutHandle layout,
+      SplitSchedulingContext splitSchedulingContext) {
+    TiDBTableLayoutHandle layoutHandle = (TiDBTableLayoutHandle) layout;
+    TiDBTableHandle tableHandle = layoutHandle.getTable();
+    List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
+    return new FixedSplitSource(
+        splits.stream().map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate()))
+            .collect(toImmutableList()));
+  }
 }

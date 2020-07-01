@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql.tidb;
 
 import com.zhihu.presto.tidb.Wrapper;
 
-public final class TiDBConnectorId
-        extends Wrapper<String>
-{
-    public TiDBConnectorId(String connectorId)
-    {
-        super(connectorId);
-    }
+public final class TiDBConnectorId extends Wrapper<String> {
+
+  public TiDBConnectorId(String connectorId) {
+    super(connectorId);
+  }
 }

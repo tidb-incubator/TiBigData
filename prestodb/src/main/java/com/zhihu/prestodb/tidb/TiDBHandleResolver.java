@@ -13,41 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestodb.tidb;
 
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ColumnHandle;
+import com.facebook.presto.spi.ConnectorHandleResolver;
+import com.facebook.presto.spi.ConnectorSplit;
+import com.facebook.presto.spi.ConnectorTableHandle;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
-public final class TiDBHandleResolver
-        implements ConnectorHandleResolver
-{
-    @Override
-    public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass()
-    {
-        return TiDBTableLayoutHandle.class;
-    }
+public final class TiDBHandleResolver implements ConnectorHandleResolver {
 
-    @Override
-    public Class<? extends ConnectorTableHandle> getTableHandleClass()
-    {
-        return TiDBTableHandle.class;
-    }
+  @Override
+  public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass() {
+    return TiDBTableLayoutHandle.class;
+  }
 
-    @Override
-    public Class<? extends ColumnHandle> getColumnHandleClass()
-    {
-        return TiDBColumnHandle.class;
-    }
+  @Override
+  public Class<? extends ConnectorTableHandle> getTableHandleClass() {
+    return TiDBTableHandle.class;
+  }
 
-    @Override
-    public Class<? extends ConnectorSplit> getSplitClass()
-    {
-        return TiDBSplit.class;
-    }
+  @Override
+  public Class<? extends ColumnHandle> getColumnHandleClass() {
+    return TiDBColumnHandle.class;
+  }
 
-    @Override
-    public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass()
-    {
-        return TiDBTransactionHandle.class;
-    }
+  @Override
+  public Class<? extends ConnectorSplit> getSplitClass() {
+    return TiDBSplit.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass() {
+    return TiDBTransactionHandle.class;
+  }
 }

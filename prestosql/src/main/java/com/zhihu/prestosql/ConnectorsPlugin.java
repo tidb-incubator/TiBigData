@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.zhihu.prestosql;
 
-import com.zhihu.prestosql.tidb.TiDBConnectorFactory;
 import com.google.common.collect.ImmutableList;
+import com.zhihu.prestosql.tidb.TiDBConnectorFactory;
 import io.prestosql.spi.Plugin;
 import io.prestosql.spi.connector.ConnectorFactory;
 
 public class ConnectorsPlugin
-        implements Plugin
-{
-    @Override
-    public Iterable<ConnectorFactory> getConnectorFactories()
-    {
-        return ImmutableList.of(new TiDBConnectorFactory());
-    }
+    implements Plugin {
+
+  @Override
+  public Iterable<ConnectorFactory> getConnectorFactories() {
+    return ImmutableList.of(new TiDBConnectorFactory());
+  }
 }
