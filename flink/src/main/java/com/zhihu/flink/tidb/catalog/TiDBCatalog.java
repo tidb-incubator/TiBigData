@@ -57,11 +57,19 @@ public class TiDBCatalog extends AbstractCatalog {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBCatalog.class);
 
-  private static final String DEFAULT_DATABASE = "default";
+  public static final String DEFAULT_DATABASE = "default";
+
+  public static final String DEFAULT_NAME = "tidb";
 
   private final String pdAddresses;
 
   private Optional<ClientSession> clientSession = Optional.empty();
+
+  private boolean isOpened;
+
+  public TiDBCatalog(String pdAddresses) {
+    this(DEFAULT_NAME, DEFAULT_DATABASE, pdAddresses);
+  }
 
   public TiDBCatalog(String name, String pdAddresses) {
     this(name, DEFAULT_DATABASE, pdAddresses);
@@ -74,18 +82,24 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public void open() throws CatalogException {
-    clientSession = Optional.of(new ClientSession(new ClientConfig(pdAddresses)));
+    if (!isOpened) {
+      clientSession = Optional.of(new ClientSession(new ClientConfig(pdAddresses)));
+    }
+    isOpened = true;
   }
 
   @Override
   public void close() throws CatalogException {
-    clientSession.ifPresent(clientSession -> {
-      try {
-        clientSession.close();
-      } catch (Exception e) {
-        LOG.warn("can not close clientSession", e);
-      }
-    });
+    if (isOpened) {
+      clientSession.ifPresent(clientSession -> {
+        try {
+          clientSession.close();
+        } catch (Exception e) {
+          LOG.warn("can not close clientSession", e);
+        }
+      });
+      isOpened = false;
+    }
   }
 
   @Override
