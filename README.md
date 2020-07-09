@@ -1,52 +1,158 @@
 # TiBigData
+
 [License](https://github.com/pingcap-incubator/TiBigData/blob/master/LICENSE)
 
 Misc BigData components for TiDB, Presto & Flink connectors for example.
 
 ## License
+
 TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
 
-## Flink-TiDB-Connector
+## Getting Started
 
-### Usage 
+### Build
 
-#### Use TiDBCatalog
+```bash
+git clone git@github.com:pingcap-incubator/TiBigData.git
+cd TiBigData
+mvn clean package
+```
+
+### Presto-TiDB-Connector
+
+#### Install TiDB Plugin
+
+##### prestodb
+
+```bash
+tar -zxf prestodb/target/prestodb-connector-0.0.1-SNAPSHOT-plugin.tar.gz -C prestodb/target
+cp -r prestodb/target/prestodb-connector-0.0.1-SNAPSHOT/tidb ${PRESTO_HOME}/plugin
+```
+
+##### prostosql
+
+```bash
+tar -zxf prestosql/target/prestosql-connector-0.0.1-SNAPSHOT-plugin.tar.gz -C prestosql/target
+cp -r prestosql/target/prestosql-connector-0.0.1-SNAPSHOT/tidb ${PRESTO_HOME}/plugin
+```
+
+#### Configuration
+
+```bash
+vim ${PRESTO_HOME}/etc/catalog/tidb.properties
+```
+
+The file `tidb.properties` like :
+
+```properties
+# connector name
+connector.name=tidb
+# your tidb pd addresses
+presto.tidb.pd.addresses=host1:port1,host2:port2,host3:port3
+```
+
+then restart your presto cluster and use presto-cli to connect presto coordinator:
+
+```bash
+presto-cli --server ${COORDINATOR_HOST}:${PORT} --catalog tidb --schema ${TIDB_DATABASE} --user ${USERNAME}
+SHOW TABLES;
+SELECT * FROM ${TABLE_NAME} LIMIT 100;
+```
+
+### Flink-TiDB-Connector
+
+```bash
+cp flink/target/flink-tidb-connector-0.0.1-SNAPSHOT.jar ${FLINK_HOME}/lib
+bin/flink run -c com.zhihu.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --pd.addresses host1:port1,host2:port2,host3:port3 --database.name ${TIDB_DATABASE} --table.name ${TABLE_NAME}
+```
+
+The output can be found in taskexecutor logs, check your flink log directory for log files with this pattern:
+```flink-${username}-taskexecutor-1-${host}.out```.
+
+#### TiDBCatalog
+
+The above example is implemented by TiDBCatalog.
+
 ```java
-public class TestTiDBCatalog{
+public class TiDBCatalogDemo {
+  
   public static void main(String[] args) throws Exception {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
+    ParameterTool parameterTool = ParameterTool.fromArgs(args);
+    final String pdAddresses = parameterTool.getRequired("pd.addresses");
+    final String tableName = parameterTool.getRequired("table.name");
+    final String databaseName = parameterTool.getRequired("database.name");
+    // env
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     // register TiDBCatalog
-    String pdAddresses="host1:port1,host2:port2,host3:port3";
-    TiDBCatalog catalog = new TiDBCatalog("tidb", pdAddresses);
+    TiDBCatalog catalog = new TiDBCatalog(pdAddresses);
     catalog.open();
-    tEnv.registerCatalog("tidb", catalog);
+    tableEnvironment.registerCatalog("tidb", catalog);
+    tableEnvironment.useCatalog("tidb");
     // query and print
-    tEnv.useCatalog("tidb");
-    tEnv.useDatabase("default");
-    Table table = tEnv.sqlQuery("SELECT * FROM `tidb`.`default`.`tableName`");
+    String sql = String.format("SELECT * FROM `%s`.`%s`", databaseName, tableName);
+    Table table = tableEnvironment.sqlQuery(sql);
     table.printSchema();
-    tEnv.toAppendStream(table, Row.class).print();
+    tableEnvironment.toAppendStream(table, Row.class).print();
     // execute
-    tEnv.execute("Test TiDB Catalog");
+    tableEnvironment.execute("Test TiDB Catalog");
   }
 }
 ```
 
-#### Use TiDBTableSource
+The DataType Mapping of TiDBCatalog  is:
+
+| TiDB DataType |    Flink DataType     |
+| :-----------: | :-------------------: |
+|   SMALLINT    |  DataTypes.BIGINT()   |
+|   MEDIUMINT   |  DataTypes.BIGINT()   |
+|      INT      |  DataTypes.BIGINT()   |
+|    BIGINT     |  DataTypes.BIGINT()   |
+|    TINYINT    |  DataTypes.BIGINT()   |
+|    VARCHAR    |  DataTypes.STRING()   |
+|     TEXT      |  DataTypes.STRING()   |
+|     DATE      |   DataTypes.DATE()    |
+|     FLOAT     |   DataTypes.FLOAT()   |
+|    DOUBLE     |  DataTypes.DOUBLE()   |
+|    DECIMAL    |  DataTypes.DECIMAL()  |
+|   DATETIME    | DataTypes.TIMESTAMP() |
+|   TIMESTAMP   | DataTypes.TIMESTAMP() |
+|     TIME      |   DataTypes.TIME()    |
+|     YEAR      |  DataTypes.BIGINT()   |
+|     CHAR      |  DataTypes.STRING()   |
+|   TINYBLOB    |   DataTypes.BYTES()   |
+|   TINYTEXT    |  DataTypes.STRING()   |
+|     BLOB      |   DataTypes.BYTES()   |
+|  MEDIUMBLOB   |   DataTypes.BYTES()   |
+|  MEDIUMTEXT   |  DataTypes.STRING()   |
+|   LONGBLOB    |   DataTypes.BYTES()   |
+|   LONGTEXT    |  DataTypes.STRING()   |
+|     ENUM      |  DataTypes.STRING()   |
+|     BOOL      |  DataTypes.BOOLEAN()  |
+|    BINARY     |   DataTypes.BYTES()   |
+|   VARBINARY   |   DataTypes.BYTES()   |
+|     JSON      |  DataTypes.STRING()   |
+
+ #### TiDBTableSource
+
+If you want to specify the type by yourself, please use TiDBTableSource. It supports most type conversions, such as INT to BIGINT, STRING to LONG, LONG to BYTES.
+
 ```java
 public class TestTiDBTableSource {
+
   public static void main(String[] args) throws Exception {
-    String pdAddresses = "your pdAddresses";
-    String databaseName = "flink";
-    String tableName = "people";
-    String[] fieldNames = {"id", "name", "sex"};
-    DataType[] fieldTypes = {DataTypes.BIGINT(), DataTypes.STRING(), DataTypes.STRING()};
+    final String pdAddresses = "your pdAddresses";
+    final String databaseName = "flink";
+    final String tableName = "people";
+    final String[] fieldNames = {"id", "name", "sex"};
+    final DataType[] fieldTypes = {DataTypes.BIGINT(), DataTypes.STRING(), DataTypes.STRING()};
     // get env
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     // build TableSchema
     TableSchema tableSchema = TableSchema.builder().fields(fieldNames, fieldTypes).build();
     // build TiDBTableSource
@@ -57,48 +163,23 @@ public class TestTiDBTableSource {
         .setTableSchema(tableSchema)
         .build();
     // register TiDB table
-    Table table = tEnv.fromTableSource(tableSource);
-    tEnv.createTemporaryView("tidb", table);
+    Table table = tableEnvironment.fromTableSource(tableSource);
+    tableEnvironment.createTemporaryView("tidb", table);
     // query and print
-    Table resTable = tEnv.sqlQuery("SELECT * FROM tidb");
+    Table resTable = tableEnvironment.sqlQuery("SELECT * FROM tidb");
     resTable.printSchema();
-    DataStream<Row> rowDataStream = tEnv.toAppendStream(resTable, Row.class);
+    DataStream<Row> rowDataStream = tableEnvironment.toAppendStream(resTable, Row.class);
     rowDataStream.print();
     // execute
-    tEnv.execute("Test TiDB TableSource");
+    tableEnvironment.execute("Test TiDB TableSource");
   }
 }
 ```
 
-#### DataTypes
-|      TiDB DataType      |  Flink Optianl DataType(TiDBTableSource)|   Flink Default DataType(TiDBCatalog)   |
-| :---------------------: | :-------------------------------------: | :-------------------------------------: |
-|        SMALLINT         |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|        MEDIUMINT        |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|           INT           |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|         BIGINT          |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|         TINYINT         |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|         VARCHAR         |           DataTypes.VARCHAR()           |           DataTypes.VARCHAR()           |
-|          TEXT           |           DataTypes.STRING()            |           DataTypes.STRING()            |
-|          DATE           |            DataTypes.DATE()             |            DataTypes.DATE()             |
-|          FLOAT          |            DataTypes.FLOAT()            |            DataTypes.FLOAT()            |
-|         DOUBLE          |           DataTypes.DOUBLE()            |           DataTypes.DOUBLE()            |
-|         DECIMAL         |           DataTypes.DECIMAL()           |           DataTypes.DECIMAL()           |
-|        DATETIME         |          DataTypes.TIMESTAMP()          |          DataTypes.TIMESTAMP()          |
-|        TIMESTAMP        |          DataTypes.TIMESTAMP()          |          DataTypes.TIMESTAMP()          |
-|          TIME           |            DataTypes.TIME()             |            DataTypes.TIME()             |
-|          YEAR           |           DataTypes.BIGINT()            |           DataTypes.BIGINT()            |
-|          CHAR           |            DataTypes.CHAR()             |            DataTypes.CHAR()             |
-|        TINYBLOB         | DataTypes.STRING() or DataTypes.BYTES() |            DataTypes.STRING()			  |
-|        TINYTEXT         |           DataTypes.STRING()            |           DataTypes.STRING()            |
-|          BLOB           | DataTypes.STRING() or DataTypes.BYTES() | 			DataTypes.STRING() 			  |
-|       MEDIUMBLOB        | DataTypes.STRING() or DataTypes.BYTES() | 			DataTypes.STRING() 		  	  |
-|       MEDIUMTEXT        | DataTypes.STRING() or DataTypes.BYTES() | 			DataTypes.STRING() 			  |
-|        LONGBLOB         | DataTypes.STRING() or DataTypes.BYTES() | 			DataTypes.STRING()		 	  |
-|        LONGTEXT         |           DataTypes.STRING()            |           DataTypes.STRING()            |
-| ENUM(data1,data2,data3) |           DataTypes.STRING()            |           DataTypes.STRING()            |
-|          BOOL           |           DataTypes.BOOLEAN()           |           DataTypes.BOOLEAN()           |
-|         BINARY          |           DataTypes.BINARY()            |           DataTypes.BINARY()            |
-|        VARBINARY        |          DataTypes.VARBINARY()          |          DataTypes.VARBINARY()          |
-|          JSON           |           DataTypes.STRING()            |           DataTypes.STRING()            |
 
+
+## TODO
+
+1. Upgrade flink version to 1.11;
+2. Support write data in Presto-TiDB-Connector;
+3. TiDBTableSink.
