@@ -60,14 +60,14 @@ public class DataTypeMappingUtil {
     if (object == null) {
       return Optional.empty();
     }
-    switch (dataType.toString()) {
-      case "DATE":
+    switch (dataType.getConversionClass().getSimpleName()) {
+      case "LocalDate":
         object = ((Date) object).toLocalDate();
         break;
-      case "TIMESTAMP(6)":
+      case "LocalDateTime":
         object = ((Timestamp) object).toLocalDateTime();
         break;
-      case "TIME(0)":
+      case "LocalTime":
         object = LocalTime.ofNanoOfDay(((long) object));
         break;
       default:
