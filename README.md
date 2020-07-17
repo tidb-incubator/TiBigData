@@ -210,5 +210,5 @@ public class TestTiDBTableSource {
 
 ## TODO
 
-1. Support write data in Presto-TiDB-Connector;
+1. Support writing data in Presto-TiDB-Connector;
 2. TiDBTableSink.
