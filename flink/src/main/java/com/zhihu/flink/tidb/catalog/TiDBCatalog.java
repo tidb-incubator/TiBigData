@@ -83,7 +83,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   @Override
-  public void open() throws CatalogException {
+  public synchronized void open() throws CatalogException {
     // catalog isOpened?
     if (!clientSession.isPresent()) {
       try {
@@ -104,7 +104,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   @Override
-  public void close() throws CatalogException {
+  public synchronized void close() throws CatalogException {
     clientSession.ifPresent(session -> {
       try {
         session.close();
