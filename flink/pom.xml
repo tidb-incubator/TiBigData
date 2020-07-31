@@ -18,7 +18,7 @@
         <dep.scala.binary.version>2.11</dep.scala.binary.version>
         <dep.jackson.version>2.11.0</dep.jackson.version>
         <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
-        <dep.mysql.jdbc.version>5.1.47</dep.mysql.jdbc.version>
+        <dep.mysql.jdbc.version>8.0.16</dep.mysql.jdbc.version>
     </properties>
 
 
