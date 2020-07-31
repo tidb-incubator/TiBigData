@@ -66,8 +66,21 @@ cp flink/target/flink-tidb-connector-0.0.1-SNAPSHOT.jar ${FLINK_HOME}/lib
 bin/flink run -c com.zhihu.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --pd.addresses host1:port1,host2:port2,host3:port3 --database.name ${TIDB_DATABASE} --table.name ${TABLE_NAME}
 ```
 
-The output can be found in taskexecutor logs, check your flink log directory for log files with this pattern:
-```flink-${username}-taskexecutor-1-${host}.out```.
+The output can be found in console:
+
+```bash
+Job has been submitted with JobID 3a64ea7affe969eef77790048923b5b6
++----------------------+--------------------------------+--------------------------------+
+|                   id |                           name |                            sex |
++----------------------+--------------------------------+--------------------------------+
+|                    1 |                           java |                              1 |
+|                    2 |                          scala |                              2 |
+|                    3 |                         python |                              1 |
++----------------------+--------------------------------+--------------------------------+
+3 rows in set
+```
+
+
 
 #### TiDBCatalog
 
@@ -87,17 +100,15 @@ public class TiDBCatalogDemo {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     // register TiDBCatalog
-    TiDBCatalog catalog = new TiDBCatalog(pdAddresses);
+    Properties properties = new Properties();
+    properties.setProperty("pd.addresses", pdAddresses);
+    TiDBCatalog catalog = new TiDBCatalog(properties);
     catalog.open();
     tableEnvironment.registerCatalog("tidb", catalog);
     tableEnvironment.useCatalog("tidb");
     // query and print
-    String sql = String.format("SELECT * FROM `%s`.`%s`", databaseName, tableName);
-    Table table = tableEnvironment.sqlQuery(sql);
-    table.printSchema();
-    tableEnvironment.toAppendStream(table, Row.class).print();
-    // execute
-    tableEnvironment.execute("Test TiDB Catalog");
+    String sql = String.format("SELECT * FROM `%s`.`%s` LIMIT 100", databaseName, tableName);
+    tableEnvironment.executeSql(sql).print();
   }
 }
 ```
@@ -135,6 +146,31 @@ The DataType Mapping of TiDBCatalog  is:
 |   VARBINARY   |   DataTypes.BYTES()   |
 |     JSON      |  DataTypes.STRING()   |
 
+If you set properties of TiDB server, you could submit DDL  by TiDBCatalog, such as create table, drop table: 
+
+```java
+public class TestCreateTable {
+
+  public static void main(String[] args) throws Exception {
+    Properties properties = new Properties();
+    properties.setProperty("pd.addresses", "host1:port1,host2:port2,host3:port3");
+    // optional properties
+    properties.setProperty("database.url", "jdbc:mysql://host:port/database");
+    properties.setProperty("username", "root");
+    properties.setProperty("password", "123456");
+    TiDBCatalog catalog = new TiDBCatalog(properties);
+    catalog.open();
+    String sql = "CREATE TABLE IF NOT EXISTS people(id INT, name VARCHAR(255), sex ENUM('1','2'))";
+    catalog.sqlUpdate(sql);
+    catalog.close();
+  }
+}
+```
+
+it is implemented by `mysql-connector-java`.
+
+
+
  #### TiDBTableSource
 
 If you want to specify the type by yourself, please use TiDBTableSource. It supports most type conversions, such as INT to BIGINT, STRING to LONG, LONG to BYTES.
@@ -163,15 +199,9 @@ public class TestTiDBTableSource {
         .setTableSchema(tableSchema)
         .build();
     // register TiDB table
-    Table table = tableEnvironment.fromTableSource(tableSource);
-    tableEnvironment.createTemporaryView("tidb", table);
+    tableEnvironment.registerTableSource("tidb", tableSource);
     // query and print
-    Table resTable = tableEnvironment.sqlQuery("SELECT * FROM tidb");
-    resTable.printSchema();
-    DataStream<Row> rowDataStream = tableEnvironment.toAppendStream(resTable, Row.class);
-    rowDataStream.print();
-    // execute
-    tableEnvironment.execute("Test TiDB TableSource");
+    tableEnvironment.executeSql("SELECT * FROM tidb LIMIT 100").print();
   }
 }
 ```
@@ -180,6 +210,5 @@ public class TestTiDBTableSource {
 
 ## TODO
 
-1. Upgrade flink version to 1.11;
-2. Support write data in Presto-TiDB-Connector;
-3. TiDBTableSink.
+1. Support writing data in Presto-TiDB-Connector;
+2. TiDBTableSink.

@@ -14,28 +14,49 @@
     <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <properties>
-        <dep.flink.version>1.10.0</dep.flink.version>
+        <dep.flink.version>1.11.0</dep.flink.version>
         <dep.scala.binary.version>2.11</dep.scala.binary.version>
         <dep.jackson.version>2.11.0</dep.jackson.version>
         <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
+        <dep.mysql.jdbc.version>5.1.47</dep.mysql.jdbc.version>
     </properties>
 
 
     <dependencies>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${dep.jackson.version}</version>
-        </dependency>
+        <!-- TiDB commons -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>tibigdata-core</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${dep.jackson.version}</version>
+        </dependency>
+        <!-- apache commons -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>${dep.apache.commons.version}</version>
+        </dependency>
+        <!-- jdbc mysql -->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${dep.mysql.jdbc.version}</version>
+        </dependency>
         <!-- flink -->
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-java</artifactId>
+            <version>${dep.flink.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-clients_${dep.scala.binary.version}</artifactId>
             <version>${dep.flink.version}</version>
             <scope>provided</scope>
         </dependency>
@@ -62,12 +83,6 @@
             <artifactId>flink-table-planner_${dep.scala.binary.version}</artifactId>
             <version>${dep.flink.version}</version>
             <scope>provided</scope>
-        </dependency>
-        <!-- apache commons -->
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>${dep.apache.commons.version}</version>
         </dependency>
     </dependencies>
 
