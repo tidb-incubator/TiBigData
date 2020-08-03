@@ -16,9 +16,24 @@
 
 package com.zhihu.prestodb.tidb;
 
+import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
+import static com.facebook.presto.spi.type.BigintType.BIGINT;
+import static com.facebook.presto.spi.type.BooleanType.BOOLEAN;
+import static com.facebook.presto.spi.type.DateType.DATE;
 import static com.facebook.presto.spi.type.Decimals.decodeUnscaledValue;
 import static com.facebook.presto.spi.type.Decimals.encodeScaledValue;
 import static com.facebook.presto.spi.type.Decimals.encodeShortScaledValue;
+import static com.facebook.presto.spi.type.DoubleType.DOUBLE;
+import static com.facebook.presto.spi.type.IntegerType.INTEGER;
+import static com.facebook.presto.spi.type.RealType.REAL;
+import static com.facebook.presto.spi.type.SmallintType.SMALLINT;
+import static com.facebook.presto.spi.type.TimeType.TIME;
+import static com.facebook.presto.spi.type.TimeWithTimeZoneType.TIME_WITH_TIME_ZONE;
+import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
+import static com.facebook.presto.spi.type.TimestampWithTimeZoneType.TIMESTAMP_WITH_TIME_ZONE;
+import static com.facebook.presto.spi.type.TinyintType.TINYINT;
+import static com.facebook.presto.spi.type.VarbinaryType.VARBINARY;
+import static com.facebook.presto.spi.type.Varchars.isVarcharType;
 import static com.zhihu.prestodb.tidb.TypeHelper.doubleHelper;
 import static com.zhihu.prestodb.tidb.TypeHelper.longHelper;
 import static com.zhihu.prestodb.tidb.TypeHelper.sliceHelper;
@@ -27,13 +42,18 @@ import static io.airlift.slice.Slices.wrappedBuffer;
 import static java.lang.Float.floatToRawIntBits;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.max;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.joda.time.DateTimeZone.UTC;
 
+import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.type.CharType;
+import com.facebook.presto.spi.type.DecimalType;
 import com.facebook.presto.spi.type.Decimals;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.VarcharType;
+import com.google.common.collect.ImmutableMap;
 import com.pingcap.tikv.types.BytesType;
 import com.pingcap.tikv.types.DataType;
 import com.pingcap.tikv.types.EnumType;
@@ -45,6 +65,7 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joda.time.DateTimeZone;
@@ -53,6 +74,22 @@ import org.joda.time.chrono.ISOChronology;
 public final class TypeHelpers {
 
   private static final ISOChronology UTC_CHRONOLOGY = ISOChronology.getInstanceUTC();
+
+  private static final Map<Type, String> SQL_TYPES = ImmutableMap.<Type, String>builder()
+      .put(BOOLEAN, "boolean")
+      .put(BIGINT, "bigint")
+      .put(INTEGER, "integer")
+      .put(SMALLINT, "smallint")
+      .put(TINYINT, "tinyint")
+      .put(DOUBLE, "double precision")
+      .put(REAL, "real")
+      .put(VARBINARY, "varbinary")
+      .put(DATE, "date")
+      .put(TIME, "time")
+      .put(TIME_WITH_TIME_ZONE, "time with timezone")
+      .put(TIMESTAMP, "timestamp")
+      .put(TIMESTAMP_WITH_TIME_ZONE, "timestamp with timezone")
+      .build();
 
   private static final ConcurrentHashMap<DataType, Optional<TypeHelper>> TYPE_HELPERS
       = new ConcurrentHashMap<>();
@@ -191,6 +228,54 @@ public final class TypeHelpers {
 
   public static Optional<Type> getPrestoType(DataType type) {
     return getHelper(type).map(TypeHelper::getPrestoType);
+  }
+
+  // copy from com.facebook.presto.plugin.mysql.MySqlClient#toSqlType
+  public static String toSqlString(Type type) {
+    if (REAL.equals(type)) {
+      return "float";
+    }
+    if (TIME_WITH_TIME_ZONE.equals(type) || TIMESTAMP_WITH_TIME_ZONE.equals(type)) {
+      throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
+    }
+    if (TIMESTAMP.equals(type)) {
+      return "datetime";
+    }
+    if (VARBINARY.equals(type)) {
+      return "mediumblob";
+    }
+    if (isVarcharType(type)) {
+      VarcharType varcharType = (VarcharType) type;
+      if (varcharType.isUnbounded()) {
+        return "longtext";
+      }
+      int length = varcharType.getLengthSafe();
+      if (length <= 255) {
+        return "tinytext";
+      }
+      if (length <= 65535) {
+        return "text";
+      }
+      if (length <= 16777215) {
+        return "mediumtext";
+      }
+      return "longtext";
+    }
+    if (type instanceof CharType) {
+      if (((CharType) type).getLength() == CharType.MAX_LENGTH) {
+        return "char";
+      }
+      return "char(" + ((CharType) type).getLength() + ")";
+    }
+    if (type instanceof DecimalType) {
+      return format("decimal(%s, %s)", ((DecimalType) type).getPrecision(),
+          ((DecimalType) type).getScale());
+    }
+    String sqlType = SQL_TYPES.get(type);
+    if (sqlType != null) {
+      return sqlType;
+    }
+    return type.getDisplayName();
   }
 }
 

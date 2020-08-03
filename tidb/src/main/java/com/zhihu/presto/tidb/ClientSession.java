@@ -20,6 +20,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
+import static com.zhihu.presto.tidb.ClientConfig.JDBC_DRIVER_NAME;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -36,6 +37,12 @@ import com.pingcap.tikv.operation.iterator.CoprocessIterator;
 import com.pingcap.tikv.row.Row;
 import com.pingcap.tikv.util.KeyRangeUtils;
 import com.pingcap.tikv.util.RangeSplitter;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -43,20 +50,37 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tikv.kvproto.Coprocessor;
 import shade.com.google.protobuf.ByteString;
 
 public final class ClientSession implements AutoCloseable {
 
-  private ClientConfig config;
+  static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
+
+  private final ClientConfig config;
 
   private final TiSession session;
-  private Catalog catalog;
+
+  private final Catalog catalog;
+
+  private final HikariDataSource dataSource;
 
   @Inject
   public ClientSession(ClientConfig config) {
     this.config = requireNonNull(config, "config is null");
-
+    dataSource = new HikariDataSource(new HikariConfig() {
+      {
+        setDriverClassName(JDBC_DRIVER_NAME);
+        setJdbcUrl(config.getDatabaseUrl());
+        setUsername(requireNonNull(config.getUsername(), "username can not be null"));
+        setPassword(config.getPassword());
+        setMaximumPoolSize(config.getMaximumPoolSize());
+        setMinimumIdle(config.getMinimumIdleSize());
+      }
+    });
+    this.config.setPdAddresses(getPdAddresses());
     session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()));
     catalog = session.getCatalog();
   }
@@ -178,6 +202,127 @@ public final class ClientSession implements AutoCloseable {
             session);
   }
 
+  public String getPdAddresses() {
+    if (config.getPdAddresses() == null) {
+      String sql = "SELECT `INSTANCE` FROM `INFORMATION_SCHEMA`.`CLUSTER_INFO` WHERE `TYPE` = 'pd'";
+      List<String> pdAddressesList = new ArrayList<>();
+      try (Connection connection = dataSource.getConnection()) {
+        try (Statement statement = connection.createStatement()) {
+          try (ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+              pdAddressesList.add(resultSet.getString("INSTANCE"));
+            }
+          }
+        }
+      } catch (Exception e) {
+        throw new IllegalStateException("can not get pdAddresses", e);
+      }
+      return String.join(",", pdAddressesList);
+    } else {
+      return config.getPdAddresses();
+    }
+  }
+
+  public void sqlUpdate(String... sqls) {
+    try (final Connection connection = dataSource.getConnection()) {
+      try (final Statement statement = connection.createStatement()) {
+        for (String sql : sqls) {
+          LOG.info("sql update: " + sql);
+          statement.executeUpdate(sql);
+        }
+      }
+    } catch (Exception e) {
+      LOG.error("execute sql fail", e);
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public static String getCreateTableSql(String databaseName, String tableName,
+      List<String> columnNames, List<String> columnTypes, boolean ignoreIfExists) {
+    StringBuilder stringBuilder = new StringBuilder(
+        String.format("CREATE TABLE %s `%s`.`%s`(\n", ignoreIfExists ? "IF NOT EXISTS" : "",
+            databaseName, tableName));
+    for (int i = 0; i < columnNames.size(); i++) {
+      stringBuilder
+          .append("`")
+          .append(columnNames.get(i))
+          .append("`")
+          .append(" ")
+          .append(columnTypes.get(i));
+      if (i < columnNames.size() - 1) {
+        stringBuilder.append(",");
+      }
+      stringBuilder.append("\n");
+    }
+    stringBuilder.append(")");
+    return stringBuilder.toString();
+  }
+
+  public void createTable(String databaseName, String tableName, List<String> columnNames,
+      List<String> columnTypes, boolean ignoreIfExists) {
+    sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
+        requireNonNull(columnNames), requireNonNull(columnTypes), ignoreIfExists));
+  }
+
+  public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
+    sqlUpdate(String.format("DROP TABLE %s `%s`.`%s`", ignoreIfNotExists ? "IF EXISTS" : "",
+        requireNonNull(databaseName), requireNonNull(tableName)));
+  }
+
+  public void createDatabase(String databaseName, boolean ignoreIfExists) {
+    sqlUpdate(String.format("CREATE DATABASE %s `%s`", ignoreIfExists ? "IF NOT EXISTS" : "",
+        requireNonNull(databaseName)));
+  }
+
+  public void dropDatabase(String databaseName, boolean ignoreIfNotExists) {
+    sqlUpdate(String.format("DROP DATABASE %s `%s`", ignoreIfNotExists ? "IF EXISTS" : "",
+        requireNonNull(databaseName)));
+  }
+
+  public boolean databaseExists(String databaseName) {
+    return getSchemaNames().contains(requireNonNull(databaseName));
+  }
+
+  public boolean tableExists(String databaseName, String tableName) {
+    return databaseExists(requireNonNull(databaseName))
+        && getTableNames(databaseName).contains(requireNonNull(tableName));
+  }
+
+  public void renameTable(String oldDatabaseName, String newDatabaseName, String oldTableName,
+      String newTableName) {
+    sqlUpdate(String.format("RENAME TABLE `%s`.`%s` TO `%s`.`%s` ",
+        requireNonNull(oldDatabaseName),
+        requireNonNull(oldDatabaseName),
+        requireNonNull(newDatabaseName),
+        requireNonNull(newTableName)));
+  }
+
+  public void addColumn(String databaseName, String tableName, String columnName,
+      String columnType) {
+    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` ADD COLUMN `%s` %s",
+        requireNonNull(databaseName),
+        requireNonNull(tableName),
+        requireNonNull(columnName),
+        requireNonNull(columnType)));
+  }
+
+  public void renameColumn(String databaseName, String tableName, String oldName, String newName,
+      String newType) {
+    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` CHANGE `%s` `%s` %s",
+        requireNonNull(databaseName),
+        requireNonNull(tableName),
+        requireNonNull(oldName),
+        requireNonNull(newName),
+        requireNonNull(newType)));
+  }
+
+  public void dropColumn(String databaseName, String tableName, String columnName) {
+    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` DROP COLUMN `%s`",
+        requireNonNull(databaseName),
+        requireNonNull(tableName),
+        requireNonNull(columnName)));
+  }
+
   @Override
   public String toString() {
     return toStringHelper(this)
@@ -186,7 +331,8 @@ public final class ClientSession implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public synchronized void close() throws Exception {
     session.close();
+    dataSource.close();
   }
 }

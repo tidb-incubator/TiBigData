@@ -55,6 +55,50 @@ public final class MetadataInternal {
     return session.getTableColumns(schemaName, tableName);
   }
 
+  public boolean tableExists(String databaseName, String tableName) {
+    return session.tableExists(databaseName, tableName);
+  }
+
+  public void createTable(String databaseName, String tableName, List<String> columnNames,
+      List<String> columnTypes, boolean ignoreExisting) {
+    session.createTable(databaseName, tableName, columnNames, columnTypes, ignoreExisting);
+  }
+
+  public void dropTable(String schemaName, String tableName, boolean ignoreIfNotExists) {
+    session.dropTable(schemaName, tableName, ignoreIfNotExists);
+  }
+
+  public boolean databaseExists(String databaseName) {
+    return session.databaseExists(databaseName);
+  }
+
+  public void createDatabase(String databaseName, boolean ignoreIfExists) {
+    session.createDatabase(databaseName, ignoreIfExists);
+  }
+
+  public void dropDatabase(String schemaName, boolean ignoreIfNotExists) {
+    session.dropDatabase(schemaName, ignoreIfNotExists);
+  }
+
+  public void renameTable(String oldDatabaseName, String newDatabaseName, String oldTableName,
+      String newTableName) {
+    session.renameTable(oldDatabaseName, newDatabaseName, oldTableName, newTableName);
+  }
+
+  public void addColumn(String databaseName, String tableName, String columnName,
+      String columnType) {
+    session.addColumn(databaseName, tableName, columnName, columnType);
+  }
+
+  public void renameColumn(String databaseName, String tableName, String oldName, String newName,
+      String newType) {
+    session.renameColumn(databaseName, tableName, oldName, newName, newType);
+  }
+
+  public void dropColumn(String databaseName, String tableName, String columnName) {
+    session.dropColumn(databaseName, tableName, columnName);
+  }
+
   public String getConnectorId() {
     return connectorId;
   }

@@ -26,13 +26,53 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
     super(new ClientConfig());
   }
 
-  public String getPdAddresses() {
-    return getInternal().getPdAddresses();
+  public String getDatabaseUrl() {
+    return getInternal().getDatabaseUrl();
   }
 
-  @Config("presto.tidb.pd.addresses")
-  public TiDBConfig setPdAddresses(String addresses) {
-    getInternal().setPdAddresses(addresses);
+  @Config(ClientConfig.DATABASE_URL)
+  public TiDBConfig setDatabaseUrl(String databasesUrl) {
+    getInternal().setDatabaseUrl(databasesUrl);
+    return this;
+  }
+
+  public String getUsername() {
+    return getInternal().getUsername();
+  }
+
+  @Config(ClientConfig.USERNAME)
+  public TiDBConfig setUsername(String username) {
+    getInternal().setUsername(username);
+    return this;
+  }
+
+  public String getPassword() {
+    return getInternal().getPassword();
+  }
+
+  @Config(ClientConfig.PASSWORD)
+  public TiDBConfig setPassword(String password) {
+    getInternal().setPassword(password);
+    return this;
+  }
+
+  public int getMaximumPoolSize() {
+    return getInternal().getMaximumPoolSize();
+  }
+
+  @Config(ClientConfig.MAX_POOL_SIZE)
+  public TiDBConfig setMaximumPoolSize(int maximumPoolSize) {
+    getInternal().setMaximumPoolSize(maximumPoolSize);
+    return this;
+  }
+
+  public int getMinimumIdle() {
+    return getInternal().getMinimumIdleSize();
+  }
+
+  @Config(ClientConfig.MIN_IDLE_SIZE)
+  public TiDBConfig setMinimumIdle(int minimumIdle) {
+    getInternal().setMinimumIdleSize(minimumIdle);
     return this;
   }
 }

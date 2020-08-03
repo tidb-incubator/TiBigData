@@ -10,18 +10,17 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 public class TiDBCatalogDemo {
 
   public static void main(String[] args) {
+    // properties
     ParameterTool parameterTool = ParameterTool.fromArgs(args);
-    final String pdAddresses = parameterTool.getRequired("pd.addresses");
-    final String tableName = parameterTool.getRequired("table.name");
-    final String databaseName = parameterTool.getRequired("database.name");
+    final Properties properties = parameterTool.getProperties();
+    final String databaseName = parameterTool.getRequired("tidb.database.name");
+    final String tableName = parameterTool.getRequired("tidb.table.name");
     // env
     EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
         .inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     // register TiDBCatalog
-    Properties properties = new Properties();
-    properties.setProperty("pd.addresses", pdAddresses);
     TiDBCatalog catalog = new TiDBCatalog(properties);
     catalog.open();
     tableEnvironment.registerCatalog("tidb", catalog);

@@ -29,6 +29,7 @@ import com.zhihu.presto.tidb.TableHandleInternal;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.common.io.DefaultInputSplitAssigner;
 import org.apache.flink.api.common.io.RichInputFormat;
@@ -43,6 +44,7 @@ import org.apache.flink.core.io.InputSplitAssigner;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,11 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBInputFormat.class);
 
-  private final String pdAddresses;
+  public static String DATABASE_NAME = "tidb.database.name";
+
+  public static String TABLE_NAME = "tidb.table.name";
+
+  private final Properties properties;
 
   private final String databaseName;
 
@@ -69,34 +75,23 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
 
   private transient ClientSession clientSession;
 
-
-  /**
-   * see {@link TiDBInputFormat#builder()}
-   */
-  private TiDBInputFormat(String pdAddresses, String databaseName, String tableName,
-      String[] fieldNames, DataType[] fieldTypes) {
-    this.pdAddresses = pdAddresses;
-    this.databaseName = databaseName;
-    this.tableName = tableName;
+  public TiDBInputFormat(Properties properties, String[] fieldNames, DataType[] fieldTypes) {
+    this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
+    this.databaseName = getRequiredProperties(DATABASE_NAME);
+    this.tableName = getRequiredProperties(TABLE_NAME);
     this.fieldNames = fieldNames;
     this.fieldTypes = fieldTypes;
-    List<SplitInternal> splits = null;
-    List<ColumnHandleInternal> columnHandleInternals = null;
     // get split
-    try (ClientSession splitSession = new ClientSession(new ClientConfig(this.pdAddresses))) {
+    try (ClientSession splitSession = new ClientSession(new ClientConfig(properties))) {
       TableHandleInternal tableHandleInternal = new TableHandleInternal(
-          UUID.randomUUID().toString(),
-          this.databaseName, this.tableName);
+          UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
       splits = splitManagerInternal.getSplits(tableHandleInternal);
       columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
     } catch (Exception e) {
-      LOG.error("can not get split", e);
-      System.exit(1);
+      throw new IllegalStateException("can not get split", e);
     }
-    this.splits = splits;
-    this.columnHandleInternals = columnHandleInternals;
   }
 
   @Override
@@ -125,7 +120,7 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
 
   @Override
   public void openInputFormat() throws IOException {
-    clientSession = new ClientSession(new ClientConfig(pdAddresses));
+    clientSession = new ClientSession(new ClientConfig(properties));
   }
 
   @Override
@@ -175,54 +170,7 @@ public class TiDBInputFormat extends RichInputFormat<Row, InputSplit> implements
     return new RowTypeInfo(TypeConversions.fromDataTypeToLegacyInfo(fieldTypes), fieldNames);
   }
 
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-
-    private String pdAddresses;
-
-    private String databaseName;
-
-    private String tableName;
-
-    private String[] fieldNames;
-
-    private DataType[] fieldTypes;
-
-    private Builder() {
-
-    }
-
-    public Builder setPdAddresses(String pdAddresses) {
-      this.pdAddresses = pdAddresses;
-      return this;
-    }
-
-    public Builder setDatabaseName(String databaseName) {
-      this.databaseName = databaseName;
-      return this;
-    }
-
-    public Builder setTableName(String tableName) {
-      this.tableName = tableName;
-      return this;
-    }
-
-    public Builder setFieldNames(String[] fieldNames) {
-      this.fieldNames = fieldNames;
-      return this;
-    }
-
-    public Builder setFieldTypes(DataType[] fieldTypes) {
-      this.fieldTypes = fieldTypes;
-      return this;
-    }
-
-    public TiDBInputFormat build() {
-      return new TiDBInputFormat(pdAddresses, databaseName, tableName, fieldNames.clone(),
-          fieldTypes.clone());
-    }
+  private String getRequiredProperties(String key) {
+    return Preconditions.checkNotNull(properties.getProperty(key), key + " can not be null");
   }
 }

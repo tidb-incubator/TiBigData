@@ -20,10 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.zhihu.flink.tidb.utils.DataTypeMappingUtil;
 import com.zhihu.presto.tidb.ClientConfig;
 import com.zhihu.presto.tidb.ClientSession;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
@@ -66,20 +62,13 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public static final String DEFAULT_NAME = "tidb";
 
-  private final String pdAddresses;
-
   private final Properties properties;
 
   private Optional<ClientSession> clientSession = Optional.empty();
 
-  private Optional<Connection> connection = Optional.empty();
-
-  private Optional<Statement> statement = Optional.empty();
-
   public TiDBCatalog(Properties properties) {
     super(DEFAULT_NAME, DEFAULT_DATABASE);
     this.properties = Preconditions.checkNotNull(properties);
-    this.pdAddresses = Preconditions.checkNotNull(properties.getProperty(TiDBOptions.PD_ADDRESSES));
   }
 
   @Override
@@ -87,16 +76,7 @@ public class TiDBCatalog extends AbstractCatalog {
     // catalog isOpened?
     if (!clientSession.isPresent()) {
       try {
-        clientSession = Optional.of(new ClientSession(new ClientConfig(pdAddresses)));
-        String dbUrl = properties.getProperty(TiDBOptions.DATABASE_URL);
-        if (dbUrl != null) {
-          Class.forName(TiDBOptions.DRIVER_NAME);
-          String username = Preconditions
-              .checkNotNull(properties.getProperty(TiDBOptions.USERNAME));
-          String password = properties.getProperty(TiDBOptions.PASSWORD);
-          connection = Optional.of(DriverManager.getConnection(dbUrl, username, password));
-          statement = Optional.of(connection.get().createStatement());
-        }
+        clientSession = Optional.of(new ClientSession(new ClientConfig(properties)));
       } catch (Exception e) {
         throw new CatalogException("can not open catalog", e);
       }
@@ -112,22 +92,6 @@ public class TiDBCatalog extends AbstractCatalog {
         LOG.warn("can not close clientSession", e);
       }
       clientSession = Optional.empty();
-    });
-    statement.ifPresent(stat -> {
-      try {
-        stat.close();
-      } catch (SQLException e) {
-        LOG.warn("can not close statement", e);
-      }
-      statement = Optional.empty();
-    });
-    connection.ifPresent(con -> {
-      try {
-        con.close();
-      } catch (SQLException e) {
-        LOG.warn("can not close connection", e);
-      }
-      connection = Optional.empty();
     });
   }
 
@@ -147,8 +111,7 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public boolean databaseExists(String databaseName) throws CatalogException {
-    Preconditions.checkNotNull(databaseName);
-    return getClientSession().getSchemaNames().contains(databaseName);
+    return getClientSession().databaseExists(databaseName);
   }
 
   @Override
@@ -158,17 +121,13 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   public void createDatabase(String databaseName, boolean ignoreIfExists) {
-    Preconditions.checkNotNull(databaseName);
-    sqlUpdate(String
-        .format("CREATE DATABASE %s `%s`", ignoreIfExists ? "IF NOT EXISTS" : "", databaseName));
+    getClientSession().createDatabase(databaseName, ignoreIfExists);
   }
 
   @Override
   public void dropDatabase(String databaseName, boolean ignoreIfNotExists, boolean cascade)
       throws DatabaseNotExistException, DatabaseNotEmptyException, CatalogException {
-    Preconditions.checkNotNull(databaseName);
-    sqlUpdate(String
-        .format("DROP DATABASE %s `%s`", ignoreIfNotExists ? "IF EXISTS" : "", databaseName));
+    getClientSession().dropDatabase(databaseName, ignoreIfNotExists);
   }
 
   @Override
@@ -209,10 +168,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   public boolean tableExists(String databaseName, String tableName) throws CatalogException {
-    Preconditions.checkNotNull(databaseName);
-    Preconditions.checkNotNull(tableName);
-    return databaseExists(databaseName) && getClientSession().getTableNames(databaseName)
-        .contains(tableName);
+    return getClientSession().tableExists(databaseName, tableName);
   }
 
   @Override
@@ -224,11 +180,7 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists)
       throws TableNotExistException, CatalogException {
-    Preconditions.checkNotNull(databaseName);
-    Preconditions.checkNotNull(tableName);
-    sqlUpdate(String
-        .format("DROP TABLE %s `%s`.`%s`", ignoreIfNotExists ? "IF EXISTS" : "", databaseName,
-            tableName));
+    getClientSession().dropTable(databaseName, tableName, ignoreIfNotExists);
   }
 
   @Override
@@ -400,31 +352,14 @@ public class TiDBCatalog extends AbstractCatalog {
 
   @Override
   public Optional<TableFactory> getTableFactory() {
-    return Optional.of(new TiDBTableFactory(pdAddresses));
+    return Optional.of(new TiDBTableFactory(properties));
   }
 
-  public synchronized void sqlUpdate(String sql) {
-    try {
-      statement.orElseThrow(IllegalStateException::new).executeUpdate(sql);
-    } catch (SQLException e) {
-      throw new CatalogException(e);
-    }
+  public void sqlUpdate(String... sqls) {
+    getClientSession().sqlUpdate(sqls);
   }
 
   private ClientSession getClientSession() {
     return clientSession.orElseThrow(IllegalStateException::new);
-  }
-
-  public static class TiDBOptions {
-
-    public static final String PD_ADDRESSES = "pd.addresses";
-
-    public static final String DATABASE_URL = "database.url";
-
-    public static final String USERNAME = "username";
-
-    public static final String PASSWORD = "password";
-
-    public static final String DRIVER_NAME = "com.mysql.jdbc.Driver";
   }
 }
