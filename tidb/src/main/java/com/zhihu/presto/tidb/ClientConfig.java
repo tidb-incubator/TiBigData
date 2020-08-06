@@ -151,7 +151,6 @@ public final class ClientConfig {
     return toStringHelper(this)
         .add("databaseUrl", databaseUrl)
         .add("username", username)
-        .add("password", password)
         .add("pdAddresses", pdAddresses)
         .add("maximumPoolSize", maximumPoolSize)
         .add("minimumIdleSize", minimumIdleSize)
