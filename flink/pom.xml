@@ -18,7 +18,6 @@
         <dep.scala.binary.version>2.11</dep.scala.binary.version>
         <dep.jackson.version>2.11.0</dep.jackson.version>
         <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
-        <dep.mysql.jdbc.version>5.1.47</dep.mysql.jdbc.version>
     </properties>
 
 
@@ -40,12 +39,6 @@
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
             <version>${dep.apache.commons.version}</version>
-        </dependency>
-        <!-- jdbc mysql -->
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${dep.mysql.jdbc.version}</version>
         </dependency>
         <!-- flink -->
         <dependency>

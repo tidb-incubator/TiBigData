@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.CatalogTableImpl;
 import org.apache.flink.table.catalog.ObjectPath;
@@ -31,22 +32,17 @@ import org.apache.flink.util.Preconditions;
 
 public class TiDBTableFactory implements TableSourceFactory<Row> {
 
-  private final String pdAddresses;
+  private final Properties properties;
 
-  public TiDBTableFactory(String pdAddresses) {
-    this.pdAddresses = pdAddresses;
+  public TiDBTableFactory(Properties properties) {
+    this.properties = properties;
   }
 
   @Override
   public TableSource<Row> createTableSource(ObjectPath tablePath, CatalogTable table) {
     Preconditions.checkNotNull(table);
     Preconditions.checkArgument(table instanceof CatalogTableImpl);
-    return TiDBTableSource.builder()
-        .setPdAddresses(pdAddresses)
-        .setDatabaseName(tablePath.getDatabaseName())
-        .setTableName(tablePath.getObjectName())
-        .setTableSchema(table.getSchema())
-        .build();
+    return new TiDBTableSource(table.getSchema(), properties);
   }
 
   @Override

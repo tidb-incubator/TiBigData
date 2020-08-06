@@ -16,6 +16,7 @@
 
 package com.zhihu.flink.tidb.source;
 
+import java.util.Properties;
 import org.apache.flink.api.common.io.InputFormat;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.sources.InputFormatTableSource;
@@ -26,31 +27,15 @@ public class TiDBTableSource extends InputFormatTableSource<Row> {
 
   private final TableSchema tableSchema;
 
-  private final String pdAddresses;
-
-  private final String databaseName;
-
-  private final String tableName;
+  private final Properties properties;
 
   private final InputFormat<Row, ?> inputFormat;
 
-  /**
-   * see {@link TiDBTableSource#builder()}
-   */
-  private TiDBTableSource(TableSchema tableSchema, String pdAddresses, String databaseName,
-      String tableName) {
-
+  public TiDBTableSource(TableSchema tableSchema, Properties properties) {
     this.tableSchema = tableSchema;
-    this.pdAddresses = pdAddresses;
-    this.databaseName = databaseName;
-    this.tableName = tableName;
-    this.inputFormat = TiDBInputFormat.builder()
-        .setPdAddresses(this.pdAddresses)
-        .setDatabaseName(this.databaseName)
-        .setTableName(this.tableName)
-        .setFieldNames(this.tableSchema.getFieldNames())
-        .setFieldTypes(this.tableSchema.getFieldDataTypes())
-        .build();
+    this.properties = properties;
+    this.inputFormat = new TiDBInputFormat(this.properties, tableSchema.getFieldNames(),
+        tableSchema.getFieldDataTypes());
   }
 
   @Override
@@ -66,48 +51,5 @@ public class TiDBTableSource extends InputFormatTableSource<Row> {
   @Override
   public TableSchema getTableSchema() {
     return tableSchema;
-  }
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static class Builder {
-
-    private TableSchema tableSchema;
-
-    private String pdAddresses;
-
-    private String databaseName;
-
-    private String tableName;
-
-    private Builder() {
-
-    }
-
-    public Builder setPdAddresses(String pdAddresses) {
-      this.pdAddresses = pdAddresses;
-      return this;
-    }
-
-    public Builder setDatabaseName(String databaseName) {
-      this.databaseName = databaseName;
-      return this;
-    }
-
-    public Builder setTableName(String tableName) {
-      this.tableName = tableName;
-      return this;
-    }
-
-    public Builder setTableSchema(TableSchema tableSchema) {
-      this.tableSchema = tableSchema;
-      return this;
-    }
-
-    public TiDBTableSource build() {
-      return new TiDBTableSource(tableSchema, pdAddresses, databaseName, tableName);
-    }
   }
 }

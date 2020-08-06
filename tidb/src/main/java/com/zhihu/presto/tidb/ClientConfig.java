@@ -17,19 +17,62 @@
 package com.zhihu.presto.tidb;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static java.util.Objects.requireNonNull;
 
 import java.util.Objects;
+import java.util.Properties;
 
 public final class ClientConfig {
 
+  public static final String JDBC_DRIVER_NAME = "com.mysql.jdbc.Driver";
+
+  public static final String DATABASE_URL = "tidb.jdbc.database.url";
+
+  public static final String USERNAME = "tidb.jdbc.username";
+
+  public static final String PASSWORD = "tidb.jdbc.password";
+
+  public static final String MAX_POOL_SIZE = "tidb.jdbc.maximum.pool.size";
+  public static final int MAX_POOL_SIZE_DEFAULT = 10;
+
+  // default value means that we connect to tidb server lazily
+  public static final String MIN_IDLE_SIZE = "tidb.jdbc.minimum.idle.size";
+  public static final int MIN_IDLE_SIZE_DEFAULT = 0;
+
   private String pdAddresses;
 
-  public ClientConfig(String pdAddresses) {
-    this.pdAddresses = requireNonNull(pdAddresses, "pdAddresses is null");
-  }
+  private String databaseUrl;
+
+  private String username;
+
+  private String password;
+
+  private int maximumPoolSize;
+
+  private int minimumIdleSize;
 
   public ClientConfig() {
+    this(null, null, null, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT);
+  }
+
+  public ClientConfig(String databaseUrl, String username, String password) {
+    this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT);
+  }
+
+  public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
+      int minimumIdleSize) {
+    this.databaseUrl = databaseUrl;
+    this.username = username;
+    this.password = password;
+    this.maximumPoolSize = maximumPoolSize;
+    this.minimumIdleSize = minimumIdleSize;
+  }
+
+  public ClientConfig(Properties properties) {
+    this(properties.getProperty(DATABASE_URL),
+        properties.getProperty(USERNAME),
+        properties.getProperty(PASSWORD),
+        Integer.parseInt(properties.getProperty(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT + "")),
+        Integer.parseInt(properties.getProperty(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT + "")));
   }
 
   public String getPdAddresses() {
@@ -38,6 +81,46 @@ public final class ClientConfig {
 
   public void setPdAddresses(String addresses) {
     this.pdAddresses = addresses;
+  }
+
+  public String getDatabaseUrl() {
+    return databaseUrl;
+  }
+
+  public void setDatabaseUrl(String databaseUrl) {
+    this.databaseUrl = databaseUrl;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getPassword() {
+    return password;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public int getMaximumPoolSize() {
+    return maximumPoolSize;
+  }
+
+  public void setMaximumPoolSize(int maximumPoolSize) {
+    this.maximumPoolSize = maximumPoolSize;
+  }
+
+  public int getMinimumIdleSize() {
+    return minimumIdleSize;
+  }
+
+  public void setMinimumIdleSize(int minimumIdleSize) {
+    this.minimumIdleSize = minimumIdleSize;
   }
 
   @Override
@@ -55,13 +138,22 @@ public final class ClientConfig {
     }
 
     ClientConfig other = (ClientConfig) obj;
-    return Objects.equals(this.pdAddresses, other.pdAddresses);
+    return Objects.equals(this.pdAddresses, other.pdAddresses)
+        && Objects.equals(this.databaseUrl, other.databaseUrl)
+        && Objects.equals(this.username, other.username)
+        && Objects.equals(this.password, other.password)
+        && Objects.equals(this.maximumPoolSize, other.maximumPoolSize)
+        && Objects.equals(this.minimumIdleSize, other.minimumIdleSize);
   }
 
   @Override
   public String toString() {
     return toStringHelper(this)
+        .add("databaseUrl", databaseUrl)
+        .add("username", username)
         .add("pdAddresses", pdAddresses)
+        .add("maximumPoolSize", maximumPoolSize)
+        .add("minimumIdleSize", minimumIdleSize)
         .toString();
   }
 }

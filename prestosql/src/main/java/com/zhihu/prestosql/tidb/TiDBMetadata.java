@@ -147,4 +147,76 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
       ConnectorTableHandle table) {
     return new ConnectorTableProperties();
   }
+
+  @Override
+  public void createTable(ConnectorSession session, ConnectorTableMetadata tableMetadata,
+      boolean ignoreExisting) {
+    List<ColumnMetadata> columns = tableMetadata.getColumns();
+    SchemaTableName table = tableMetadata.getTable();
+    List<String> columnNames = columns.stream().map(ColumnMetadata::getName)
+        .collect(toImmutableList());
+    List<String> columnTypes = columns.stream()
+        .map(column -> TypeHelpers.toSqlString(column.getType()))
+        .collect(toImmutableList());
+    getInternal().createTable(table.getSchemaName(), table.getTableName(), columnNames, columnTypes,
+        ignoreExisting);
+  }
+
+  @Override
+  public void dropTable(ConnectorSession session, ConnectorTableHandle tableHandle) {
+    TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
+    String schemaName = handle.getSchemaName();
+    String tableName = handle.getTableName();
+    getInternal().dropTable(schemaName, tableName, true);
+  }
+
+  @Override
+  public boolean schemaExists(ConnectorSession session, String schemaName) {
+    return getInternal().databaseExists(schemaName);
+  }
+
+  public void createSchema(ConnectorSession session, String schemaName,
+      Map<String, Object> properties) {
+    getInternal().createDatabase(schemaName, true);
+  }
+
+  @Override
+  public void dropSchema(ConnectorSession session, String schemaName) {
+    getInternal().dropDatabase(schemaName, true);
+  }
+
+  @Override
+  public void renameTable(ConnectorSession session, ConnectorTableHandle tableHandle,
+      SchemaTableName schemaTableName) {
+    TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
+    getInternal()
+        .renameTable(handle.getSchemaName(), schemaTableName.getSchemaName(),
+            handle.getTableName(), schemaTableName.getTableName());
+  }
+
+  @Override
+  public void addColumn(ConnectorSession session, ConnectorTableHandle tableHandle,
+      ColumnMetadata column) {
+    TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
+    getInternal().addColumn(handle.getSchemaName(), handle.getTableName(), column.getName(),
+        TypeHelpers.toSqlString(column.getType()));
+  }
+
+  @Override
+  public void renameColumn(ConnectorSession session, ConnectorTableHandle tableHandle,
+      ColumnHandle source, String target) {
+    TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
+    TiDBColumnHandle columnHandle = (TiDBColumnHandle) source;
+    getInternal()
+        .renameColumn(handle.getSchemaName(), handle.getTableName(), columnHandle.getName(), target,
+            TypeHelpers.toSqlString(columnHandle.getPrestoType()));
+  }
+
+  @Override
+  public void dropColumn(ConnectorSession session, ConnectorTableHandle tableHandle,
+      ColumnHandle column) {
+    TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
+    TiDBColumnHandle columnHandle = (TiDBColumnHandle) column;
+    getInternal().dropColumn(handle.getSchemaName(), handle.getTableName(), columnHandle.getName());
+  }
 }
