@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.zhihu.flink.tidb.catalog;
+package com.zhihu.flink.tidb.factory;
 
 import com.zhihu.flink.tidb.source.TiDBTableSource;
 import java.util.ArrayList;
