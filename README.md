@@ -205,13 +205,9 @@ public class TestCreateTable {
 }
 ```
 
-it is implemented by `mysql-connector-java`.
+it is implemented by `mysql-connector-java`. If you want to specify the type by yourself, please use `TiDBTableSource` or `Flink SQL`. It supports most type conversions, such as INT to BIGINT, STRING to LONG, LONG to BYTES.
 
-
-
- #### TiDBTableSource
-
-If you want to specify the type by yourself, please use TiDBTableSource. It supports most type conversions, such as INT to BIGINT, STRING to LONG, LONG to BYTES.
+#### TiDBTableSource
 
 ```java
 public class TestTiDBTableSource {
@@ -243,6 +239,152 @@ public class TestTiDBTableSource {
     tableResult.print();
   }
 }
+```
+
+#### Flink SQL
+
+##### Sample Data
+
+You could create a sample tidb table which contains most tidb types by the following script.
+
+```sql
+CREATE TABLE test_tidb_type(
+ c1     tinyint(4),
+ c2     smallint(6),
+ c3     mediumint(9),
+ c4     int(11),
+ c5     bigint(20),
+ c6     char(10),
+ c7     varchar(20),
+ c8     tinytext,
+ c9     mediumtext,
+ c10    text,
+ c11    longtext,
+ c12    binary(20),
+ c13    varbinary(20),
+ c14    tinyblob,
+ c15    mediumblob,
+ c16    blob,
+ c17    longblob,
+ c18    float,
+ c19    double,
+ c20    decimal(6,3),
+ c21    date,
+ c22    time,
+ c23    datetime,
+ c24    timestamp,
+ c25    year(4),
+ c26    boolean,
+ c27    json,
+ c28    enum('1','2','3')
+);
+
+INSERT INTO test_tidb_type VALUES
+(1,2,3,4,5,'chartype','varchartype','tinytexttype','mediumtexttype','texttype','longtexttype','binarytype','varbinarytype','tinyblobtype','mediumblobtype','blobtype','longblobtype',1.234,2.456789,123.456,CURRENT_DATE,CURRENT_TIME,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,2020,true,'{"a":1,"b":2}','1'),
+(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
+```
+
+##### Flink SQL Programming
+
+```java
+public class TestFlinkS {
+
+  public static void main(String[] args) {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    tableEnvironment.executeSql("CREATE TABLE tidb(\n"
+        + " c1     tinyint,\n"
+        + " c2     smallint,\n"
+        + " c3     int,\n"
+        + " c4     int,\n"
+        + " c5     bigint,\n"
+        + " c6     char(10),\n"
+        + " c7     varchar(20),\n"
+        + " c8     string,\n"
+        + " c9     string,\n"
+        + " c10    string,\n"
+        + " c11    string,\n"
+        + " c12    BYTES,\n"
+        + " c13    BYTES,\n"
+        + " c14    BYTES,\n"
+        + " c15    BYTES,\n"
+        + " c16    BYTES,\n"
+        + " c17    BYTES,\n"
+        + " c18    float,\n"
+        + " c19    double,\n"
+        + " c20    decimal(6,3),\n"
+        + " c21    date,\n"
+        + " c22    time,\n"
+        + " c23    timestamp,\n"
+        + " c24    timestamp,\n"
+        + " c25    int,\n"
+        + " c26    boolean,\n"
+        + " c27    string,\n"
+        + " c28    string\n"
+        + ") WITH (\n"
+        + "  'connector' = 'tidb',\n"
+        + "  'tidb.jdbc.database.url' = 'jdbc:mysql://host:port/database',\n"
+        + "  'tidb.jdbc.username' = 'root',\n"
+        + "  'tidb.jdbc.password' = '123456',\n"
+        + "  'tidb.database.name' = 'database',\n"
+        + "  'tidb.table.name' = 'test_tidb_type'\n"
+        + ")"
+    );
+    tableEnvironment.executeSql("SELECT * FROM tidb LIMIT 100").print();
+  }
+```
+
+##### Flink SQL Client
+
+```shell
+# run flink sql client
+bin/sql-client.sh embedded
+# create a flink table mapping to tidb table
+CREATE TABLE tidb(
+ c1     tinyint,
+ c2     smallint,
+ c3     int,
+ c4     int,
+ c5     bigint,
+ c6     char(10),
+ c7     varchar(20),
+ c8     string,
+ c9     string,
+ c10    string,
+ c11    string,
+ c12    BYTES,
+ c13    BYTES,
+ c14    BYTES,
+ c15    BYTES,
+ c16    BYTES,
+ c17    BYTES,
+ c18    float,
+ c19    double,
+ c20    decimal(6,3),
+ c21    date,
+ c22    time,
+ c23    timestamp,
+ c24    timestamp,
+ c25    int,
+ c26    boolean,
+ c27    string,
+ c28    string
+) WITH (
+  'connector' = 'tidb',
+  'tidb.jdbc.database.url' = 'jdbc:mysql://host:port/database',
+  'tidb.jdbc.username' = 'root',
+  'tidb.jdbc.password' = '123456',
+  'tidb.database.name' = 'database',
+  'tidb.jdbc.maximum.pool.size' = '10',
+  'tidb.jdbc.minimum.idle.size' = '0',
+  'tidb.table.name' = 'test_tidb_type'
+);
+# set result format
+SET execution.result-mode=tableau;
+# query
+SELECT * FROM tidb LIMIT 100;
 ```
 
 

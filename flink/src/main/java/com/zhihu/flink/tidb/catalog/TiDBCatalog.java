@@ -17,6 +17,7 @@
 package com.zhihu.flink.tidb.catalog;
 
 import com.google.common.collect.ImmutableMap;
+import com.zhihu.flink.tidb.factory.TiDBTableFactory;
 import com.zhihu.flink.tidb.utils.DataTypeMappingUtil;
 import com.zhihu.presto.tidb.ClientConfig;
 import com.zhihu.presto.tidb.ClientSession;
