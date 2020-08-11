@@ -104,7 +104,7 @@ CREATE TABLE hive.default.people AS SELECT * FROM tidb.default.people;
 
 ```bash
 cp flink/target/flink-tidb-connector-0.0.1-SNAPSHOT.jar ${FLINK_HOME}/lib
-bin/flink run -c com.zhihu.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --tidb.jdbc.database.url ${DATABASE_URL} --tidb.jdbc.username ${USERNAME} --tidb.jdbc.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+bin/flink run -c com.zhihu.tibigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --tidb.jdbc.database.url ${DATABASE_URL} --tidb.jdbc.username ${USERNAME} --tidb.jdbc.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
 ```
 
 The output can be found in console:
