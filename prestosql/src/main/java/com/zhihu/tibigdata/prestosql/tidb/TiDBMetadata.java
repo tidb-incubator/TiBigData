@@ -27,15 +27,20 @@ import com.google.common.collect.ImmutableMap;
 import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
 import com.zhihu.tibigdata.tidb.MetadataInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
+import io.airlift.slice.Slice;
 import io.prestosql.spi.connector.ColumnHandle;
 import io.prestosql.spi.connector.ColumnMetadata;
+import io.prestosql.spi.connector.ConnectorInsertTableHandle;
 import io.prestosql.spi.connector.ConnectorMetadata;
+import io.prestosql.spi.connector.ConnectorOutputMetadata;
 import io.prestosql.spi.connector.ConnectorSession;
 import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.prestosql.spi.connector.ConnectorTableMetadata;
 import io.prestosql.spi.connector.ConnectorTableProperties;
 import io.prestosql.spi.connector.SchemaTableName;
 import io.prestosql.spi.connector.SchemaTablePrefix;
+import io.prestosql.spi.statistics.ComputedStatistics;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -218,5 +223,18 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
     TiDBColumnHandle columnHandle = (TiDBColumnHandle) column;
     getInternal().dropColumn(handle.getSchemaName(), handle.getTableName(), columnHandle.getName());
+  }
+
+  @Override
+  public ConnectorInsertTableHandle beginInsert(ConnectorSession session,
+      ConnectorTableHandle tableHandle, List<ColumnHandle> columns) {
+    return (TiDBTableHandle) tableHandle;
+  }
+
+  @Override
+  public Optional<ConnectorOutputMetadata> finishInsert(ConnectorSession session,
+      ConnectorInsertTableHandle insertHandle, Collection<Slice> fragments,
+      Collection<ComputedStatistics> computedStatistics) {
+    return Optional.empty();
   }
 }

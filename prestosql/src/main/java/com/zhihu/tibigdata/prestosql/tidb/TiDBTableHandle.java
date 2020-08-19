@@ -20,10 +20,12 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
+import io.prestosql.spi.connector.ConnectorInsertTableHandle;
+import io.prestosql.spi.connector.ConnectorOutputTableHandle;
 import io.prestosql.spi.connector.ConnectorTableHandle;
 
 public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
-    ConnectorTableHandle {
+    ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
 
   @JsonCreator
   public TiDBTableHandle(

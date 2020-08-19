@@ -18,6 +18,8 @@ package com.zhihu.tibigdata.prestodb.tidb;
 
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorHandleResolver;
+import com.facebook.presto.spi.ConnectorInsertTableHandle;
+import com.facebook.presto.spi.ConnectorOutputTableHandle;
 import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
@@ -48,5 +50,15 @@ public final class TiDBHandleResolver implements ConnectorHandleResolver {
   @Override
   public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass() {
     return TiDBTransactionHandle.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorOutputTableHandle> getOutputTableHandleClass() {
+    return TiDBTableHandle.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorInsertTableHandle> getInsertTableHandleClass() {
+    return TiDBTableHandle.class;
   }
 }

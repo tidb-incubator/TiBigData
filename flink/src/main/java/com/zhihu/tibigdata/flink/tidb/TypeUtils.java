@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.zhihu.tibigdata.flink.tidb.utils;
+package com.zhihu.tibigdata.flink.tidb;
 
-import static com.pingcap.tikv.types.MySQLType.TypeFloat;
+import static java.lang.String.format;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -34,7 +34,7 @@ import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 
-public class DataTypeMappingUtil {
+public class TypeUtils {
 
   /**
    * a default mapping: TiKV DataType -> Flink DataType
@@ -42,34 +42,51 @@ public class DataTypeMappingUtil {
    * @param dataType TiKV DataType
    * @return Flink DataType
    */
-  public static DataType mapToFlinkType(com.pingcap.tikv.types.DataType dataType) {
-    switch (dataType.getClass().getSimpleName()) {
-      case "IntegerType":
-        return DataTypes.BIGINT();
-      case "StringType":
-      case "EnumType":
-      case "JsonType":
-        return DataTypes.STRING();
-      case "BytesType":
-        return DataTypes.BYTES();
-      case "TimeType":
-        return DataTypes.TIME();
-      case "DateType":
-        return DataTypes.DATE();
-      case "TimestampType":
-      case "DateTimeType":
+  public static DataType getFlinkType(com.pingcap.tikv.types.DataType dataType) {
+    switch (dataType.getType()) {
+      case TypeTiny:
+      case TypeBit:
+        return DataTypes.TINYINT();
+      case TypeYear:
+      case TypeShort:
+        return DataTypes.SMALLINT();
+      case TypeInt24:
+      case TypeLong:
+        return DataTypes.INT();
+      case TypeFloat:
+        return DataTypes.FLOAT();
+      case TypeDouble:
+        return DataTypes.DOUBLE();
+      case TypeNull:
+        return DataTypes.NULL();
+      case TypeDatetime:
+      case TypeTimestamp:
         return DataTypes.TIMESTAMP();
-      case "RealType":
-        if (dataType.getType() == TypeFloat) {
-          return DataTypes.FLOAT();
-        } else {
-          return DataTypes.DOUBLE();
-        }
-      case "DecimalType":
+      case TypeLonglong:
+        return DataTypes.BIGINT();
+      case TypeDate:
+      case TypeNewDate:
+        return DataTypes.DATE();
+      case TypeDuration:
+        return DataTypes.TIME();
+      case TypeTinyBlob:
+      case TypeMediumBlob:
+      case TypeLongBlob:
+      case TypeBlob:
+      case TypeJSON:
+      case TypeEnum:
+      case TypeVarString:
+      case TypeString:
+      case TypeVarchar:
+        return DataTypes.STRING();
+      case TypeDecimal:
+      case TypeNewDecimal:
         return DataTypes.DECIMAL((int) dataType.getLength(), dataType.getDecimal());
+      case TypeGeometry:
+      case TypeSet:
       default:
         throw new IllegalArgumentException(
-            String.format("can not map %s to flink datatype", dataType));
+            format("can not get flink datatype by tikv type: %s", dataType));
     }
   }
 
@@ -85,6 +102,13 @@ public class DataTypeMappingUtil {
       return Optional.empty();
     }
     switch (dataType.getConversionClass().getSimpleName()) {
+      case "String":
+        if (object instanceof byte[]) {
+          object = new String((byte[]) object);
+        } else {
+          object = object.toString();
+        }
+        break;
       case "Integer":
         object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT()).get();
         break;

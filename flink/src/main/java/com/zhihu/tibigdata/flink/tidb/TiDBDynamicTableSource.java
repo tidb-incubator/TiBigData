@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.zhihu.tibigdata.flink.tidb.source;
+package com.zhihu.tibigdata.flink.tidb;
 
-import java.util.Properties;
+import java.util.Map;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
@@ -29,9 +29,9 @@ public class TiDBDynamicTableSource implements ScanTableSource {
 
   private final TableSchema tableSchema;
 
-  private final Properties properties;
+  private final Map<String,String> properties;
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Properties properties) {
+  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String,String> properties) {
     this.tableSchema = tableSchema;
     this.properties = properties;
   }

@@ -24,6 +24,7 @@ import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.log.Logger;
 import io.prestosql.spi.connector.Connector;
 import io.prestosql.spi.connector.ConnectorMetadata;
+import io.prestosql.spi.connector.ConnectorPageSinkProvider;
 import io.prestosql.spi.connector.ConnectorRecordSetProvider;
 import io.prestosql.spi.connector.ConnectorSplitManager;
 import io.prestosql.spi.connector.ConnectorTransactionHandle;
@@ -39,16 +40,19 @@ public final class TiDBConnector
   private final TiDBMetadata metadata;
   private final TiDBSplitManager splitManager;
   private final TiDBRecordSetProvider recordSetProvider;
+  private final TiDBPageSinkProvider pageSinkProvider;
 
   @Inject
   public TiDBConnector(
       LifeCycleManager lifeCycleManager,
       TiDBMetadata metadata,
       TiDBSplitManager splitManager,
-      TiDBRecordSetProvider recordSetProvider) {
+      TiDBRecordSetProvider recordSetProvider,
+      TiDBPageSinkProvider pageSinkProvider) {
     this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
     this.metadata = requireNonNull(metadata, "metadata is null");
     this.splitManager = requireNonNull(splitManager, "splitManager is null");
+    this.pageSinkProvider = requireNonNull(pageSinkProvider, "pageSinkProvider is null");
     this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
   }
 
@@ -72,6 +76,11 @@ public final class TiDBConnector
   @Override
   public ConnectorRecordSetProvider getRecordSetProvider() {
     return recordSetProvider;
+  }
+
+  @Override
+  public ConnectorPageSinkProvider getPageSinkProvider() {
+    return pageSinkProvider;
   }
 
   @Override
