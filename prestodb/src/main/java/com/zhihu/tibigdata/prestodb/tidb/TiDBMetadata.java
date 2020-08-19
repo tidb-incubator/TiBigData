@@ -25,6 +25,7 @@ import static java.util.function.Function.identity;
 
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
+import com.facebook.presto.spi.ConnectorInsertTableHandle;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableLayout;
@@ -35,11 +36,15 @@ import com.facebook.presto.spi.Constraint;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.facebook.presto.spi.connector.ConnectorOutputMetadata;
+import com.facebook.presto.spi.statistics.ComputedStatistics;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
 import com.zhihu.tibigdata.tidb.MetadataInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
+import io.airlift.slice.Slice;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -234,5 +239,18 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
     TiDBColumnHandle columnHandle = (TiDBColumnHandle) column;
     getInternal().dropColumn(handle.getSchemaName(), handle.getTableName(), columnHandle.getName());
+  }
+
+  @Override
+  public ConnectorInsertTableHandle beginInsert(ConnectorSession session,
+      ConnectorTableHandle tableHandle) {
+    return (TiDBTableHandle) tableHandle;
+  }
+
+  @Override
+  public Optional<ConnectorOutputMetadata> finishInsert(ConnectorSession session,
+      ConnectorInsertTableHandle insertHandle, Collection<Slice> fragments,
+      Collection<ComputedStatistics> computedStatistics) {
+    return Optional.empty();
   }
 }

@@ -18,6 +18,8 @@ package com.zhihu.tibigdata.prestosql.tidb;
 
 import io.prestosql.spi.connector.ColumnHandle;
 import io.prestosql.spi.connector.ConnectorHandleResolver;
+import io.prestosql.spi.connector.ConnectorInsertTableHandle;
+import io.prestosql.spi.connector.ConnectorOutputTableHandle;
 import io.prestosql.spi.connector.ConnectorSplit;
 import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.prestosql.spi.connector.ConnectorTransactionHandle;
@@ -42,5 +44,15 @@ public final class TiDBHandleResolver implements ConnectorHandleResolver {
   @Override
   public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass() {
     return TiDBTransactionHandle.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorOutputTableHandle> getOutputTableHandleClass() {
+    return TiDBTableHandle.class;
+  }
+
+  @Override
+  public Class<? extends ConnectorInsertTableHandle> getInsertTableHandleClass() {
+    return TiDBTableHandle.class;
   }
 }

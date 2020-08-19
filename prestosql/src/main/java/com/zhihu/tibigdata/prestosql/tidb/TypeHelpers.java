@@ -163,7 +163,7 @@ public final class TypeHelpers {
           return zone.convertUTCToLocal(zone.getMillisKeepLocal(UTC, localMillis));
         }, millis -> (1000000L * (((long) millis) + 8 * 3600 * 1000L)));
       case TypeJSON:
-        return null;
+        return varcharHelper(type, VarcharType.createUnboundedVarcharType());
       case TypeSet:
         // TiKV client might has issue related to set, disable it at this time.
         return null;

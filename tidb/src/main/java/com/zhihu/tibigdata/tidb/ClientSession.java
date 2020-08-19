@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.zhihu.tibigdata.tidb.ClientConfig.JDBC_DRIVER_NAME;
+import static com.zhihu.tibigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -41,6 +42,7 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -73,7 +75,7 @@ public final class ClientSession implements AutoCloseable {
     dataSource = new HikariDataSource(new HikariConfig() {
       {
         setDriverClassName(JDBC_DRIVER_NAME);
-        setJdbcUrl(config.getDatabaseUrl());
+        setJdbcUrl(requireNonNull(config.getDatabaseUrl(), "database url can not be null"));
         setUsername(requireNonNull(config.getUsername(), "username can not be null"));
         setPassword(config.getPassword());
         setMaximumPoolSize(config.getMaximumPoolSize());
@@ -206,13 +208,13 @@ public final class ClientSession implements AutoCloseable {
     if (config.getPdAddresses() == null) {
       String sql = "SELECT `INSTANCE` FROM `INFORMATION_SCHEMA`.`CLUSTER_INFO` WHERE `TYPE` = 'pd'";
       List<String> pdAddressesList = new ArrayList<>();
-      try (Connection connection = dataSource.getConnection()) {
-        try (Statement statement = connection.createStatement()) {
-          try (ResultSet resultSet = statement.executeQuery(sql)) {
-            while (resultSet.next()) {
-              pdAddressesList.add(resultSet.getString("INSTANCE"));
-            }
-          }
+      try (
+          Connection connection = dataSource.getConnection();
+          Statement statement = connection.createStatement();
+          ResultSet resultSet = statement.executeQuery(sql)
+      ) {
+        while (resultSet.next()) {
+          pdAddressesList.add(resultSet.getString("INSTANCE"));
         }
       } catch (Exception e) {
         throw new IllegalStateException("can not get pdAddresses", e);
@@ -224,38 +226,18 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void sqlUpdate(String... sqls) {
-    try (final Connection connection = dataSource.getConnection()) {
-      try (final Statement statement = connection.createStatement()) {
-        for (String sql : sqls) {
-          LOG.info("sql update: " + sql);
-          statement.executeUpdate(sql);
-        }
+    try (
+        Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()
+    ) {
+      for (String sql : sqls) {
+        LOG.info("sql update: " + sql);
+        statement.executeUpdate(sql);
       }
     } catch (Exception e) {
       LOG.error("execute sql fail", e);
       throw new IllegalStateException(e);
     }
-  }
-
-  public static String getCreateTableSql(String databaseName, String tableName,
-      List<String> columnNames, List<String> columnTypes, boolean ignoreIfExists) {
-    StringBuilder stringBuilder = new StringBuilder(
-        String.format("CREATE TABLE %s `%s`.`%s`(\n", ignoreIfExists ? "IF NOT EXISTS" : "",
-            databaseName, tableName));
-    for (int i = 0; i < columnNames.size(); i++) {
-      stringBuilder
-          .append("`")
-          .append(columnNames.get(i))
-          .append("`")
-          .append(" ")
-          .append(columnTypes.get(i));
-      if (i < columnNames.size() - 1) {
-        stringBuilder.append(",");
-      }
-      stringBuilder.append("\n");
-    }
-    stringBuilder.append(")");
-    return stringBuilder.toString();
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
@@ -321,6 +303,10 @@ public final class ClientSession implements AutoCloseable {
         requireNonNull(databaseName),
         requireNonNull(tableName),
         requireNonNull(columnName)));
+  }
+
+  public Connection getJdbcConnection() throws SQLException {
+    return dataSource.getConnection();
   }
 
   @Override
