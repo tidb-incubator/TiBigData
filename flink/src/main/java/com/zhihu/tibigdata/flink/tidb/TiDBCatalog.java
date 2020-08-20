@@ -162,8 +162,8 @@ public class TiDBCatalog extends AbstractCatalog {
   public CatalogBaseTable getTable(String databaseName, String tableName)
       throws TableNotExistException, CatalogException {
     Map<String, String> properties = new HashMap<>(this.properties);
-    properties.put(DATABASE_NAME, databaseName);
-    properties.put(TABLE_NAME, tableName);
+    properties.put(DATABASE_NAME.key(), databaseName);
+    properties.put(TABLE_NAME.key(), tableName);
     return new CatalogTableImpl(getTableSchema(databaseName, tableName), properties, "");
   }
 

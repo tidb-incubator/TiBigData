@@ -16,36 +16,50 @@
 
 package com.zhihu.tibigdata.flink.tidb;
 
-import static com.zhihu.tibigdata.tidb.ClientConfig.DATABASE_URL;
-import static com.zhihu.tibigdata.tidb.ClientConfig.PASSWORD;
-import static com.zhihu.tibigdata.tidb.ClientConfig.USERNAME;
+import static org.apache.flink.util.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableSet;
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
+import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
+import org.apache.flink.table.factories.FactoryUtil;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
 
   public static final String IDENTIFIER = "tidb";
 
-  public static String DATABASE_NAME = "tidb.database.name";
+  private static final ConfigOption<String> DATABASE_URL = ConfigOptions
+      .key(ClientConfig.DATABASE_URL).stringType().noDefaultValue();
 
-  public static String TABLE_NAME = "tidb.table.name";
+  private static final ConfigOption<String> USERNAME = ConfigOptions.key(ClientConfig.USERNAME)
+      .stringType().noDefaultValue();
 
+  private static final ConfigOption<String> PASSWORD = ConfigOptions.key(ClientConfig.PASSWORD)
+      .stringType().noDefaultValue();
+
+  public static final ConfigOption<String> DATABASE_NAME = ConfigOptions
+      .key("tidb.database.name").stringType().noDefaultValue();
+
+  public static final ConfigOption<String> TABLE_NAME = ConfigOptions
+      .key("tidb.table.name").stringType().noDefaultValue();
+
+  private static final ConfigOption<String> MAX_POOL_SIZE = ConfigOptions
+      .key(ClientConfig.MAX_POOL_SIZE).stringType().noDefaultValue();
+
+  private static final ConfigOption<String> MIN_IDLE_SIZE = ConfigOptions
+      .key(ClientConfig.MIN_IDLE_SIZE).stringType().noDefaultValue();
   /**
    * see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory}
    */
@@ -76,20 +90,15 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public Set<ConfigOption<?>> requiredOptions() {
-    return ImmutableSet.of(
-        ConfigOptions.key(DATABASE_URL).stringType().noDefaultValue(),
-        ConfigOptions.key(USERNAME).stringType().noDefaultValue(),
-        ConfigOptions.key(DATABASE_NAME).stringType().noDefaultValue(),
-        ConfigOptions.key(TABLE_NAME).stringType().noDefaultValue()
-    );
+    return ImmutableSet.of(DATABASE_URL, USERNAME, DATABASE_NAME, TABLE_NAME);
   }
 
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
     return ImmutableSet.of(
-        ConfigOptions.key(ClientConfig.PASSWORD).stringType().noDefaultValue(),
-        ConfigOptions.key(ClientConfig.MAX_POOL_SIZE).stringType().noDefaultValue(),
-        ConfigOptions.key(ClientConfig.MIN_IDLE_SIZE).stringType().noDefaultValue(),
+        PASSWORD,
+        MAX_POOL_SIZE,
+        MIN_IDLE_SIZE,
         SINK_BUFFER_FLUSH_INTERVAL,
         SINK_BUFFER_FLUSH_MAX_ROWS,
         SINK_MAX_RETRIES
@@ -107,16 +116,31 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
    */
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
-    CatalogTable table = context.getCatalogTable();
-    TableSchema schema = table.getSchema();
-    Map<String, String> properties = table.toProperties();
+    FactoryUtil.TableFactoryHelper helper = FactoryUtil
+        .createTableFactoryHelper(this, context);
+    ReadableConfig config = helper.getOptions();
+    TableSchema schema = context.getCatalogTable().getSchema();
+
+    // replace database name in database url
+    String dbUrl = config.get(DATABASE_URL);
+    String databaseName = config.get(DATABASE_NAME);
+    checkArgument(dbUrl.matches("jdbc:mysql://[^/]+:\\d+/[^/]+"),
+        "the format of database not matches jdbc:mysql://host:port/database");
+    dbUrl = dbUrl.substring(0, dbUrl.lastIndexOf("/") + 1) + databaseName;
+    // jdbc options
     JdbcOptions jdbcOptions = JdbcOptions.builder()
-        .setDBUrl(properties.get(DATABASE_URL))
-        .setTableName(properties.get(TABLE_NAME))
-        .setUsername(properties.get(USERNAME))
-        .setPassword(properties.get(PASSWORD))
+        .setDBUrl(dbUrl)
+        .setTableName(config.get(TABLE_NAME))
+        .setUsername(config.get(USERNAME))
+        .setPassword(config.get(PASSWORD))
         .build();
-    JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder().build();
+    // execution options
+    JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
+        .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+        .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+        .withMaxRetries(config.get(SINK_MAX_RETRIES))
+        .build();
+    // dml options
     JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
         .withTableName(jdbcOptions.getTableName())
         .withDialect(jdbcOptions.getDialect())
@@ -124,7 +148,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         .withKeyFields(schema.getPrimaryKey().map(pk -> pk.getColumns().toArray(new String[0]))
             .orElse(null))
         .build();
-    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions,
-        schema);
+
+    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
   }
 }

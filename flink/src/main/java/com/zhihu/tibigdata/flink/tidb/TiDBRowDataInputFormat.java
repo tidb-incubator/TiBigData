@@ -77,8 +77,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       DataType[] fieldTypes,
       TypeInformation<RowData> typeInformation) {
     this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
-    this.databaseName = getRequiredProperties(DATABASE_NAME);
-    this.tableName = getRequiredProperties(TABLE_NAME);
+    this.databaseName = getRequiredProperties(DATABASE_NAME.key());
+    this.tableName = getRequiredProperties(TABLE_NAME.key());
     this.fieldNames = fieldNames;
     this.fieldTypes = fieldTypes;
     this.typeInformation = typeInformation;
