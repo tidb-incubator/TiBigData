@@ -16,6 +16,8 @@
 
 package com.zhihu.tibigdata.prestodb.tidb;
 
+import com.facebook.presto.spi.ConnectorInsertTableHandle;
+import com.facebook.presto.spi.ConnectorOutputTableHandle;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +25,7 @@ import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
 
 public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
-    ConnectorTableHandle {
+    ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
 
   @JsonCreator
   public TiDBTableHandle(

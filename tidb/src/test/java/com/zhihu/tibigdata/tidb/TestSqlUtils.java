@@ -3,7 +3,7 @@ package com.zhihu.tibigdata.tidb;
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
-public class TestClientSession {
+public class TestSqlUtils {
 
   @Test
   public void testGetCreateTableSql() {
@@ -12,10 +12,10 @@ public class TestClientSession {
     ImmutableList<String> columnNames = ImmutableList.of("id", "name", "sex");
     ImmutableList<String> columnTypes = ImmutableList.of("int", "varchar(255)", "varchar(255)");
     System.out.println(
-        ClientSession.getCreateTableSql(databaseName, tableName, columnNames, columnTypes, true));
+        SqlUtils.getCreateTableSql(databaseName, tableName, columnNames, columnTypes, true));
     System.out.println(
-        ClientSession.getCreateTableSql(databaseName, tableName, columnNames, columnTypes, false));
-
+        SqlUtils.getCreateTableSql(databaseName, tableName, columnNames, columnTypes, false));
+    System.out.println(SqlUtils.getInsertSql(databaseName, tableName, columnNames));
   }
 
 }

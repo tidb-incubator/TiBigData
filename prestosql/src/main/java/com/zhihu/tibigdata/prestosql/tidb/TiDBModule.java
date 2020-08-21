@@ -45,6 +45,7 @@ public final class TiDBModule
     binder.bind(TiDBSession.class).in(Scopes.SINGLETON);
     binder.bind(TiDBSplitManager.class).in(Scopes.SINGLETON);
     binder.bind(TiDBRecordSetProvider.class).in(Scopes.SINGLETON);
+    binder.bind(TiDBPageSinkProvider.class).in(Scopes.SINGLETON);
 
     configBinder(binder).bindConfig(TiDBConfig.class);
   }

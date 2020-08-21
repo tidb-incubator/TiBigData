@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package com.zhihu.tibigdata.flink.tidb.catalog;
+package com.zhihu.tibigdata.flink.tidb;
+
+import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NAME;
+import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
 
 import com.google.common.collect.ImmutableMap;
-import com.zhihu.tibigdata.flink.tidb.factory.TiDBTableFactory;
-import com.zhihu.tibigdata.flink.tidb.utils.DataTypeMappingUtil;
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.ClientSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import org.apache.flink.table.api.TableAlreadyExistException;
 import org.apache.flink.table.api.TableNotExistException;
 import org.apache.flink.table.api.TableSchema;
@@ -50,7 +52,7 @@ import org.apache.flink.table.catalog.exceptions.TablePartitionedException;
 import org.apache.flink.table.catalog.stats.CatalogColumnStatistics;
 import org.apache.flink.table.catalog.stats.CatalogTableStatistics;
 import org.apache.flink.table.expressions.Expression;
-import org.apache.flink.table.factories.TableFactory;
+import org.apache.flink.table.factories.Factory;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,11 +65,11 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public static final String DEFAULT_NAME = "tidb";
 
-  private final Properties properties;
+  private final Map<String, String> properties;
 
   private Optional<ClientSession> clientSession = Optional.empty();
 
-  public TiDBCatalog(Properties properties) {
+  public TiDBCatalog(Map<String, String> properties) {
     super(DEFAULT_NAME, DEFAULT_DATABASE);
     this.properties = Preconditions.checkNotNull(properties);
   }
@@ -159,7 +161,10 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public CatalogBaseTable getTable(String databaseName, String tableName)
       throws TableNotExistException, CatalogException {
-    return new CatalogTableImpl(getTableSchema(databaseName, tableName), ImmutableMap.of(), "");
+    Map<String, String> properties = new HashMap<>(this.properties);
+    properties.put(DATABASE_NAME.key(), databaseName);
+    properties.put(TABLE_NAME.key(), tableName);
+    return new CatalogTableImpl(getTableSchema(databaseName, tableName), properties, "");
   }
 
   @Override
@@ -348,12 +353,12 @@ public class TiDBCatalog extends AbstractCatalog {
         .orElseThrow(() -> new NullPointerException("can not get table columns"))
         .stream()
         .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
-            DataTypeMappingUtil.mapToFlinkType(c.getType())), (builder1, builder2) -> null).build();
+            TypeUtils.getFlinkType(c.getType())), (builder1, builder2) -> null).build();
   }
 
   @Override
-  public Optional<TableFactory> getTableFactory() {
-    return Optional.of(new TiDBTableFactory(properties));
+  public Optional<Factory> getFactory() {
+    return Optional.of(new TiDBDynamicTableFactory());
   }
 
   public void sqlUpdate(String... sqls) {

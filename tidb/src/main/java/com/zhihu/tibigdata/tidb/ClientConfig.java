@@ -18,8 +18,8 @@ package com.zhihu.tibigdata.tidb;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 public final class ClientConfig {
 
@@ -67,12 +67,14 @@ public final class ClientConfig {
     this.minimumIdleSize = minimumIdleSize;
   }
 
-  public ClientConfig(Properties properties) {
-    this(properties.getProperty(DATABASE_URL),
-        properties.getProperty(USERNAME),
-        properties.getProperty(PASSWORD),
-        Integer.parseInt(properties.getProperty(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT + "")),
-        Integer.parseInt(properties.getProperty(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT + "")));
+  public ClientConfig(Map<String, String> properties) {
+    this(properties.get(DATABASE_URL),
+        properties.get(USERNAME),
+        properties.get(PASSWORD),
+        Integer.parseInt(
+            properties.getOrDefault(MAX_POOL_SIZE, Integer.toString(MAX_POOL_SIZE_DEFAULT))),
+        Integer.parseInt(
+            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))));
   }
 
   public String getPdAddresses() {

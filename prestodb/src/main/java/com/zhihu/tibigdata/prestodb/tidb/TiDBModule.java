@@ -62,6 +62,7 @@ public final class TiDBModule implements Module {
     binder.bind(FunctionMetadataManager.class).toInstance(functionMetadataManager);
     binder.bind(StandardFunctionResolution.class).toInstance(standardFunctionResolution);
     binder.bind(RowExpressionService.class).toInstance(rowExpressionService);
+    binder.bind(TiDBPageSinkProvider.class).in(Scopes.SINGLETON);
 
     configBinder(binder).bindConfig(TiDBConfig.class);
   }

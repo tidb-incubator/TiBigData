@@ -19,6 +19,8 @@ package com.zhihu.tibigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -97,6 +99,10 @@ public final class MetadataInternal {
 
   public void dropColumn(String databaseName, String tableName, String columnName) {
     session.dropColumn(databaseName, tableName, columnName);
+  }
+
+  public Connection getJdbcConnection() throws SQLException {
+    return session.getJdbcConnection();
   }
 
   public String getConnectorId() {

@@ -16,11 +16,12 @@
 
 package com.zhihu.tibigdata.flink.tidb.examples;
 
-import com.zhihu.tibigdata.flink.tidb.catalog.TiDBCatalog;
-import java.util.Properties;
+import com.zhihu.tibigdata.flink.tidb.TiDBCatalog;
+import java.util.Map;
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 public class TiDBCatalogDemo {
@@ -28,7 +29,7 @@ public class TiDBCatalogDemo {
   public static void main(String[] args) {
     // properties
     ParameterTool parameterTool = ParameterTool.fromArgs(args);
-    final Properties properties = parameterTool.getProperties();
+    final Map<String, String> properties = parameterTool.toMap();
     final String databaseName = parameterTool.getRequired("tidb.database.name");
     final String tableName = parameterTool.getRequired("tidb.table.name");
     // env
@@ -43,6 +44,8 @@ public class TiDBCatalogDemo {
     tableEnvironment.useCatalog("tidb");
     // query and print
     String sql = String.format("SELECT * FROM `%s`.`%s` LIMIT 100", databaseName, tableName);
-    tableEnvironment.executeSql(sql).print();
+    TableResult tableResult = tableEnvironment.executeSql(sql);
+    System.out.println(tableResult.getTableSchema());
+    tableResult.print();
   }
 }

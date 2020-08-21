@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.zhihu.tibigdata.flink.tidb.source;
+package com.zhihu.tibigdata.flink.tidb;
 
-import com.zhihu.tibigdata.flink.tidb.utils.DataTypeMappingUtil;
+import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NAME;
+import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
+
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.ClientSession;
 import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
@@ -27,8 +29,8 @@ import com.zhihu.tibigdata.tidb.SplitManagerInternal;
 import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.UUID;
 import org.apache.flink.api.common.io.DefaultInputSplitAssigner;
 import org.apache.flink.api.common.io.RichInputFormat;
@@ -46,19 +48,12 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * for flink sql, same as {@link TiDBInputFormat}
- */
 public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit> implements
     ResultTypeQueryable<RowData> {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBRowDataInputFormat.class);
 
-  public static String DATABASE_NAME = "tidb.database.name";
-
-  public static String TABLE_NAME = "tidb.table.name";
-
-  private final Properties properties;
+  private final Map<String, String> properties;
 
   private final String databaseName;
 
@@ -78,11 +73,12 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   private transient ClientSession clientSession;
 
-  public TiDBRowDataInputFormat(Properties properties, String[] fieldNames, DataType[] fieldTypes,
+  public TiDBRowDataInputFormat(Map<String, String> properties, String[] fieldNames,
+      DataType[] fieldTypes,
       TypeInformation<RowData> typeInformation) {
     this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
-    this.databaseName = getRequiredProperties(DATABASE_NAME);
-    this.tableName = getRequiredProperties(TABLE_NAME);
+    this.databaseName = getRequiredProperties(DATABASE_NAME.key());
+    this.tableName = getRequiredProperties(TABLE_NAME.key());
     this.fieldNames = fieldNames;
     this.fieldTypes = fieldTypes;
     this.typeInformation = typeInformation;
@@ -166,9 +162,9 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);
       // data can be null here
-      row.setField(i, DataTypeMappingUtil.getObjectWithDataType(object, fieldType).orElse(null));
+      row.setField(i, TypeUtils.getObjectWithDataType(object, fieldType).orElse(null));
     }
-    return DataTypeMappingUtil.toRowData(row).orElse(null);
+    return TypeUtils.toRowData(row).orElse(null);
   }
 
   @Override
@@ -177,7 +173,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   }
 
   private String getRequiredProperties(String key) {
-    return Preconditions.checkNotNull(properties.getProperty(key), key + " can not be null");
+    return Preconditions.checkNotNull(properties.get(key), key + " can not be null");
   }
 
 }
