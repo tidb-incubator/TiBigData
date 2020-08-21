@@ -20,7 +20,6 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 public final class ClientConfig {
 
@@ -72,8 +71,10 @@ public final class ClientConfig {
     this(properties.get(DATABASE_URL),
         properties.get(USERNAME),
         properties.get(PASSWORD),
-        Integer.parseInt(properties.getOrDefault(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT + "")),
-        Integer.parseInt(properties.getOrDefault(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT + "")));
+        Integer.parseInt(
+            properties.getOrDefault(MAX_POOL_SIZE, Integer.toString(MAX_POOL_SIZE_DEFAULT))),
+        Integer.parseInt(
+            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))));
   }
 
   public String getPdAddresses() {

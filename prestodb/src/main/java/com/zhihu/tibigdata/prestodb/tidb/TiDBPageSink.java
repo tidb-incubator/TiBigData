@@ -134,38 +134,53 @@ public class TiDBPageSink implements ConnectorPageSink {
     }
 
     Type type = columnTypes.get(channel);
-    if (BOOLEAN.equals(type)) {
-      statement.setBoolean(parameter, type.getBoolean(block, position));
-    } else if (BIGINT.equals(type)) {
-      statement.setLong(parameter, type.getLong(block, position));
-    } else if (INTEGER.equals(type)) {
-      statement.setInt(parameter, toIntExact(type.getLong(block, position)));
-    } else if (SMALLINT.equals(type)) {
-      statement.setShort(parameter, Shorts.checkedCast(type.getLong(block, position)));
-    } else if (TINYINT.equals(type)) {
-      statement.setByte(parameter, SignedBytes.checkedCast(type.getLong(block, position)));
-    } else if (DOUBLE.equals(type)) {
-      statement.setDouble(parameter, type.getDouble(block, position));
-    } else if (REAL.equals(type)) {
-      statement.setFloat(parameter, intBitsToFloat(toIntExact(type.getLong(block, position))));
-    } else if (type instanceof DecimalType) {
-      statement.setBigDecimal(parameter, readBigDecimal((DecimalType) type, block, position));
-    } else if (isVarcharType(type) || isCharType(type) || JSON.equals(type)) {
-      statement.setString(parameter, type.getSlice(block, position).toStringUtf8());
-    } else if (VARBINARY.equals(type)) {
-      statement.setBytes(parameter, type.getSlice(block, position).getBytes());
-    } else if (DATE.equals(type)) {
-      // convert to midnight in default time zone
-      long utcMillis = DAYS.toMillis(type.getLong(block, position));
-      long localMillis = getInstanceUTC().getZone()
-          .getMillisKeepLocal(DateTimeZone.getDefault(), utcMillis);
-      statement.setDate(parameter, new Date(localMillis));
-    } else if (TIME.equals(type)) {
-      statement.setTime(parameter, new Time(type.getLong(block, position)));
-    } else if (TIMESTAMP.equals(type)) {
-      statement.setTimestamp(parameter, new Timestamp(type.getLong(block, position)));
-    } else {
-      throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
+    switch (type.getDisplayName()) {
+      case "boolean":
+        statement.setBoolean(parameter, type.getBoolean(block, position));
+        break;
+      case "tinyint":
+        statement.setByte(parameter, SignedBytes.checkedCast(type.getLong(block, position)));
+        break;
+      case "smallint":
+        statement.setShort(parameter, Shorts.checkedCast(type.getLong(block, position)));
+        break;
+      case "integer":
+        statement.setInt(parameter, toIntExact(type.getLong(block, position)));
+        break;
+      case "bigint":
+        statement.setLong(parameter, type.getLong(block, position));
+        break;
+      case "real":
+        statement.setFloat(parameter, intBitsToFloat(toIntExact(type.getLong(block, position))));
+        break;
+      case "double":
+        statement.setDouble(parameter, type.getDouble(block, position));
+        break;
+      case "date":
+        // convert to midnight in default time zone
+        long utcMillis = DAYS.toMillis(type.getLong(block, position));
+        long localMillis = getInstanceUTC().getZone()
+            .getMillisKeepLocal(DateTimeZone.getDefault(), utcMillis);
+        statement.setDate(parameter, new Date(localMillis));
+        break;
+      case "time":
+        statement.setTime(parameter, new Time(type.getLong(block, position)));
+        break;
+      case "timestamp":
+        statement.setTimestamp(parameter, new Timestamp(type.getLong(block, position)));
+        break;
+      case "varbinary":
+        statement.setBytes(parameter, type.getSlice(block, position).getBytes());
+        break;
+      default:
+        if (type instanceof DecimalType) {
+          statement.setBigDecimal(parameter, readBigDecimal((DecimalType) type, block, position));
+        } else if (isVarcharType(type) || isCharType(type) || JSON.equals(type)) {
+          statement.setString(parameter, type.getSlice(block, position).toStringUtf8());
+        } else {
+          throw new PrestoException(NOT_SUPPORTED,
+              "Unsupported column type: " + type.getDisplayName());
+        }
     }
   }
 
