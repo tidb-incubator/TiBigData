@@ -19,7 +19,9 @@ package com.zhihu.tibigdata.prestodb.tidb;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.PRIMARY_KEYS;
 import static com.zhihu.tibigdata.prestodb.tidb.TypeHelpers.getHelper;
+import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -44,11 +46,13 @@ import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
 import com.zhihu.tibigdata.tidb.MetadataInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
 import io.airlift.slice.Slice;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 
@@ -101,13 +105,14 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     TiDBTableHandle tableHandle = (TiDBTableHandle) table;
     checkArgument(tableHandle.getConnectorId().equals(getInternal().getConnectorId()),
         "tableHandle is not for this connector");
-    return getTableMetadata(
-        new SchemaTableName(tableHandle.getSchemaName(), tableHandle.getTableName()));
+    return getTableMetadata(tableHandle.getSchemaName(), tableHandle.getTableName());
   }
 
-  private ConnectorTableMetadata getTableMetadata(SchemaTableName schemaTable) {
-    return new ConnectorTableMetadata(schemaTable,
-        getTableMetadataStream(schemaTable).collect(toImmutableList()));
+  private ConnectorTableMetadata getTableMetadata(String schemaName, String tableName) {
+    return new ConnectorTableMetadata(new SchemaTableName(schemaName, tableName),
+        getTableMetadataStream(schemaName, tableName).collect(toImmutableList()),
+        ImmutableMap
+            .of(PRIMARY_KEYS, join(",", getInternal().getPrimaryKeys(schemaName, tableName))));
   }
 
   @Override
@@ -173,13 +178,20 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
       boolean ignoreExisting) {
     List<ColumnMetadata> columns = tableMetadata.getColumns();
     SchemaTableName table = tableMetadata.getTable();
+    String schemaName = table.getSchemaName();
+    String tableName = table.getTableName();
     List<String> columnNames = columns.stream().map(ColumnMetadata::getName)
         .collect(toImmutableList());
     List<String> columnTypes = columns.stream()
         .map(column -> TypeHelpers.toSqlString(column.getType()))
         .collect(toImmutableList());
-    getInternal().createTable(table.getSchemaName(), table.getTableName(), columnNames, columnTypes,
-        ignoreExisting);
+    List<String> primaryKeys = Arrays
+        .stream(tableMetadata.getProperties().get(PRIMARY_KEYS).toString().split(","))
+        .filter(s -> !s.isEmpty()).collect(Collectors.toList());
+    checkArgument(columnNames.containsAll(primaryKeys),
+        "column names does not contain all primary keys");
+    getInternal()
+        .createTable(schemaName, tableName, columnNames, columnTypes, primaryKeys, ignoreExisting);
   }
 
   @Override

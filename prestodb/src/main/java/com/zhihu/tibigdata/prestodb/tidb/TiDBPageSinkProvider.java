@@ -17,6 +17,7 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_ERROR;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.UPSERT_MODE_ENABLE;
 
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorInsertTableHandle;
@@ -43,17 +44,18 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
   public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
       ConnectorSession session, ConnectorOutputTableHandle outputTableHandle,
       PageSinkProperties pageSinkProperties) {
-    return createTiDBPageSink((TiDBTableHandle) outputTableHandle);
+    return createTiDBPageSink(session, (TiDBTableHandle) outputTableHandle);
   }
 
   @Override
   public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
       ConnectorSession session, ConnectorInsertTableHandle insertTableHandle,
       PageSinkProperties pageSinkProperties) {
-    return createTiDBPageSink((TiDBTableHandle) insertTableHandle);
+    return createTiDBPageSink(session, (TiDBTableHandle) insertTableHandle);
   }
 
-  private TiDBPageSink createTiDBPageSink(TiDBTableHandle tiDBTableHandle) {
+  private TiDBPageSink createTiDBPageSink(ConnectorSession session,
+      TiDBTableHandle tiDBTableHandle) {
     final String schemaName = tiDBTableHandle.getSchemaName();
     final String tableName = tiDBTableHandle.getTableName();
     final List<ColumnMetadata> columns = metadata.getTableMetadata(null, tiDBTableHandle)
@@ -62,12 +64,15 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
         .collect(ImmutableList.toImmutableList());
     final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
         .collect(ImmutableList.toImmutableList());
+    final List<String> primaryKeys = metadata.getInternal().getPrimaryKeys(schemaName, tableName);
+    final Boolean isUpsert = session.getProperty(UPSERT_MODE_ENABLE, Boolean.class);
     Connection connection;
     try {
       connection = metadata.getInternal().getJdbcConnection();
     } catch (SQLException e) {
       throw new PrestoException(JDBC_ERROR, e);
     }
-    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, connection);
+    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeys, isUpsert,
+        connection);
   }
 }

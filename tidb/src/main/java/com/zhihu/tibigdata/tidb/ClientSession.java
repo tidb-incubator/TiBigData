@@ -31,6 +31,7 @@ import com.pingcap.tikv.TiConfiguration;
 import com.pingcap.tikv.TiSession;
 import com.pingcap.tikv.catalog.Catalog;
 import com.pingcap.tikv.key.RowKey;
+import com.pingcap.tikv.meta.TiColumnInfo;
 import com.pingcap.tikv.meta.TiDAGRequest;
 import com.pingcap.tikv.meta.TiDBInfo;
 import com.pingcap.tikv.meta.TiTableInfo;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -241,9 +243,9 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, boolean ignoreIfExists) {
+      List<String> columnTypes, List<String> primaryKeys, boolean ignoreIfExists) {
     sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
-        requireNonNull(columnNames), requireNonNull(columnTypes), ignoreIfExists));
+        requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeys, ignoreIfExists));
   }
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
@@ -274,7 +276,7 @@ public final class ClientSession implements AutoCloseable {
       String newTableName) {
     sqlUpdate(String.format("RENAME TABLE `%s`.`%s` TO `%s`.`%s` ",
         requireNonNull(oldDatabaseName),
-        requireNonNull(oldDatabaseName),
+        requireNonNull(oldTableName),
         requireNonNull(newDatabaseName),
         requireNonNull(newTableName)));
   }
@@ -314,6 +316,11 @@ public final class ClientSession implements AutoCloseable {
     return toStringHelper(this)
         .add("config", config)
         .toString();
+  }
+
+  public List<String> getPrimaryKeys(String databaseName, String tableName) {
+    return getTableMust(databaseName, tableName).getColumns().stream()
+        .filter(TiColumnInfo::isPrimaryKey).map(TiColumnInfo::getName).collect(Collectors.toList());
   }
 
   @Override

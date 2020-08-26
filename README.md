@@ -19,17 +19,19 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 #### Configuration
 
-| Configration                | Default Value | Description                                                  | Scope                                     |
-| --------------------------- | ------------- | ------------------------------------------------------------ | ----------------------------------------- |
-| tidb.jdbc.database.url      | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format: `jdbc:mysql://host:port/database`. | both of presto and flink                  |
-| tidb.jdbc.username          | -             | JDBC username                                                | both of presto and flink                  |
-| tidb.jdbc.password          | null          | JDBC password                                                | both of presto and flink                  |
-| tidb.jdbc.maximum.pool.size | 10            | connection pool size                                         | both of presto and flink                  |
-| tidb.jdbc.minimum.idle.size | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. | both of presto and flink                  |
-| tidb.database.name          | null          | database name                                                | flink sql only, it is no need for catalog |
-| tidb.table.name             | null          | table name                                                   | flink sql only, it is no need for catalog |
+| Configration                | Scope                                     | Default Value | Description                                                  |
+| --------------------------- | ----------------------------------------- | ------------- | ------------------------------------------------------------ |
+| tidb.jdbc.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format: `jdbc:mysql://host:port/database`. |
+| tidb.jdbc.username          | Presto and Flink                          | -             | JDBC username.                                               |
+| tidb.jdbc.password          | Presto and Flink                          | null          | JDBC password.                                               |
+| tidb.jdbc.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
+| tidb.jdbc.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
+| tidb.upsert_mode_enable     | Presto only                               | false         | tidb sink update mode: false is append only, true is upsert; You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.upsert_mode_enable=true` within a session. |
+| tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
+| tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
 
-TiDB Flink sink support supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.
+
+TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.
 
 #### DataType Mapping
 
@@ -182,7 +184,10 @@ CREATE TABLE ${CATALOG}.${DATABASE}.${TABLE} AS SELECT * FROM ${CATALOG}.${DATAB
 CREATE TABLE hive.default.people AS SELECT * FROM tidb.default.people;
 -- hive to tidb
 CREATE TABLE tidb.default.people AS SELECT * FROM hive.default.people;
+-- enable upsert mode
+SET SESSION tidb.upsert_mode_enable=true;
 ```
+#### Insert and Upsert
 You can also insert and query test table:
 
 ```sql
@@ -260,7 +265,7 @@ VALUES (
 select * from test_tidb_type;
 ```
 
-
+If there are primary keys in tidb table, you can enable upsert mode by `SET SESSION tidb.upsert_mode_enable=true`. TiDB primary keys will be mapping as presto table properties `primary_keys`.
 
 
 ### Flink-TiDB-Connector

@@ -62,8 +62,9 @@ public final class MetadataInternal {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, boolean ignoreExisting) {
-    session.createTable(databaseName, tableName, columnNames, columnTypes, ignoreExisting);
+      List<String> columnTypes, List<String> primaryKeys, boolean ignoreExisting) {
+    session.createTable(databaseName, tableName, columnNames, columnTypes, primaryKeys,
+        ignoreExisting);
   }
 
   public void dropTable(String schemaName, String tableName, boolean ignoreIfNotExists) {
@@ -103,6 +104,10 @@ public final class MetadataInternal {
 
   public Connection getJdbcConnection() throws SQLException {
     return session.getJdbcConnection();
+  }
+
+  public List<String> getPrimaryKeys(String databaseName, String tableName) {
+    return session.getPrimaryKeys(databaseName, tableName);
   }
 
   public String getConnectorId() {

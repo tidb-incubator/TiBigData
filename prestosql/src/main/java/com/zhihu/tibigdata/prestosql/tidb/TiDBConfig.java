@@ -22,6 +22,17 @@ import io.airlift.configuration.Config;
 
 public final class TiDBConfig extends Wrapper<ClientConfig> {
 
+  // for properties
+  public static final String UPSERT_MODE_ENABLE_GLOBLE = "tidb.upsert_mode_enable";
+
+  // for session
+  public static final String UPSERT_MODE_ENABLE = "upsert_mode_enable";
+
+  // for table properties
+  public static final String PRIMARY_KEYS = "primary_keys";
+
+  private boolean isUpsert;
+
   public TiDBConfig() {
     super(new ClientConfig());
   }
@@ -73,6 +84,17 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   @Config(ClientConfig.MIN_IDLE_SIZE)
   public TiDBConfig setMinimumIdle(int minimumIdle) {
     getInternal().setMinimumIdleSize(minimumIdle);
+    return this;
+  }
+
+
+  public boolean getUpsertEnable() {
+    return isUpsert;
+  }
+
+  @Config(UPSERT_MODE_ENABLE_GLOBLE)
+  public TiDBConfig setUpsertEnable(boolean isUpsert) {
+    this.isUpsert = isUpsert;
     return this;
   }
 }

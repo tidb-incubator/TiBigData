@@ -17,24 +17,14 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
-import static com.facebook.presto.spi.type.BigintType.BIGINT;
-import static com.facebook.presto.spi.type.BooleanType.BOOLEAN;
 import static com.facebook.presto.spi.type.Chars.isCharType;
-import static com.facebook.presto.spi.type.DateType.DATE;
 import static com.facebook.presto.spi.type.Decimals.readBigDecimal;
-import static com.facebook.presto.spi.type.DoubleType.DOUBLE;
-import static com.facebook.presto.spi.type.IntegerType.INTEGER;
 import static com.facebook.presto.spi.type.JsonType.JSON;
-import static com.facebook.presto.spi.type.RealType.REAL;
-import static com.facebook.presto.spi.type.SmallintType.SMALLINT;
-import static com.facebook.presto.spi.type.TimeType.TIME;
-import static com.facebook.presto.spi.type.TimestampType.TIMESTAMP;
-import static com.facebook.presto.spi.type.TinyintType.TINYINT;
-import static com.facebook.presto.spi.type.VarbinaryType.VARBINARY;
 import static com.facebook.presto.spi.type.Varchars.isVarcharType;
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_ERROR;
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_NON_TRANSIENT_ERROR;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getInsertSql;
+import static com.zhihu.tibigdata.tidb.SqlUtils.getUpsertSql;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.toIntExact;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -76,24 +66,30 @@ public class TiDBPageSink implements ConnectorPageSink {
 
   private final List<Type> columnTypes;
 
+  private final List<String> primaryKeys;
+
+  private final boolean isUpsert;
+
   private final Connection connection;
 
   private final PreparedStatement statement;
 
   private int batchSize;
 
-  public TiDBPageSink(String schemaName, String tableName,
-      List<String> columnNames, List<Type> columnTypes, Connection connection) {
+  public TiDBPageSink(String schemaName, String tableName, List<String> columnNames,
+      List<Type> columnTypes, List<String> primaryKeys, boolean isUpsert, Connection connection) {
     this.schemaName = schemaName;
     this.tableName = tableName;
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
+    this.primaryKeys = primaryKeys;
+    this.isUpsert = isUpsert;
     this.connection = connection;
     try {
       connection.setAutoCommit(false);
       statement = connection.prepareStatement(
-          getInsertSql(schemaName, tableName,
-              columnNames));
+          isUpsert ? getUpsertSql(schemaName, tableName, columnNames, primaryKeys)
+              : getInsertSql(schemaName, tableName, columnNames));
     } catch (SQLException e) {
       closeWithSuppression(connection, e);
       throw new PrestoException(JDBC_ERROR, e);

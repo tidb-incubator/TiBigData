@@ -16,10 +16,13 @@
 
 package com.zhihu.tibigdata.prestosql.tidb;
 
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.PRIMARY_KEYS;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.UPSERT_MODE_ENABLE;
 import static io.prestosql.spi.transaction.IsolationLevel.REPEATABLE_READ;
 import static io.prestosql.spi.transaction.IsolationLevel.checkConnectorSupports;
 import static java.util.Objects.requireNonNull;
 
+import com.google.common.collect.ImmutableList;
 import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.log.Logger;
 import io.prestosql.spi.connector.Connector;
@@ -28,7 +31,9 @@ import io.prestosql.spi.connector.ConnectorPageSinkProvider;
 import io.prestosql.spi.connector.ConnectorRecordSetProvider;
 import io.prestosql.spi.connector.ConnectorSplitManager;
 import io.prestosql.spi.connector.ConnectorTransactionHandle;
+import io.prestosql.spi.session.PropertyMetadata;
 import io.prestosql.spi.transaction.IsolationLevel;
+import java.util.List;
 import javax.inject.Inject;
 
 public final class TiDBConnector
@@ -36,6 +41,7 @@ public final class TiDBConnector
 
   private static final Logger log = Logger.get(TiDBConnector.class);
 
+  private final TiDBConfig config;
   private final LifeCycleManager lifeCycleManager;
   private final TiDBMetadata metadata;
   private final TiDBSplitManager splitManager;
@@ -44,11 +50,13 @@ public final class TiDBConnector
 
   @Inject
   public TiDBConnector(
+      TiDBConfig config,
       LifeCycleManager lifeCycleManager,
       TiDBMetadata metadata,
       TiDBSplitManager splitManager,
       TiDBRecordSetProvider recordSetProvider,
       TiDBPageSinkProvider pageSinkProvider) {
+    this.config = requireNonNull(config, "config is null");
     this.lifeCycleManager = requireNonNull(lifeCycleManager, "lifeCycleManager is null");
     this.metadata = requireNonNull(metadata, "metadata is null");
     this.splitManager = requireNonNull(splitManager, "splitManager is null");
@@ -81,6 +89,22 @@ public final class TiDBConnector
   @Override
   public ConnectorPageSinkProvider getPageSinkProvider() {
     return pageSinkProvider;
+  }
+
+  @Override
+  public List<PropertyMetadata<?>> getTableProperties() {
+    return ImmutableList.of(
+        PropertyMetadata.stringProperty(PRIMARY_KEYS, "tidb table primary keys", "", false)
+    );
+  }
+
+  @Override
+  public List<PropertyMetadata<?>> getSessionProperties() {
+    return ImmutableList.of(
+        PropertyMetadata.booleanProperty(UPSERT_MODE_ENABLE,
+            "tidb sink update mode: false is append only, true is upsert",
+            config.getUpsertEnable(), false)
+    );
   }
 
   @Override
