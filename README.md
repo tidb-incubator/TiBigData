@@ -26,7 +26,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | tidb.jdbc.password          | Presto and Flink                          | null          | JDBC password.                                               |
 | tidb.jdbc.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
 | tidb.jdbc.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
-| tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.tidb.write_mode='upsert'` within a session. |
+| tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
 
