@@ -19,7 +19,7 @@ package com.zhihu.tibigdata.prestodb.tidb;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.PRIMARY_KEYS;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.PRIMARY_KEY;
 import static com.zhihu.tibigdata.prestodb.tidb.TypeHelpers.getHelper;
 import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
@@ -111,8 +111,8 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
   private ConnectorTableMetadata getTableMetadata(String schemaName, String tableName) {
     return new ConnectorTableMetadata(new SchemaTableName(schemaName, tableName),
         getTableMetadataStream(schemaName, tableName).collect(toImmutableList()),
-        ImmutableMap
-            .of(PRIMARY_KEYS, join(",", getInternal().getPrimaryKeys(schemaName, tableName))));
+        ImmutableMap.of(PRIMARY_KEY,
+            join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName))));
   }
 
   @Override
@@ -185,13 +185,13 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     List<String> columnTypes = columns.stream()
         .map(column -> TypeHelpers.toSqlString(column.getType()))
         .collect(toImmutableList());
-    List<String> primaryKeys = Arrays
-        .stream(tableMetadata.getProperties().get(PRIMARY_KEYS).toString().split(","))
+    List<String> primaryKeyColumns = Arrays
+        .stream(tableMetadata.getProperties().get(PRIMARY_KEY).toString().split(","))
         .filter(s -> !s.isEmpty()).collect(Collectors.toList());
-    checkArgument(columnNames.containsAll(primaryKeys),
-        "column names does not contain all primary keys");
-    getInternal()
-        .createTable(schemaName, tableName, columnNames, columnTypes, primaryKeys, ignoreExisting);
+    checkArgument(columnNames.containsAll(primaryKeyColumns),
+        "column names does not contain all primary key columns");
+    getInternal().createTable(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
+        ignoreExisting);
   }
 
   @Override

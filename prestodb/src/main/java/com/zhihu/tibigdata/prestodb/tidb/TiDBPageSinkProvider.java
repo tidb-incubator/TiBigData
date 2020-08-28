@@ -17,7 +17,8 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_ERROR;
-import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.UPSERT_MODE_ENABLE;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.WRITE_MODE;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBWriteMode.fromString;
 
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorInsertTableHandle;
@@ -64,15 +65,16 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
         .collect(ImmutableList.toImmutableList());
     final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
         .collect(ImmutableList.toImmutableList());
-    final List<String> primaryKeys = metadata.getInternal().getPrimaryKeys(schemaName, tableName);
-    final Boolean isUpsert = session.getProperty(UPSERT_MODE_ENABLE, Boolean.class);
+    final List<String> primaryKeyColumns = metadata.getInternal()
+        .getPrimaryKeyColumns(schemaName, tableName);
+    TiDBWriteMode writeMode = fromString(session.getProperty(WRITE_MODE, String.class));
     Connection connection;
     try {
       connection = metadata.getInternal().getJdbcConnection();
     } catch (SQLException e) {
       throw new PrestoException(JDBC_ERROR, e);
     }
-    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeys, isUpsert,
-        connection);
+    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
+        writeMode, connection);
   }
 }

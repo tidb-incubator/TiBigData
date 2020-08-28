@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.zhihu.tibigdata.tidb.ClientConfig.JDBC_DRIVER_NAME;
+import static com.zhihu.tibigdata.tidb.SqlUtils.QUERY_PD_SQL;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
@@ -208,12 +209,11 @@ public final class ClientSession implements AutoCloseable {
 
   public String getPdAddresses() {
     if (config.getPdAddresses() == null) {
-      String sql = "SELECT `INSTANCE` FROM `INFORMATION_SCHEMA`.`CLUSTER_INFO` WHERE `TYPE` = 'pd'";
       List<String> pdAddressesList = new ArrayList<>();
       try (
           Connection connection = dataSource.getConnection();
           Statement statement = connection.createStatement();
-          ResultSet resultSet = statement.executeQuery(sql)
+          ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
         while (resultSet.next()) {
           pdAddressesList.add(resultSet.getString("INSTANCE"));
@@ -243,9 +243,10 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeys, boolean ignoreIfExists) {
+      List<String> columnTypes, List<String> primaryKeyColumns, boolean ignoreIfExists) {
     sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
-        requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeys, ignoreIfExists));
+        requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeyColumns,
+        ignoreIfExists));
   }
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
@@ -318,7 +319,7 @@ public final class ClientSession implements AutoCloseable {
         .toString();
   }
 
-  public List<String> getPrimaryKeys(String databaseName, String tableName) {
+  public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
     return getTableMust(databaseName, tableName).getColumns().stream()
         .filter(TiColumnInfo::isPrimaryKey).map(TiColumnInfo::getName).collect(Collectors.toList());
   }

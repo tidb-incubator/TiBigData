@@ -13,17 +13,19 @@ public class TestSqlUtils {
   String tableName = "people";
   ImmutableList<String> columnNames = ImmutableList.of("id", "name", "sex");
   ImmutableList<String> columnTypes = ImmutableList.of("int", "varchar(255)", "varchar(255)");
-  ImmutableList<String> primaryKeys1 = ImmutableList.of("id");
-  ImmutableList<String> primaryKeys2 = ImmutableList.of("id", "name");
+  ImmutableList<String> primaryKeyColumns1 = ImmutableList.of("id");
+  ImmutableList<String> primaryKeyColumns2 = ImmutableList.of("id", "name");
 
   @Test
   public void testGetCreateTableSql() {
     System.out.println(
         getCreateTableSql(databaseName, tableName, columnNames, columnTypes, null, true));
     System.out.println(
-        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeys1, true));
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns1,
+            true));
     System.out.println(
-        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeys2, false));
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns2,
+            false));
   }
 
   @Test
@@ -34,8 +36,8 @@ public class TestSqlUtils {
   @Test
   public void testUpsertSql() {
     System.out.println(getUpsertSql(databaseName, tableName, columnNames, null));
-    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeys1));
-    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeys2));
+    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeyColumns1));
+    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeyColumns2));
   }
 
 }

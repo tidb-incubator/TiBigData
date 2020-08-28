@@ -23,15 +23,15 @@ import io.airlift.configuration.Config;
 public final class TiDBConfig extends Wrapper<ClientConfig> {
 
   // for properties
-  public static final String UPSERT_MODE_ENABLE_GLOBLE = "tidb.upsert_mode_enable";
+  public static final String WRITE_MODE_GLOBAL = "tidb.write_mode";
 
   // for session
-  public static final String UPSERT_MODE_ENABLE = "upsert_mode_enable";
+  public static final String WRITE_MODE = "write_mode";
 
   // for table properties
-  public static final String PRIMARY_KEYS = "primary_keys";
+  public static final String PRIMARY_KEY = "primary_key";
 
-  private boolean isUpsert;
+  private String writeMode = "append";
 
   public TiDBConfig() {
     super(new ClientConfig());
@@ -87,14 +87,13 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
     return this;
   }
 
-
-  public boolean getUpsertEnable() {
-    return isUpsert;
+  public String getWriteMode() {
+    return writeMode;
   }
 
-  @Config(UPSERT_MODE_ENABLE_GLOBLE)
-  public TiDBConfig setUpsertEnable(boolean isUpsert) {
-    this.isUpsert = isUpsert;
+  @Config(WRITE_MODE_GLOBAL)
+  public TiDBConfig setWriteMode(String writeMode) {
+    this.writeMode = writeMode;
     return this;
   }
 }

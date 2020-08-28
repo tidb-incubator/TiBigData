@@ -26,7 +26,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | tidb.jdbc.password          | Presto and Flink                          | null          | JDBC password.                                               |
 | tidb.jdbc.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
 | tidb.jdbc.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
-| tidb.upsert_mode_enable     | Presto only                               | false         | tidb sink update mode: false is append only, true is upsert; You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.upsert_mode_enable=true` within a session. |
+| tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.tidb.write_mode='upsert'` within a session. |
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
 
@@ -147,6 +147,7 @@ tidb.jdbc.username=root
 tidb.jdbc.password=123456
 tidb.jdbc.maximum.pool.size=10
 tidb.jdbc.minimum.idle.size=0
+tidb.write_mode=upsert
 ```
 
 then restart your presto cluster and use presto-cli to connect presto coordinator:
@@ -185,7 +186,7 @@ CREATE TABLE hive.default.people AS SELECT * FROM tidb.default.people;
 -- hive to tidb
 CREATE TABLE tidb.default.people AS SELECT * FROM hive.default.people;
 -- enable upsert mode
-SET SESSION tidb.upsert_mode_enable=true;
+SET SESSION tidb.write_mode='upsert';
 ```
 #### Insert and Upsert
 You can also insert and query test table:
@@ -265,7 +266,7 @@ VALUES (
 select * from test_tidb_type;
 ```
 
-If there are primary keys in tidb table, you can enable upsert mode by `SET SESSION tidb.upsert_mode_enable=true`. TiDB primary keys will be mapping as presto table properties `primary_keys`.
+If there is primary key in tidb table, you can enable upsert mode by `SET SESSION tidb.write_mode='upsert'`. TiDB primary key columns will be mapped as presto table property `primary_key`.
 
 
 ### Flink-TiDB-Connector

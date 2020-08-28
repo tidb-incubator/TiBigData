@@ -31,7 +31,7 @@ public final class MetadataInternal {
   private final ClientSession session;
 
   public MetadataInternal(String connectorId, ClientSession session) {
-    this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
+    this.connectorId = requireNonNull(connectorId, "connectorId is null");
     this.session = requireNonNull(session, "session is null");
   }
 
@@ -62,8 +62,8 @@ public final class MetadataInternal {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeys, boolean ignoreExisting) {
-    session.createTable(databaseName, tableName, columnNames, columnTypes, primaryKeys,
+      List<String> columnTypes, List<String> primaryKeyColumns, boolean ignoreExisting) {
+    session.createTable(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
         ignoreExisting);
   }
 
@@ -106,8 +106,8 @@ public final class MetadataInternal {
     return session.getJdbcConnection();
   }
 
-  public List<String> getPrimaryKeys(String databaseName, String tableName) {
-    return session.getPrimaryKeys(databaseName, tableName);
+  public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
+    return session.getPrimaryKeyColumns(databaseName, tableName);
   }
 
   public String getConnectorId() {

@@ -18,6 +18,7 @@ package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.zhihu.tibigdata.prestosql.tidb.JdbcErrorCode.JDBC_ERROR;
 import static com.zhihu.tibigdata.prestosql.tidb.JdbcErrorCode.JDBC_NON_TRANSIENT_ERROR;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBWriteMode.UPSERT;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getInsertSql;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getUpsertSql;
 import static io.prestosql.spi.StandardErrorCode.NOT_SUPPORTED;
@@ -66,9 +67,9 @@ public class TiDBPageSink implements ConnectorPageSink {
 
   private final List<Type> columnTypes;
 
-  private final List<String> primaryKeys;
+  private final List<String> primaryKeyColumns;
 
-  private final boolean isUpsert;
+  private final TiDBWriteMode writeMode;
 
   private final Connection connection;
 
@@ -77,18 +78,19 @@ public class TiDBPageSink implements ConnectorPageSink {
   private int batchSize;
 
   public TiDBPageSink(String schemaName, String tableName, List<String> columnNames,
-      List<Type> columnTypes, List<String> primaryKeys, boolean isUpsert, Connection connection) {
+      List<Type> columnTypes, List<String> primaryKeyColumns, TiDBWriteMode writeMode,
+      Connection connection) {
     this.schemaName = schemaName;
     this.tableName = tableName;
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
-    this.primaryKeys = primaryKeys;
-    this.isUpsert = isUpsert;
+    this.primaryKeyColumns = primaryKeyColumns;
+    this.writeMode = writeMode;
     this.connection = connection;
     try {
       connection.setAutoCommit(false);
       statement = connection.prepareStatement(
-          isUpsert ? getUpsertSql(schemaName, tableName, columnNames, primaryKeys)
+          writeMode == UPSERT ? getUpsertSql(schemaName, tableName, columnNames, primaryKeyColumns)
               : getInsertSql(schemaName, tableName, columnNames));
     } catch (SQLException e) {
       closeWithSuppression(connection, e);
