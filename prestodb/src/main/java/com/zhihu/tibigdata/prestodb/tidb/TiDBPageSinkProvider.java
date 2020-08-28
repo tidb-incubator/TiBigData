@@ -17,6 +17,8 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_ERROR;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.WRITE_MODE;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBWriteMode.fromString;
 
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorInsertTableHandle;
@@ -43,17 +45,18 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
   public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
       ConnectorSession session, ConnectorOutputTableHandle outputTableHandle,
       PageSinkProperties pageSinkProperties) {
-    return createTiDBPageSink((TiDBTableHandle) outputTableHandle);
+    return createTiDBPageSink(session, (TiDBTableHandle) outputTableHandle);
   }
 
   @Override
   public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
       ConnectorSession session, ConnectorInsertTableHandle insertTableHandle,
       PageSinkProperties pageSinkProperties) {
-    return createTiDBPageSink((TiDBTableHandle) insertTableHandle);
+    return createTiDBPageSink(session, (TiDBTableHandle) insertTableHandle);
   }
 
-  private TiDBPageSink createTiDBPageSink(TiDBTableHandle tiDBTableHandle) {
+  private TiDBPageSink createTiDBPageSink(ConnectorSession session,
+      TiDBTableHandle tiDBTableHandle) {
     final String schemaName = tiDBTableHandle.getSchemaName();
     final String tableName = tiDBTableHandle.getTableName();
     final List<ColumnMetadata> columns = metadata.getTableMetadata(null, tiDBTableHandle)
@@ -62,12 +65,16 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
         .collect(ImmutableList.toImmutableList());
     final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
         .collect(ImmutableList.toImmutableList());
+    final List<String> primaryKeyColumns = metadata.getInternal()
+        .getPrimaryKeyColumns(schemaName, tableName);
+    TiDBWriteMode writeMode = fromString(session.getProperty(WRITE_MODE, String.class));
     Connection connection;
     try {
       connection = metadata.getInternal().getJdbcConnection();
     } catch (SQLException e) {
       throw new PrestoException(JDBC_ERROR, e);
     }
-    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, connection);
+    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
+        writeMode, connection);
   }
 }

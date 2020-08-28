@@ -22,6 +22,17 @@ import com.zhihu.tibigdata.tidb.Wrapper;
 
 public final class TiDBConfig extends Wrapper<ClientConfig> {
 
+  // for properties
+  public static final String WRITE_MODE_GLOBAL = "tidb.write_mode";
+
+  // for session
+  public static final String WRITE_MODE = "write_mode";
+
+  // for table properties
+  public static final String PRIMARY_KEY = "primary_key";
+
+  private String writeMode = "append";
+
   public TiDBConfig() {
     super(new ClientConfig());
   }
@@ -73,6 +84,16 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   @Config(ClientConfig.MIN_IDLE_SIZE)
   public TiDBConfig setMinimumIdle(int minimumIdle) {
     getInternal().setMinimumIdleSize(minimumIdle);
+    return this;
+  }
+
+  public String getWriteMode() {
+    return writeMode;
+  }
+
+  @Config(WRITE_MODE_GLOBAL)
+  public TiDBConfig setWriteMode(String writeMode) {
+    this.writeMode = writeMode;
     return this;
   }
 }

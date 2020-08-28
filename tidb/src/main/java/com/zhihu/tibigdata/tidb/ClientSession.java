@@ -21,6 +21,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.zhihu.tibigdata.tidb.ClientConfig.JDBC_DRIVER_NAME;
+import static com.zhihu.tibigdata.tidb.SqlUtils.QUERY_PD_SQL;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
@@ -31,6 +32,7 @@ import com.pingcap.tikv.TiConfiguration;
 import com.pingcap.tikv.TiSession;
 import com.pingcap.tikv.catalog.Catalog;
 import com.pingcap.tikv.key.RowKey;
+import com.pingcap.tikv.meta.TiColumnInfo;
 import com.pingcap.tikv.meta.TiDAGRequest;
 import com.pingcap.tikv.meta.TiDBInfo;
 import com.pingcap.tikv.meta.TiTableInfo;
@@ -50,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.inject.Inject;
 import org.slf4j.Logger;
@@ -206,12 +209,11 @@ public final class ClientSession implements AutoCloseable {
 
   public String getPdAddresses() {
     if (config.getPdAddresses() == null) {
-      String sql = "SELECT `INSTANCE` FROM `INFORMATION_SCHEMA`.`CLUSTER_INFO` WHERE `TYPE` = 'pd'";
       List<String> pdAddressesList = new ArrayList<>();
       try (
           Connection connection = dataSource.getConnection();
           Statement statement = connection.createStatement();
-          ResultSet resultSet = statement.executeQuery(sql)
+          ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
         while (resultSet.next()) {
           pdAddressesList.add(resultSet.getString("INSTANCE"));
@@ -241,9 +243,10 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, boolean ignoreIfExists) {
+      List<String> columnTypes, List<String> primaryKeyColumns, boolean ignoreIfExists) {
     sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
-        requireNonNull(columnNames), requireNonNull(columnTypes), ignoreIfExists));
+        requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeyColumns,
+        ignoreIfExists));
   }
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
@@ -274,7 +277,7 @@ public final class ClientSession implements AutoCloseable {
       String newTableName) {
     sqlUpdate(String.format("RENAME TABLE `%s`.`%s` TO `%s`.`%s` ",
         requireNonNull(oldDatabaseName),
-        requireNonNull(oldDatabaseName),
+        requireNonNull(oldTableName),
         requireNonNull(newDatabaseName),
         requireNonNull(newTableName)));
   }
@@ -314,6 +317,11 @@ public final class ClientSession implements AutoCloseable {
     return toStringHelper(this)
         .add("config", config)
         .toString();
+  }
+
+  public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
+    return getTableMust(databaseName, tableName).getColumns().stream()
+        .filter(TiColumnInfo::isPrimaryKey).map(TiColumnInfo::getName).collect(Collectors.toList());
   }
 
   @Override
