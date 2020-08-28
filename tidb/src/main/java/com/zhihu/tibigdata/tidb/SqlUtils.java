@@ -15,7 +15,7 @@ public class SqlUtils {
 
   private static List<String> concatNameType(List<String> columnNames, List<String> columnTypes,
       List<String> primaryKeyColumns) {
-    List<String> nameType = new ArrayList<>();
+    List<String> nameType = new ArrayList<>(columnNames.size() + 1);
     for (int i = 0; i < columnNames.size(); i++) {
       nameType.add(format("`%s` %s", columnNames.get(i), columnTypes.get(i)));
     }
