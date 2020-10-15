@@ -18,6 +18,8 @@ package com.zhihu.tibigdata.flink.tidb;
 
 import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NAME;
 import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
+import static com.zhihu.tibigdata.flink.tidb.TypeUtils.getObjectWithDataType;
+import static com.zhihu.tibigdata.flink.tidb.TypeUtils.toRowDataType;
 
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.ClientSession;
@@ -162,7 +164,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);
       // data can be null here
-      row.setField(i, TypeUtils.getObjectWithDataType(object, fieldType).orElse(null));
+      row.setField(i, toRowDataType(getObjectWithDataType(object, fieldType).orElse(null)));
     }
     return TypeUtils.toRowData(row).orElse(null);
   }

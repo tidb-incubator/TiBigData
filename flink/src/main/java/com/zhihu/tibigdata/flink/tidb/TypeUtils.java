@@ -165,36 +165,43 @@ public class TypeUtils {
     }
     GenericRowData rowData = new GenericRowData(row.getArity());
     for (int i = 0; i < row.getArity(); i++) {
-      Object object = row.getField(i);
-      if (object == null) {
-        continue;
-      }
-      switch (object.getClass().getSimpleName()) {
-        case "String":
-          object = StringData.fromString(object.toString());
-          break;
-        case "BigDecimal":
-          BigDecimal bigDecimal = (BigDecimal) object;
-          object = DecimalData
-              .fromBigDecimal(bigDecimal, bigDecimal.precision(), bigDecimal.scale());
-          break;
-        case "LocalDate":
-          LocalDate localDate = (LocalDate) object;
-          object = (int) localDate.toEpochDay();
-          break;
-        case "LocalDateTime":
-          object = TimestampData.fromLocalDateTime((LocalDateTime) object);
-          break;
-        case "LocalTime":
-          LocalTime localTime = (LocalTime) object;
-          object = (int) (localTime.toNanoOfDay() / (1000 * 1000));
-          break;
-        default:
-          // pass code style
-          break;
-      }
-      rowData.setField(i, object);
+      rowData.setField(i, toRowDataType(row.getField(i)));
     }
     return Optional.of(rowData);
+  }
+
+  /**
+   * transform Row type to GenericRowData type
+   */
+  public static Object toRowDataType(Object object) {
+    Object result = object;
+    if (object == null) {
+      return null;
+    }
+    switch (object.getClass().getSimpleName()) {
+      case "String":
+        result = StringData.fromString(object.toString());
+        break;
+      case "BigDecimal":
+        BigDecimal bigDecimal = (BigDecimal) object;
+        result = DecimalData
+            .fromBigDecimal(bigDecimal, bigDecimal.precision(), bigDecimal.scale());
+        break;
+      case "LocalDate":
+        LocalDate localDate = (LocalDate) object;
+        result = (int) localDate.toEpochDay();
+        break;
+      case "LocalDateTime":
+        result = TimestampData.fromLocalDateTime((LocalDateTime) object);
+        break;
+      case "LocalTime":
+        LocalTime localTime = (LocalTime) object;
+        result = (int) (localTime.toNanoOfDay() / (1000 * 1000));
+        break;
+      default:
+        // pass code style
+        break;
+    }
+    return result;
   }
 }
