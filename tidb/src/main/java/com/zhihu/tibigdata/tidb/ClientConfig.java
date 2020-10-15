@@ -25,17 +25,17 @@ public final class ClientConfig {
 
   public static final String JDBC_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
-  public static final String DATABASE_URL = "tidb.jdbc.database.url";
+  public static final String DATABASE_URL = "tidb.database.url";
 
-  public static final String USERNAME = "tidb.jdbc.username";
+  public static final String USERNAME = "tidb.username";
 
-  public static final String PASSWORD = "tidb.jdbc.password";
+  public static final String PASSWORD = "tidb.password";
 
-  public static final String MAX_POOL_SIZE = "tidb.jdbc.maximum.pool.size";
+  public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
   public static final int MAX_POOL_SIZE_DEFAULT = 10;
 
   // default value means that we connect to tidb server lazily
-  public static final String MIN_IDLE_SIZE = "tidb.jdbc.minimum.idle.size";
+  public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
   public static final int MIN_IDLE_SIZE_DEFAULT = 0;
 
   private String pdAddresses;
