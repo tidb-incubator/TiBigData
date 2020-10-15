@@ -21,11 +21,11 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 | Configration                | Scope                                     | Default Value | Description                                                  |
 | --------------------------- | ----------------------------------------- | ------------- | ------------------------------------------------------------ |
-| tidb.jdbc.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format: `jdbc:mysql://host:port/database`. |
-| tidb.jdbc.username          | Presto and Flink                          | -             | JDBC username.                                               |
-| tidb.jdbc.password          | Presto and Flink                          | null          | JDBC password.                                               |
-| tidb.jdbc.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
-| tidb.jdbc.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
+| tidb.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format: `jdbc:mysql://host:port/database`. |
+| tidb.username          | Presto and Flink                          | -             | JDBC username.                                               |
+| tidb.password          | Presto and Flink                          | null          | JDBC password.                                               |
+| tidb.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
+| tidb.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
@@ -142,11 +142,11 @@ The file `tidb.properties` like :
 ```properties
 # connector name, must be tidb
 connector.name=tidb
-tidb.jdbc.database.url=jdbc:mysql://host:port/database
-tidb.jdbc.username=root
-tidb.jdbc.password=123456
-tidb.jdbc.maximum.pool.size=10
-tidb.jdbc.minimum.idle.size=0
+tidb.database.url=jdbc:mysql://host:port/database
+tidb.username=root
+tidb.password=123456
+tidb.maximum.pool.size=10
+tidb.minimum.idle.size=0
 tidb.write_mode=upsert
 ```
 
@@ -273,7 +273,7 @@ If there is primary key in tidb table, you can enable upsert mode by `SET SESSIO
 
 ```bash
 cp flink/target/flink-tidb-connector-0.0.1-SNAPSHOT.jar ${FLINK_HOME}/lib
-bin/flink run -c com.zhihu.tibigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --tidb.jdbc.database.url ${DATABASE_URL} --tidb.jdbc.username ${USERNAME} --tidb.jdbc.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+bin/flink run -c com.zhihu.tibigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.1-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
 ```
 
 The output can be found in console, like:
@@ -331,9 +331,9 @@ public class TestCreateTable {
 
   public static void main(String[] args) throws Exception {
     Properties properties = new Properties();
-    properties.setProperty("tidb.jdbc.database.url", "jdbc:mysql://host:port/database");
-    properties.setProperty("tidb.jdbc.username", "root");
-    properties.setProperty("tidb.jdbc.password", "123456");
+    properties.setProperty("tidb.database.url", "jdbc:mysql://host:port/database");
+    properties.setProperty("tidb.username", "root");
+    properties.setProperty("tidb.password", "123456");
     TiDBCatalog catalog = new TiDBCatalog(properties);
     catalog.open();
     String sql = "CREATE TABLE IF NOT EXISTS people(id INT, name VARCHAR(255), sex ENUM('1','2'))";
@@ -389,9 +389,9 @@ public class TestFlinkSql {
         + " c28    string\n"
         + ") WITH (\n"
         + "  'connector' = 'tidb',\n"
-        + "  'tidb.jdbc.database.url' = 'jdbc:mysql://host:port/database',\n"
-        + "  'tidb.jdbc.username' = 'root',\n"
-        + "  'tidb.jdbc.password' = '123456',\n"
+        + "  'tidb.database.url' = 'jdbc:mysql://host:port/database',\n"
+        + "  'tidb.username' = 'root',\n"
+        + "  'tidb.password' = '123456',\n"
         + "  'tidb.database.name' = 'database',\n"
         + "  'tidb.table.name' = 'test_tidb_type'\n"
         + ")"
@@ -437,12 +437,12 @@ CREATE TABLE tidb(
  c28    string
 ) WITH (
   'connector' = 'tidb',
-  'tidb.jdbc.database.url' = 'jdbc:mysql://host:port/database',
-  'tidb.jdbc.username' = 'root',
-  'tidb.jdbc.password' = '123456',
+  'tidb.database.url' = 'jdbc:mysql://host:port/database',
+  'tidb.username' = 'root',
+  'tidb.password' = '123456',
   'tidb.database.name' = 'database',
-  'tidb.jdbc.maximum.pool.size' = '10',
-  'tidb.jdbc.minimum.idle.size' = '0',
+  'tidb.maximum.pool.size' = '10',
+  'tidb.minimum.idle.size' = '0',
   'tidb.table.name' = 'test_tidb_type'
 );
 -- insert data
