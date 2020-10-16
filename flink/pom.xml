@@ -97,6 +97,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.google.common</pattern>
+                                    <shadedPattern>shade.tibigdata.com.google.common</shadedPattern>
+                                </relocation>
+                            </relocations>
                             <finalName>${project.artifactId}-${project.version}</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"></transformer>
