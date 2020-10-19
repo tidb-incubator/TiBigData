@@ -17,13 +17,17 @@
 package com.zhihu.tibigdata.tidb;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
+import static com.zhihu.tibigdata.jdbc.TiDBDriver.MYSQL_PREFIX;
+import static com.zhihu.tibigdata.jdbc.TiDBDriver.TIDB_PREFIX;
 
 import java.util.Map;
 import java.util.Objects;
 
 public final class ClientConfig {
 
-  public static final String JDBC_DRIVER_NAME = "com.mysql.jdbc.Driver";
+  public static final String TIDB_DRIVER_NAME = "com.zhihu.tibigdata.jdbc.TiDBDriver";
+
+  public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
   public static final String DATABASE_URL = "tidb.database.url";
 
@@ -36,7 +40,7 @@ public final class ClientConfig {
 
   // default value means that we connect to tidb server lazily
   public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
-  public static final int MIN_IDLE_SIZE_DEFAULT = 0;
+  public static final int MIN_IDLE_SIZE_DEFAULT = 10;
 
   private String pdAddresses;
 
@@ -123,6 +127,16 @@ public final class ClientConfig {
 
   public void setMinimumIdleSize(int minimumIdleSize) {
     this.minimumIdleSize = minimumIdleSize;
+  }
+
+  public String getDriverName() {
+    if (databaseUrl.startsWith(MYSQL_PREFIX)) {
+      return MYSQL_DRIVER_NAME;
+    }
+    if (databaseUrl.startsWith(TIDB_PREFIX)) {
+      return TIDB_DRIVER_NAME;
+    }
+    throw new IllegalArgumentException("can not parse driver by " + databaseUrl);
   }
 
   @Override

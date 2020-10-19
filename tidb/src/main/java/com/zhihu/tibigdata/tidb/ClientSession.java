@@ -20,7 +20,6 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static com.zhihu.tibigdata.tidb.ClientConfig.JDBC_DRIVER_NAME;
 import static com.zhihu.tibigdata.tidb.SqlUtils.QUERY_PD_SQL;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.util.Objects.requireNonNull;
@@ -77,15 +76,15 @@ public final class ClientSession implements AutoCloseable {
     this.config = requireNonNull(config, "config is null");
     dataSource = new HikariDataSource(new HikariConfig() {
       {
-        setDriverClassName(JDBC_DRIVER_NAME);
         setJdbcUrl(requireNonNull(config.getDatabaseUrl(), "database url can not be null"));
         setUsername(requireNonNull(config.getUsername(), "username can not be null"));
         setPassword(config.getPassword());
+        setDriverClassName(config.getDriverName());
         setMaximumPoolSize(config.getMaximumPoolSize());
         setMinimumIdle(config.getMinimumIdleSize());
       }
     });
-    this.config.setPdAddresses(getPdAddresses());
+    loadPdAddresses();
     session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()));
     catalog = session.getCatalog();
   }
@@ -207,7 +206,7 @@ public final class ClientSession implements AutoCloseable {
             session);
   }
 
-  public String getPdAddresses() {
+  public void loadPdAddresses() {
     if (config.getPdAddresses() == null) {
       List<String> pdAddressesList = new ArrayList<>();
       try (
@@ -221,9 +220,7 @@ public final class ClientSession implements AutoCloseable {
       } catch (Exception e) {
         throw new IllegalStateException("can not get pdAddresses", e);
       }
-      return String.join(",", pdAddressesList);
-    } else {
-      return config.getPdAddresses();
+      config.setPdAddresses(String.join(",", pdAddressesList));
     }
   }
 

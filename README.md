@@ -12,20 +12,20 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 ### Implements
 
-|        | Flink                  | Presto              |
-| ------ | ---------------------- | ------------------- |
-| source | `tikv-java-client`     | `tikv-java-client`  |
-| sink   | `JdbcDynamicTableSink` | `mysql-jdbc` client |
+|        | Flink                  | Presto                 |
+| ------ | ---------------------- | ---------------------- |
+| source | `tikv-java-client`     | `tikv-java-client`     |
+| sink   | `JdbcDynamicTableSink` | `mysql-connector-java` |
 
 #### Configuration
 
 | Configration                | Scope                                     | Default Value | Description                                                  |
 | --------------------------- | ----------------------------------------- | ------------- | ------------------------------------------------------------ |
-| tidb.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format: `jdbc:mysql://host:port/database`. |
+| tidb.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide  your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is very huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and picked one at random when establishing connections. |
 | tidb.username          | Presto and Flink                          | -             | JDBC username.                                               |
 | tidb.password          | Presto and Flink                          | null          | JDBC password.                                               |
 | tidb.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
-| tidb.minimum.idle.size | Presto and Flink                          | 0             | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
+| tidb.minimum.idle.size | Presto and Flink                          | 10           | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |

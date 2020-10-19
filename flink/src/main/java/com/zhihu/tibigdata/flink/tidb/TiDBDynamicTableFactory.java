@@ -16,9 +16,13 @@
 
 package com.zhihu.tibigdata.flink.tidb;
 
+import static com.zhihu.tibigdata.jdbc.TiDBDriver.MYSQL_DRIVER_NAME;
+import static com.zhihu.tibigdata.jdbc.TiDBDriver.TIDB_PREFIX;
+import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_DRIVER_NAME;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableSet;
+import com.zhihu.tibigdata.jdbc.TiDBDriver;
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import java.time.Duration;
 import java.util.Set;
@@ -26,6 +30,7 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
+import org.apache.flink.connector.jdbc.dialect.MySQLDialect;
 import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
@@ -124,15 +129,18 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     // replace database name in database url
     String dbUrl = config.get(DATABASE_URL);
     String databaseName = config.get(DATABASE_NAME);
-    checkArgument(dbUrl.matches("jdbc:mysql://[^/]+:\\d+/[^/]+"),
-        "the format of database not matches jdbc:mysql://host:port/database");
+    checkArgument(dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/[^/]+"),
+        "the format of database not matches jdbc:(mysql|tidb)://host:port/database");
     dbUrl = dbUrl.substring(0, dbUrl.lastIndexOf("/") + 1) + databaseName;
+    String driverName = dbUrl.startsWith(TIDB_PREFIX) ? TIDB_DRIVER_NAME : MYSQL_DRIVER_NAME;
     // jdbc options
     JdbcOptions jdbcOptions = JdbcOptions.builder()
         .setDBUrl(dbUrl)
         .setTableName(config.get(TABLE_NAME))
         .setUsername(config.get(USERNAME))
         .setPassword(config.get(PASSWORD))
+        .setDialect(new MySQLDialect())
+        .setDriverName(driverName)
         .build();
     // execution options
     JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
