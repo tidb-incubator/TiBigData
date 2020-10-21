@@ -101,7 +101,11 @@ public class TypeUtils {
     if (object == null) {
       return Optional.empty();
     }
-    switch (dataType.getConversionClass().getSimpleName()) {
+    Class<?> conversionClass = dataType.getConversionClass();
+    if (dataType.getConversionClass() == object.getClass()) {
+      return Optional.of(object);
+    }
+    switch (conversionClass.getSimpleName()) {
       case "String":
         if (object instanceof byte[]) {
           object = new String((byte[]) object);
@@ -151,7 +155,7 @@ public class TypeUtils {
         }
         break;
       default:
-        object = ConvertUtils.convert(object, dataType.getConversionClass());
+        object = ConvertUtils.convert(object, conversionClass);
     }
     return Optional.of(object);
   }
