@@ -43,9 +43,9 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.io.GenericInputSplit;
 import org.apache.flink.core.io.InputSplit;
 import org.apache.flink.core.io.InputSplitAssigner;
+import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,6 +74,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   private transient RecordCursorInternal cursor;
 
   private transient ClientSession clientSession;
+
+  private transient GenericRowData row;
 
   public TiDBRowDataInputFormat(Map<String, String> properties, String[] fieldNames,
       DataType[] fieldTypes,
@@ -124,6 +126,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   @Override
   public void openInputFormat() throws IOException {
     clientSession = new ClientSession(new ClientConfig(properties));
+    row = new GenericRowData(fieldNames.length);
   }
 
   @Override
@@ -159,14 +162,13 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   @Override
   public RowData nextRecord(RowData rowData) throws IOException {
-    Row row = new Row(rowData.getArity());
-    for (int i = 0; i < row.getArity(); i++) {
+    for (int i = 0; i < fieldNames.length; i++) {
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);
       // data can be null here
       row.setField(i, toRowDataType(getObjectWithDataType(object, fieldType).orElse(null)));
     }
-    return TypeUtils.toRowData(row).orElse(null);
+    return row;
   }
 
   @Override
