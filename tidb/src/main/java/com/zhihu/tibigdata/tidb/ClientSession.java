@@ -85,7 +85,7 @@ public final class ClientSession implements AutoCloseable {
       }
     });
     loadPdAddresses();
-    session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()));
+    session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()), true);
     catalog = session.getCatalog();
   }
 
