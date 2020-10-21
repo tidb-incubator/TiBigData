@@ -16,7 +16,6 @@
 
 package com.zhihu.tibigdata.jdbc;
 
-import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
 import java.sql.Connection;
@@ -27,7 +26,7 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
@@ -36,21 +35,26 @@ public abstract class LoadBalanceDriver implements Driver {
 
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoadBalanceDriver.class);
 
-  public static final String BALANCE_DRIVER_NAME = "balance.driver.name";
+  /**
+   * implements {@link java.util.function.Function}, Default: {@link DefaultUrlSelector}
+   */
+  private final Function<List<String>, String> urlSelector;
 
   private final Driver driver;
 
-  private final Random random = new Random();
-
-  public LoadBalanceDriver() throws SQLException {
-    String driverName = requireNonNull(System.getProperty(BALANCE_DRIVER_NAME),
-        format("system property %s can not be bull", BALANCE_DRIVER_NAME));
-    LOG.info("load balance driver name: " + driverName);
+  public LoadBalanceDriver(String balanceDriverName, Function<List<String>, String> urlSelector)
+      throws SQLException {
+    this.urlSelector = requireNonNull(urlSelector, "urlSelector can not be null");
+    requireNonNull(balanceDriverName, "driver name can not be null");
     try {
-      driver = (Driver) Class.forName(driverName).newInstance();
+      this.driver = (Driver) Class.forName(balanceDriverName).newInstance();
     } catch (Exception e) {
-      throw new SQLException("can not load balance driver", e);
+      throw new SQLException("can not create driver", e);
     }
+  }
+
+  public LoadBalanceDriver(String balanceDriverName) throws SQLException {
+    this(balanceDriverName, new DefaultUrlSelector());
   }
 
   /**
@@ -60,7 +64,7 @@ public abstract class LoadBalanceDriver implements Driver {
   public Connection connect(String urls, Properties info) throws SQLException {
     List<String> urlList = getUrlList(urls);
     while (urlList.size() > 0) {
-      String url = urlList.get(random.nextInt(urlList.size()));
+      String url = urlSelector.apply(urlList);
       LOG.debug("try connect to " + url);
       try {
         return driver.connect(url, info);

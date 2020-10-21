@@ -26,6 +26,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +48,18 @@ public class TiDBDriver extends LoadBalanceDriver {
   public static final String QUERY_TIDB_SERVER_SQL =
       "SELECT `IP`,`PORT` FROM `INFORMATION_SCHEMA`.`TIDB_SERVERS_INFO` ";
 
-  public static final String TIDB_HOST_PORT_MAPPING_IMPL =
-      "tidb.host-port-mapping.impl";
+  /**
+   * implements {@link java.util.function.Function}, List{HostPort} -> List{HostPort}. Default: do
+   * nothing. The value is set by {@link System#setProperty(String, String)}
+   */
+  public static final String TIDB_ADDRESSES_MAPPING = "tidb.addresses.mapping";
 
-  public static final String TIDB_HOST_PORT_MAPPING_IMPL_DEFAULT =
-      "com.zhihu.tibigdata.jdbc.HostPortMappingDefaultImpl";
+  /**
+   * The value is set by {@link System#setProperty(String, String)}
+   */
+  public static final String URL_SELECTOR = "url.selector";
 
   static {
-    System.setProperty(BALANCE_DRIVER_NAME, MYSQL_DRIVER_NAME);
     try {
       java.sql.DriverManager.registerDriver(new TiDBDriver());
     } catch (SQLException e) {
@@ -63,6 +68,7 @@ public class TiDBDriver extends LoadBalanceDriver {
   }
 
   public TiDBDriver() throws SQLException {
+    super(MYSQL_DRIVER_NAME, createUrlSelector());
   }
 
   @Override
@@ -85,17 +91,22 @@ public class TiDBDriver extends LoadBalanceDriver {
     return super.getPropertyInfo(getMySqlUrl(tidbUrl), info);
   }
 
+  @SuppressWarnings("unchecked")
   private List<HostPort> queryTiDBServer(String tidbUrl, Properties info)
       throws SQLException {
-    String className = System
-        .getProperty(TIDB_HOST_PORT_MAPPING_IMPL, TIDB_HOST_PORT_MAPPING_IMPL_DEFAULT);
-    HostPortMapping hostPortMapping;
-    try {
-      hostPortMapping = (HostPortMapping) Class.forName(className).newInstance();
-    } catch (Exception e) {
-      throw new SQLException(e);
+    String className = System.getProperty(TIDB_ADDRESSES_MAPPING);
+    Function<List<HostPort>, List<HostPort>> mapping;
+    if (className == null) {
+      mapping = hostPorts -> hostPorts;
+    } else {
+      try {
+        mapping = (Function<List<HostPort>, List<HostPort>>) Class.forName(className).newInstance();
+      } catch (Exception e) {
+        throw new SQLException(e);
+      }
     }
-    try (Connection connection = super.connect(getMySqlUrl(tidbUrl), info);
+    try (
+        Connection connection = super.connect(getMySqlUrl(tidbUrl), info);
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(QUERY_TIDB_SERVER_SQL)) {
       List<HostPort> list = new ArrayList<>();
@@ -103,7 +114,7 @@ public class TiDBDriver extends LoadBalanceDriver {
         list.add(new HostPort(resultSet.getString("IP"), resultSet.getInt("PORT")));
       }
       LOG.debug("query result of servers: " + list);
-      List<HostPort> hostPortList = hostPortMapping.map(list);
+      List<HostPort> hostPortList = mapping.apply(list);
       LOG.debug("mapping result of servers: " + hostPortList);
       return hostPortList;
     }
@@ -111,6 +122,17 @@ public class TiDBDriver extends LoadBalanceDriver {
 
   private String getMySqlUrl(String tidbUrl) {
     return tidbUrl.replaceFirst(TIDB_PREFIX, MYSQL_PREFIX);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Function<List<String>, String> createUrlSelector() {
+    try {
+      return (Function<List<String>, String>) Class
+          .forName(System.getProperty(URL_SELECTOR, DefaultUrlSelector.class.getName()))
+          .newInstance();
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   public static class HostPort {
