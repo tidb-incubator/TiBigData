@@ -35,16 +35,17 @@ public abstract class LoadBalanceDriver implements Driver {
 
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoadBalanceDriver.class);
 
+  protected final Driver driver;
+
   /**
-   * implements {@link java.util.function.Function}, Default: {@link DefaultUrlSelector}
+   * implements {@link java.util.function.Function}, Default: {@link DefaultUrlProvider}
    */
-  private final Function<List<String>, String> urlSelector;
+  protected final Function<List<String>, List<String>> urlProvider;
 
-  private final Driver driver;
-
-  public LoadBalanceDriver(String balanceDriverName, Function<List<String>, String> urlSelector)
+  public LoadBalanceDriver(String balanceDriverName,
+      Function<List<String>, List<String>> urlProvider)
       throws SQLException {
-    this.urlSelector = requireNonNull(urlSelector, "urlSelector can not be null");
+    this.urlProvider = requireNonNull(urlProvider, "urlProvider can not be null");
     requireNonNull(balanceDriverName, "driver name can not be null");
     try {
       this.driver = (Driver) Class.forName(balanceDriverName).newInstance();
@@ -54,7 +55,7 @@ public abstract class LoadBalanceDriver implements Driver {
   }
 
   public LoadBalanceDriver(String balanceDriverName) throws SQLException {
-    this(balanceDriverName, new DefaultUrlSelector());
+    this(balanceDriverName, new DefaultUrlProvider());
   }
 
   /**
@@ -62,15 +63,13 @@ public abstract class LoadBalanceDriver implements Driver {
    */
   @Override
   public Connection connect(String urls, Properties info) throws SQLException {
-    List<String> urlList = getUrlList(urls);
-    while (urlList.size() > 0) {
-      String url = urlSelector.apply(urlList);
+    List<String> urlList = urlProvider.apply(getUrlList(urls));
+    for (String url : urlList) {
       LOG.debug("try connect to " + url);
       try {
         return driver.connect(url, info);
       } catch (Exception e) {
         LOG.warn("connect to " + url + " fail, retry other url", e);
-        urlList.remove(url);
       }
     }
     throw new SQLException("can not get connection");

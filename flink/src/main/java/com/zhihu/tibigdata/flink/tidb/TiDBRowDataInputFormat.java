@@ -75,8 +75,6 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   private transient ClientSession clientSession;
 
-  private transient GenericRowData row;
-
   public TiDBRowDataInputFormat(Map<String, String> properties, String[] fieldNames,
       DataType[] fieldTypes,
       TypeInformation<RowData> typeInformation) {
@@ -126,7 +124,6 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   @Override
   public void openInputFormat() throws IOException {
     clientSession = new ClientSession(new ClientConfig(properties));
-    row = new GenericRowData(fieldNames.length);
   }
 
   @Override
@@ -162,6 +159,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   @Override
   public RowData nextRecord(RowData rowData) throws IOException {
+    GenericRowData row = new GenericRowData(fieldNames.length);
     for (int i = 0; i < fieldNames.length; i++) {
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);

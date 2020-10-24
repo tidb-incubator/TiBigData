@@ -16,18 +16,20 @@
 
 package com.zhihu.tibigdata.jdbc;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.function.Function;
 
 
-public class DefaultUrlSelector implements Function<List<String>, String> {
+public class DefaultUrlProvider implements Function<List<String>, List<String>> {
 
-  private final Random random = new Random();
-
+  /**
+   * @param list urls
+   */
   @Override
-  public String apply(List<String> list) {
-    return list.get(random.nextInt(list.size()));
+  public List<String> apply(List<String> list) {
+    Collections.shuffle(list);
+    return list;
   }
 
 }

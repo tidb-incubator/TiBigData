@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -49,15 +48,9 @@ public class TiDBDriver extends LoadBalanceDriver {
       "SELECT `IP`,`PORT` FROM `INFORMATION_SCHEMA`.`TIDB_SERVERS_INFO` ";
 
   /**
-   * implements {@link java.util.function.Function}, List{HostPort} -> List{HostPort}. Default: do
-   * nothing. The value is set by {@link System#setProperty(String, String)}
-   */
-  public static final String TIDB_ADDRESSES_MAPPING = "tidb.addresses.mapping";
-
-  /**
    * The value is set by {@link System#setProperty(String, String)}
    */
-  public static final String URL_SELECTOR = "url.selector";
+  public static final String URL_PROVIDER = "url.provider";
 
   static {
     try {
@@ -68,16 +61,12 @@ public class TiDBDriver extends LoadBalanceDriver {
   }
 
   public TiDBDriver() throws SQLException {
-    super(MYSQL_DRIVER_NAME, createUrlSelector());
+    super(MYSQL_DRIVER_NAME, createUrlProvider());
   }
 
   @Override
   public Connection connect(String tidbUrl, Properties info) throws SQLException {
-    String mysqlUrl = getMySqlUrl(tidbUrl);
-    List<String> urls = queryTiDBServer(mysqlUrl, info).stream()
-        .map(hostPort -> mysqlUrl
-            .replaceFirst(MYSQL_URL_PREFIX_REGEX, MYSQL_PREFIX + hostPort.toString()))
-        .collect(Collectors.toList());
+    List<String> urls = queryAllUrls(tidbUrl, info);
     return super.connect(String.join(",", urls), info);
   }
 
@@ -92,31 +81,25 @@ public class TiDBDriver extends LoadBalanceDriver {
   }
 
   @SuppressWarnings("unchecked")
-  private List<HostPort> queryTiDBServer(String tidbUrl, Properties info)
+  private List<String> queryAllUrls(String tidbUrl, Properties info)
       throws SQLException {
-    String className = System.getProperty(TIDB_ADDRESSES_MAPPING);
-    Function<List<HostPort>, List<HostPort>> mapping;
-    if (className == null) {
-      mapping = hostPorts -> hostPorts;
-    } else {
-      try {
-        mapping = (Function<List<HostPort>, List<HostPort>>) Class.forName(className).newInstance();
-      } catch (Exception e) {
-        throw new SQLException(e);
-      }
-    }
+    String mySqlUrl = getMySqlUrl(tidbUrl);
     try (
-        Connection connection = super.connect(getMySqlUrl(tidbUrl), info);
+        Connection connection = driver.connect(mySqlUrl, info);
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(QUERY_TIDB_SERVER_SQL)) {
-      List<HostPort> list = new ArrayList<>();
+      List<String> list = new ArrayList<>();
       while (resultSet.next()) {
-        list.add(new HostPort(resultSet.getString("IP"), resultSet.getInt("PORT")));
+        String ip = resultSet.getString("IP");
+        int port = resultSet.getInt("PORT");
+        list.add(
+            mySqlUrl.replaceFirst(MYSQL_URL_PREFIX_REGEX, format("jdbc:mysql://%s:%d", ip, port)));
+
       }
-      LOG.debug("query result of servers: " + list);
-      List<HostPort> hostPortList = mapping.apply(list);
-      LOG.debug("mapping result of servers: " + hostPortList);
-      return hostPortList;
+      LOG.debug("query urls: " + list);
+      List<String> urls = urlProvider.apply(list);
+      LOG.debug("real urls: " + urls);
+      return urls;
     }
   }
 
@@ -125,38 +108,13 @@ public class TiDBDriver extends LoadBalanceDriver {
   }
 
   @SuppressWarnings("unchecked")
-  private static Function<List<String>, String> createUrlSelector() {
+  private static Function<List<String>, List<String>> createUrlProvider() {
     try {
-      return (Function<List<String>, String>) Class
-          .forName(System.getProperty(URL_SELECTOR, DefaultUrlSelector.class.getName()))
+      return (Function<List<String>, List<String>>) Class
+          .forName(System.getProperty(URL_PROVIDER, DefaultUrlProvider.class.getName()))
           .newInstance();
     } catch (Exception e) {
       throw new IllegalStateException(e);
-    }
-  }
-
-  public static class HostPort {
-
-    private final String host;
-
-    private final int port;
-
-    public HostPort(String host, int port) {
-      this.host = host;
-      this.port = port;
-    }
-
-    public String getHost() {
-      return host;
-    }
-
-    public int getPort() {
-      return port;
-    }
-
-    @Override
-    public String toString() {
-      return format("%s:%s", host, port);
     }
   }
 
