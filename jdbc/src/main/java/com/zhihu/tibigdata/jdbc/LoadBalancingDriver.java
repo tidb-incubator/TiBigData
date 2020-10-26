@@ -66,7 +66,9 @@ public abstract class LoadBalancingDriver implements Driver {
   public Connection connect(String urls, Properties info) throws SQLException {
     Collection<String> urlList = urlProvider.apply(getUrlList(urls));
     for (String url : urlList) {
-      LOG.debug("try connect to " + url);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("try connect to " + url);
+      }
       try {
         return driver.connect(url, info);
       } catch (Exception e) {
