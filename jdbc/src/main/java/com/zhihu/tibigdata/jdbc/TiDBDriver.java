@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
@@ -32,7 +33,7 @@ import org.slf4j.LoggerFactory;
 /**
  * jdbc:tidb://host:port/database
  */
-public class TiDBDriver extends LoadBalanceDriver {
+public class TiDBDriver extends LoadBalancingDriver {
 
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TiDBDriver.class);
 
@@ -66,7 +67,7 @@ public class TiDBDriver extends LoadBalanceDriver {
 
   @Override
   public Connection connect(String tidbUrl, Properties info) throws SQLException {
-    List<String> urls = queryAllUrls(tidbUrl, info);
+    Collection<String> urls = queryAllUrls(tidbUrl, info);
     return super.connect(String.join(",", urls), info);
   }
 
@@ -77,11 +78,11 @@ public class TiDBDriver extends LoadBalanceDriver {
 
   @Override
   public DriverPropertyInfo[] getPropertyInfo(String tidbUrl, Properties info) throws SQLException {
-    return super.getPropertyInfo(getMySqlUrl(tidbUrl), info);
+    return driver.getPropertyInfo(getMySqlUrl(tidbUrl), info);
   }
 
   @SuppressWarnings("unchecked")
-  private List<String> queryAllUrls(String tidbUrl, Properties info)
+  private Collection<String> queryAllUrls(String tidbUrl, Properties info)
       throws SQLException {
     String mySqlUrl = getMySqlUrl(tidbUrl);
     try (
@@ -97,7 +98,7 @@ public class TiDBDriver extends LoadBalanceDriver {
 
       }
       LOG.debug("query urls: " + list);
-      List<String> urls = urlProvider.apply(list);
+      Collection<String> urls = urlProvider.apply(list);
       LOG.debug("real urls: " + urls);
       return urls;
     }
@@ -108,9 +109,9 @@ public class TiDBDriver extends LoadBalanceDriver {
   }
 
   @SuppressWarnings("unchecked")
-  private static Function<List<String>, List<String>> createUrlProvider() {
+  private static Function<Collection<String>, Collection<String>> createUrlProvider() {
     try {
-      return (Function<List<String>, List<String>>) Class
+      return (Function<Collection<String>, Collection<String>>) Class
           .forName(System.getProperty(URL_PROVIDER, DefaultUrlProvider.class.getName()))
           .newInstance();
     } catch (Exception e) {

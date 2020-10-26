@@ -24,6 +24,7 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
 import java.util.function.Function;
@@ -31,19 +32,19 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 
-public abstract class LoadBalanceDriver implements Driver {
+public abstract class LoadBalancingDriver implements Driver {
 
-  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoadBalanceDriver.class);
+  private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoadBalancingDriver.class);
 
   protected final Driver driver;
 
   /**
    * implements {@link java.util.function.Function}, Default: {@link DefaultUrlProvider}
    */
-  protected final Function<List<String>, List<String>> urlProvider;
+  protected final Function<Collection<String>, Collection<String>> urlProvider;
 
-  public LoadBalanceDriver(String balanceDriverName,
-      Function<List<String>, List<String>> urlProvider)
+  public LoadBalancingDriver(String balanceDriverName,
+      Function<Collection<String>, Collection<String>> urlProvider)
       throws SQLException {
     this.urlProvider = requireNonNull(urlProvider, "urlProvider can not be null");
     requireNonNull(balanceDriverName, "driver name can not be null");
@@ -54,7 +55,7 @@ public abstract class LoadBalanceDriver implements Driver {
     }
   }
 
-  public LoadBalanceDriver(String balanceDriverName) throws SQLException {
+  public LoadBalancingDriver(String balanceDriverName) throws SQLException {
     this(balanceDriverName, new DefaultUrlProvider());
   }
 
@@ -63,7 +64,7 @@ public abstract class LoadBalanceDriver implements Driver {
    */
   @Override
   public Connection connect(String urls, Properties info) throws SQLException {
-    List<String> urlList = urlProvider.apply(getUrlList(urls));
+    Collection<String> urlList = urlProvider.apply(getUrlList(urls));
     for (String url : urlList) {
       LOG.debug("try connect to " + url);
       try {

@@ -206,7 +206,7 @@ public final class ClientSession implements AutoCloseable {
             session);
   }
 
-  public void loadPdAddresses() {
+  private void loadPdAddresses() {
     if (config.getPdAddresses() == null) {
       List<String> pdAddressesList = new ArrayList<>();
       try (

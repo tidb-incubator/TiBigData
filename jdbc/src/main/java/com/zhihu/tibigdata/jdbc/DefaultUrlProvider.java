@@ -16,18 +16,20 @@
 
 package com.zhihu.tibigdata.jdbc;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Function;
 
 
-public class DefaultUrlProvider implements Function<List<String>, List<String>> {
+public class DefaultUrlProvider implements Function<Collection<String>, Collection<String>> {
 
   /**
-   * @param list urls
+   * @param collection urls
    */
   @Override
-  public List<String> apply(List<String> list) {
+  public Collection<String> apply(Collection<String> collection) {
+    ArrayList<String> list = new ArrayList<>(collection);
     Collections.shuffle(list);
     return list;
   }
