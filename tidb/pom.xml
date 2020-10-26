@@ -16,12 +16,16 @@
     <properties>
         <dep.tikv-client.version>2.2.0</dep.tikv-client.version>
         <dep.guava.version>29.0-jre</dep.guava.version>
-        <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
         <dep.junit.version>4.13.1</dep.junit.version>
         <dep.HikariCP.version>3.4.5</dep.HikariCP.version>
     </properties>
 
      <dependencies>
+         <dependency>
+             <groupId>com.zhihu.tibigdata</groupId>
+             <artifactId>tidb-jdbc</artifactId>
+             <version>${parent.version}</version>
+         </dependency>
          <dependency>
              <groupId>com.pingcap.tikv</groupId>
              <artifactId>tikv-client</artifactId>
@@ -36,12 +40,6 @@
              <groupId>com.zaxxer</groupId>
              <artifactId>HikariCP</artifactId>
              <version>${dep.HikariCP.version}</version>
-         </dependency>
-         <dependency>
-             <groupId>mysql</groupId>
-             <artifactId>mysql-connector-java</artifactId>
-             <version>${dep.mysql.jdbc.version}</version>
-             <scope>provided</scope>
          </dependency>
          <dependency>
              <groupId>junit</groupId>
