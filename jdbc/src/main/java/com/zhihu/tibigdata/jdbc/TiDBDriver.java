@@ -97,9 +97,10 @@ public class TiDBDriver extends LoadBalancingDriver {
             mySqlUrl.replaceFirst(MYSQL_URL_PREFIX_REGEX, format("jdbc:mysql://%s:%d", ip, port)));
 
       }
-      LOG.debug("query urls: " + list);
       Collection<String> urls = urlProvider.apply(list);
-      LOG.debug("real urls: " + urls);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(format("query urls: %s, real urls: %s", list, urls));
+      }
       return urls;
     }
   }
