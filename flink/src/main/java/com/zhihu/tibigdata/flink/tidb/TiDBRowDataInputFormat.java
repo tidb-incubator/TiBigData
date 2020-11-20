@@ -57,7 +57,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBRowDataInputFormat.class);
 
-  private static final String TIMESTAMP_FORMAT_PREFIX = "timestamp.format";
+  private static final String TIMESTAMP_FORMAT_PREFIX = "timestamp-format";
 
   private final Map<String, String> properties;
 
