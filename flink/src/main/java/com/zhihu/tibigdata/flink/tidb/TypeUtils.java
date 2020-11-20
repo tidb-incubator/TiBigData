@@ -24,6 +24,7 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.flink.table.api.DataTypes;
@@ -97,7 +98,8 @@ public class TypeUtils {
    * @param object TiKV java object
    * @param dataType Flink datatype
    */
-  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType) {
+  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType,
+      DateTimeFormatter formatter) {
     if (object == null) {
       return Optional.empty();
     }
@@ -109,12 +111,16 @@ public class TypeUtils {
       case "String":
         if (object instanceof byte[]) {
           object = new String((byte[]) object);
+        } else if (object instanceof Timestamp) {
+          Timestamp timestamp = (Timestamp) object;
+          object = formatter == null ? timestamp.toString()
+              : timestamp.toLocalDateTime().format(formatter);
         } else {
           object = object.toString();
         }
         break;
       case "Integer":
-        object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT()).get();
+        object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT(), formatter).get();
         break;
       case "Long":
         if (object instanceof LocalDate) {
@@ -138,13 +144,9 @@ public class TypeUtils {
         if (object instanceof Timestamp) {
           object = ((Timestamp) object).toLocalDateTime();
         } else if (object instanceof String) {
-          // convert string to LocalDateTime
           String timeString = (String) object;
-          try {
-            object = LocalDateTime.parse(timeString);
-          } catch (Exception e) {
-            object = Timestamp.valueOf(timeString).toLocalDateTime();
-          }
+          object = formatter == null ? LocalDateTime.parse(timeString)
+              : LocalDateTime.parse(timeString, formatter);
         } else if (object instanceof Long) {
           object = new Timestamp((Long) object).toLocalDateTime();
         }
@@ -158,6 +160,10 @@ public class TypeUtils {
         object = ConvertUtils.convert(object, conversionClass);
     }
     return Optional.of(object);
+  }
+
+  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType) {
+    return getObjectWithDataType(object, dataType, null);
   }
 
   /**

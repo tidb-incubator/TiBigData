@@ -29,6 +29,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
+| timestamp-format.${columnName} | Flink SQL only | null | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. |
 
 
 TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.

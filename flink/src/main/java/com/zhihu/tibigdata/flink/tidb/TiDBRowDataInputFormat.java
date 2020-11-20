@@ -30,6 +30,8 @@ import com.zhihu.tibigdata.tidb.SplitInternal;
 import com.zhihu.tibigdata.tidb.SplitManagerInternal;
 import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +57,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBRowDataInputFormat.class);
 
+  private static final String TIMESTAMP_FORMAT_PREFIX = "timestamp-format";
+
   private final Map<String, String> properties;
 
   private final String databaseName;
@@ -70,6 +74,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   private final List<SplitInternal> splits;
 
   private final List<ColumnHandleInternal> columnHandleInternals;
+
+  private transient DateTimeFormatter[] formatters;
 
   private transient RecordCursorInternal cursor;
 
@@ -123,6 +129,10 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   @Override
   public void openInputFormat() throws IOException {
+    formatters = Arrays.stream(fieldNames).map(name -> {
+      String pattern = properties.get(TIMESTAMP_FORMAT_PREFIX + "." + name);
+      return pattern == null ? null : DateTimeFormatter.ofPattern(pattern);
+    }).toArray(DateTimeFormatter[]::new);
     clientSession = new ClientSession(new ClientConfig(properties));
   }
 
@@ -164,7 +174,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       DataType fieldType = fieldTypes[i];
       Object object = cursor.getObject(i);
       // data can be null here
-      row.setField(i, toRowDataType(getObjectWithDataType(object, fieldType).orElse(null)));
+      row.setField(i,
+          toRowDataType(getObjectWithDataType(object, fieldType, formatters[i]).orElse(null)));
     }
     return row;
   }
