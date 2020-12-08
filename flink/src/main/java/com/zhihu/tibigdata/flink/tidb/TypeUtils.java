@@ -34,6 +34,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
+import org.tikv.common.types.StringType;
 
 public class TypeUtils {
 
@@ -43,7 +44,7 @@ public class TypeUtils {
    * @param dataType TiKV DataType
    * @return Flink DataType
    */
-  public static DataType getFlinkType(com.pingcap.tikv.types.DataType dataType) {
+  public static DataType getFlinkType(org.tikv.common.types.DataType dataType) {
     switch (dataType.getType()) {
       case TypeTiny:
       case TypeBit:
@@ -74,17 +75,21 @@ public class TypeUtils {
       case TypeMediumBlob:
       case TypeLongBlob:
       case TypeBlob:
-      case TypeJSON:
-      case TypeEnum:
       case TypeVarString:
       case TypeString:
       case TypeVarchar:
+        if (dataType instanceof StringType) {
+          return DataTypes.STRING();
+        }
+        return DataTypes.BYTES();
+      case TypeJSON:
+      case TypeEnum:
+      case TypeSet:
         return DataTypes.STRING();
       case TypeDecimal:
       case TypeNewDecimal:
         return DataTypes.DECIMAL((int) dataType.getLength(), dataType.getDecimal());
       case TypeGeometry:
-      case TypeSet:
       default:
         throw new IllegalArgumentException(
             format("can not get flink datatype by tikv type: %s", dataType));
@@ -148,7 +153,7 @@ public class TypeUtils {
           object = formatter == null ? LocalDateTime.parse(timeString)
               : LocalDateTime.parse(timeString, formatter);
         } else if (object instanceof Long) {
-          object = new Timestamp((Long) object).toLocalDateTime();
+          object = new Timestamp(((Long) object) / 1000).toLocalDateTime();
         }
         break;
       case "LocalTime":

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.PRIMARY_KEY;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.UNIQUE_KEY;
 import static com.zhihu.tibigdata.prestosql.tidb.TypeHelpers.getHelper;
 import static java.lang.String.join;
 import static java.util.Objects.requireNonNull;
@@ -95,9 +96,9 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
   private ConnectorTableMetadata getTableMetadata(String schemaName, String tableName) {
     return new ConnectorTableMetadata(new SchemaTableName(schemaName, tableName),
         getTableMetadataStream(schemaName, tableName).collect(toImmutableList()),
-        ImmutableMap
-            .of(PRIMARY_KEY,
-                join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName))));
+        ImmutableMap.of(
+            PRIMARY_KEY, join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName)),
+            UNIQUE_KEY, join(",", getInternal().getUniqueKeyColumns(schemaName, tableName))));
   }
 
   @Override
@@ -177,8 +178,13 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
         .filter(s -> !s.isEmpty()).collect(Collectors.toList());
     checkArgument(columnNames.containsAll(primaryKeyColumns),
         "column names does not contain all primary key columns");
+    List<String> uniqueKeyColumns = Arrays
+        .stream(tableMetadata.getProperties().get(UNIQUE_KEY).toString().split(","))
+        .filter(s -> !s.isEmpty()).collect(Collectors.toList());
+    checkArgument(columnNames.containsAll(uniqueKeyColumns),
+        "column names does not contain all unique key columns");
     getInternal().createTable(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
-        ignoreExisting);
+        uniqueKeyColumns, ignoreExisting);
   }
 
   @Override

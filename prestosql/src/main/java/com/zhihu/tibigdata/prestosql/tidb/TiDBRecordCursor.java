@@ -18,7 +18,6 @@ package com.zhihu.tibigdata.prestosql.tidb;
 
 import static java.lang.String.format;
 
-import com.pingcap.tikv.types.DataType;
 import com.zhihu.tibigdata.prestosql.tidb.TypeHelper.BooleanRecordCursorReader;
 import com.zhihu.tibigdata.prestosql.tidb.TypeHelper.DoubleRecordCursorReader;
 import com.zhihu.tibigdata.prestosql.tidb.TypeHelper.LongRecordCursorReader;
@@ -30,6 +29,7 @@ import io.airlift.slice.Slice;
 import io.prestosql.spi.connector.RecordCursor;
 import io.prestosql.spi.type.Type;
 import java.util.List;
+import org.tikv.common.types.DataType;
 
 public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implements RecordCursor {
 

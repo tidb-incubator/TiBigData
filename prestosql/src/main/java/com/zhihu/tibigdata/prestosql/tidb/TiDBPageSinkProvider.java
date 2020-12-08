@@ -17,10 +17,11 @@
 package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.zhihu.tibigdata.prestosql.tidb.JdbcErrorCode.JDBC_ERROR;
-import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.WRITE_MODE;
-import static com.zhihu.tibigdata.prestosql.tidb.TiDBWriteMode.fromString;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.SESSION_WRITE_MODE;
+import static com.zhihu.tibigdata.tidb.TiDBWriteMode.fromString;
 
 import com.google.common.collect.ImmutableList;
+import com.zhihu.tibigdata.tidb.TiDBWriteMode;
 import io.prestosql.spi.PrestoException;
 import io.prestosql.spi.connector.ColumnMetadata;
 import io.prestosql.spi.connector.ConnectorInsertTableHandle;
@@ -62,16 +63,13 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
         .collect(ImmutableList.toImmutableList());
     final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
         .collect(ImmutableList.toImmutableList());
-    final List<String> primaryKeyColumns = metadata.getInternal()
-        .getPrimaryKeyColumns(schemaName, tableName);
-    TiDBWriteMode writeMode = fromString(session.getProperty(WRITE_MODE, String.class));
+    TiDBWriteMode writeMode = fromString(session.getProperty(SESSION_WRITE_MODE, String.class));
     Connection connection;
     try {
       connection = metadata.getInternal().getJdbcConnection();
     } catch (SQLException e) {
       throw new PrestoException(JDBC_ERROR, e);
     }
-    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
-        writeMode, connection);
+    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, writeMode, connection);
   }
 }

@@ -1,4 +1,4 @@
-package com.zhihu.tibigdata.prestosql.tidb;
+package com.zhihu.tibigdata.tidb;
 
 public enum TiDBWriteMode {
   APPEND, UPSERT;

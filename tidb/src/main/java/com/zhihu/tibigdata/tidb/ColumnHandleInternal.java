@@ -19,9 +19,9 @@ package com.zhihu.tibigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-import com.pingcap.tikv.types.DataType;
 import java.io.Serializable;
 import java.util.Objects;
+import org.tikv.common.types.DataType;
 
 public final class ColumnHandleInternal implements Serializable {
 

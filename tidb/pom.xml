@@ -14,7 +14,7 @@
     <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <properties>
-        <dep.tikv-client.version>2.2.0</dep.tikv-client.version>
+        <dep.tikv-client.version>3.0.1</dep.tikv-client.version>
         <dep.guava.version>29.0-jre</dep.guava.version>
         <dep.junit.version>4.13.1</dep.junit.version>
         <dep.HikariCP.version>3.4.5</dep.HikariCP.version>
@@ -27,8 +27,8 @@
              <version>${parent.version}</version>
          </dependency>
          <dependency>
-             <groupId>com.pingcap.tikv</groupId>
-             <artifactId>tikv-client</artifactId>
+             <groupId>org.tikv</groupId>
+             <artifactId>tikv-client-java</artifactId>
              <version>${dep.tikv-client.version}</version>
          </dependency>
          <dependency>

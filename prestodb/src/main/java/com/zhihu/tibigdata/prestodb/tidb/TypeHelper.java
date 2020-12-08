@@ -20,11 +20,11 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
 import com.facebook.presto.spi.type.Type;
-import com.pingcap.tikv.types.DataType;
 import com.zhihu.tibigdata.tidb.RecordCursorInternal;
 import io.airlift.slice.Slice;
 import java.util.Objects;
 import java.util.function.Function;
+import org.tikv.common.types.DataType;
 
 public final class TypeHelper {
 

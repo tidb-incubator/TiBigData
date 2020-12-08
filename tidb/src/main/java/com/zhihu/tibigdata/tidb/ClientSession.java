@@ -27,18 +27,6 @@ import static java.util.function.Function.identity;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
-import com.pingcap.tikv.TiConfiguration;
-import com.pingcap.tikv.TiSession;
-import com.pingcap.tikv.catalog.Catalog;
-import com.pingcap.tikv.key.RowKey;
-import com.pingcap.tikv.meta.TiColumnInfo;
-import com.pingcap.tikv.meta.TiDAGRequest;
-import com.pingcap.tikv.meta.TiDBInfo;
-import com.pingcap.tikv.meta.TiTableInfo;
-import com.pingcap.tikv.operation.iterator.CoprocessIterator;
-import com.pingcap.tikv.row.Row;
-import com.pingcap.tikv.util.KeyRangeUtils;
-import com.pingcap.tikv.util.RangeSplitter;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
@@ -47,15 +35,29 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.TiConfiguration;
+import org.tikv.common.TiSession;
+import org.tikv.common.catalog.Catalog;
+import org.tikv.common.key.RowKey;
+import org.tikv.common.meta.TiColumnInfo;
+import org.tikv.common.meta.TiDAGRequest;
+import org.tikv.common.meta.TiDBInfo;
+import org.tikv.common.meta.TiIndexColumn;
+import org.tikv.common.meta.TiIndexInfo;
+import org.tikv.common.meta.TiTableInfo;
+import org.tikv.common.operation.iterator.CoprocessorIterator;
+import org.tikv.common.row.Row;
+import org.tikv.common.util.KeyRangeUtils;
+import org.tikv.common.util.RangeSplitter;
 import org.tikv.kvproto.Coprocessor;
 import shade.com.google.protobuf.ByteString;
 
@@ -71,8 +73,7 @@ public final class ClientSession implements AutoCloseable {
 
   private final HikariDataSource dataSource;
 
-  @Inject
-  public ClientSession(ClientConfig config) {
+  private ClientSession(ClientConfig config) {
     this.config = requireNonNull(config, "config is null");
     dataSource = new HikariDataSource(new HikariConfig() {
       {
@@ -85,7 +86,9 @@ public final class ClientSession implements AutoCloseable {
       }
     });
     loadPdAddresses();
-    session = TiSession.getInstance(TiConfiguration.createDefault(config.getPdAddresses()), true);
+    TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
+    tiConfiguration.setReplicaRead(config.isReplicaRead());
+    session = TiSession.create(tiConfiguration);
     catalog = session.getCatalog();
   }
 
@@ -200,8 +203,8 @@ public final class ClientSession implements AutoCloseable {
         .setStartTs(session.getTimestamp());
   }
 
-  public CoprocessIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
-    return CoprocessIterator
+  public CoprocessorIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
+    return CoprocessorIterator
         .getRowIterator(request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range),
             session);
   }
@@ -240,10 +243,11 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeyColumns, boolean ignoreIfExists) {
+      List<String> columnTypes, List<String> primaryKeyColumns, List<String> uniqueKeyColumns,
+      boolean ignoreIfExists) {
     sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
         requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeyColumns,
-        ignoreIfExists));
+        uniqueKeyColumns, ignoreIfExists));
   }
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
@@ -321,9 +325,31 @@ public final class ClientSession implements AutoCloseable {
         .filter(TiColumnInfo::isPrimaryKey).map(TiColumnInfo::getName).collect(Collectors.toList());
   }
 
+  public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
+    List<String> primaryKeyColumns = getPrimaryKeyColumns(databaseName, tableName);
+    return getTableMust(databaseName, tableName).getIndices().stream()
+        .filter(TiIndexInfo::isUnique)
+        .map(TiIndexInfo::getIndexColumns)
+        .flatMap(Collection::stream).map(TiIndexColumn::getName)
+        .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
+  }
+
   @Override
   public synchronized void close() throws Exception {
     session.close();
     dataSource.close();
+  }
+
+  public static ClientSession create(ClientConfig config, boolean withMinimumPool) {
+    ClientConfig clientConfig = new ClientConfig(config);
+    if (withMinimumPool) {
+      clientConfig.setMaximumPoolSize(1);
+      clientConfig.setMinimumIdleSize(1);
+    }
+    return new ClientSession(clientConfig);
+  }
+
+  public static ClientSession create(ClientConfig config) {
+    return create(config, false);
   }
 }

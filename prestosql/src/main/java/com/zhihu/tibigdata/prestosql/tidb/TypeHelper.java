@@ -19,12 +19,12 @@ package com.zhihu.tibigdata.prestosql.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
-import com.pingcap.tikv.types.DataType;
 import com.zhihu.tibigdata.tidb.RecordCursorInternal;
 import io.airlift.slice.Slice;
 import io.prestosql.spi.type.Type;
 import java.util.Objects;
 import java.util.function.Function;
+import org.tikv.common.types.DataType;
 
 public final class TypeHelper {
 

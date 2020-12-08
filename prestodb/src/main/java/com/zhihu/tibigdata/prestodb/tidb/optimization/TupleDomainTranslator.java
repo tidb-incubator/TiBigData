@@ -27,7 +27,6 @@ import com.facebook.presto.spi.predicate.Marker;
 import com.facebook.presto.spi.predicate.Range;
 import com.facebook.presto.spi.predicate.TupleDomain;
 import com.facebook.presto.spi.predicate.ValueSet;
-import com.pingcap.tikv.expression.Expression;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBColumnHandle;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBSession;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBTableHandle;
@@ -35,6 +34,7 @@ import com.zhihu.tibigdata.tidb.Expressions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.tikv.common.expression.Expression;
 
 public final class TupleDomainTranslator {
 

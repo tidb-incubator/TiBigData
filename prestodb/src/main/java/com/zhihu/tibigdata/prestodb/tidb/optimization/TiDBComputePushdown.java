@@ -38,13 +38,13 @@ import com.facebook.presto.spi.relation.DeterminismEvaluator;
 import com.facebook.presto.spi.relation.ExpressionOptimizer;
 import com.facebook.presto.spi.relation.RowExpression;
 import com.google.common.collect.ImmutableList;
-import com.pingcap.tikv.expression.Expression;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBSession;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBTableHandle;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBTableLayoutHandle;
 import com.zhihu.tibigdata.tidb.Expressions;
 import java.util.Optional;
 import java.util.Set;
+import org.tikv.common.expression.Expression;
 
 public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
 

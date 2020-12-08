@@ -24,7 +24,12 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import com.google.common.collect.ImmutableSet;
 import com.zhihu.tibigdata.jdbc.TiDBDriver;
 import com.zhihu.tibigdata.tidb.ClientConfig;
+import com.zhihu.tibigdata.tidb.ClientSession;
+import com.zhihu.tibigdata.tidb.TiDBWriteMode;
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
@@ -65,6 +70,11 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   private static final ConfigOption<String> MIN_IDLE_SIZE = ConfigOptions
       .key(ClientConfig.MIN_IDLE_SIZE).stringType().noDefaultValue();
+
+  private static final ConfigOption<String> WRITE_MODE = ConfigOptions
+      .key(ClientConfig.TIDB_WRITE_MODE).stringType()
+      .defaultValue(ClientConfig.TIDB_WRITE_MODE_DEFAULT);
+
   /**
    * see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory}
    */
@@ -106,7 +116,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         MIN_IDLE_SIZE,
         SINK_BUFFER_FLUSH_INTERVAL,
         SINK_BUFFER_FLUSH_MAX_ROWS,
-        SINK_MAX_RETRIES
+        SINK_MAX_RETRIES,
+        WRITE_MODE
     );
   }
 
@@ -129,6 +140,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     // replace database name in database url
     String dbUrl = config.get(DATABASE_URL);
     String databaseName = config.get(DATABASE_NAME);
+    String tableName = config.get(TABLE_NAME);
     checkArgument(dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/[^/]+"),
         "the format of database not matches jdbc:(mysql|tidb)://host:port/database");
     dbUrl = dbUrl.substring(0, dbUrl.lastIndexOf("/") + 1) + databaseName;
@@ -136,7 +148,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     // jdbc options
     JdbcOptions jdbcOptions = JdbcOptions.builder()
         .setDBUrl(dbUrl)
-        .setTableName(config.get(TABLE_NAME))
+        .setTableName(tableName)
         .setUsername(config.get(USERNAME))
         .setPassword(config.get(PASSWORD))
         .setDialect(new MySQLDialect())
@@ -153,10 +165,29 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         .withTableName(jdbcOptions.getTableName())
         .withDialect(jdbcOptions.getDialect())
         .withFieldNames(schema.getFieldNames())
-        .withKeyFields(schema.getPrimaryKey().map(pk -> pk.getColumns().toArray(new String[0]))
-            .orElse(null))
+        .withKeyFields(getKeyFields(context, config, databaseName, tableName))
         .build();
 
     return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+  }
+
+  private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
+      String tableName) {
+    // check write mode
+    TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
+    String[] keyFields = null;
+    if (writeMode == TiDBWriteMode.UPSERT) {
+      try (ClientSession clientSession = ClientSession.create(
+          new ClientConfig(context.getCatalogTable().toProperties()), true)) {
+        Set<String> set = ImmutableSet.<String>builder()
+            .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
+            .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
+            .build();
+        keyFields = set.size() == 0 ? null : set.toArray(new String[0]);
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    return keyFields;
   }
 }

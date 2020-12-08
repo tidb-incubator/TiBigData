@@ -17,21 +17,21 @@
 package com.zhihu.tibigdata.tidb;
 
 import static com.google.common.base.Preconditions.checkState;
-import static com.pingcap.tikv.types.IntegerType.TINYINT;
+import static org.tikv.common.types.IntegerType.TINYINT;
 
-import com.pingcap.tikv.expression.ArithmeticBinaryExpression;
-import com.pingcap.tikv.expression.ColumnRef;
-import com.pingcap.tikv.expression.ComparisonBinaryExpression;
-import com.pingcap.tikv.expression.Constant;
-import com.pingcap.tikv.expression.Expression;
-import com.pingcap.tikv.expression.IsNull;
-import com.pingcap.tikv.expression.LogicalBinaryExpression;
-import com.pingcap.tikv.expression.Not;
-import com.pingcap.tikv.expression.StringRegExpression;
-import com.pingcap.tikv.types.DataType;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.tikv.common.expression.ArithmeticBinaryExpression;
+import org.tikv.common.expression.ColumnRef;
+import org.tikv.common.expression.ComparisonBinaryExpression;
+import org.tikv.common.expression.Constant;
+import org.tikv.common.expression.Expression;
+import org.tikv.common.expression.IsNull;
+import org.tikv.common.expression.LogicalBinaryExpression;
+import org.tikv.common.expression.Not;
+import org.tikv.common.expression.StringRegExpression;
+import org.tikv.common.types.DataType;
 
 public final class Expressions {
 

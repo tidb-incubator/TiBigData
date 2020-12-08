@@ -21,6 +21,17 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.zhihu.tibigdata.prestodb.tidb.optimization.TiDBPlanOptimizerProvider.isPushdownType;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
+import static org.tikv.common.types.DateType.DATE;
+import static org.tikv.common.types.IntegerType.BIGINT;
+import static org.tikv.common.types.IntegerType.INT;
+import static org.tikv.common.types.IntegerType.SMALLINT;
+import static org.tikv.common.types.IntegerType.TINYINT;
+import static org.tikv.common.types.RealType.DOUBLE;
+import static org.tikv.common.types.RealType.FLOAT;
+import static org.tikv.common.types.StringType.CHAR;
+import static org.tikv.common.types.StringType.VARCHAR;
+import static org.tikv.common.types.TimeType.TIME;
+import static org.tikv.common.types.TimestampType.TIMESTAMP;
 
 import com.facebook.presto.expressions.translator.FunctionTranslator;
 import com.facebook.presto.expressions.translator.RowExpressionTranslator;
@@ -48,13 +59,13 @@ import com.facebook.presto.spi.type.TinyintType;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.VarcharType;
 import com.google.common.collect.ImmutableList;
-import com.pingcap.tikv.expression.Expression;
 import com.zhihu.tibigdata.prestodb.tidb.TiDBColumnHandle;
 import com.zhihu.tibigdata.tidb.Expressions;
 import io.airlift.slice.Slice;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.tikv.common.expression.Expression;
 
 public final class PredicateTranslator extends
     RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {
@@ -78,29 +89,29 @@ public final class PredicateTranslator extends
         value = ((Slice) value).toStringUtf8();
       }
       if (type.equals(BigintType.BIGINT)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.IntegerType.BIGINT);
+        exp = Expressions.constant(value, BIGINT);
       } else if (type.equals(TinyintType.TINYINT)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.IntegerType.TINYINT);
+        exp = Expressions.constant(value, TINYINT);
       } else if (type.equals(SmallintType.SMALLINT)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.IntegerType.SMALLINT);
+        exp = Expressions.constant(value, SMALLINT);
       } else if (type.equals(IntegerType.INTEGER)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.IntegerType.INT);
+        exp = Expressions.constant(value, INT);
       } else if (type.equals(DoubleType.DOUBLE)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.RealType.DOUBLE);
+        exp = Expressions.constant(value, DOUBLE);
       } else if (type.equals(RealType.REAL)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.RealType.FLOAT);
+        exp = Expressions.constant(value, FLOAT);
       } else if (type.equals(BooleanType.BOOLEAN)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.IntegerType.TINYINT);
+        exp = Expressions.constant(value, TINYINT);
       } else if (type.equals(DateType.DATE)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.DateType.DATE);
+        exp = Expressions.constant(value, DATE);
       } else if (type.equals(TimeType.TIME)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.TimeType.TIME);
+        exp = Expressions.constant(value, TIME);
       } else if (type.equals(TimestampType.TIMESTAMP)) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.TimestampType.TIMESTAMP);
+        exp = Expressions.constant(value, TIMESTAMP);
       } else if (type instanceof VarcharType) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.StringType.VARCHAR);
+        exp = Expressions.constant(value, VARCHAR);
       } else if (type instanceof CharType) {
-        exp = Expressions.constant(value, com.pingcap.tikv.types.StringType.CHAR);
+        exp = Expressions.constant(value, CHAR);
       }
     }
     return exp;

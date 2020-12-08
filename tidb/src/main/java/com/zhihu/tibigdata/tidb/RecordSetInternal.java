@@ -19,19 +19,19 @@ package com.zhihu.tibigdata.tidb;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
-import com.pingcap.tikv.expression.Expression;
-import com.pingcap.tikv.meta.TiDAGRequest;
-import com.pingcap.tikv.operation.iterator.CoprocessIterator;
-import com.pingcap.tikv.row.Row;
-import com.pingcap.tikv.types.DataType;
 import java.util.List;
 import java.util.Optional;
+import org.tikv.common.expression.Expression;
+import org.tikv.common.meta.TiDAGRequest;
+import org.tikv.common.operation.iterator.CoprocessorIterator;
+import org.tikv.common.row.Row;
+import org.tikv.common.types.DataType;
 
 public final class RecordSetInternal {
 
   private final List<ColumnHandleInternal> columnHandles;
   private final List<DataType> columnTypes;
-  private final CoprocessIterator<Row> iterator;
+  private final CoprocessorIterator<Row> iterator;
 
   public RecordSetInternal(ClientSession session, SplitInternal split,
       List<ColumnHandleInternal> columnHandles, Optional<Expression> expression) {

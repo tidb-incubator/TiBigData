@@ -91,7 +91,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
     this.fieldTypes = fieldTypes;
     this.typeInformation = typeInformation;
     // get split
-    try (ClientSession splitSession = new ClientSession(new ClientConfig(properties))) {
+    try (ClientSession splitSession = ClientSession.create(new ClientConfig(properties), true)) {
       TableHandleInternal tableHandleInternal = new TableHandleInternal(
           UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
@@ -133,7 +133,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       String pattern = properties.get(TIMESTAMP_FORMAT_PREFIX + "." + name);
       return pattern == null ? null : DateTimeFormatter.ofPattern(pattern);
     }).toArray(DateTimeFormatter[]::new);
-    clientSession = new ClientSession(new ClientConfig(properties));
+    clientSession = ClientSession.create(new ClientConfig(properties), true);
   }
 
   @Override

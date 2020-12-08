@@ -16,7 +16,7 @@
 
 package com.zhihu.tibigdata.tidb;
 
-import com.pingcap.tikv.types.DataType;
+import org.tikv.common.types.DataType;
 
 public final class DataTypes {
 
