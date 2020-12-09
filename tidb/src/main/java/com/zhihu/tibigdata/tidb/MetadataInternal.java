@@ -62,9 +62,10 @@ public final class MetadataInternal {
   }
 
   public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeyColumns, boolean ignoreExisting) {
+      List<String> columnTypes, List<String> primaryKeyColumns, List<String> uniqueKeyColumns,
+      boolean ignoreExisting) {
     session.createTable(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
-        ignoreExisting);
+        uniqueKeyColumns, ignoreExisting);
   }
 
   public void dropTable(String schemaName, String tableName, boolean ignoreIfNotExists) {
@@ -108,6 +109,10 @@ public final class MetadataInternal {
 
   public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
     return session.getPrimaryKeyColumns(databaseName, tableName);
+  }
+
+  public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
+    return session.getUniqueKeyColumns(databaseName, tableName);
   }
 
   public String getConnectorId() {

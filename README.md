@@ -24,12 +24,16 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | tidb.database.url      | Presto and Flink                          | -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and pick one  randomly when establishing connections. |
 | tidb.username          | Presto and Flink                          | -             | JDBC username.                                               |
 | tidb.password          | Presto and Flink                          | null          | JDBC password.                                               |
-| tidb.maximum.pool.size | Presto and Flink                          | 10            | connection pool size.                                        |
-| tidb.minimum.idle.size | Presto and Flink                          | 10           | the minimum number of idle connections that HikariCP tries to maintain in the pool. |
-| tidb.write_mode             | Presto only                               | append        | tidb sink write mode: upsert or append. You could config it in you `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
+| tidb.maximum.pool.size | Presto and Flink                          | 10            | Connection pool size.                                       |
+| tidb.minimum.idle.size | Presto and Flink                          | 10           | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
+| tidb.write_mode             | Presto and Flink                     | append        | TiDB sink write mode: `upsert` or `append`.  For presto, you could config it in `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
+| tidb.read-replica |Presto and Flink|false|Read data from follower.|
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
 | timestamp-format.${columnName} | Flink SQL only | null | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. |
+| sink.buffer-flush.max-rows | Flink | 100 | The max size of buffered records before flush. Can be set to zero to disable it. |
+| sink.buffer-flush.interval | Flink | 1s | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
+| sink.max-retries | Flink | 3 | The max retry times if writing records to database failed. |
 
 
 TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.
@@ -37,35 +41,36 @@ TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://
 #### DataType Mapping
 
 | index |    TiDB    |     Flink(deault)     | Prestodb  | Prestosql |
-| ----- | :--------: | :-------------------: | --------- | --------- |
-| 1     |  TINYINT   |  DataTypes.TINYINT()  | TINYINT   | TINYINT   |
+| ----- | :--------: | :-------------------: | :-------: | :-------: |
+| 1     |  TINYINT   |  DataTypes.TINYINT()  |  TINYINT  |  TINYINT  |
 | 2     |  SMALLINT  | DataTypes.SMALLINT()  | SMALLINT  | SMALLINT  |
-| 3     | MEDIUMINT  |    DataTypes.INT()    | INT       | INT       |
-| 4     |    INT     |    DataTypes.INT()    | INT       | INT       |
-| 5     |   BIGINT   |  DataTypes.BIGINT()   | BIGINT    | BIGINT    |
-| 6     |    CHAR    |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 7     |  VARCHAR   |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 8     |  TINYTEXT  |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 9     | MEDIUMTEXT |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 10    |    TEXT    |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 11    |  LONGTEXT  |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
-| 12    |   BINARY   |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 13    | VARBINARY  |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 14    |  TINYBLOB  |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 15    | MEDIUMBLOB |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 16    |    BLOB    |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 17    |  LONGBLOB  |  DataTypes.STRING()   | VARBINARY | VARBINARY |
-| 18    |   FLOAT    |   DataTypes.FLOAT()   | REAL      | REAL      |
-| 19    |   DOUBLE   |  DataTypes.DOUBLE()   | DOUBLE    | DOUBLE    |
-| 20    |  DECIMAL   |  DataTypes.DECIMAL()  | DECIMAL   | DECIMAL   |
-| 21    |    DATE    |   DataTypes.DATE()    | DATE      | DATE      |
-| 22    |    TIME    |   DataTypes.TIME()    | TIME      | TIME      |
+| 3     | MEDIUMINT  |    DataTypes.INT()    |    INT    |    INT    |
+| 4     |    INT     |    DataTypes.INT()    |    INT    |    INT    |
+| 5     |   BIGINT   |  DataTypes.BIGINT()   |  BIGINT   |  BIGINT   |
+| 6     |    CHAR    |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 7     |  VARCHAR   |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 8     |  TINYTEXT  |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 9     | MEDIUMTEXT |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 10    |    TEXT    |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 11    |  LONGTEXT  |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 12    |   BINARY   |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 13    | VARBINARY  |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 14    |  TINYBLOB  |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 15    | MEDIUMBLOB |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 16    |    BLOB    |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 17    |  LONGBLOB  |   DataTypes.BYTES()   | VARBINARY | VARBINARY |
+| 18    |   FLOAT    |   DataTypes.FLOAT()   |   REAL    |   REAL    |
+| 19    |   DOUBLE   |  DataTypes.DOUBLE()   |  DOUBLE   |  DOUBLE   |
+| 20    |  DECIMAL   |  DataTypes.DECIMAL()  |  DECIMAL  |  DECIMAL  |
+| 21    |    DATE    |   DataTypes.DATE()    |   DATE    |   DATE    |
+| 22    |    TIME    |   DataTypes.TIME()    |   TIME    |   TIME    |
 | 23    |  DATETIME  | DataTypes.TIMESTAMP() | TIMESTAMP | TIMESTAMP |
 | 24    | TIMESTAMP  | DataTypes.TIMESTAMP() | TIMESTAMP | TIMESTAMP |
 | 25    |    YEAR    | DataTypes.SMALLINT()  | SMALLINT  | SMALLINT  |
-| 26    |    BOOL    |  DataTypes.BOOLEAN()  | TINYINT   | TINYINT   |
-| 27    |    JSON    |  DataTypes.STRING()   | JSON      | VARCHAR   |
-| 28    |    ENUM    |  DataTypes.STRING()   | VARCHAR   | VARCHAR   |
+| 26    |    BOOL    |  DataTypes.BOOLEAN()  |  TINYINT  |  TINYINT  |
+| 27    |    JSON    |  DataTypes.STRING()   |   JSON    |  VARCHAR  |
+| 28    |    ENUM    |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
+| 29    |    SET     |  DataTypes.STRING()   |  VARCHAR  |  VARCHAR  |
 
 ### Build
 
@@ -108,7 +113,8 @@ CREATE TABLE `default`.`test_tidb_type`(
  c25    year,
  c26    boolean,
  c27    json,
- c28    enum('1','2','3')
+ c28    enum('1','2','3'),
+ c29    set('a','b','c')
 );
 ```
 
@@ -223,14 +229,15 @@ VALUES (
  smallint '2020',
  tinyint '1',
  json '{"a":1,"b":2}',
- '1'
+ '1',
+ 'a'
 );
 
 -- prestosql
 INSERT INTO test_tidb_type(
  c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
  c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
- c21,c22,c23,c24,c25,c26,c27,c28
+ c21,c22,c23,c24,c25,c26,c27,c28,c29
 ) 
 VALUES (
  tinyint '1',
@@ -260,14 +267,15 @@ VALUES (
  smallint '2020',
  tinyint '1',
  '{"a":1,"b":2}',
- '1'
+ '1',
+ 'a'
 )
 
 -- query
 select * from test_tidb_type;
 ```
 
-If there is primary key in tidb table, you can enable upsert mode by `SET SESSION tidb.write_mode='upsert'`. TiDB primary key columns will be mapped as presto table property `primary_key`.
+If there is primary key or unique key in tidb table, you can enable upsert mode by `SET SESSION tidb.write_mode='upsert'`. TiDB primary key columns and unique key columns will be mapped as presto table properties `primary_key` and `unique_key`.
 
 
 ### Flink-TiDB-Connector
@@ -303,7 +311,7 @@ public class TiDBCatalogDemo {
   public static void main(String[] args) {
     // properties
     ParameterTool parameterTool = ParameterTool.fromArgs(args);
-    final Map<String, String> properties = (Map) parameterTool.getProperties();
+    final Map<String, String> properties = parameterTool.toMap();
     final String databaseName = parameterTool.getRequired("tidb.database.name");
     final String tableName = parameterTool.getRequired("tidb.table.name");
     // env
@@ -331,10 +339,10 @@ You could submit DDL  by TiDBCatalog, such as create table, drop table:
 public class TestCreateTable {
 
   public static void main(String[] args) throws Exception {
-    Properties properties = new Properties();
-    properties.setProperty("tidb.database.url", "jdbc:mysql://host:port/database");
-    properties.setProperty("tidb.username", "root");
-    properties.setProperty("tidb.password", "123456");
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tidb.database.url", "jdbc:mysql://host:port/database");
+    properties.put("tidb.username", "root");
+    properties.put("tidb.password", "123456");
     TiDBCatalog catalog = new TiDBCatalog(properties);
     catalog.open();
     String sql = "CREATE TABLE IF NOT EXISTS people(id INT, name VARCHAR(255), sex ENUM('1','2'))";
@@ -387,7 +395,8 @@ public class TestFlinkSql {
         + " c25    smallint,\n"
         + " c26    boolean,\n"
         + " c27    string,\n"
-        + " c28    string\n"
+        + " c28    string,\n"
+        + " c29    string\n"
         + ") WITH (\n"
         + "  'connector' = 'tidb',\n"
         + "  'tidb.database.url' = 'jdbc:mysql://host:port/database',\n"
@@ -435,7 +444,8 @@ CREATE TABLE tidb(
  c25    smallint,
  c26    boolean,
  c27    string,
- c28    string
+ c28    string,
+ c29    string
 ) WITH (
   'connector' = 'tidb',
   'tidb.database.url' = 'jdbc:mysql://host:port/database',
@@ -444,7 +454,9 @@ CREATE TABLE tidb(
   'tidb.database.name' = 'database',
   'tidb.maximum.pool.size' = '10',
   'tidb.minimum.idle.size' = '0',
-  'tidb.table.name' = 'test_tidb_type'
+  'tidb.table.name' = 'test_tidb_type',
+  'tidb.write_mode' = 'upsert',
+  'sink.buffer-flush.max-rows' = '0'
 );
 -- insert data
 INSERT INTO tidb
@@ -476,7 +488,8 @@ VALUES (
  cast(2020 as smallint),
  true,
  cast('{"a":1,"b":2}' as string),
- cast('1' as string)
+ cast('1' as string),
+ cast('a' as string)
 );
 -- set result format
 SET execution.result-mode=tableau;

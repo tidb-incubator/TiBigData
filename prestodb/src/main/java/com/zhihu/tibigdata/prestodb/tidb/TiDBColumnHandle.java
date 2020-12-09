@@ -24,14 +24,14 @@ import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.pingcap.tikv.expression.Expression;
-import com.pingcap.tikv.types.DataType;
 import com.zhihu.tibigdata.prestodb.tidb.TypeHelper.RecordCursorReader;
 import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
 import com.zhihu.tibigdata.tidb.DataTypes;
 import com.zhihu.tibigdata.tidb.Expressions;
 import java.util.List;
 import java.util.Objects;
+import org.tikv.common.expression.Expression;
+import org.tikv.common.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {
 

@@ -20,7 +20,6 @@ import static java.lang.String.format;
 
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.type.Type;
-import com.pingcap.tikv.types.DataType;
 import com.zhihu.tibigdata.prestodb.tidb.TypeHelper.BooleanRecordCursorReader;
 import com.zhihu.tibigdata.prestodb.tidb.TypeHelper.DoubleRecordCursorReader;
 import com.zhihu.tibigdata.prestodb.tidb.TypeHelper.LongRecordCursorReader;
@@ -30,6 +29,7 @@ import com.zhihu.tibigdata.tidb.RecordCursorInternal;
 import com.zhihu.tibigdata.tidb.Wrapper;
 import io.airlift.slice.Slice;
 import java.util.List;
+import org.tikv.common.types.DataType;
 
 public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implements RecordCursor {
 

@@ -24,6 +24,6 @@ public final class TiDBSession extends Wrapper<ClientSession> {
 
   @Inject
   public TiDBSession(TiDBConfig config) {
-    super(new ClientSession(config.getInternal()));
+    super(ClientSession.create(config.getInternal()));
   }
 }

@@ -19,23 +19,23 @@ package com.zhihu.tibigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.pingcap.tikv.operation.iterator.CoprocessIterator;
-import com.pingcap.tikv.row.Row;
-import com.pingcap.tikv.types.DataType;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
+import org.tikv.common.operation.iterator.CoprocessorIterator;
+import org.tikv.common.row.Row;
+import org.tikv.common.types.DataType;
 
 public class RecordCursorInternal {
 
   private final List<ColumnHandleInternal> columnHandles;
-  private final CoprocessIterator<Row> iterator;
+  private final CoprocessorIterator<Row> iterator;
   private Row row = null;
 
   public RecordCursorInternal(List<ColumnHandleInternal> columnHandles,
-      CoprocessIterator<Row> iterator) {
+      CoprocessorIterator<Row> iterator) {
     this.columnHandles = columnHandles;
     this.iterator = iterator;
   }

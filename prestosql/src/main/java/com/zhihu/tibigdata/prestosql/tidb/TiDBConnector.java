@@ -17,7 +17,8 @@
 package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.PRIMARY_KEY;
-import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.WRITE_MODE;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.SESSION_WRITE_MODE;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.UNIQUE_KEY;
 import static io.prestosql.spi.transaction.IsolationLevel.REPEATABLE_READ;
 import static io.prestosql.spi.transaction.IsolationLevel.checkConnectorSupports;
 import static java.util.Objects.requireNonNull;
@@ -94,16 +95,16 @@ public final class TiDBConnector
   @Override
   public List<PropertyMetadata<?>> getTableProperties() {
     return ImmutableList.of(
-        PropertyMetadata.stringProperty(PRIMARY_KEY, "tidb table primary keys", "", false)
+        PropertyMetadata.stringProperty(PRIMARY_KEY, "tidb table primary key", "", false),
+        PropertyMetadata.stringProperty(UNIQUE_KEY, "tidb table unique key", "", false)
     );
   }
 
   @Override
   public List<PropertyMetadata<?>> getSessionProperties() {
-    return ImmutableList.of(
-        PropertyMetadata.stringProperty(WRITE_MODE, "tidb sink write mode: append or upsert",
-            config.getWriteMode(), false)
-    );
+    return ImmutableList.of(PropertyMetadata
+        .stringProperty(SESSION_WRITE_MODE, "tidb sink write mode: append or upsert",
+            config.getWriteMode(), false));
   }
 
   @Override

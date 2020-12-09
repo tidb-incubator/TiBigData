@@ -79,7 +79,7 @@ public class TiDBCatalog extends AbstractCatalog {
     // catalog isOpened?
     if (!clientSession.isPresent()) {
       try {
-        clientSession = Optional.of(new ClientSession(new ClientConfig(properties)));
+        clientSession = Optional.of(ClientSession.create(new ClientConfig(properties)));
       } catch (Exception e) {
         throw new CatalogException("can not open catalog", e);
       }

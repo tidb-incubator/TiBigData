@@ -14,7 +14,7 @@ public class SqlUtils {
       "SELECT `INSTANCE` FROM `INFORMATION_SCHEMA`.`CLUSTER_INFO` WHERE `TYPE` = 'pd'";
 
   private static List<String> concatNameType(List<String> columnNames, List<String> columnTypes,
-      List<String> primaryKeyColumns) {
+      List<String> primaryKeyColumns, List<String> uniqueKeyColumns) {
     List<String> nameType = new ArrayList<>(columnNames.size() + 1);
     for (int i = 0; i < columnNames.size(); i++) {
       nameType.add(format("`%s` %s", columnNames.get(i), columnTypes.get(i)));
@@ -23,25 +23,29 @@ public class SqlUtils {
       nameType.add(format("PRIMARY KEY(%s)",
           primaryKeyColumns.stream().map(pk -> "`" + pk + "`").collect(Collectors.joining(","))));
     }
+    if (uniqueKeyColumns != null && uniqueKeyColumns.size() != 0) {
+      nameType.add(format("UNIQUE KEY(%s)",
+          uniqueKeyColumns.stream().map(uk -> "`" + uk + "`").collect(Collectors.joining(","))));
+    }
     return nameType;
   }
 
 
   public static String getCreateTableSql(String databaseName, String tableName,
       List<String> columnNames, List<String> columnTypes, List<String> primaryKeyColumns,
-      boolean ignoreIfExists) {
+      List<String> uniqueKeyColumns, boolean ignoreIfExists) {
     return format("CREATE TABLE %s `%s`.`%s`(\n%s\n)",
         ignoreIfExists ? "IF NOT EXISTS" : "",
         databaseName,
         tableName,
-        join(",\n", concatNameType(columnNames, columnTypes, primaryKeyColumns))
+        join(",\n", concatNameType(columnNames, columnTypes, primaryKeyColumns, uniqueKeyColumns))
     );
   }
 
   public static String getInsertSql(String databaseName, String tableName,
       List<String> columnNames) {
     return format(
-        "INSERT INTO `%s`.`%s`(%s) VALUES(%s) ",
+        "INSERT INTO `%s`.`%s`(%s) VALUES(%s)",
         databaseName,
         tableName,
         columnNames.stream().map(name -> format("`%s`", name)).collect(Collectors.joining(",")),
@@ -50,14 +54,10 @@ public class SqlUtils {
   }
 
   public static String getUpsertSql(String databaseName, String tableName,
-      List<String> columnNames, List<String> primaryKeyColumns) {
+      List<String> columnNames) {
     String insertSql = getInsertSql(databaseName, tableName, columnNames);
-    if (primaryKeyColumns == null || primaryKeyColumns.size() == 0) {
-      return insertSql;
-    }
     return format("%s ON DUPLICATE KEY UPDATE %s", insertSql,
-        columnNames.stream().filter(name -> !primaryKeyColumns.contains(name))
-            .map(pk -> format("`%s`=VALUES(`%s`)", pk, pk))
+        columnNames.stream().map(columnName -> format("`%s`=VALUES(`%s`)", columnName, columnName))
             .collect(Collectors.joining(",")));
   }
 

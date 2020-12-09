@@ -19,7 +19,8 @@ package com.zhihu.tibigdata.prestodb.tidb;
 import static com.facebook.presto.spi.transaction.IsolationLevel.REPEATABLE_READ;
 import static com.facebook.presto.spi.transaction.IsolationLevel.checkConnectorSupports;
 import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.PRIMARY_KEY;
-import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.WRITE_MODE;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.SESSION_WRITE_MODE;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.UNIQUE_KEY;
 import static java.util.Objects.requireNonNull;
 
 import com.facebook.airlift.bootstrap.LifeCycleManager;
@@ -104,14 +105,15 @@ public final class TiDBConnector implements Connector {
   @Override
   public List<PropertyMetadata<?>> getTableProperties() {
     return ImmutableList.of(
-        PropertyMetadata.stringProperty(PRIMARY_KEY, "tidb table primary keys", "", false)
+        PropertyMetadata.stringProperty(PRIMARY_KEY, "tidb table primary key", "", false),
+        PropertyMetadata.stringProperty(UNIQUE_KEY, "tidb table unique key", "", false)
     );
   }
 
   @Override
   public List<PropertyMetadata<?>> getSessionProperties() {
-    return ImmutableList.of(
-        PropertyMetadata.stringProperty(WRITE_MODE, "tidb sink write mode: append or upsert",
+    return ImmutableList.of(PropertyMetadata
+        .stringProperty(SESSION_WRITE_MODE, "tidb sink write mode: append or upsert",
             config.getWriteMode(), false)
     );
   }

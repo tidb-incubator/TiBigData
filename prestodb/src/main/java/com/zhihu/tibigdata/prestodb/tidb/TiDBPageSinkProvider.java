@@ -17,8 +17,8 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.zhihu.tibigdata.prestodb.tidb.JdbcErrorCode.JDBC_ERROR;
-import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.WRITE_MODE;
-import static com.zhihu.tibigdata.prestodb.tidb.TiDBWriteMode.fromString;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.SESSION_WRITE_MODE;
+import static com.zhihu.tibigdata.tidb.TiDBWriteMode.fromString;
 
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorInsertTableHandle;
@@ -31,6 +31,7 @@ import com.facebook.presto.spi.connector.ConnectorPageSinkProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.facebook.presto.spi.type.Type;
 import com.google.common.collect.ImmutableList;
+import com.zhihu.tibigdata.tidb.TiDBWriteMode;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -65,16 +66,13 @@ public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
         .collect(ImmutableList.toImmutableList());
     final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
         .collect(ImmutableList.toImmutableList());
-    final List<String> primaryKeyColumns = metadata.getInternal()
-        .getPrimaryKeyColumns(schemaName, tableName);
-    TiDBWriteMode writeMode = fromString(session.getProperty(WRITE_MODE, String.class));
+    TiDBWriteMode writeMode = fromString(session.getProperty(SESSION_WRITE_MODE, String.class));
     Connection connection;
     try {
       connection = metadata.getInternal().getJdbcConnection();
     } catch (SQLException e) {
       throw new PrestoException(JDBC_ERROR, e);
     }
-    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
-        writeMode, connection);
+    return new TiDBPageSink(schemaName, tableName, columnNames, columnTypes, writeMode, connection);
   }
 }

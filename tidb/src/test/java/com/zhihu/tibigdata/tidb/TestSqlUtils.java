@@ -9,23 +9,31 @@ import org.junit.Test;
 
 public class TestSqlUtils {
 
-  String databaseName = "default";
-  String tableName = "people";
-  ImmutableList<String> columnNames = ImmutableList.of("id", "name", "sex");
-  ImmutableList<String> columnTypes = ImmutableList.of("int", "varchar(255)", "varchar(255)");
-  ImmutableList<String> primaryKeyColumns1 = ImmutableList.of("id");
-  ImmutableList<String> primaryKeyColumns2 = ImmutableList.of("id", "name");
+  String databaseName = "default_database";
+  String tableName = "default_table";
+  ImmutableList<String> columnNames = ImmutableList.of("c1", "c2", "c3", "c4", "c5", "c6");
+  ImmutableList<String> columnTypes = ImmutableList
+      .of("int", "bigint", "varchar(255)", "varchar(255)", "varchar(255)", "varchar(255)");
+  ImmutableList<String> primaryKeyColumns = ImmutableList.of("c1", "c2");
+  ImmutableList<String> unqiueKeyColumns = ImmutableList.of("c3", "c4");
 
   @Test
   public void testGetCreateTableSql() {
     System.out.println(
-        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, null, true));
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
+            unqiueKeyColumns, true));
     System.out.println(
-        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns1,
-            true));
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
+            unqiueKeyColumns, false));
     System.out.println(
-        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns2,
-            false));
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, null,
+            unqiueKeyColumns, false));
+    System.out.println(
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
+            null, false));
+    System.out.println(
+        getCreateTableSql(databaseName, tableName, columnNames, columnTypes, null,
+            null, false));
   }
 
   @Test
@@ -35,9 +43,7 @@ public class TestSqlUtils {
 
   @Test
   public void testUpsertSql() {
-    System.out.println(getUpsertSql(databaseName, tableName, columnNames, null));
-    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeyColumns1));
-    System.out.println(getUpsertSql(databaseName, tableName, columnNames, primaryKeyColumns2));
+    System.out.println(getUpsertSql(databaseName, tableName, columnNames));
   }
 
 }

@@ -48,11 +48,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.joda.time.DateTimeZone.UTC;
 
 import com.google.common.collect.ImmutableMap;
-import com.pingcap.tikv.types.BytesType;
-import com.pingcap.tikv.types.DataType;
-import com.pingcap.tikv.types.EnumType;
-import com.pingcap.tikv.types.SetType;
-import com.pingcap.tikv.types.StringType;
 import com.zhihu.tibigdata.tidb.RecordCursorInternal;
 import io.airlift.slice.Slice;
 import io.prestosql.spi.PrestoException;
@@ -65,11 +60,17 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joda.time.DateTimeZone;
 import org.joda.time.chrono.ISOChronology;
+import org.tikv.common.types.BytesType;
+import org.tikv.common.types.DataType;
+import org.tikv.common.types.EnumType;
+import org.tikv.common.types.SetType;
+import org.tikv.common.types.StringType;
 
 public final class TypeHelpers {
 
@@ -143,7 +144,7 @@ public final class TypeHelpers {
         // FALLTHROUGH
       case TypeTimestamp:
         return longHelper(type, io.prestosql.spi.type.TimestampType.TIMESTAMP,
-            (cursor, columnIndex) -> cursor.getTimestamp(columnIndex).getTime(),
+            (recordCursorInternal, field) -> recordCursorInternal.getLong(field) / 1000,
             Timestamp::new);
       case TypeLonglong:
         return longHelper(type, BIGINT,
@@ -151,11 +152,8 @@ public final class TypeHelpers {
       case TypeDate:
         // FALLTHROUGH
       case TypeNewDate:
-        return longHelper(type, DATE, (cursor, columnIndex) -> {
-          long localMillis = cursor.getDate(columnIndex).getTime();
-          DateTimeZone zone = ISOChronology.getInstance().getZone();
-          return MILLISECONDS.toDays(zone.getMillisKeepLocal(UTC, localMillis));
-        }, days -> new Date(DAYS.toMillis((long) days)));
+        return longHelper(type, DATE, RecordCursorInternal::getLong,
+            days -> Date.valueOf(LocalDate.ofEpochDay(days)));
       case TypeDuration:
         return longHelper(type, io.prestosql.spi.type.TimeType.TIME, (cursor, columnIndex) -> {
           long localMillis = cursor.getLong(columnIndex) / 1000000L;
@@ -165,8 +163,7 @@ public final class TypeHelpers {
       case TypeJSON:
         return varcharHelper(type, VarcharType.createUnboundedVarcharType());
       case TypeSet:
-        // TiKV client might has issue related to set, disable it at this time.
-        return null;
+        // FALLTHROUGH
       case TypeTinyBlob:
         // FALLTHROUGH
       case TypeMediumBlob:
@@ -183,8 +180,7 @@ public final class TypeHelpers {
         // FALLTHROUGH
       case TypeVarchar:
         // FALLTHROUGH
-        if (type instanceof StringType || type instanceof SetType
-            || type instanceof EnumType) {
+        if (type instanceof StringType || type instanceof SetType || type instanceof EnumType) {
           if (length > (long) VarcharType.MAX_LENGTH || length < 0) {
             return varcharHelper(type, VarcharType.createUnboundedVarcharType());
           }

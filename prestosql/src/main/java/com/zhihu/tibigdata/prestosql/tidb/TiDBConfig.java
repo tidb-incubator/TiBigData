@@ -16,22 +16,26 @@
 
 package com.zhihu.tibigdata.prestosql.tidb;
 
+import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_READ_REPLICA;
+import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
+import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_WRITE_MODE_DEFAULT;
+
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.Wrapper;
 import io.airlift.configuration.Config;
 
 public final class TiDBConfig extends Wrapper<ClientConfig> {
 
-  // for properties
-  public static final String WRITE_MODE_GLOBAL = "tidb.write_mode";
-
   // for session
-  public static final String WRITE_MODE = "write_mode";
+  public static final String SESSION_WRITE_MODE = "write_mode";
 
   // for table properties
   public static final String PRIMARY_KEY = "primary_key";
 
-  private String writeMode = "append";
+  // for table properties
+  public static final String UNIQUE_KEY = "unique_key";
+
+  private String writeMode = TIDB_WRITE_MODE_DEFAULT;
 
   public TiDBConfig() {
     super(new ClientConfig());
@@ -91,9 +95,20 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
     return writeMode;
   }
 
-  @Config(WRITE_MODE_GLOBAL)
+  @Config(TIDB_WRITE_MODE)
   public TiDBConfig setWriteMode(String writeMode) {
     this.writeMode = writeMode;
     return this;
   }
+
+  public boolean isReplicaRead() {
+    return getInternal().isReplicaRead();
+  }
+
+  @Config(TIDB_READ_REPLICA)
+  public TiDBConfig setReplicaRead(boolean isReplicaRead) {
+    getInternal().setReplicaRead(isReplicaRead);
+    return this;
+  }
+
 }

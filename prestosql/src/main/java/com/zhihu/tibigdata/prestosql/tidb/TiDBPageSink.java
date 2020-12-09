@@ -18,9 +18,9 @@ package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.zhihu.tibigdata.prestosql.tidb.JdbcErrorCode.JDBC_ERROR;
 import static com.zhihu.tibigdata.prestosql.tidb.JdbcErrorCode.JDBC_NON_TRANSIENT_ERROR;
-import static com.zhihu.tibigdata.prestosql.tidb.TiDBWriteMode.UPSERT;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getInsertSql;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getUpsertSql;
+import static com.zhihu.tibigdata.tidb.TiDBWriteMode.UPSERT;
 import static io.prestosql.spi.StandardErrorCode.NOT_SUPPORTED;
 import static io.prestosql.spi.type.Chars.isCharType;
 import static io.prestosql.spi.type.Decimals.readBigDecimal;
@@ -34,6 +34,7 @@ import static org.joda.time.chrono.ISOChronology.getInstanceUTC;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Shorts;
 import com.google.common.primitives.SignedBytes;
+import com.zhihu.tibigdata.tidb.TiDBWriteMode;
 import io.airlift.slice.Slice;
 import io.prestosql.spi.Page;
 import io.prestosql.spi.PrestoException;
@@ -67,8 +68,6 @@ public class TiDBPageSink implements ConnectorPageSink {
 
   private final List<Type> columnTypes;
 
-  private final List<String> primaryKeyColumns;
-
   private final TiDBWriteMode writeMode;
 
   private final Connection connection;
@@ -78,19 +77,17 @@ public class TiDBPageSink implements ConnectorPageSink {
   private int batchSize;
 
   public TiDBPageSink(String schemaName, String tableName, List<String> columnNames,
-      List<Type> columnTypes, List<String> primaryKeyColumns, TiDBWriteMode writeMode,
-      Connection connection) {
+      List<Type> columnTypes, TiDBWriteMode writeMode, Connection connection) {
     this.schemaName = schemaName;
     this.tableName = tableName;
     this.columnNames = columnNames;
     this.columnTypes = columnTypes;
-    this.primaryKeyColumns = primaryKeyColumns;
     this.writeMode = writeMode;
     this.connection = connection;
     try {
       connection.setAutoCommit(false);
       statement = connection.prepareStatement(
-          writeMode == UPSERT ? getUpsertSql(schemaName, tableName, columnNames, primaryKeyColumns)
+          writeMode == UPSERT ? getUpsertSql(schemaName, tableName, columnNames)
               : getInsertSql(schemaName, tableName, columnNames));
     } catch (SQLException e) {
       closeWithSuppression(connection, e);

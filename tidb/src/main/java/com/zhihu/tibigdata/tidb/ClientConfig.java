@@ -20,8 +20,8 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.zhihu.tibigdata.jdbc.TiDBDriver.MYSQL_PREFIX;
 import static com.zhihu.tibigdata.jdbc.TiDBDriver.TIDB_PREFIX;
 
+import com.google.common.base.Objects;
 import java.util.Map;
-import java.util.Objects;
 
 public final class ClientConfig {
 
@@ -42,6 +42,12 @@ public final class ClientConfig {
   public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
   public static final int MIN_IDLE_SIZE_DEFAULT = 10;
 
+  public static final String TIDB_WRITE_MODE = "tidb.write_mode";
+  public static final String TIDB_WRITE_MODE_DEFAULT = "append";
+
+  public static final String TIDB_READ_REPLICA = "tidb.read-replica";
+  public static final boolean TIDB_READ_REPLICA_DEFAULT = false;
+
   private String pdAddresses;
 
   private String databaseUrl;
@@ -54,21 +60,37 @@ public final class ClientConfig {
 
   private int minimumIdleSize;
 
+  private String writeMode;
+
+  private boolean isReplicaRead;
+
+  public boolean isReplicaRead() {
+    return isReplicaRead;
+  }
+
+  public void setReplicaRead(boolean replicaRead) {
+    isReplicaRead = replicaRead;
+  }
+
   public ClientConfig() {
-    this(null, null, null, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT);
+    this(null, null, null, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
+        false);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
-    this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT);
+    this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
+        TIDB_WRITE_MODE_DEFAULT, false);
   }
 
   public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
-      int minimumIdleSize) {
+      int minimumIdleSize, String writeMode, boolean isReplicaRead) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
     this.maximumPoolSize = maximumPoolSize;
     this.minimumIdleSize = minimumIdleSize;
+    this.writeMode = writeMode;
+    this.isReplicaRead = isReplicaRead;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -78,7 +100,21 @@ public final class ClientConfig {
         Integer.parseInt(
             properties.getOrDefault(MAX_POOL_SIZE, Integer.toString(MAX_POOL_SIZE_DEFAULT))),
         Integer.parseInt(
-            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))));
+            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))),
+        properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
+        Boolean.parseBoolean(
+            properties.getOrDefault(TIDB_READ_REPLICA, Boolean.toString(TIDB_READ_REPLICA_DEFAULT)))
+    );
+  }
+
+  public ClientConfig(ClientConfig config) {
+    this(config.getDatabaseUrl(),
+        config.getUsername(),
+        config.getPassword(),
+        config.getMaximumPoolSize(),
+        config.getMinimumIdleSize(),
+        config.getWriteMode(),
+        config.isReplicaRead());
   }
 
   public String getPdAddresses() {
@@ -129,6 +165,14 @@ public final class ClientConfig {
     this.minimumIdleSize = minimumIdleSize;
   }
 
+  public String getWriteMode() {
+    return writeMode;
+  }
+
+  public void setWriteMode(String writeMode) {
+    this.writeMode = writeMode;
+  }
+
   public String getDriverName() {
     if (databaseUrl.startsWith(MYSQL_PREFIX)) {
       return MYSQL_DRIVER_NAME;
@@ -141,25 +185,27 @@ public final class ClientConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pdAddresses);
+    return Objects.hashCode(pdAddresses, databaseUrl, username, password, maximumPoolSize,
+        minimumIdleSize, writeMode, isReplicaRead);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  public boolean equals(Object object) {
+    if (this == object) {
       return true;
     }
-    if ((obj == null) || (getClass() != obj.getClass())) {
+    if (object == null || getClass() != object.getClass()) {
       return false;
     }
-
-    ClientConfig other = (ClientConfig) obj;
-    return Objects.equals(this.pdAddresses, other.pdAddresses)
-        && Objects.equals(this.databaseUrl, other.databaseUrl)
-        && Objects.equals(this.username, other.username)
-        && Objects.equals(this.password, other.password)
-        && Objects.equals(this.maximumPoolSize, other.maximumPoolSize)
-        && Objects.equals(this.minimumIdleSize, other.minimumIdleSize);
+    ClientConfig that = (ClientConfig) object;
+    return maximumPoolSize == that.maximumPoolSize
+        && minimumIdleSize == that.minimumIdleSize
+        && isReplicaRead == that.isReplicaRead
+        && Objects.equal(pdAddresses, that.pdAddresses)
+        && Objects.equal(databaseUrl, that.databaseUrl)
+        && Objects.equal(username, that.username)
+        && Objects.equal(password, that.password)
+        && Objects.equal(writeMode, that.writeMode);
   }
 
   @Override
@@ -170,6 +216,8 @@ public final class ClientConfig {
         .add("pdAddresses", pdAddresses)
         .add("maximumPoolSize", maximumPoolSize)
         .add("minimumIdleSize", minimumIdleSize)
+        .add("writeMode", writeMode)
+        .add("isReplicaRead", isReplicaRead)
         .toString();
   }
 }

@@ -54,22 +54,23 @@ import com.facebook.presto.spi.type.Decimals;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.VarcharType;
 import com.google.common.collect.ImmutableMap;
-import com.pingcap.tikv.types.BytesType;
-import com.pingcap.tikv.types.DataType;
-import com.pingcap.tikv.types.EnumType;
-import com.pingcap.tikv.types.SetType;
-import com.pingcap.tikv.types.StringType;
 import com.zhihu.tibigdata.tidb.RecordCursorInternal;
 import io.airlift.slice.Slice;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joda.time.DateTimeZone;
 import org.joda.time.chrono.ISOChronology;
+import org.tikv.common.types.BytesType;
+import org.tikv.common.types.DataType;
+import org.tikv.common.types.EnumType;
+import org.tikv.common.types.SetType;
+import org.tikv.common.types.StringType;
 
 public final class TypeHelpers {
 
@@ -143,7 +144,7 @@ public final class TypeHelpers {
         // FALLTHROUGH
       case TypeTimestamp:
         return longHelper(type, com.facebook.presto.spi.type.TimestampType.TIMESTAMP,
-            (cursor, columnIndex) -> cursor.getTimestamp(columnIndex).getTime(),
+            (recordCursorInternal, field) -> recordCursorInternal.getLong(field) / 1000,
             Timestamp::new);
       case TypeLonglong:
         return longHelper(type, com.facebook.presto.spi.type.BigintType.BIGINT,
@@ -152,11 +153,7 @@ public final class TypeHelpers {
         // FALLTHROUGH
       case TypeNewDate:
         return longHelper(type, com.facebook.presto.spi.type.DateType.DATE,
-            (cursor, columnIndex) -> {
-              long localMillis = cursor.getDate(columnIndex).getTime();
-              DateTimeZone zone = ISOChronology.getInstance().getZone();
-              return MILLISECONDS.toDays(zone.getMillisKeepLocal(UTC, localMillis));
-            }, days -> new Date(DAYS.toMillis((long) days)));
+            RecordCursorInternal::getLong, days -> Date.valueOf(LocalDate.ofEpochDay(days)));
       case TypeDuration:
         return longHelper(type, com.facebook.presto.spi.type.TimeType.TIME,
             (cursor, columnIndex) -> {
@@ -168,8 +165,7 @@ public final class TypeHelpers {
         return sliceHelper(type, com.facebook.presto.spi.type.JsonType.JSON,
             (cursor, columnIndex) -> utf8Slice(cursor.getString(columnIndex)));
       case TypeSet:
-        // TiKV client might has issue related to set, disable it at this time.
-        return null;
+        // FALLTHROUGH
       case TypeTinyBlob:
         // FALLTHROUGH
       case TypeMediumBlob:
