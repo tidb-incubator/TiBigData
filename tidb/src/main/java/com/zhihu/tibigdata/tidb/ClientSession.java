@@ -340,16 +340,14 @@ public final class ClientSession implements AutoCloseable {
     dataSource.close();
   }
 
-  public static ClientSession create(ClientConfig config, boolean withMinimumPool) {
+  public static ClientSession createWithSingleConnection(ClientConfig config) {
     ClientConfig clientConfig = new ClientConfig(config);
-    if (withMinimumPool) {
-      clientConfig.setMaximumPoolSize(1);
-      clientConfig.setMinimumIdleSize(1);
-    }
+    clientConfig.setMaximumPoolSize(1);
+    clientConfig.setMinimumIdleSize(1);
     return new ClientSession(clientConfig);
   }
 
   public static ClientSession create(ClientConfig config) {
-    return create(config, false);
+    return new ClientSession(config);
   }
 }

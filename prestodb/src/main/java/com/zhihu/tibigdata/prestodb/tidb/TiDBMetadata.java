@@ -191,12 +191,12 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
         .stream(tableMetadata.getProperties().get(PRIMARY_KEY).toString().split(","))
         .filter(s -> !s.isEmpty()).collect(Collectors.toList());
     checkArgument(columnNames.containsAll(primaryKeyColumns),
-        "column names does not contain all primary key columns");
+        "invalid primary key columns: " + primaryKeyColumns);
     List<String> uniqueKeyColumns = Arrays
         .stream(tableMetadata.getProperties().get(UNIQUE_KEY).toString().split(","))
         .filter(s -> !s.isEmpty()).collect(Collectors.toList());
     checkArgument(columnNames.containsAll(uniqueKeyColumns),
-        "column names does not contain all unique key columns");
+        "invalid unique key columns: " + uniqueKeyColumns);
     getInternal().createTable(schemaName, tableName, columnNames, columnTypes, primaryKeyColumns,
         uniqueKeyColumns, ignoreExisting);
   }
