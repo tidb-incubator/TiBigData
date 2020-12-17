@@ -20,11 +20,13 @@ import static com.facebook.presto.spi.StandardErrorCode.NOT_SUPPORTED;
 import static com.facebook.presto.spi.type.BigintType.BIGINT;
 import static com.facebook.presto.spi.type.BooleanType.BOOLEAN;
 import static com.facebook.presto.spi.type.DateType.DATE;
+import static com.facebook.presto.spi.type.DecimalType.createDecimalType;
 import static com.facebook.presto.spi.type.Decimals.decodeUnscaledValue;
 import static com.facebook.presto.spi.type.Decimals.encodeScaledValue;
 import static com.facebook.presto.spi.type.Decimals.encodeShortScaledValue;
 import static com.facebook.presto.spi.type.DoubleType.DOUBLE;
 import static com.facebook.presto.spi.type.IntegerType.INTEGER;
+import static com.facebook.presto.spi.type.JsonType.JSON;
 import static com.facebook.presto.spi.type.RealType.REAL;
 import static com.facebook.presto.spi.type.SmallintType.SMALLINT;
 import static com.facebook.presto.spi.type.TimeType.TIME;
@@ -43,8 +45,6 @@ import static java.lang.Float.floatToRawIntBits;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.max;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.DAYS;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.joda.time.DateTimeZone.UTC;
 
 import com.facebook.presto.spi.PrestoException;
@@ -115,54 +115,54 @@ public final class TypeHelpers {
   }
 
   private static TypeHelper getHelperInternal(DataType type) {
+    boolean unsigned = type.isUnsigned();
     long length = type.getLength();
     switch (type.getType()) {
-      case TypeTiny:
-        // FALLTHROUGH
       case TypeBit:
-        return longHelper(type, com.facebook.presto.spi.type.TinyintType.TINYINT,
-            RecordCursorInternal::getByte);
+        return longHelper(type, TINYINT, RecordCursorInternal::getByte);
+      case TypeTiny:
+        return unsigned ? longHelper(type, SMALLINT, RecordCursorInternal::getShort)
+            : longHelper(type, TINYINT, RecordCursorInternal::getByte);
       case TypeYear:
       case TypeShort:
-        return longHelper(type, com.facebook.presto.spi.type.SmallintType.SMALLINT,
-            RecordCursorInternal::getShort);
+        return unsigned ? longHelper(type, INTEGER, RecordCursorInternal::getInteger)
+            : longHelper(type, SMALLINT, RecordCursorInternal::getShort);
       case TypeInt24:
         // FALLTHROUGH
       case TypeLong:
-        return longHelper(type, com.facebook.presto.spi.type.IntegerType.INTEGER,
-            RecordCursorInternal::getInteger);
+        return unsigned ? longHelper(type, BIGINT, RecordCursorInternal::getLong)
+            : longHelper(type, INTEGER, RecordCursorInternal::getInteger);
       case TypeFloat:
-        return longHelper(type, com.facebook.presto.spi.type.RealType.REAL,
+        return longHelper(type, REAL,
             (cursor, column) -> floatToRawIntBits(cursor.getFloat(column)),
             l -> intBitsToFloat(l.intValue()));
       case TypeDouble:
-        return doubleHelper(type, com.facebook.presto.spi.type.DoubleType.DOUBLE,
-            RecordCursorInternal::getDouble);
+        return doubleHelper(type, DOUBLE, RecordCursorInternal::getDouble);
       case TypeNull:
         return null;
       case TypeDatetime:
         // FALLTHROUGH
       case TypeTimestamp:
-        return longHelper(type, com.facebook.presto.spi.type.TimestampType.TIMESTAMP,
+        return longHelper(type, TIMESTAMP,
             (recordCursorInternal, field) -> recordCursorInternal.getLong(field) / 1000,
             Timestamp::new);
       case TypeLonglong:
-        return longHelper(type, com.facebook.presto.spi.type.BigintType.BIGINT,
-            RecordCursorInternal::getLong);
+        return unsigned ? decimalHelper(type, createDecimalType((int) length, 0))
+            : longHelper(type, BIGINT, RecordCursorInternal::getLong);
       case TypeDate:
         // FALLTHROUGH
       case TypeNewDate:
-        return longHelper(type, com.facebook.presto.spi.type.DateType.DATE,
+        return longHelper(type, DATE,
             RecordCursorInternal::getLong, days -> Date.valueOf(LocalDate.ofEpochDay(days)));
       case TypeDuration:
-        return longHelper(type, com.facebook.presto.spi.type.TimeType.TIME,
+        return longHelper(type, TIME,
             (cursor, columnIndex) -> {
               long localMillis = cursor.getLong(columnIndex) / 1000000L;
               DateTimeZone zone = ISOChronology.getInstance().getZone();
               return zone.convertUTCToLocal(zone.getMillisKeepLocal(UTC, localMillis));
             }, millis -> (1000000L * (((long) millis) + 8 * 3600 * 1000L)));
       case TypeJSON:
-        return sliceHelper(type, com.facebook.presto.spi.type.JsonType.JSON,
+        return sliceHelper(type, JSON,
             (cursor, columnIndex) -> utf8Slice(cursor.getString(columnIndex)));
       case TypeSet:
         // FALLTHROUGH
@@ -188,7 +188,7 @@ public final class TypeHelpers {
           }
           return varcharHelper(type, VarcharType.createVarcharType((int) length));
         } else if (type instanceof BytesType) {
-          return sliceHelper(type, com.facebook.presto.spi.type.VarbinaryType.VARBINARY,
+          return sliceHelper(type, VARBINARY,
               (cursor, columnIndex) -> wrappedBuffer(cursor.getBytes(columnIndex)),
               Slice::getBytes);
         } else {
@@ -203,8 +203,7 @@ public final class TypeHelpers {
         if (precision > Decimals.MAX_PRECISION) {
           return null;
         }
-        return decimalHelper(type, com.facebook.presto.spi.type.DecimalType
-            .createDecimalType(precision, max(decimalDigits, 0)));
+        return decimalHelper(type, createDecimalType(precision, max(decimalDigits, 0)));
       case TypeGeometry:
         // FALLTHROUGH
       default:
