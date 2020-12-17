@@ -45,16 +45,24 @@ public class TypeUtils {
    * @return Flink DataType
    */
   public static DataType getFlinkType(org.tikv.common.types.DataType dataType) {
+    boolean unsigned = dataType.isUnsigned();
+    int length = (int) dataType.getLength();
     switch (dataType.getType()) {
-      case TypeTiny:
       case TypeBit:
-        return DataTypes.TINYINT();
+        return DataTypes.BOOLEAN();
+      case TypeTiny:
+        if (length == 1) {
+          return DataTypes.BOOLEAN();
+        }
+        return unsigned ? DataTypes.SMALLINT() : DataTypes.TINYINT();
       case TypeYear:
       case TypeShort:
-        return DataTypes.SMALLINT();
+        return unsigned ? DataTypes.INT() : DataTypes.SMALLINT();
       case TypeInt24:
       case TypeLong:
-        return DataTypes.INT();
+        return unsigned ? DataTypes.BIGINT() : DataTypes.INT();
+      case TypeLonglong:
+        return unsigned ? DataTypes.DECIMAL(length, 0) : DataTypes.BIGINT();
       case TypeFloat:
         return DataTypes.FLOAT();
       case TypeDouble:
@@ -64,8 +72,6 @@ public class TypeUtils {
       case TypeDatetime:
       case TypeTimestamp:
         return DataTypes.TIMESTAMP();
-      case TypeLonglong:
-        return DataTypes.BIGINT();
       case TypeDate:
       case TypeNewDate:
         return DataTypes.DATE();
@@ -88,7 +94,7 @@ public class TypeUtils {
         return DataTypes.STRING();
       case TypeDecimal:
       case TypeNewDecimal:
-        return DataTypes.DECIMAL((int) dataType.getLength(), dataType.getDecimal());
+        return DataTypes.DECIMAL(length, dataType.getDecimal());
       case TypeGeometry:
       default:
         throw new IllegalArgumentException(
