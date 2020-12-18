@@ -29,13 +29,13 @@
             </activation>
             <properties>
                 <flink.scope>compile</flink.scope>
-                <mysql.connector.version>5.1.44</mysql.connector.version>
+                <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
             </properties>
             <dependencies>
                 <dependency>
                     <groupId>mysql</groupId>
                     <artifactId>mysql-connector-java</artifactId>
-                    <version>${mysql.connector.version}</version>
+                    <version>${dep.mysql.jdbc.version}</version>
                 </dependency>
             </dependencies>
         </profile>
