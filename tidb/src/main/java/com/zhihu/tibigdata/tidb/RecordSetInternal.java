@@ -35,15 +35,20 @@ public final class RecordSetInternal {
 
   public RecordSetInternal(ClientSession session, SplitInternal split,
       List<ColumnHandleInternal> columnHandles, Optional<Expression> expression) {
+    this(session, split, columnHandles, expression, Integer.MAX_VALUE);
+  }
+
+  public RecordSetInternal(ClientSession session, SplitInternal split,
+      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression, int limit) {
     requireNonNull(split, "split is null");
     this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
     this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType)
         .collect(toImmutableList());
     List<String> columns = columnHandles.stream().map(ColumnHandleInternal::getName)
         .collect(toImmutableList());
-
     TiDAGRequest.Builder request = session.request(split.getTable(), columns);
-    expression.ifPresent(e -> request.addFilter(e));
+    request.setLimit(limit);
+    expression.ifPresent(request::addFilter);
     iterator = session.iterate(request, new Base64KeyRange(split.getStartKey(), split.getEndKey()));
   }
 

@@ -19,10 +19,9 @@ package com.zhihu.tibigdata.flink.tidb.examples;
 import com.zhihu.tibigdata.flink.tidb.TiDBCatalog;
 import java.util.Map;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 
 public class TiDBCatalogDemo {
 
@@ -34,18 +33,17 @@ public class TiDBCatalogDemo {
     final String tableName = parameterTool.getRequired("tidb.table.name");
     // env
     EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inStreamingMode().build();
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+        .inBatchMode().build();
+    TableEnvironment tableEnvironment = TableEnvironment.create(settings);
     // register TiDBCatalog
     TiDBCatalog catalog = new TiDBCatalog(properties);
     catalog.open();
     tableEnvironment.registerCatalog("tidb", catalog);
-    tableEnvironment.useCatalog("tidb");
     // query and print
-    String sql = String.format("SELECT * FROM `%s`.`%s` LIMIT 100", databaseName, tableName);
+    String sql = String.format("SELECT * FROM `tidb`.`%s`.`%s` LIMIT 100", databaseName, tableName);
+    System.out.println("Flink SQL: " + sql);
     TableResult tableResult = tableEnvironment.executeSql(sql);
-    System.out.println(tableResult.getTableSchema());
+    System.out.println("TableSchema: \n" + tableResult.getTableSchema());
     tableResult.print();
   }
 }

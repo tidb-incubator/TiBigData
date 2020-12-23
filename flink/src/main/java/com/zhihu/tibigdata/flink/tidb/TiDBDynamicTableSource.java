@@ -23,15 +23,22 @@ import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.InputFormatProvider;
 import org.apache.flink.table.connector.source.ScanTableSource;
+import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
+import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
 import org.apache.flink.table.data.RowData;
 
-public class TiDBDynamicTableSource implements ScanTableSource {
+public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPushDown,
+    SupportsProjectionPushDown {
 
   private final TableSchema tableSchema;
 
-  private final Map<String,String> properties;
+  private final Map<String, String> properties;
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String,String> properties) {
+  private long limit = Long.MAX_VALUE;
+
+  private int[][] projectedFields;
+
+  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
     this.tableSchema = tableSchema;
     this.properties = properties;
   }
@@ -42,22 +49,43 @@ public class TiDBDynamicTableSource implements ScanTableSource {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-    TypeInformation<RowData> typeInformation = (TypeInformation<RowData>) runtimeProviderContext
+    TypeInformation<RowData> typeInformation = runtimeProviderContext
         .createTypeInformation(tableSchema.toRowDataType());
     TiDBRowDataInputFormat tidbRowDataInputFormat = new TiDBRowDataInputFormat(properties,
         tableSchema.getFieldNames(), tableSchema.getFieldDataTypes(), typeInformation);
+    tidbRowDataInputFormat.setLimit(limit);
+    if (projectedFields != null) {
+      tidbRowDataInputFormat.setProjectedFields(projectedFields);
+    }
     return InputFormatProvider.of(tidbRowDataInputFormat);
   }
 
   @Override
   public DynamicTableSource copy() {
-    return new TiDBDynamicTableSource(tableSchema, properties);
+    TiDBDynamicTableSource tableSource = new TiDBDynamicTableSource(tableSchema, properties);
+    tableSource.limit = this.limit;
+    tableSource.projectedFields = this.projectedFields;
+    return tableSource;
   }
 
   @Override
   public String asSummaryString() {
     return this.getClass().getName();
+  }
+
+  @Override
+  public void applyLimit(long limit) {
+    this.limit = limit;
+  }
+
+  @Override
+  public boolean supportsNestedProjection() {
+    return false;
+  }
+
+  @Override
+  public void applyProjection(int[][] projectedFields) {
+    this.projectedFields = projectedFields;
   }
 }
