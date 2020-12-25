@@ -57,6 +57,10 @@ public final class Expressions {
     return new ColumnRef(name);
   }
 
+  public static Expression column(String name, DataType dataType) {
+    return new ColumnRef(name, dataType);
+  }
+
   public static Expression equal(Expression lhs, Expression rhs) {
     return ComparisonBinaryExpression.equal(lhs, rhs);
   }

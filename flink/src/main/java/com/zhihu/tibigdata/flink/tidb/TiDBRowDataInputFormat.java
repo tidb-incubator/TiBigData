@@ -53,6 +53,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.expression.Expression;
 
 public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit> implements
     ResultTypeQueryable<RowData> {
@@ -82,6 +83,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   private long recordCount;
 
   private int[] projectedFieldIndexes;
+
+  private Expression expression;
 
   private transient DateTimeFormatter[] formatters;
 
@@ -165,7 +168,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
     RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
         Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
             .collect(Collectors.toList()),
-        Optional.empty(),
+        expression == null ? Optional.empty() : Optional.of(expression),
         limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
     cursor = recordSetInternal.cursor();
   }
@@ -221,4 +224,9 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       this.projectedFieldIndexes[i] = projectedField[0];
     }
   }
+
+  public void setExpression(Expression expression) {
+    this.expression = expression;
+  }
+
 }

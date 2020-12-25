@@ -348,6 +348,6 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public static ClientSession create(ClientConfig config) {
-    return new ClientSession(config);
+    return new ClientSession(new ClientConfig(config));
   }
 }
