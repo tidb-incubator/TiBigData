@@ -19,6 +19,7 @@ package com.zhihu.tibigdata.flink.tidb;
 import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NAME;
 import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
 
+import com.google.common.collect.ImmutableSet;
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.ClientSession;
 import com.zhihu.tibigdata.tidb.ColumnHandleInternal;
@@ -27,6 +28,7 @@ import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -44,11 +46,26 @@ import org.apache.flink.table.expressions.FieldReferenceExpression;
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.expressions.ValueLiteralExpression;
 import org.apache.flink.util.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tikv.common.expression.Expression;
+import org.tikv.common.expression.visitor.SupportedExpressionValidator;
 import org.tikv.common.types.DataType;
 
 public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPushDown,
     SupportsProjectionPushDown, SupportsFilterPushDown {
+
+  static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
+
+  private static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
+      "greaterThan",
+      "greaterThanOrEqual",
+      "lessThan",
+      "lessThanOrEqual",
+      "equals",
+      "notEquals",
+      "like"
+  );
 
   private final TableSchema tableSchema;
 
@@ -122,9 +139,11 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
 
   @Override
   public Result applyFilters(List<ResolvedExpression> filters) {
+    LOG.info("flink filters: " + filters);
     if (config.isFilterPushDown()) {
       this.expression = createExpression(filters);
     }
+    LOG.info("tidb expression: " + this.expression);
     return Result.of(Collections.emptyList(), filters);
   }
 
@@ -158,14 +177,25 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
   }
 
   private Expression getExpression(List<ResolvedExpression> resolvedExpressions) {
-    return Expressions.and(resolvedExpressions.stream().map(this::getExpression));
+    return Expressions.and(resolvedExpressions.stream().map(this::getExpression)
+        .filter(exp -> exp != Expressions.alwaysTrue()));
   }
 
   private Expression getExpression(ResolvedExpression resolvedExpression) {
     if (resolvedExpression instanceof CallExpression) {
       CallExpression callExpression = (CallExpression) resolvedExpression;
       List<ResolvedExpression> resolvedChildren = callExpression.getResolvedChildren();
-      switch (callExpression.getFunctionName()) {
+      String functionName = callExpression.getFunctionName();
+      Expression left = null;
+      Expression right = null;
+      if (COMPARISON_BINARY_FILTERS.contains(functionName)) {
+        left = getExpression(resolvedChildren.get(0));
+        right = getExpression(resolvedChildren.get(1));
+        if (left == Expressions.alwaysTrue() || right == Expressions.alwaysTrue()) {
+          return Expressions.alwaysTrue();
+        }
+      }
+      switch (functionName) {
         case "cast":
           // we only need column name
           return getExpression(resolvedChildren.get(0));
@@ -174,28 +204,24 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
           return Expressions.or(resolvedChildren.stream().map(this::getExpression)
               .filter(exp -> exp != Expressions.alwaysTrue()));
         case "not":
-          return Expressions.not(getExpression(resolvedChildren.get(0)));
+          if (left == Expressions.alwaysTrue()) {
+            return Expressions.alwaysTrue();
+          }
+          return alwaysTrueIfNotSupported(Expressions.not(left));
         case "greaterThan":
-          return Expressions.greaterThan(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.greaterThan(left, right));
         case "greaterThanOrEqual":
-          return Expressions.greaterEqual(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.greaterEqual(left, right));
         case "lessThan":
-          return Expressions.lessThan(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.lessThan(left, right));
         case "lessThanOrEqual":
-          return Expressions.lessEqual(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.lessEqual(left, right));
         case "equals":
-          return Expressions.equal(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.equal(left, right));
         case "notEquals":
-          return Expressions.notEqual(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.notEqual(left, right));
         case "like":
-          return Expressions.like(getExpression(resolvedChildren.get(0)),
-              getExpression(resolvedChildren.get(1)));
+          return alwaysTrueIfNotSupported(Expressions.like(left, right));
         default:
           return Expressions.alwaysTrue();
       }
@@ -212,5 +238,10 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
       return Expressions.constant(value, null);
     }
     return Expressions.alwaysTrue();
+  }
+
+  private Expression alwaysTrueIfNotSupported(Expression expression) {
+    return SupportedExpressionValidator.isSupportedExpression(expression, null)
+        ? expression : Expressions.alwaysTrue();
   }
 }
