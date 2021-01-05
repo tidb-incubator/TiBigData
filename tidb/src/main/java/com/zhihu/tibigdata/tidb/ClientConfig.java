@@ -45,8 +45,8 @@ public final class ClientConfig {
   public static final String TIDB_WRITE_MODE = "tidb.write_mode";
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
 
-  public static final String TIDB_READ_REPLICA = "tidb.read-replica";
-  public static final boolean TIDB_READ_REPLICA_DEFAULT = false;
+  public static final String TIDB_REPLICA_READ = "tidb.replica-read";
+  public static final boolean TIDB_REPLICA_READ_DEFAULT = false;
 
   public static final String TIDB_FILTER_PUSH_DOWN = "tidb.filter-push-down";
   public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
@@ -87,12 +87,12 @@ public final class ClientConfig {
 
   public ClientConfig() {
     this(null, null, null, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
-        TIDB_READ_REPLICA_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+        TIDB_REPLICA_READ_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
     this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
-        TIDB_WRITE_MODE_DEFAULT, TIDB_READ_REPLICA_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+        TIDB_WRITE_MODE_DEFAULT, TIDB_REPLICA_READ_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
@@ -117,7 +117,7 @@ public final class ClientConfig {
             properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))),
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
         Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_READ_REPLICA, Boolean.toString(TIDB_READ_REPLICA_DEFAULT))),
+            .getOrDefault(TIDB_REPLICA_READ, Boolean.toString(TIDB_REPLICA_READ_DEFAULT))),
         Boolean.parseBoolean(properties
             .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT)))
     );

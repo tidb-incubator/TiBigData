@@ -168,7 +168,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
     RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
         Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
             .collect(Collectors.toList()),
-        expression == null ? Optional.empty() : Optional.of(expression),
+        Optional.ofNullable(expression),
         limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
     cursor = recordSetInternal.cursor();
   }
