@@ -139,11 +139,11 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
 
   @Override
   public Result applyFilters(List<ResolvedExpression> filters) {
-    LOG.info("flink filters: " + filters);
+    LOG.debug("flink filters: " + filters);
     if (config.isFilterPushDown()) {
       this.expression = createExpression(filters);
     }
-    LOG.info("tidb expression: " + this.expression);
+    LOG.debug("tidb expression: " + this.expression);
     return Result.of(Collections.emptyList(), filters);
   }
 
