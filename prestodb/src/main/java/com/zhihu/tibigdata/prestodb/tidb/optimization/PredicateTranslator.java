@@ -138,7 +138,7 @@ public final class PredicateTranslator extends
     TiDBColumnHandle columnHandle = (TiDBColumnHandle) context.get(variable);
     requireNonNull(columnHandle, format("Unrecognized variable %s", variable));
     return new TranslatedExpression<>(
-        Optional.of(Expressions.column(columnHandle.getName())),
+        Optional.of(Expressions.column(columnHandle.getName(), columnHandle.getTiDBType())),
         variable,
         ImmutableList.of());
   }
