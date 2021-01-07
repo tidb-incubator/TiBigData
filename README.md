@@ -27,7 +27,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | tidb.maximum.pool.size | Presto and Flink                          | 10            | Connection pool size.                                       |
 | tidb.minimum.idle.size | Presto and Flink                          | 10           | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode             | Presto and Flink                     | append        | TiDB sink write mode: `upsert` or `append`.  For presto, you could config it in `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. |
-| tidb.read-replica |Presto and Flink|false|Read data from follower.|
+| tidb.replica-read |Presto and Flink|false|Read data from follower.|
 | tidb.database.name          | Flink SQL only, it is no need for catalog | null          | database name.                                               |
 | tidb.table.name             | Flink SQL only, it is no need for catalog | null          | table name.                                                  |
 | timestamp-format.${columnName} | Flink SQL only | null | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. |

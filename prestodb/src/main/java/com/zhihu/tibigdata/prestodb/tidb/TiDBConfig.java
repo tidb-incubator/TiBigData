@@ -16,7 +16,7 @@
 
 package com.zhihu.tibigdata.prestodb.tidb;
 
-import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_READ_REPLICA;
+import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static com.zhihu.tibigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 
 import com.facebook.airlift.configuration.Config;
@@ -102,7 +102,7 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
     return getInternal().isReplicaRead();
   }
 
-  @Config(TIDB_READ_REPLICA)
+  @Config(TIDB_REPLICA_READ)
   public TiDBConfig setReplicaRead(boolean isReplicaRead) {
     getInternal().setReplicaRead(isReplicaRead);
     return this;

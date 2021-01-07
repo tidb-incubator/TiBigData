@@ -53,8 +53,8 @@ public final class Expressions {
     return new Constant(value, type);
   }
 
-  public static Expression column(String name) {
-    return new ColumnRef(name);
+  public static Expression column(String name, DataType dataType) {
+    return new ColumnRef(name, dataType);
   }
 
   public static Expression equal(Expression lhs, Expression rhs) {

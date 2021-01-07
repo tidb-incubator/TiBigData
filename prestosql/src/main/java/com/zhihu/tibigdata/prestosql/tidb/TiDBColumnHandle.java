@@ -96,7 +96,7 @@ public final class TiDBColumnHandle implements ColumnHandle {
   }
 
   public Expression createColumnExpression() {
-    return Expressions.column(getName());
+    return Expressions.column(getName(), getTiDBType());
   }
 
   ColumnHandleInternal createInternal() {

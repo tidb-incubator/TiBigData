@@ -36,6 +36,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.apache.flink.api.common.io.DefaultInputSplitAssigner;
 import org.apache.flink.api.common.io.RichInputFormat;
 import org.apache.flink.api.common.io.statistics.BaseStatistics;
@@ -51,6 +53,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.expression.Expression;
 
 public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit> implements
     ResultTypeQueryable<RowData> {
@@ -75,6 +78,14 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   private final List<ColumnHandleInternal> columnHandleInternals;
 
+  private long limit = Long.MAX_VALUE;
+
+  private long recordCount;
+
+  private int[] projectedFieldIndexes;
+
+  private Expression expression;
+
   private transient DateTimeFormatter[] formatters;
 
   private transient RecordCursorInternal cursor;
@@ -82,8 +93,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   private transient ClientSession clientSession;
 
   public TiDBRowDataInputFormat(Map<String, String> properties, String[] fieldNames,
-      DataType[] fieldTypes,
-      TypeInformation<RowData> typeInformation) {
+      DataType[] fieldTypes, TypeInformation<RowData> typeInformation) {
     this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
     this.databaseName = getRequiredProperties(DATABASE_NAME.key());
     this.tableName = getRequiredProperties(TABLE_NAME.key());
@@ -102,6 +112,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
     } catch (Exception e) {
       throw new IllegalStateException("can not get split", e);
     }
+    projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
   }
 
   @Override
@@ -150,9 +161,15 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   @Override
   public void open(InputSplit split) throws IOException {
+    if (recordCount >= limit) {
+      return;
+    }
     SplitInternal splitInternal = splits.get(split.getSplitNumber());
     RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
-        columnHandleInternals, Optional.empty());
+        Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
+            .collect(Collectors.toList()),
+        Optional.ofNullable(expression),
+        limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
     cursor = recordSetInternal.cursor();
   }
 
@@ -160,24 +177,27 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   public void close() throws IOException {
     if (cursor != null) {
       cursor.close();
+      cursor = null;
     }
   }
 
   @Override
   public boolean reachedEnd() throws IOException {
-    return !cursor.advanceNextPosition();
+    return recordCount >= limit || !cursor.advanceNextPosition();
   }
 
   @Override
   public RowData nextRecord(RowData rowData) throws IOException {
-    GenericRowData row = new GenericRowData(fieldNames.length);
-    for (int i = 0; i < fieldNames.length; i++) {
-      DataType fieldType = fieldTypes[i];
+    GenericRowData row = new GenericRowData(projectedFieldIndexes.length);
+    for (int i = 0; i < projectedFieldIndexes.length; i++) {
+      int projectedFieldIndex = projectedFieldIndexes[i];
+      DataType fieldType = fieldTypes[projectedFieldIndex];
       Object object = cursor.getObject(i);
       // data can be null here
-      row.setField(i,
-          toRowDataType(getObjectWithDataType(object, fieldType, formatters[i]).orElse(null)));
+      row.setField(i, toRowDataType(
+          getObjectWithDataType(object, fieldType, formatters[projectedFieldIndex]).orElse(null)));
     }
+    recordCount++;
     return row;
   }
 
@@ -188,6 +208,25 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
 
   private String getRequiredProperties(String key) {
     return Preconditions.checkNotNull(properties.get(key), key + " can not be null");
+  }
+
+  public void setLimit(long limit) {
+    this.limit = limit;
+  }
+
+  public void setProjectedFields(int[][] projectedFields) {
+    this.projectedFieldIndexes = new int[projectedFields.length];
+    for (int i = 0; i < projectedFields.length; i++) {
+      int[] projectedField = projectedFields[i];
+      // not support nested projection
+      Preconditions.checkArgument(projectedField != null && projectedField.length == 1,
+          "projected field can not be null and length must be 1");
+      this.projectedFieldIndexes[i] = projectedField[0];
+    }
+  }
+
+  public void setExpression(Expression expression) {
+    this.expression = expression;
   }
 
 }
