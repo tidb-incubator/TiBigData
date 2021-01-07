@@ -50,6 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.expression.visitor.SupportedExpressionValidator;
+import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.types.DataType;
 
 public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPushDown,
@@ -155,12 +156,8 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
     String databaseName = getRequiredProperties(DATABASE_NAME.key());
     String tableName = getRequiredProperties(TABLE_NAME.key());
     try (ClientSession clientSession = ClientSession.createWithSingleConnection(config)) {
-      TableHandleInternal tableHandleInternal = new TableHandleInternal(
-          UUID.randomUUID().toString(), databaseName, tableName);
-      this.nameTypeMap = clientSession.getTableColumns(tableHandleInternal)
-          .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"))
-          .stream().collect(Collectors.toMap(ColumnHandleInternal::getName,
-              ColumnHandleInternal::getType));
+      this.nameTypeMap = clientSession.getTableMust(databaseName, tableName).getColumns()
+          .stream().collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     } catch (Exception e) {
       throw new IllegalStateException("can not get columns", e);
     }

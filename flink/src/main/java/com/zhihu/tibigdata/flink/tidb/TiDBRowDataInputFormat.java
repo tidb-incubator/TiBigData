@@ -103,6 +103,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
     // get split
     try (ClientSession splitSession = ClientSession
         .createWithSingleConnection(new ClientConfig(properties))) {
+      // check exist
+      splitSession.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal = new TableHandleInternal(
           UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
@@ -110,7 +112,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
     } catch (Exception e) {
-      throw new IllegalStateException("can not get split", e);
+      throw new IllegalStateException(e);
     }
     projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
   }
