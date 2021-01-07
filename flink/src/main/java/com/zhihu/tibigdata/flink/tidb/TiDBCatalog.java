@@ -69,9 +69,17 @@ public class TiDBCatalog extends AbstractCatalog {
 
   private Optional<ClientSession> clientSession = Optional.empty();
 
-  public TiDBCatalog(Map<String, String> properties) {
-    super(DEFAULT_NAME, DEFAULT_DATABASE);
+  public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
+    super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
+  }
+
+  public TiDBCatalog(String name, Map<String, String> properties) {
+    this(name, DEFAULT_DATABASE, properties);
+  }
+
+  public TiDBCatalog(Map<String, String> properties) {
+    this(DEFAULT_NAME, DEFAULT_DATABASE, properties);
   }
 
   @Override
@@ -349,8 +357,8 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public TableSchema getTableSchema(String databaseName, String tableName) {
     return getClientSession()
-        .getTableColumns(databaseName, tableName)
-        .orElseThrow(() -> new NullPointerException("can not get table columns"))
+        .getTableMust(databaseName, tableName)
+        .getColumns()
         .stream()
         .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
             TypeUtils.getFlinkType(c.getType())), (builder1, builder2) -> null).build();

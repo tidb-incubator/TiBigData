@@ -34,6 +34,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | sink.buffer-flush.max-rows | Flink | 100 | The max size of buffered records before flush. Can be set to zero to disable it. |
 | sink.buffer-flush.interval | Flink | 1s | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
 | sink.max-retries | Flink | 3 | The max retry times if writing records to database failed. |
+| tidb.filter-push-down | Flink | false | Support filter push down. |
 
 
 TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.
@@ -411,6 +412,34 @@ public class TestFlinkSql {
 ```
 
 ##### Flink SQL Client
+
+On the one hand, you can use TiDB Catalog in flink sql client by environment file:  `env.yaml`.
+
+```yaml
+catalogs:
+   - name: tidb
+     type: tidb
+     tidb.database.url: jdbc:mysql://host:port/database
+     tidb.username: root
+     tidb.password: 123456
+
+execution:
+        planner: blink
+        type: batch
+        parallelism: 1
+```
+
+then run sql-client and query tidb table:
+
+```sql
+bin/sql-client.sh embedded -e env.yaml
+-- set result format
+SET execution.result-mode=tableau;
+-- query
+SELECT * FROM `tidb`.`default`.`test_tidb_type` LIMIT 100;
+```
+
+On the other hand, you can also create mapping table by yourself: 
 
 ```sql
 -- run flink sql client
