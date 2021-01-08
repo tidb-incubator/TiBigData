@@ -53,6 +53,7 @@ import org.tikv.common.meta.TiDAGRequest;
 import org.tikv.common.meta.TiDBInfo;
 import org.tikv.common.meta.TiIndexColumn;
 import org.tikv.common.meta.TiIndexInfo;
+import org.tikv.common.meta.TiPartitionDef;
 import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.operation.iterator.CoprocessorIterator;
 import org.tikv.common.row.Row;
@@ -132,7 +133,6 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
-    Stream<Integer> indexStream = Stream.iterate(0, i -> i + 1);
     return Streams.mapWithIndex(table.getColumns().stream(),
         (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i))
         .collect(toImmutableList());
@@ -173,12 +173,17 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
-    return getTable(tableHandle).map(table -> {
-      long tableId = table.getId();
-      RowKey start = RowKey.createMin(tableId);
-      RowKey end = RowKey.createBeyondMax(tableId);
-      return getRangeRegionTasks(start.toByteString(), end.toByteString());
-    }).orElseGet(ImmutableList::of);
+    return getTable(tableHandle)
+        .map(table -> table.isPartitionEnabled()
+            ? table.getPartitionInfo().getDefs().stream().map(TiPartitionDef::getId)
+            .collect(Collectors.toList()) : ImmutableList.of(table.getId()))
+        .orElseGet(ImmutableList::of)
+        .stream()
+        .flatMap(Stream::of)
+        .map(tableId -> getRangeRegionTasks(RowKey.createMin(tableId).toByteString(),
+            RowKey.createBeyondMax(tableId).toByteString()))
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
   }
 
   public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle) {
