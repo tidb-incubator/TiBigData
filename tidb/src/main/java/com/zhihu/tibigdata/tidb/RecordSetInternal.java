@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiDAGRequest;
+import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.operation.iterator.CoprocessorIterator;
 import org.tikv.common.row.Row;
 import org.tikv.common.types.DataType;
@@ -34,12 +35,14 @@ public final class RecordSetInternal {
   private final CoprocessorIterator<Row> iterator;
 
   public RecordSetInternal(ClientSession session, SplitInternal split,
-      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression) {
-    this(session, split, columnHandles, expression, Integer.MAX_VALUE);
+      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
+      Optional<TiTimestamp> timestamp) {
+    this(session, split, columnHandles, expression, timestamp, Integer.MAX_VALUE);
   }
 
   public RecordSetInternal(ClientSession session, SplitInternal split,
-      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression, int limit) {
+      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
+      Optional<TiTimestamp> timestamp, int limit) {
     requireNonNull(split, "split is null");
     this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
     this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType)
@@ -49,6 +52,7 @@ public final class RecordSetInternal {
     TiDAGRequest.Builder request = session.request(split.getTable(), columns);
     request.setLimit(limit);
     expression.ifPresent(request::addFilter);
+    timestamp.ifPresent(request::setStartTs);
     iterator = session.iterate(request, new Base64KeyRange(split.getStartKey(), split.getEndKey()));
   }
 

@@ -29,6 +29,8 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   // for session
   public static final String SESSION_WRITE_MODE = "write_mode";
 
+  public static final String SESSION_SNAPSHOT_TIMESTAMP = "snapshot_timestamp";
+
   // for table properties
   public static final String PRIMARY_KEY = "primary_key";
 

@@ -17,6 +17,7 @@
 package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.PRIMARY_KEY;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.SESSION_SNAPSHOT_TIMESTAMP;
 import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.SESSION_WRITE_MODE;
 import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.UNIQUE_KEY;
 import static io.prestosql.spi.transaction.IsolationLevel.REPEATABLE_READ;
@@ -103,8 +104,12 @@ public final class TiDBConnector
   @Override
   public List<PropertyMetadata<?>> getSessionProperties() {
     return ImmutableList.of(PropertyMetadata
-        .stringProperty(SESSION_WRITE_MODE, "tidb sink write mode: append or upsert",
-            config.getWriteMode(), false));
+            .stringProperty(SESSION_WRITE_MODE, "tidb sink write mode: append or upsert",
+                config.getWriteMode(), false),
+        PropertyMetadata
+            .stringProperty(SESSION_SNAPSHOT_TIMESTAMP, "timestamp for snapshot read",
+                null, false)
+    );
   }
 
   @Override

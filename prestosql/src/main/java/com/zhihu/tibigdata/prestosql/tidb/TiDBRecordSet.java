@@ -26,16 +26,20 @@ import io.prestosql.spi.connector.RecordCursor;
 import io.prestosql.spi.connector.RecordSet;
 import io.prestosql.spi.type.Type;
 import java.util.List;
+import java.util.Optional;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements RecordSet {
 
   private final List<TiDBColumnHandle> columnHandles;
   private final List<Type> columnTypes;
 
-  public TiDBRecordSet(TiDBSession session, TiDBSplit split, List<TiDBColumnHandle> columnHandles) {
+  public TiDBRecordSet(TiDBSession session, TiDBSplit split, List<TiDBColumnHandle> columnHandles,
+      Optional<TiTimestamp> timestamp) {
     super(new RecordSetInternal(session.getInternal(), split.toInternal(),
         internalHandles(columnHandles),
-        split.getAdditionalPredicate().map(Expressions::deserialize)));
+        split.getAdditionalPredicate().map(Expressions::deserialize),
+        timestamp));
     this.columnHandles = columnHandles;
     this.columnTypes = columnHandles.stream().map(TiDBColumnHandle::getPrestoType)
         .collect(toImmutableList());

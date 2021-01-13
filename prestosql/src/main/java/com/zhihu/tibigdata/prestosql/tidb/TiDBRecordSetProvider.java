@@ -17,6 +17,7 @@
 package com.zhihu.tibigdata.prestosql.tidb;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.zhihu.tibigdata.prestosql.tidb.TiDBConfig.SESSION_SNAPSHOT_TIMESTAMP;
 import static java.util.Objects.requireNonNull;
 
 import io.prestosql.spi.connector.ColumnHandle;
@@ -26,8 +27,13 @@ import io.prestosql.spi.connector.ConnectorSplit;
 import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.prestosql.spi.connector.ConnectorTransactionHandle;
 import io.prestosql.spi.connector.RecordSet;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
 
@@ -43,7 +49,12 @@ public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
       ConnectorTransactionHandle transactionHandle, ConnectorSession session, ConnectorSplit split,
       ConnectorTableHandle table, List<? extends ColumnHandle> columns) {
     requireNonNull(split, "split is null");
+    Optional<TiTimestamp> timestamp = Optional
+        .ofNullable(session.getProperty(SESSION_SNAPSHOT_TIMESTAMP, String.class))
+        .filter(StringUtils::isNoneEmpty)
+        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
     return new TiDBRecordSet(this.session, (TiDBSplit) split,
-        columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()));
+        columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()),
+        timestamp);
   }
 }

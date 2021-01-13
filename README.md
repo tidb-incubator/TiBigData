@@ -35,6 +35,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 | sink.buffer-flush.interval | Flink | 1s | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
 | sink.max-retries | Flink | 3 | The max retry times if writing records to database failed. |
 | tidb.filter-push-down | Flink | false | Support filter push down. |
+| tidb.snapshot_timestamp | Presto and Flink | null | It is available for TiDB connector to read snapshot. For Flink, You could configure it in table properties; for Presto, you could set it by `SET SESSION tidb.snapshot_timestamp='2021-01-01T14:00:00+08:00'` and unset it by `SET SESSION tidb.snapshot_timestamp=''` within a session. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
 
 
 TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://ci.apache.org/projects/flink/flink-docs-release-1.11/dev/table/connectors/jdbc.html), because it is implemented by JdbcDynamicTableSink.

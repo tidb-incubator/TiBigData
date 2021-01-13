@@ -17,6 +17,7 @@
 package com.zhihu.tibigdata.prestodb.tidb;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
+import static com.zhihu.tibigdata.prestodb.tidb.TiDBConfig.SESSION_SNAPSHOT_TIMESTAMP;
 import static java.util.Objects.requireNonNull;
 
 import com.facebook.presto.spi.ColumnHandle;
@@ -25,8 +26,15 @@ import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import javax.inject.Inject;
+import org.apache.commons.lang3.StringUtils;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
 
@@ -41,7 +49,21 @@ public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
   public RecordSet getRecordSet(ConnectorTransactionHandle transactionHandle,
       ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns) {
     requireNonNull(split, "split is null");
+    Optional<TiTimestamp> timestamp = Optional
+        .ofNullable(session.getProperty(SESSION_SNAPSHOT_TIMESTAMP, String.class))
+        .filter(StringUtils::isNoneEmpty)
+        .map(s -> new TiTimestamp(
+            Timestamp.from(ZonedDateTime.parse(decode(s)).toInstant()).getTime(), 0));
     return new TiDBRecordSet(this.session, (TiDBSplit) split,
-        columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()));
+        columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()),
+        timestamp);
+  }
+
+  private String decode(String s) {
+    try {
+      return URLDecoder.decode(s, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }
