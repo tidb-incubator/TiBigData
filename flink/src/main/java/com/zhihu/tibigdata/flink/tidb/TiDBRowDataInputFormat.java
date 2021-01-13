@@ -20,6 +20,7 @@ import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NA
 import static com.zhihu.tibigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
 import static com.zhihu.tibigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static com.zhihu.tibigdata.flink.tidb.TypeUtils.toRowDataType;
+import static com.zhihu.tibigdata.tidb.ClientConfig.SNAPSHOT_TIMESTAMP;
 
 import com.zhihu.tibigdata.tidb.ClientConfig;
 import com.zhihu.tibigdata.tidb.ClientSession;
@@ -30,6 +31,8 @@ import com.zhihu.tibigdata.tidb.SplitInternal;
 import com.zhihu.tibigdata.tidb.SplitManagerInternal;
 import com.zhihu.tibigdata.tidb.TableHandleInternal;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +41,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.io.DefaultInputSplitAssigner;
 import org.apache.flink.api.common.io.RichInputFormat;
 import org.apache.flink.api.common.io.statistics.BaseStatistics;
@@ -54,6 +58,7 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.expression.Expression;
+import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit> implements
     ResultTypeQueryable<RowData> {
@@ -77,6 +82,8 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
   private final List<SplitInternal> splits;
 
   private final List<ColumnHandleInternal> columnHandleInternals;
+
+  private final TiTimestamp timestamp;
 
   private long limit = Long.MAX_VALUE;
 
@@ -115,6 +122,11 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
       throw new IllegalStateException(e);
     }
     projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
+    timestamp = Optional
+        .ofNullable(properties.get(SNAPSHOT_TIMESTAMP))
+        .filter(StringUtils::isNoneEmpty)
+        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0))
+        .orElse(null);
   }
 
   @Override
@@ -171,6 +183,7 @@ public class TiDBRowDataInputFormat extends RichInputFormat<RowData, InputSplit>
         Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
             .collect(Collectors.toList()),
         Optional.ofNullable(expression),
+        Optional.ofNullable(timestamp),
         limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
     cursor = recordSetInternal.cursor();
   }

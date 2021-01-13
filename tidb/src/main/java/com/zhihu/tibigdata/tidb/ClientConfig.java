@@ -51,6 +51,8 @@ public final class ClientConfig {
   public static final String TIDB_FILTER_PUSH_DOWN = "tidb.filter-push-down";
   public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
 
+  public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
+
   private String pdAddresses;
 
   private String databaseUrl;
