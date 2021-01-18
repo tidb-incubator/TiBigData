@@ -79,7 +79,12 @@ TiDB Flink sink supports all sink properties of  [flink-connector-jdbc](https://
 ```bash
 git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests
+# presto
+mvn clean package -DskipTests -am -pl flink
+# prestodb
+mvn clean package -DskipTests -am -pl prestodb
+# prestosql(need java 11)
+mvn clean package -DskipTests -am -pl prestosql
 ```
 
 ### Test Table

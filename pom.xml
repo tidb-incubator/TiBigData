@@ -7,7 +7,7 @@
     <artifactId>tibigdata</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Presto Connectors</name>
+    <name>TiBigData</name>
     <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <licenses>
