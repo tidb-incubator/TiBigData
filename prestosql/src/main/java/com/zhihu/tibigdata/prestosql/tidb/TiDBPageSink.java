@@ -22,9 +22,7 @@ import static com.zhihu.tibigdata.tidb.SqlUtils.getInsertSql;
 import static com.zhihu.tibigdata.tidb.SqlUtils.getUpsertSql;
 import static com.zhihu.tibigdata.tidb.TiDBWriteMode.UPSERT;
 import static io.prestosql.spi.StandardErrorCode.NOT_SUPPORTED;
-import static io.prestosql.spi.type.Chars.isCharType;
 import static io.prestosql.spi.type.Decimals.readBigDecimal;
-import static io.prestosql.spi.type.Varchars.isVarcharType;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.toIntExact;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -40,8 +38,12 @@ import io.prestosql.spi.Page;
 import io.prestosql.spi.PrestoException;
 import io.prestosql.spi.block.Block;
 import io.prestosql.spi.connector.ConnectorPageSink;
+import io.prestosql.spi.type.CharType;
 import io.prestosql.spi.type.DecimalType;
+import io.prestosql.spi.type.TimeType;
+import io.prestosql.spi.type.TimestampType;
 import io.prestosql.spi.type.Type;
+import io.prestosql.spi.type.VarcharType;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -51,6 +53,7 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.CompletableFuture;
 import org.joda.time.DateTimeZone;
 import org.slf4j.Logger;
@@ -158,20 +161,19 @@ public class TiDBPageSink implements ConnectorPageSink {
             .getMillisKeepLocal(DateTimeZone.getDefault(), utcMillis);
         statement.setDate(parameter, new Date(localMillis));
         break;
-      case "time":
-        statement.setTime(parameter, new Time(type.getLong(block, position)));
-        break;
-      case "timestamp":
-        statement.setTimestamp(parameter, new Timestamp(type.getLong(block, position)));
-        break;
       case "varbinary":
         statement.setBytes(parameter, type.getSlice(block, position).getBytes());
         break;
       default:
         if (type instanceof DecimalType) {
           statement.setBigDecimal(parameter, readBigDecimal((DecimalType) type, block, position));
-        } else if (isVarcharType(type) || isCharType(type)) {
+        } else if (type instanceof VarcharType || type instanceof CharType) {
           statement.setString(parameter, type.getSlice(block, position).toStringUtf8());
+        } else if (type instanceof TimestampType) {
+          statement.setTimestamp(parameter, new Timestamp(
+              type.getLong(block, position) / 1000 - TimeZone.getDefault().getRawOffset()));
+        } else if (type instanceof TimeType) {
+          statement.setTime(parameter, new Time(type.getLong(block, position)));
         } else {
           throw new PrestoException(NOT_SUPPORTED,
               "Unsupported column type: " + type.getDisplayName());

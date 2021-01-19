@@ -33,13 +33,8 @@ import static io.prestosql.spi.type.DoubleType.DOUBLE;
 import static io.prestosql.spi.type.IntegerType.INTEGER;
 import static io.prestosql.spi.type.RealType.REAL;
 import static io.prestosql.spi.type.SmallintType.SMALLINT;
-import static io.prestosql.spi.type.TimeType.TIME;
-import static io.prestosql.spi.type.TimeWithTimeZoneType.TIME_WITH_TIME_ZONE;
-import static io.prestosql.spi.type.TimestampType.TIMESTAMP;
-import static io.prestosql.spi.type.TimestampWithTimeZoneType.TIMESTAMP_WITH_TIME_ZONE;
 import static io.prestosql.spi.type.TinyintType.TINYINT;
 import static io.prestosql.spi.type.VarbinaryType.VARBINARY;
-import static io.prestosql.spi.type.Varchars.isVarcharType;
 import static java.lang.Float.floatToRawIntBits;
 import static java.lang.Float.intBitsToFloat;
 import static java.lang.Math.max;
@@ -53,6 +48,10 @@ import io.prestosql.spi.PrestoException;
 import io.prestosql.spi.type.CharType;
 import io.prestosql.spi.type.DecimalType;
 import io.prestosql.spi.type.Decimals;
+import io.prestosql.spi.type.TimeType;
+import io.prestosql.spi.type.TimeWithTimeZoneType;
+import io.prestosql.spi.type.TimestampType;
+import io.prestosql.spi.type.TimestampWithTimeZoneType;
 import io.prestosql.spi.type.Type;
 import io.prestosql.spi.type.VarcharType;
 import java.math.BigDecimal;
@@ -62,9 +61,8 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import org.joda.time.DateTimeZone;
-import org.joda.time.chrono.ISOChronology;
 import org.tikv.common.types.BytesType;
 import org.tikv.common.types.DataType;
 import org.tikv.common.types.EnumType;
@@ -73,22 +71,16 @@ import org.tikv.common.types.StringType;
 
 public final class TypeHelpers {
 
-  private static final ISOChronology UTC_CHRONOLOGY = ISOChronology.getInstanceUTC();
-
   private static final Map<Type, String> SQL_TYPES = ImmutableMap.<Type, String>builder()
       .put(BOOLEAN, "boolean")
       .put(BIGINT, "bigint")
       .put(INTEGER, "integer")
       .put(SMALLINT, "smallint")
       .put(TINYINT, "tinyint")
-      .put(DOUBLE, "double precision")
-      .put(REAL, "real")
-      .put(VARBINARY, "varbinary")
+      .put(DOUBLE, "double")
+      .put(REAL, "float")
+      .put(VARBINARY, "mediumblob")
       .put(DATE, "date")
-      .put(TIME, "time")
-      .put(TIME_WITH_TIME_ZONE, "time with timezone")
-      .put(TIMESTAMP, "timestamp")
-      .put(TIMESTAMP_WITH_TIME_ZONE, "timestamp with timezone")
       .build();
 
   private static final ConcurrentHashMap<DataType, Optional<TypeHelper>> TYPE_HELPERS
@@ -116,6 +108,7 @@ public final class TypeHelpers {
   private static TypeHelper getHelperInternal(DataType type) {
     boolean unsigned = type.isUnsigned();
     long length = type.getLength();
+    int decimal = type.getDecimal();
     switch (type.getType()) {
       case TypeBit:
         return longHelper(type, TINYINT, RecordCursorInternal::getByte);
@@ -142,9 +135,9 @@ public final class TypeHelpers {
       case TypeDatetime:
         // FALLTHROUGH
       case TypeTimestamp:
-        return longHelper(type, TIMESTAMP,
-            (recordCursorInternal, field) -> recordCursorInternal.getLong(field) / 1000,
-            Timestamp::new);
+        return longHelper(type, TimestampType.createTimestampType(decimal),
+            (recordCursorInternal, field) -> recordCursorInternal.getLong(field)
+                + TimeZone.getDefault().getRawOffset() * 1000L, Timestamp::new);
       case TypeLonglong:
         return unsigned ? decimalHelper(type, createDecimalType((int) length, 0))
             : longHelper(type, BIGINT, RecordCursorInternal::getLong);
@@ -154,11 +147,8 @@ public final class TypeHelpers {
         return longHelper(type, DATE, RecordCursorInternal::getLong,
             days -> Date.valueOf(LocalDate.ofEpochDay(days)));
       case TypeDuration:
-        return longHelper(type, TIME, (cursor, columnIndex) -> {
-          long localMillis = cursor.getLong(columnIndex) / 1000000L;
-          DateTimeZone zone = ISOChronology.getInstance().getZone();
-          return zone.convertUTCToLocal(zone.getMillisKeepLocal(UTC, localMillis));
-        }, millis -> (1000000L * (((long) millis) + 8 * 3600 * 1000L)));
+        return longHelper(type, TimeType.createTimeType(decimal),
+            (recordCursorInternal, field) -> recordCursorInternal.getLong(field) * 1000);
       case TypeJSON:
         return varcharHelper(type, VarcharType.createUnboundedVarcharType());
       case TypeSet:
@@ -194,13 +184,12 @@ public final class TypeHelpers {
       case TypeDecimal:
         // FALLTHROUGH
       case TypeNewDecimal:
-        int decimalDigits = type.getDecimal();
-        int precision = (int) length + max(-decimalDigits,
-            0); // Map decimal(p, -s) (negative scale) to decimal(p+s, 0).
+        int precision = (int) length + max(-decimal, 0);
+        // Map decimal(p, -s) (negative scale) to decimal(p+s, 0).
         if (precision > Decimals.MAX_PRECISION) {
           return null;
         }
-        return decimalHelper(type, createDecimalType(precision, max(decimalDigits, 0)));
+        return decimalHelper(type, createDecimalType(precision, max(decimal, 0)));
       case TypeGeometry:
         // FALLTHROUGH
       default:
@@ -222,22 +211,14 @@ public final class TypeHelpers {
     return getHelper(type).map(TypeHelper::getPrestoType);
   }
 
-
-  // copy from com.facebook.presto.plugin.mysql.MySqlClient#toSqlType
   public static String toSqlString(Type type) {
-    if (REAL.equals(type)) {
-      return "float";
-    }
-    if (TIME_WITH_TIME_ZONE.equals(type) || TIMESTAMP_WITH_TIME_ZONE.equals(type)) {
+    if (type instanceof TimeWithTimeZoneType || type instanceof TimestampWithTimeZoneType) {
       throw new PrestoException(NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
     }
-    if (TIMESTAMP.equals(type)) {
-      return "datetime";
+    if (type instanceof TimestampType) {
+      return format("timestamp(%s)", ((TimestampType) type).getPrecision());
     }
-    if (VARBINARY.equals(type)) {
-      return "mediumblob";
-    }
-    if (isVarcharType(type)) {
+    if (type instanceof VarcharType) {
       VarcharType varcharType = (VarcharType) type;
       if (varcharType.isUnbounded()) {
         return "longtext";
@@ -255,14 +236,18 @@ public final class TypeHelpers {
       return "longtext";
     }
     if (type instanceof CharType) {
-      if (((CharType) type).getLength() == CharType.MAX_LENGTH) {
-        return "char";
+      int length = ((CharType) type).getLength();
+      if (length <= 255) {
+        return "char(" + length + ")";
       }
-      return "char(" + ((CharType) type).getLength() + ")";
+      return "text";
     }
     if (type instanceof DecimalType) {
       return format("decimal(%s, %s)", ((DecimalType) type).getPrecision(),
           ((DecimalType) type).getScale());
+    }
+    if (type instanceof TimeType) {
+      return format("time(%s)", ((TimeType) type).getPrecision());
     }
     String sqlType = SQL_TYPES.get(type);
     if (sqlType != null) {

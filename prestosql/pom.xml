@@ -15,7 +15,7 @@
 
     <properties>
         <dep.airlift.version>0.197</dep.airlift.version>
-        <dep.prestosql.version>333</dep.prestosql.version>
+        <dep.prestosql.version>350</dep.prestosql.version>
     </properties>
 
     <dependencies>
