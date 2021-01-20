@@ -15,7 +15,7 @@
 
     <properties>
         <dep.airlift.version>0.197</dep.airlift.version>
-        <dep.prestosql.version>333</dep.prestosql.version>
+        <dep.prestosql.version>350</dep.prestosql.version>
     </properties>
 
     <dependencies>
@@ -55,8 +55,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>11</source>
+                    <target>11</target>
                     <encoding>UTF-8</encoding>
                     <showWarnings>true</showWarnings>
                     <showDeprecation>true</showDeprecation>
