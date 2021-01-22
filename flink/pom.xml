@@ -3,9 +3,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.zhihu.tibigdata</groupId>
-        <artifactId>tibigdata</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <groupId>org.tikv</groupId>
+        <artifactId>bigdata</artifactId>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>flink-tidb-connector</artifactId>
@@ -46,7 +46,7 @@
         <!-- TiDB commons -->
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>tibigdata-core</artifactId>
+            <artifactId>bigdata-core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- jackson -->
@@ -121,7 +121,7 @@
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.common</pattern>
-                                    <shadedPattern>shade.tibigdata.com.google.common</shadedPattern>
+                                    <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
                                 </relocation>
                             </relocations>
                             <finalName>${project.artifactId}-${project.version}</finalName>

@@ -1,1 +1,1 @@
-com.zhihu.tibigdata.prestodb.ConnectorsPlugin
+org.tikv.bigdata.prestodb.ConnectorsPlugin

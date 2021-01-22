@@ -1,8 +1,8 @@
-package com.zhihu.tibigdata.tidb;
+package org.tikv.bigdata.tidb;
 
-import static com.zhihu.tibigdata.tidb.SqlUtils.getCreateTableSql;
-import static com.zhihu.tibigdata.tidb.SqlUtils.getInsertSql;
-import static com.zhihu.tibigdata.tidb.SqlUtils.getUpsertSql;
+import static org.tikv.bigdata.tidb.SqlUtils.getCreateTableSql;
+import static org.tikv.bigdata.tidb.SqlUtils.getInsertSql;
+import static org.tikv.bigdata.tidb.SqlUtils.getUpsertSql;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Test;
