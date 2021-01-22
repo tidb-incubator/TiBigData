@@ -3,12 +3,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.zhihu.tibigdata</groupId>
-        <artifactId>tibigdata</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <groupId>org.tikv</groupId>
+        <artifactId>bigdata</artifactId>
+        <version>0.0.2-SNAPSHOT</version>
     </parent>
 
-    <artifactId>tibigdata-core</artifactId>
+    <artifactId>bigdata-core</artifactId>
     <packaging>jar</packaging>
     <name>TiBigData Project Core</name>
     <url>https://github.com/pingcap-incubator/TiBigData</url>
@@ -22,7 +22,7 @@
 
      <dependencies>
          <dependency>
-             <groupId>com.zhihu.tibigdata</groupId>
+             <groupId>org.tikv</groupId>
              <artifactId>tidb-jdbc</artifactId>
              <version>${parent.version}</version>
          </dependency>
