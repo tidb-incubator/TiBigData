@@ -1,5 +1,5 @@
-def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
-    
+def call(ghprbActualCommit, ghprbCommentBody, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
+
     catchError {
         node ('build') {
             container("java") {
@@ -17,12 +17,12 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     }
                 }
 
-                stage('Build') {
+                stage('Test') {
                     dir("/home/jenkins/agent/git/tibigdata") {
                         sh """
-                        mvn clean package -Dmaven.test.skip=true -am -pl flink
-                        mvn clean package -Dmaven.test.skip=true -am -pl prestodb
-                        mvn clean package -Dmaven.test.skip=true -am -pl jdbc
+                        mvn clean test -am -pl flink
+                        mvn clean test -am -pl prestodb
+                        mvn clean test -am -pl jdbc
                         """
                     }
                 }
@@ -30,15 +30,16 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
         }
         currentBuild.result = "SUCCESS"
     }
-    
+
     stage('Summary') {
         def duration = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000 / 60).setScale(2, BigDecimal.ROUND_HALF_UP)
         def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" +
         "${ghprbPullLink}" + "\n" +
         "${ghprbPullDescription}" + "\n" +
-        "Build Result: `${currentBuild.result}`" + "\n" +
+        "Integration Common Test Result: `${currentBuild.result}`" + "\n" +
         "Elapsed Time: `${duration} mins` " + "\n" +
         "${env.RUN_DISPLAY_URL}"
+
         print msg
     }
 }
