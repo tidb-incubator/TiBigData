@@ -1,4 +1,4 @@
-package org.tikv.tibigdata.tidb;
+package org.tikv.bigdata.tidb;
 
 import static org.tikv.bigdata.tidb.SqlUtils.getCreateTableSql;
 import static org.tikv.bigdata.tidb.SqlUtils.getInsertSql;
