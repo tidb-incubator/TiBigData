@@ -1,0 +1,4 @@
+# PD Configuration.
+[replication]
+enable-placement-rules = true
+max-replicas = 1
