@@ -76,11 +76,9 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 stage('Test') {
                     dir("/home/jenkins/agent/git/tibigdata") {
                         try {
-                            sh """
-                            mvn clean test -am -pl flink
-                            mvn clean test -am -pl prestodb
-                            mvn clean test -am -pl jdbc
-                            """
+                            timeout(30) {
+                                sh ".ci/test.sh"
+                            }
                         } catch (err) {
                             sh """
                             ps aux | grep '-server' || true

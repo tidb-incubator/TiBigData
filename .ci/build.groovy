@@ -22,11 +22,9 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                 stage('Build') {
                     dir("/home/jenkins/agent/git/tibigdata") {
-                        sh """
-                        mvn clean compile -am -pl flink
-                        mvn clean compile -am -pl prestodb
-                        mvn clean compile -am -pl jdbc
-                        """
+                        timeout(30) {
+                            sh ".ci/build.sh"
+                        }
                     }
                 }
             }
