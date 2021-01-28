@@ -1,0 +1,4 @@
+# TiKV Configuration.
+[raftstore]
+# set store capacity, if no set, use disk capacity.
+capacity = "8G"
