@@ -9,17 +9,20 @@
     </parent>
 
     <artifactId>flink-tidb-connector</artifactId>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>Flink Connector</name>
     <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <properties>
-        <dep.flink.version>1.12.0</dep.flink.version>
         <dep.scala.binary.version>2.11</dep.scala.binary.version>
         <dep.jackson.version>2.11.0</dep.jackson.version>
         <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
         <flink.scope>provided</flink.scope>
     </properties>
+
+    <modules>
+        <module>flink-1.12</module>
+    </modules>
 
     <profiles>
         <profile>
@@ -41,115 +44,4 @@
         </profile>
     </profiles>
 
-
-    <dependencies>
-        <!-- TiDB commons -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigdata-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${dep.jackson.version}</version>
-        </dependency>
-        <!-- apache commons -->
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>${dep.apache.commons.version}</version>
-        </dependency>
-        <!-- flink -->
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-java</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-clients_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-java_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-api-java-bridge_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner-blink_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-            <scope>${flink.scope}</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
-            <version>${dep.flink.version}</version>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <relocations>
-                                <relocation>
-                                    <pattern>com.google.common</pattern>
-                                    <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
-                                </relocation>
-                            </relocations>
-                            <finalName>${project.artifactId}-${project.version}</finalName>
-                            <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"></transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>8</source>
-                    <target>8</target>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
