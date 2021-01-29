@@ -14,8 +14,8 @@
 ```bash
 git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests -am -pl flink
-cp flink/target/flink-tidb-connector-0.0.2-SNAPSHOT.jar ${FLINK_HOME}/lib
+mvn clean package -DskipTests -am -pl flink/flink-1.12
+cp flink/flink-1.12/target/flink-tidb-connector-1.12-0.0.2-SNAPSHOT.jar ${FLINK_HOME}/lib
 ```
 
 Then restart your Flink cluster.
@@ -23,7 +23,7 @@ Then restart your Flink cluster.
 ## Demo
 
 ```bash
-bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-1.12-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
 ```
 
 The output can be found in console, like:
