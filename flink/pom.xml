@@ -23,7 +23,7 @@
     <modules>
         <module>flink-1.12</module>
         <module>flink-base</module>
-      <module>flink-1.11</module>
+        <module>flink-1.11</module>
     </modules>
 
     <profiles>
@@ -45,14 +45,5 @@
             </dependencies>
         </profile>
     </profiles>
-
-    <dependencies>
-        <!-- TiDB commons -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigdata-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-    </dependencies>
 
 </project>
