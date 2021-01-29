@@ -27,7 +27,7 @@ public final class ClientConfig {
 
   public static final String TIDB_DRIVER_NAME = "org.tikv.bigdata.jdbc.TiDBDriver";
 
-  public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
+  public static final String MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
 
   public static final String DATABASE_URL = "tidb.database.url";
 

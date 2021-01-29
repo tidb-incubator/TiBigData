@@ -43,7 +43,7 @@ public class TiDBDriver extends LoadBalancingDriver {
 
   public static final String MYSQL_URL_PREFIX_REGEX = "jdbc:mysql://[^/]+:\\d+";
 
-  public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
+  public static final String MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
 
   public static final String QUERY_TIDB_SERVER_SQL =
       "SELECT `IP`,`PORT` FROM `INFORMATION_SCHEMA`.`TIDB_SERVERS_INFO` ";
