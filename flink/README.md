@@ -27,7 +27,7 @@ Then restart your Flink cluster.
 ## Demo
 
 ```bash
-bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-1.12-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-${FLINK_HOME}-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
 ```
 
 The output can be found in console, like:
