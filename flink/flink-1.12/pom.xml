@@ -18,10 +18,10 @@
     </properties>
 
     <dependencies>
-        <!-- TiDB commons -->
+        <!-- flink base -->
         <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>bigdata-core</artifactId>
+            <groupId>org.tikv</groupId>
+            <artifactId>flink-tidb-connector-base</artifactId>
             <version>${project.version}</version>
         </dependency>
         <!-- jackson -->
