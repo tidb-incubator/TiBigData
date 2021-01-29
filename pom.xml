@@ -40,10 +40,21 @@
     <modules>
         <module>tidb</module>
         <module>prestodb</module>
-        <module>prestosql</module>
         <module>flink</module>
         <module>jdbc</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>java11</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>prestosql</module>
+            </modules>
+        </profile>
+    </profiles>
 
     <build>
         <pluginManagement>
