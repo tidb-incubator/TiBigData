@@ -1,6 +1,6 @@
 # Flink-TiDB-Connector
 
-### Component
+## Component
 
 | Name                     | Supported | Description                                                  |
 | ------------------------ | --------- | ------------------------------------------------------------ |
@@ -9,13 +9,17 @@
 | `TableFactory`       | true      |                                                              |
 | `CatalogFactory`     | true      |                                                              |
 
+## Version
+
+`Flink-1.11` and `Flink-1.12` are supported.
+
 ## Build
 
 ```bash
 git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests -am -pl flink/flink-1.12
-cp flink/flink-1.12/target/flink-tidb-connector-1.12-0.0.2-SNAPSHOT.jar ${FLINK_HOME}/lib
+mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
+cp flink/flink-${FLINK_VERSION}/target/flink-tidb-connector-${FLINK_VERSION}-0.0.2-SNAPSHOT.jar ${FLINK_HOME}/lib
 ```
 
 Then restart your Flink cluster.
@@ -23,7 +27,7 @@ Then restart your Flink cluster.
 ## Demo
 
 ```bash
-bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-1.12-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+bin/flink run -c org.tikv.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-${FLINK_HOME}-0.0.2-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
 ```
 
 The output can be found in console, like:
@@ -93,7 +97,7 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | sink.buffer-flush.max-rows     | 100           | The max size of buffered records before flush. Can be set to zero to disable it. |
 | sink.buffer-flush.interval     | 1s            | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
 | sink.max-retries               | 3             | The max retry times if writing records to database failed.   |
-| tidb.filter-push-down          | false         | Support filter push down.                                    |
+| tidb.filter-push-down          | false         | Support filter push down. It is only available for version 1.12. |
 | tidb.snapshot_timestamp        | null          | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
 
 

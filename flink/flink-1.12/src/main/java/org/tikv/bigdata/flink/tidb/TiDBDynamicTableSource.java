@@ -16,8 +16,8 @@
 
 package org.tikv.bigdata.flink.tidb;
 
-import static org.tikv.bigdata.flink.tidb.TiDBDynamicTableFactory.DATABASE_NAME;
-import static org.tikv.bigdata.flink.tidb.TiDBDynamicTableFactory.TABLE_NAME;
+import static org.tikv.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
+import static org.tikv.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
@@ -50,12 +50,12 @@ import org.tikv.common.expression.visitor.SupportedExpressionValidator;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.types.DataType;
 
-public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPushDown,
-    SupportsProjectionPushDown, SupportsFilterPushDown {
+public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implements
+    SupportsLimitPushDown, SupportsProjectionPushDown, SupportsFilterPushDown {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
-  private static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
+  protected static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
       "greaterThan",
       "greaterThanOrEqual",
       "lessThan",
@@ -65,29 +65,16 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
       "like"
   );
 
-  private final TableSchema tableSchema;
+  protected long limit = Long.MAX_VALUE;
 
-  private final Map<String, String> properties;
+  protected int[][] projectedFields;
 
-  private final ClientConfig config;
+  protected Expression expression;
 
-  private long limit = Long.MAX_VALUE;
-
-  private int[][] projectedFields;
-
-  private Expression expression;
-
-  private Map<String, DataType> nameTypeMap;
+  protected Map<String, DataType> nameTypeMap;
 
   public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
-    this.tableSchema = tableSchema;
-    this.properties = properties;
-    this.config = new ClientConfig(properties);
-  }
-
-  @Override
-  public ChangelogMode getChangelogMode() {
-    return ChangelogMode.insertOnly();
+    super(tableSchema, properties);
   }
 
   @Override
@@ -116,11 +103,6 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
   }
 
   @Override
-  public String asSummaryString() {
-    return this.getClass().getName();
-  }
-
-  @Override
   public void applyLimit(long limit) {
     this.limit = limit;
   }
@@ -145,11 +127,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
     return Result.of(Collections.emptyList(), filters);
   }
 
-  private String getRequiredProperties(String key) {
-    return Preconditions.checkNotNull(properties.get(key), key + " can not be null");
-  }
-
-  private void queryNameType() {
+  protected void queryNameType() {
     String databaseName = getRequiredProperties(DATABASE_NAME.key());
     String tableName = getRequiredProperties(TABLE_NAME.key());
     try (ClientSession clientSession = ClientSession.createWithSingleConnection(config)) {
@@ -160,7 +138,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
     }
   }
 
-  private Expression createExpression(List<ResolvedExpression> filters) {
+  protected Expression createExpression(List<ResolvedExpression> filters) {
     if (filters == null || filters.size() == 0) {
       return null;
     }
@@ -170,12 +148,12 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
     return getExpression(filters);
   }
 
-  private Expression getExpression(List<ResolvedExpression> resolvedExpressions) {
+  protected Expression getExpression(List<ResolvedExpression> resolvedExpressions) {
     return Expressions.and(resolvedExpressions.stream().map(this::getExpression)
         .filter(exp -> exp != Expressions.alwaysTrue()));
   }
 
-  private Expression getExpression(ResolvedExpression resolvedExpression) {
+  protected Expression getExpression(ResolvedExpression resolvedExpression) {
     if (resolvedExpression instanceof CallExpression) {
       CallExpression callExpression = (CallExpression) resolvedExpression;
       List<ResolvedExpression> resolvedChildren = callExpression.getResolvedChildren();
@@ -234,7 +212,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, SupportsLimitPus
     return Expressions.alwaysTrue();
   }
 
-  private Expression alwaysTrueIfNotSupported(Expression expression) {
+  protected Expression alwaysTrueIfNotSupported(Expression expression) {
     return SupportedExpressionValidator.isSupportedExpression(expression, null)
         ? expression : Expressions.alwaysTrue();
   }
