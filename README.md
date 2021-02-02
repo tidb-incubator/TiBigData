@@ -20,6 +20,8 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 [PrestoDB-TiDB-Connector](./prestodb/README.md)
 
+[TiDB-JDBC](./jdbc/README.md)
+
 ## Run Tests
 
 Use the following command to run all the tests.
