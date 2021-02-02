@@ -12,7 +12,9 @@ TiDB driver is a load-balancing driver.
 ## Usage
 
 ```java
-  public void testTiDBDriver() throws SQLException, ClassNotFoundException {
+public class TiDBDriverTest {
+
+  public static void main(String[] args) throws ClassNotFoundException, SQLException {
     Class.forName("org.tikv.bigdata.jdbc.TiDBDriver");
     String url = "jdbc:tidb://localhost:4000/test"
         + "?user=root"
@@ -27,6 +29,5 @@ TiDB driver is a load-balancing driver.
       }
     }
   }
+}
 ```
-
-
