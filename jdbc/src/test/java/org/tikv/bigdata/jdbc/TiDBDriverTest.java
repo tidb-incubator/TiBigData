@@ -28,6 +28,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TiDBDriverTest {
+
   static final String JDBC_DRIVER = "org.tikv.bigdata.jdbc.TiDBDriver";
   static final String TIDB_URL_KEY = "TIDB_URL";
   static final String DEFAULT_TIDB_URL = "jdbc:tidb://127.0.0.1:4000?user=root&password=";

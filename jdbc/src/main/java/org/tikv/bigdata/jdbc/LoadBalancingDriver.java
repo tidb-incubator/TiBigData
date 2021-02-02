@@ -36,27 +36,21 @@ public abstract class LoadBalancingDriver implements Driver {
 
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LoadBalancingDriver.class);
 
-  protected final Driver driver;
-
   /**
    * implements {@link java.util.function.Function}, Default: {@link DefaultUrlProvider}
    */
-  protected final Function<Collection<String>, Collection<String>> urlProvider;
+  public static final String URL_PROVIDER = "url.provider";
 
-  public LoadBalancingDriver(String balanceDriverName,
-      Function<Collection<String>, Collection<String>> urlProvider)
-      throws SQLException {
-    this.urlProvider = requireNonNull(urlProvider, "urlProvider can not be null");
-    requireNonNull(balanceDriverName, "driver name can not be null");
-    try {
-      this.driver = (Driver) Class.forName(balanceDriverName).newInstance();
-    } catch (Exception e) {
-      throw new SQLException("can not create driver", e);
-    }
-  }
+  protected final Driver driver;
 
   public LoadBalancingDriver(String balanceDriverName) throws SQLException {
-    this(balanceDriverName, new DefaultUrlProvider());
+    requireNonNull(balanceDriverName, "driver name can not be null");
+    try {
+      ;
+      this.driver = (Driver) Class.forName(balanceDriverName).newInstance();
+    } catch (Exception e) {
+      throw new SQLException("can not create inner driver", e);
+    }
   }
 
   /**
@@ -64,7 +58,8 @@ public abstract class LoadBalancingDriver implements Driver {
    */
   @Override
   public Connection connect(String urls, Properties info) throws SQLException {
-    Collection<String> urlList = urlProvider.apply(getUrlList(urls));
+    Collection<String> urlList = getUrlProvider(
+        info.getProperty(URL_PROVIDER, DefaultUrlProvider.class.getName())).apply(getUrlList(urls));
     for (String url : urlList) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("try connect to " + url);
@@ -117,5 +112,15 @@ public abstract class LoadBalancingDriver implements Driver {
   private List<String> getUrlList(String urls) {
     return Arrays.stream(requireNonNull(urls, "urls can not be null").split(","))
         .collect(Collectors.toList());
+  }
+
+  @SuppressWarnings("unchecked")
+  protected Function<Collection<String>, Collection<String>> getUrlProvider(String className) {
+    try {
+      return (Function<Collection<String>, Collection<String>>) Class.forName(className)
+          .newInstance();
+    } catch (Exception e) {
+      throw new IllegalStateException("can not get url provider", e);
+    }
   }
 }
