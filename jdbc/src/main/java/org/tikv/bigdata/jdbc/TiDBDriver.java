@@ -153,10 +153,13 @@ public class TiDBDriver extends LoadBalancingDriver {
     try {
       URI uri = new URI(url.substring("jdbc:".length()));
       Properties properties = new Properties();
-      for (String kv : uri.getQuery().split("&")) {
-        String[] split = kv.split("=");
-        if (split.length == 2) {
-          properties.put(split[0], split[1]);
+      String query = uri.getQuery();
+      if (query != null && query.length() != 0) {
+        for (String kv : query.split("&")) {
+          String[] split = kv.split("=");
+          if (split.length == 2) {
+            properties.put(split[0], split[1]);
+          }
         }
       }
       properties.putAll(info);
