@@ -26,10 +26,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -65,9 +65,9 @@ public class TiDBDriver extends LoadBalancingDriver {
     }
   }
 
-  private Map<String, Collection<String>> urlsCache = new ConcurrentHashMap<>();
+  private Map<String, Collection<String>> urlsCache = new HashMap<>();
 
-  private Map<String, Long> urlsTime = new ConcurrentHashMap<>();
+  private Map<String, Long> urlsTime = new HashMap<>();
 
   public TiDBDriver() throws SQLException {
     super(MYSQL_DRIVER_NAME);
@@ -86,7 +86,7 @@ public class TiDBDriver extends LoadBalancingDriver {
       return super.connect(String.join(",", queryAllUrls(tidbUrl, properties)), properties);
     }
     long currentTime = System.currentTimeMillis();
-    synchronized (tidbUrl) {
+    synchronized (this) {
       if (currentTime - urlsTime.getOrDefault(tidbUrl, 0L) > ttl) {
         LOG.debug("cache is not available, update cache");
         urlsCache.put(tidbUrl, queryAllUrls(tidbUrl, properties));
