@@ -1,1 +1,1 @@
-org.tikv.bigdata.prestodb.ConnectorsPlugin
+io.tidb.bigdata.prestodb.ConnectorsPlugin
