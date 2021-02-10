@@ -34,15 +34,7 @@
             </activation>
             <properties>
                 <flink.scope>compile</flink.scope>
-                <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
             </properties>
-            <dependencies>
-                <dependency>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                    <version>${dep.mysql.jdbc.version}</version>
-                </dependency>
-            </dependencies>
         </profile>
     </profiles>
 
