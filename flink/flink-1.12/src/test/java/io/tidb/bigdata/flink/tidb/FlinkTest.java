@@ -25,12 +25,14 @@ public class FlinkTest {
 
   public static final String CATALOG_NAME = "tidb";
 
-  public static final String DATABASE_NAME = "default";
+  public static final String DATABASE_NAME = "test";
 
   public static final String TABLE_NAME = "test_tidb_type";
 
+  public static final String CREATE_DATABASE_SQL = "CREATE DATABASE IF NOT EXISTS `test`";
+
   public static final String CREATE_TABLE_SQL =
-      "CREATE TABLE IF NOT EXISTS `default`.`test_tidb_type`\n"
+      format("CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
           + "    c1  tinyint,\n"
           + "    c2  smallint,\n"
@@ -63,55 +65,67 @@ public class FlinkTest {
           + "    c29 set ('a','b','c'),\n"
           + "    PRIMARY KEY(c1),\n"
           + "    UNIQUE KEY(c2)\n"
-          + ")";
+          + ")", DATABASE_NAME, TABLE_NAME);
 
   public static final String DROP_TABLE_SQL = format("DROP TABLE IF EXISTS `%s`.`%s`",
       DATABASE_NAME, TABLE_NAME);
 
-  public static final String INSERT_ROW_SQL = "INSERT INTO `tidb`.`default`.`test_tidb_type`\n"
-      + "VALUES (\n"
-      + " cast(%s as tinyint) ,\n"
-      + " cast(%s as smallint) ,\n"
-      + " cast(1 as int) ,\n"
-      + " cast(1 as int) ,\n"
-      + " cast(1 as bigint) ,\n"
-      + " cast('chartype' as char(10)),\n"
-      + " cast('varchartype' as varchar(20)),\n"
-      + " cast('tinytexttype' as string),\n"
-      + " cast('mediumtexttype' as string),\n"
-      + " cast('texttype' as string),\n"
-      + " cast('longtexttype' as string),\n"
-      + " cast('binarytype' as bytes),\n"
-      + " cast('varbinarytype' as bytes),\n"
-      + " cast('tinyblobtype' as bytes),\n"
-      + " cast('mediumblobtype' as bytes),\n"
-      + " cast('blobtype' as bytes),\n"
-      + " cast('longblobtype' as bytes),\n"
-      + " cast(1.234 as float),\n"
-      + " cast(2.456789 as double),\n"
-      + " cast(123.456 as decimal(6,3)),\n"
-      + " cast('2020-08-10' as date),\n"
-      + " cast('15:30:29' as time),\n"
-      + " cast('2020-08-10 15:30:29' as timestamp),\n"
-      + " cast('2020-08-10 16:30:29' as timestamp),\n"
-      + " cast(2020 as smallint),\n"
-      + " true,\n"
-      + " cast('{\"a\":1,\"b\":2}' as string),\n"
-      + " cast('1' as string),\n"
-      + " cast('a' as string)\n"
-      + ")";
+  // for write mode, only unique key and primary key is mutable.
+  public static final String INSERT_ROW_SQL_FORMAT =
+      "INSERT INTO `%s`.`%s`.`%s`\n"
+          + "VALUES (\n"
+          + " cast(%s as tinyint) ,\n"
+          + " cast(%s as smallint) ,\n"
+          + " cast(1 as int) ,\n"
+          + " cast(1 as int) ,\n"
+          + " cast(1 as bigint) ,\n"
+          + " cast('chartype' as char(10)),\n"
+          + " cast('varchartype' as varchar(20)),\n"
+          + " cast('tinytexttype' as string),\n"
+          + " cast('mediumtexttype' as string),\n"
+          + " cast('texttype' as string),\n"
+          + " cast('longtexttype' as string),\n"
+          + " cast('binarytype' as bytes),\n"
+          + " cast('varbinarytype' as bytes),\n"
+          + " cast('tinyblobtype' as bytes),\n"
+          + " cast('mediumblobtype' as bytes),\n"
+          + " cast('blobtype' as bytes),\n"
+          + " cast('longblobtype' as bytes),\n"
+          + " cast(1.234 as float),\n"
+          + " cast(2.456789 as double),\n"
+          + " cast(123.456 as decimal(6,3)),\n"
+          + " cast('2020-08-10' as date),\n"
+          + " cast('15:30:29' as time),\n"
+          + " cast('2020-08-10 15:30:29' as timestamp),\n"
+          + " cast('2020-08-10 16:30:29' as timestamp),\n"
+          + " cast(2020 as smallint),\n"
+          + " true,\n"
+          + " cast('{\"a\":1,\"b\":2}' as string),\n"
+          + " cast('1' as string),\n"
+          + " cast('a' as string)\n"
+          + ")";
 
   public static String getInsertRowSql(byte value1, short value2) {
-    return format(INSERT_ROW_SQL, value1, value2);
+    return format(INSERT_ROW_SQL_FORMAT, CATALOG_NAME, DATABASE_NAME, TABLE_NAME, value1, value2);
   }
 
   public Map<String, String> getDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
-    properties.put(DATABASE_URL, "jdbc:mysql://127.0.0.1:4000/default");
+    properties.put(DATABASE_URL, "jdbc:mysql://127.0.0.1:4000/test");
     properties.put(USERNAME, "root");
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
     return properties;
+  }
+
+  public TableEnvironment getTableEnvironment() {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inBatchMode().build();
+    return TableEnvironment.create(settings);
+  }
+
+  public void initTiDBTable(TiDBCatalog tiDBCatalog) {
+    tiDBCatalog.sqlUpdate(CREATE_DATABASE_SQL, DROP_TABLE_SQL, CREATE_TABLE_SQL);
   }
 
   public TableResult runByCatalog(Map<String, String> properties) throws Exception {
@@ -121,14 +135,12 @@ public class FlinkTest {
   public TableResult runByCatalog(Map<String, String> properties, String resultSql)
       throws Exception {
     // env
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inBatchMode().build();
-    TableEnvironment tableEnvironment = TableEnvironment.create(settings);
-    // create test table
+    TableEnvironment tableEnvironment = getTableEnvironment();
+    // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
-    tiDBCatalog.sqlUpdate(DROP_TABLE_SQL);
-    tiDBCatalog.sqlUpdate(CREATE_TABLE_SQL);
+    initTiDBTable(tiDBCatalog);
+    // register catalog
     tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
     // insert data
     tableEnvironment.executeSql(getInsertRowSql((byte) 1, (short) 1));
@@ -170,6 +182,34 @@ public class FlinkTest {
     Map<String, String> properties = getDefaultProperties();
     properties.put(TIDB_WRITE_MODE, "upsert");
     return runByCatalog(properties).collect().next();
+  }
+
+  @Test
+  public void testTableFactory() throws Exception {
+    // only test for timestamp
+    // env
+    TableEnvironment tableEnvironment = getTableEnvironment();
+    Map<String, String> properties = getDefaultProperties();
+    properties.put("connector", "tidb");
+    properties.put(TiDBDynamicTableFactory.DATABASE_NAME.key(), "test");
+    properties.put(TiDBDynamicTableFactory.TABLE_NAME.key(), "test_timestamp");
+    properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
+    properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
+    // create test database and table
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tiDBCatalog.open();
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`",
+        "CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
+        "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
+    tiDBCatalog.close();
+    String propertiesString = properties.entrySet().stream()
+        .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue())).collect(
+            Collectors.joining(",\n"));
+    String createTableSql = format(
+        "CREATE TABLE `test_timestamp`(`c1` timestamp, `c2` string) WITH (\n%s\n)",
+        propertiesString);
+    tableEnvironment.executeSql(createTableSql);
+    tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").print();
   }
 
   @Test
