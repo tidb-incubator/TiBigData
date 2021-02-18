@@ -20,6 +20,7 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NA
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -156,7 +157,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
   public void openInputFormat() throws IOException {
     formatters = Arrays.stream(fieldNames).map(name -> {
       String pattern = properties.get(TIMESTAMP_FORMAT_PREFIX + "." + name);
-      return pattern == null ? null : DateTimeFormatter.ofPattern(pattern);
+      return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
     }).toArray(DateTimeFormatter[]::new);
     clientSession = ClientSession.createWithSingleConnection(new ClientConfig(properties));
   }
@@ -209,7 +210,9 @@ public abstract class TiDBBaseRowDataInputFormat extends
       Object object = cursor.getObject(i);
       // data can be null here
       row.setField(i, toRowDataType(
-          getObjectWithDataType(object, fieldType, formatters[projectedFieldIndex]).orElse(null)));
+          getObjectWithDataType(object, fieldType,
+              columnHandleInternals.get(projectedFieldIndex).getType(),
+              formatters[projectedFieldIndex]).orElse(null)));
     }
     recordCount++;
     return row;

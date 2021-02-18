@@ -8,6 +8,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
 import static java.lang.String.format;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -197,7 +198,11 @@ public class FlinkTest {
         "CREATE TABLE `test_timestamp`(`c1` timestamp, `c2` string) WITH (\n%s\n)",
         propertiesString);
     tableEnvironment.executeSql(createTableSql);
-    tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").print();
+    Row row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
+    Row row1 = new Row(2);
+    row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
+    row1.setField(1, "2020-01-01 12:00:02");
+    Assert.assertEquals(row, row1);
   }
 
   @Test
