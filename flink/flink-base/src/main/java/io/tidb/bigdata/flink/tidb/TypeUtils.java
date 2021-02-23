@@ -17,6 +17,8 @@
 package io.tidb.bigdata.flink.tidb;
 
 import static java.lang.String.format;
+import static org.tikv.common.types.MySQLType.TypeDatetime;
+import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -26,6 +28,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.data.DecimalData;
@@ -34,6 +38,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
+import org.tikv.common.types.MySQLType;
 import org.tikv.common.types.StringType;
 
 public class TypeUtils {
@@ -106,32 +111,38 @@ public class TypeUtils {
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
-   * @param object   TiKV java object
-   * @param dataType Flink datatype
+   * @param object TiKV java object
+   * @param flinkType Flink datatype
+   * @param tidbType TiDB datatype
    */
-  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType,
-      DateTimeFormatter formatter) {
+  public static Optional<Object> getObjectWithDataType(@Nullable Object object, DataType flinkType,
+      org.tikv.common.types.DataType tidbType, @NotNull DateTimeFormatter formatter) {
     if (object == null) {
       return Optional.empty();
     }
-    Class<?> conversionClass = dataType.getConversionClass();
-    if (dataType.getConversionClass() == object.getClass()) {
+    Class<?> conversionClass = flinkType.getConversionClass();
+    if (flinkType.getConversionClass() == object.getClass()) {
       return Optional.of(object);
     }
+    MySQLType mySqlType = tidbType.getType();
     switch (conversionClass.getSimpleName()) {
       case "String":
         if (object instanceof byte[]) {
           object = new String((byte[]) object);
         } else if (object instanceof Timestamp) {
           Timestamp timestamp = (Timestamp) object;
-          object = formatter == null ? timestamp.toString()
-              : timestamp.toLocalDateTime().format(formatter);
+          object = timestamp.toLocalDateTime().format(formatter);
+        } else if (object instanceof Long
+            && (mySqlType == TypeTimestamp || mySqlType == TypeDatetime)) {
+          // covert tidb timestamp to flink string
+          object = new Timestamp(((long) object) / 1000).toLocalDateTime().format(formatter);
         } else {
           object = object.toString();
         }
         break;
       case "Integer":
-        object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT(), formatter).get();
+        object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT(), tidbType, formatter)
+            .get();
         break;
       case "Long":
         if (object instanceof LocalDate) {
@@ -155,9 +166,8 @@ public class TypeUtils {
         if (object instanceof Timestamp) {
           object = ((Timestamp) object).toLocalDateTime();
         } else if (object instanceof String) {
-          String timeString = (String) object;
-          object = formatter == null ? LocalDateTime.parse(timeString)
-              : LocalDateTime.parse(timeString, formatter);
+          // convert flink string to timestamp
+          object = LocalDateTime.parse((String) object, formatter);
         } else if (object instanceof Long) {
           object = new Timestamp(((Long) object) / 1000).toLocalDateTime();
         }
@@ -171,10 +181,6 @@ public class TypeUtils {
         object = ConvertUtils.convert(object, conversionClass);
     }
     return Optional.of(object);
-  }
-
-  public static Optional<Object> getObjectWithDataType(Object object, DataType dataType) {
-    return getObjectWithDataType(object, dataType, null);
   }
 
   /**
