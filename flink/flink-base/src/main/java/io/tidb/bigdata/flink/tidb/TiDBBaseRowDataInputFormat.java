@@ -127,10 +127,11 @@ public abstract class TiDBBaseRowDataInputFormat extends
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-    // check mapping table name
+    // check flink table column names
     Arrays.stream(fieldNames)
         .forEach(name -> Preconditions.checkState(nameAndIndex.containsKey(name),
             format("can not find column: %s in table `%s`.`%s`", name, databaseName, tableName)));
+    // We should filter columns, because the number of tidb columns may greater than flink columns
     columnHandleInternals = Arrays.stream(fieldNames)
         .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
     projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
