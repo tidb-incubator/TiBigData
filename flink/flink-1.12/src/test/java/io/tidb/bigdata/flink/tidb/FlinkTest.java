@@ -217,6 +217,15 @@ public class FlinkTest {
     row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
     row1.setField(1, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
+
+    tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
+    createTableSql = format(
+        "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
+    tableEnvironment.executeSql(createTableSql);
+    row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
+    row1 = new Row(1);
+    row1.setField(0, "2020-01-01 12:00:02");
+    Assert.assertEquals(row, row1);
   }
 
   @Test
