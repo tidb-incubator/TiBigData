@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
@@ -106,7 +107,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
     this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
     this.databaseName = getRequiredProperties(DATABASE_NAME.key());
     this.tableName = getRequiredProperties(TABLE_NAME.key());
-    this.fieldNames = fieldNames;
+    this.fieldNames = Arrays.stream(fieldNames).map(String::toLowerCase).toArray(String[]::new);
     this.fieldTypes = fieldTypes;
     this.typeInformation = typeInformation;
     List<ColumnHandleInternal> columns;
@@ -128,13 +129,13 @@ public abstract class TiDBBaseRowDataInputFormat extends
       throw new IllegalStateException(e);
     }
     // check flink table column names
-    Arrays.stream(fieldNames)
+    Arrays.stream(this.fieldNames)
         .forEach(name -> Preconditions.checkState(nameAndIndex.containsKey(name),
             format("can not find column: %s in table `%s`.`%s`", name, databaseName, tableName)));
     // We should filter columns, because the number of tidb columns may greater than flink columns
-    columnHandleInternals = Arrays.stream(fieldNames)
+    columnHandleInternals = Arrays.stream(this.fieldNames)
         .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
-    projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
+    projectedFieldIndexes = IntStream.range(0, this.fieldNames.length).toArray();
     timestamp = Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNoneEmpty)
