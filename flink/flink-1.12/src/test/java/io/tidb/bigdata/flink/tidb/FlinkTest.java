@@ -3,6 +3,7 @@ package io.tidb.bigdata.flink.tidb;
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
@@ -118,6 +119,7 @@ public class FlinkTest {
     properties.put(USERNAME, "root");
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
+    properties.put(TIDB_FILTER_PUSH_DOWN, "true");
     return properties;
   }
 
