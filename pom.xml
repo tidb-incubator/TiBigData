@@ -41,6 +41,7 @@
 
     <modules>
         <module>tidb</module>
+        <module>ticdc</module>
         <module>prestodb</module>
         <module>prestosql</module>
         <module>flink</module>
