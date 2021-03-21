@@ -49,12 +49,4 @@ public final class Misc {
       final Class<?>... parameterTypes) {
     return uncheckedRun(() -> clazz.getMethod(name, parameterTypes));
   }
-
-  public static ParserFactory<JsonParser, JsonNode> jackson() {
-    return JacksonParserFactory.create();
-  }
-
-  public static ParserFactory<JsonParser, JsonNode> jackson(final String shadePrefix) {
-    return JacksonParserFactory.create(shadePrefix);
-  }
 }

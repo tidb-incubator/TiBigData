@@ -16,6 +16,9 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.JsonNode;
+import io.tidb.bigdata.cdc.json.JsonParser;
+import io.tidb.bigdata.cdc.json.jackson.JacksonParserFactory;
 import java.io.Serializable;
 
 /*
@@ -24,4 +27,12 @@ import java.io.Serializable;
 public interface ParserFactory<P extends Parser<T>, T> extends Serializable {
 
   P createParser();
+
+  static ParserFactory<JsonParser, JsonNode> json() {
+    return JacksonParserFactory.create();
+  }
+
+  static ParserFactory<JsonParser, JsonNode> json(final String shadePrefix) {
+    return JacksonParserFactory.create(shadePrefix);
+  }
 }

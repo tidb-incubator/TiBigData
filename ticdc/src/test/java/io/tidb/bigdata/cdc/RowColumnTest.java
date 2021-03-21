@@ -174,7 +174,7 @@ public class RowColumnTest extends TestCase {
 
   @Test
   public void testDecode() {
-    for (final JsonValueDecoder it = new JsonValueDecoder(value, Misc.jackson().createParser());
+    for (final JsonValueDecoder it = new JsonValueDecoder(value, ParserFactory.json().createParser());
         it.hasNext(); ) {
       final RowInsertedValue insert = (RowInsertedValue) it.next();
       Assert.assertEquals(insert.getNewValue().length, 27);

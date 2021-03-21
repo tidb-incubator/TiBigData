@@ -44,7 +44,7 @@ public class FileLoader {
 
   protected static EventDecoder decode(final File key, final File value) throws IOException {
     return EventDecoder
-        .create(getFileContent(key), getFileContent(value), Misc.jackson().createParser());
+        .create(getFileContent(key), getFileContent(value), ParserFactory.json().createParser());
   }
 
   protected static KeyDecoder decodeKey(final String key) throws IOException {
@@ -52,7 +52,7 @@ public class FileLoader {
   }
 
   protected static KeyDecoder decodeKey(final File key) throws IOException {
-    return KeyDecoder.create(getFileContent(key), Misc.jackson().createParser());
+    return KeyDecoder.create(getFileContent(key), ParserFactory.json().createParser());
   }
 
   protected static ValueDecoder decodeValue(final String value) throws IOException {
@@ -60,6 +60,6 @@ public class FileLoader {
   }
 
   protected static ValueDecoder decodeValue(final File value) throws IOException {
-    return ValueDecoder.create(getFileContent(value), Misc.jackson().createParser());
+    return ValueDecoder.create(getFileContent(value), ParserFactory.json().createParser());
   }
 }

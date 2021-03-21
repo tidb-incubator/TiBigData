@@ -59,7 +59,7 @@ public class StreamTest {
 
   @Test
   public void test() throws IOException, InterruptedException {
-    JsonParser parser = Misc.jackson().createParser();
+    JsonParser parser = ParserFactory.json().createParser();
     testEvents(parser, "ddl_", 3);
     testEvents(parser, "row_", 3);
     testEvents(parser, "rts_", 3);
