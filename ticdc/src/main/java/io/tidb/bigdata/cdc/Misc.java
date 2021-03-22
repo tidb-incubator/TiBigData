@@ -16,9 +16,6 @@
 
 package io.tidb.bigdata.cdc;
 
-import io.tidb.bigdata.cdc.json.JsonNode;
-import io.tidb.bigdata.cdc.json.JsonParser;
-import io.tidb.bigdata.cdc.json.jackson.JacksonParserFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
