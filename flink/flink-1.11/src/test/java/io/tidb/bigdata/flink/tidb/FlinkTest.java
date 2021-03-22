@@ -11,6 +11,7 @@ import static java.lang.String.format;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
@@ -25,12 +26,10 @@ public class FlinkTest {
 
   public static final String DATABASE_NAME = "test";
 
-  public static final String TABLE_NAME = "test_tidb_type";
-
   public static final String CREATE_DATABASE_SQL = "CREATE DATABASE IF NOT EXISTS `test`";
 
-  public static final String CREATE_TABLE_SQL =
-      format("CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+  public static final String CREATE_TABLE_SQL_FORMAT =
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
           + "    c1  tinyint,\n"
           + "    c2  smallint,\n"
@@ -63,10 +62,9 @@ public class FlinkTest {
           + "    c29 set ('a','b','c'),\n"
           + "    PRIMARY KEY(c1),\n"
           + "    UNIQUE KEY(c2)\n"
-          + ")", DATABASE_NAME, TABLE_NAME);
+          + ")";
 
-  public static final String DROP_TABLE_SQL = format("DROP TABLE IF EXISTS `%s`.`%s`",
-      DATABASE_NAME, TABLE_NAME);
+  public static final String DROP_TABLE_SQL_FORMAT = "DROP TABLE IF EXISTS `%s`.`%s`";
 
   // for write mode, only unique key and primary key is mutable.
   public static final String INSERT_ROW_SQL_FORMAT =
@@ -103,13 +101,26 @@ public class FlinkTest {
           + " cast('a' as string)\n"
           + ")";
 
-  public static String getInsertRowSql(byte value1, short value2) {
-    return format(INSERT_ROW_SQL_FORMAT, CATALOG_NAME, DATABASE_NAME, TABLE_NAME, value1, value2);
+  public static String getInsertRowSql(String tableName, byte value1, short value2) {
+    return format(INSERT_ROW_SQL_FORMAT, CATALOG_NAME, DATABASE_NAME, tableName, value1, value2);
+  }
+
+  public static String getCreateTableSql(String tableName) {
+    return String.format(CREATE_TABLE_SQL_FORMAT, DATABASE_NAME, tableName);
+  }
+
+  public static String getDropTableSql(String tableName) {
+    return String.format(DROP_TABLE_SQL_FORMAT, DATABASE_NAME, tableName);
+  }
+
+  public static String getRandomTableName() {
+    return UUID.randomUUID().toString().replace("-", "_");
   }
 
   public Map<String, String> getDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
-    properties.put(DATABASE_URL, "jdbc:mysql://127.0.0.1:4000/test");
+    properties.put(DATABASE_URL,
+        "jdbc:mysql://127.0.0.1:4000/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false");
     properties.put(USERNAME, "root");
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
@@ -122,31 +133,33 @@ public class FlinkTest {
     return TableEnvironment.create(settings);
   }
 
-  public void initTiDBTable(TiDBCatalog tiDBCatalog) {
-    tiDBCatalog.sqlUpdate(CREATE_DATABASE_SQL, DROP_TABLE_SQL, CREATE_TABLE_SQL);
-  }
-
-  public TableResult runByCatalog(Map<String, String> properties) throws Exception {
+  public Row runByCatalog(Map<String, String> properties) throws Exception {
     return runByCatalog(properties, null);
   }
 
-  public TableResult runByCatalog(Map<String, String> properties, String resultSql) {
+  public Row runByCatalog(Map<String, String> properties, String resultSql) {
     // env
     TableEnvironment tableEnvironment = getTableEnvironment();
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
-    initTiDBTable(tiDBCatalog);
+    String tableName = getRandomTableName();
+    String dropTableSql = getDropTableSql(tableName);
+    String createTableSql = getCreateTableSql(tableName);
+    tiDBCatalog.sqlUpdate(CREATE_DATABASE_SQL, dropTableSql, createTableSql);
     // register catalog
     tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
     // insert data
-    tableEnvironment.executeSql(getInsertRowSql((byte) 1, (short) 1));
-    tableEnvironment.executeSql(getInsertRowSql((byte) 1, (short) 2));
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 1));
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 2));
     // query
     if (resultSql == null) {
-      resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, TABLE_NAME);
+      resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, tableName);
     }
-    return tableEnvironment.executeSql(resultSql);
+    TableResult tableResult = tableEnvironment.executeSql(resultSql);
+    Row row = tableResult.collect().next();
+    tiDBCatalog.sqlUpdate(dropTableSql);
+    return row;
   }
 
   public Row copyRow(Row row) {
@@ -157,20 +170,16 @@ public class FlinkTest {
     return newRow;
   }
 
-  public Row getResultRow(String resultSql) throws Exception {
-    return runByCatalog(getDefaultProperties(), resultSql).collect().next();
-  }
-
   public Row replicaRead() throws Exception {
     Map<String, String> properties = getDefaultProperties();
     properties.put(TIDB_REPLICA_READ, "true");
-    return runByCatalog(properties).collect().next();
+    return runByCatalog(properties);
   }
 
   public Row upsertAndRead() throws Exception {
     Map<String, String> properties = getDefaultProperties();
     properties.put(TIDB_WRITE_MODE, "upsert");
-    return runByCatalog(properties).collect().next();
+    return runByCatalog(properties);
   }
 
   @Test
@@ -187,10 +196,8 @@ public class FlinkTest {
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
-    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`",
-        "CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
+    tiDBCatalog.sqlUpdate("CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
         "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
-    tiDBCatalog.close();
     String propertiesString = properties.entrySet().stream()
         .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue())).collect(
             Collectors.joining(",\n"));
@@ -212,12 +219,15 @@ public class FlinkTest {
     row1 = new Row(1);
     row1.setField(0, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
+
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`");
+    tiDBCatalog.close();
   }
 
   @Test
   public void testCatalog() throws Exception {
     // read
-    Row row = getResultRow(null);
+    Row row = runByCatalog(getDefaultProperties());
     // replica read
     Assert.assertEquals(row, replicaRead());
     // upsert and read
