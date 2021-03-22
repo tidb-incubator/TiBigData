@@ -21,10 +21,13 @@ import static io.tidb.bigdata.jdbc.TiDBDriver.TIDB_PREFIX;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_DRIVER_NAME;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
@@ -131,9 +134,9 @@ public abstract class TiDBBaseDynamicTableFactory implements DynamicTableSourceF
     String dbUrl = config.get(DATABASE_URL);
     String databaseName = config.get(DATABASE_NAME);
     String tableName = config.get(TABLE_NAME);
-    checkArgument(dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/[^/]+"),
-        "the format of database not matches jdbc:(mysql|tidb)://host:port/database");
-    dbUrl = dbUrl.substring(0, dbUrl.lastIndexOf("/") + 1) + databaseName;
+    checkArgument(dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/.*"),
+        "the format of database url does not match jdbc:(mysql|tidb)://host:port/.*");
+    dbUrl = rewriteJdbcUrlPath(dbUrl, databaseName);
     String driverName = dbUrl.startsWith(TIDB_PREFIX) ? TIDB_DRIVER_NAME : MYSQL_DRIVER_NAME;
     // jdbc options
     JdbcOptions jdbcOptions = JdbcOptions.builder()
@@ -179,5 +182,21 @@ public abstract class TiDBBaseDynamicTableFactory implements DynamicTableSourceF
       }
     }
     return keyFields;
+  }
+
+  @VisibleForTesting
+  protected String rewriteJdbcUrlPath(String url, String database) {
+    URI uri;
+    try {
+      uri = new URI(url.substring("jdbc:".length()));
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(e);
+    }
+    String scheme = uri.getScheme();
+    String host = uri.getHost();
+    int port = uri.getPort();
+    String path = uri.getPath();
+    return url.replace(String.format("jdbc:%s://%s:%d%s", scheme, host, port, path),
+        String.format("jdbc:%s://%s:%d/%s", scheme, host, port, database));
   }
 }
