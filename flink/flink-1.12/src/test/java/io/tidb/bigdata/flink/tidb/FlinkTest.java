@@ -3,6 +3,7 @@ package io.tidb.bigdata.flink.tidb;
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
@@ -118,6 +119,7 @@ public class FlinkTest {
     properties.put(USERNAME, "root");
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
+    properties.put(TIDB_FILTER_PUSH_DOWN, "true");
     return properties;
   }
 
@@ -216,6 +218,15 @@ public class FlinkTest {
     Row row1 = new Row(2);
     row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
     row1.setField(1, "2020-01-01 12:00:02");
+    Assert.assertEquals(row, row1);
+
+    tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
+    createTableSql = format(
+        "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
+    tableEnvironment.executeSql(createTableSql);
+    row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
+    row1 = new Row(1);
+    row1.setField(0, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
   }
 
