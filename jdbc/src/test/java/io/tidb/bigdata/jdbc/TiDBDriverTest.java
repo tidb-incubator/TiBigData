@@ -39,7 +39,7 @@ public class TiDBDriverTest {
   public void testTiDBDriver() throws ClassNotFoundException, SQLException {
     Class.forName(JDBC_DRIVER);
     conn = DriverManager.getConnection(tidbUrl);
-
+    executeUpdate("create database if not exists test");
     executeUpdate("drop table if exists test.t");
     executeUpdate("create table test.t(id int)");
     executeUpdate("insert into test.t values(0),(1),(2)");
