@@ -4,6 +4,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     def TIKV_BRANCH = "release-4.0"
     def PD_BRANCH = "release-4.0"
 
+    def kafka_version = "kafka_2.12-2.7.0"
+
     // parse tidb branch
     def m1 = ghprbCommentBody =~ /tidb\s*=\s*([^\s\\]+)(\s|\\|$)/
     if (m1) {
@@ -54,6 +56,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         // pd
                         def pd_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/pd/${PD_BRANCH}/sha1").trim()
                         sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/pd/${pd_sha1}/centos7/pd-server.tar.gz | tar xz"
+                        // kafka
+                        sh "curl https://download.pingcap.org/${kafka_version}.tgz | tar xz"
 
                         sh """
                         killall -9 tidb-server || true
@@ -69,6 +73,16 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         curl -s 127.0.0.1:2379/pd/api/v1/status || true
                         bin/tidb-server --store=tikv --path="127.0.0.1:2379" --config=../.ci/config/tidb.toml &>tidb.log &
                         sleep 60
+                        
+                        cd ${kafka_version}
+                        rm -rf /tmp/zookeeper
+                        rm -rf /tmp/kafka-logs
+                        bin/zookeeper-server-start.sh config/zookeeper.properties &
+                        sleep 10
+                        bin/kafka-server-start.sh config/server.properties &
+                        sleep 10
+                        bin/kafka-topics.sh --create --topic quickstart-events --bootstrap-server localhost:9092
+                        bin/kafka-topics.sh --describe --topic quickstart-events --bootstrap-server localhost:9092
                         """
                     }
                 }
@@ -87,6 +101,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             sh "cat _run/pd.log"
                             sh "cat _run/tikv.log"
                             sh "cat _run/tidb.log"
+                            sh "cat _run/${kafka_version}/log/server.log"
                             throw err
                         }
                     }
