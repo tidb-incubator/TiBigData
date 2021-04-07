@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.InputFormatProvider;
@@ -69,8 +70,9 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
 
   protected Map<String, DataType> nameTypeMap;
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
-    super(tableSchema, properties);
+  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
+      JdbcLookupOptions lookupOptions) {
+    super(tableSchema, properties, lookupOptions);
   }
 
   @Override
@@ -91,7 +93,8 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
 
   @Override
   public DynamicTableSource copy() {
-    TiDBDynamicTableSource tableSource = new TiDBDynamicTableSource(tableSchema, properties);
+    TiDBDynamicTableSource tableSource = new TiDBDynamicTableSource(tableSchema, properties,
+        lookupOptions);
     tableSource.limit = this.limit;
     tableSource.projectedFields = this.projectedFields;
     tableSource.expression = this.expression;
