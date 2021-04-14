@@ -16,7 +16,11 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.craft.CraftKeyDecoder;
+import io.tidb.bigdata.cdc.craft.CraftParser;
+import io.tidb.bigdata.cdc.craft.CraftParserState;
 import io.tidb.bigdata.cdc.json.JsonKeyDecoder;
+import io.tidb.bigdata.cdc.json.JsonNode;
 import io.tidb.bigdata.cdc.json.JsonParser;
 import java.util.Iterator;
 
@@ -25,7 +29,14 @@ import java.util.Iterator;
  */
 public interface KeyDecoder extends Iterator<Key> {
 
-  static KeyDecoder create(final byte[] key, final JsonParser parser) {
-    return new JsonKeyDecoder(key, parser);
+  static KeyDecoder json(final byte[] key,
+      final ParserFactory<JsonParser, JsonNode> parserFactory) {
+    return new JsonKeyDecoder(key, parserFactory.createParser());
+  }
+
+  static KeyDecoder craft(final byte[] payload,
+      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+    return new CraftKeyDecoder(payload, parserFactory.createParser());
   }
 }
+
