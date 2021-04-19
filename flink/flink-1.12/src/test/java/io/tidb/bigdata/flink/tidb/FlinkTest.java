@@ -3,7 +3,7 @@ package io.tidb.bigdata.flink.tidb;
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
-import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
+import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
@@ -17,16 +17,44 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class FlinkTest {
+
+  public static final String TIDB_HOST = "TIDB_HOST";
+
+  public static final String TIDB_PORT = "TIDB_PORT";
+
+  public static final String TIDB_USER = "TIDB_USER";
+
+  public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
+
+  public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
+
+  public static final String tidbPort = getEnvOrDefault(TIDB_PORT, "4000");
+
+  public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
+
+  public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
+
+  private static String getEnvOrDefault(String key, String default0) {
+    String tmp = System.getenv(key);
+    if (tmp != null && !tmp.equals("")) {
+      return tmp;
+    }
+
+    tmp = System.getProperty(key);
+    if (tmp != null && !tmp.equals("")) {
+      return tmp;
+    }
+
+    return default0;
+  }
 
   public static final String CATALOG_NAME = "tidb";
 
@@ -126,11 +154,13 @@ public class FlinkTest {
   public Map<String, String> getDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
     properties.put(DATABASE_URL,
-        "jdbc:mysql://127.0.0.1:4000/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false");
-    properties.put(USERNAME, "root");
+        String.format(
+            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false",
+            tidbHost, tidbPort));
+    properties.put(USERNAME, tidbUser);
+    properties.put(PASSWORD, tidbPassword);
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
-    properties.put(TIDB_FILTER_PUSH_DOWN, "true");
     return properties;
   }
 
