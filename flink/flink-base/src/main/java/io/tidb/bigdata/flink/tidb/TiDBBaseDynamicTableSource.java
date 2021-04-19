@@ -85,9 +85,4 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, Loo
     return Preconditions.checkNotNull(properties.get(key), key + " can not be null");
   }
 
-  private long getPropertyLong(String key, long defaultValue) {
-    String value = properties.get(key);
-    return value == null ? defaultValue : Long.parseLong(value);
-  }
-
 }
