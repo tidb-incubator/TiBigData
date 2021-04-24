@@ -34,55 +34,15 @@ import java.util.Iterator;
 
 public class CraftParserState implements Iterator<Event> {
 
-  private static final byte COLUMN_GROUP_TYPE_DELETE = 0x3;
   private static final byte COLUMN_GROUP_TYPE_OLD = 0x2;
   private static final byte COLUMN_GROUP_TYPE_NEW = 0x1;
-
-  private static final short MYSQL_TYPE_DECIMAL = 0;
-  private static final short MYSQL_TYPE_TINY = 1;
-  private static final short MYSQL_TYPE_SHORT = 2;
-  private static final short MYSQL_TYPE_LONG = 3;
-  private static final short MYSQL_TYPE_FLOAT = 4;
-  private static final short MYSQL_TYPE_DOUBLE = 5;
-  private static final short MYSQL_TYPE_NULL = 6;
-  private static final short MYSQL_TYPE_TIMESTAMP = 7;
-  private static final short MYSQL_TYPE_LONGLONG = 8;
-  private static final short MYSQL_TYPE_INT24 = 9;
-  private static final short MYSQL_TYPE_DATE = 10;
-  /*
-   * private static final short MYSQL_TYPE_DURATION original name was private static final
-   * short MYSQL_TYPE_Time, renamed to private static final short MYSQL_TYPE_Duration to
-   * resolve the conflict with Go type Time.
-   */
-  private static final short MYSQL_TYPE_DURATION = 11;
-  private static final short MYSQL_TYPE_DATETIME = 12;
-  private static final short MYSQL_TYPE_YEAR = 13;
-  private static final short MYSQL_TYPE_NEWDATE = 14;
-  private static final short MYSQL_TYPE_VARCHAR = 15;
-  private static final short MYSQL_TYPE_BIT = 16;
-
-  private static final short MYSQL_TYPE_JSON = 0xf5;
-  private static final short MYSQL_TYPE_NEWDECIMAL = 0xf6;
-  private static final short MYSQL_TYPE_ENUM = 0xf7;
-  private static final short MYSQL_TYPE_SET = 0xf8;
-  private static final short MYSQL_TYPE_TINYBLOB = 0xf9;
-  private static final short MYSQL_TYPE_MEDIUMBLOB = 0xfa;
-  private static final short MYSQL_TYPE_LONGBLOB = 0xfb;
-  private static final short MYSQL_TYPE_BLOB = 0xfc;
-  private static final short MYSQL_TYPE_VARSTRING = 0xfd;
-  private static final short MYSQL_TYPE_STRING = 0xfe;
-  private static final short MYSQL_TYPE_GEOMETRY = 0xff;
-
-  private static final long UNSIGNED_FLAG = 1 << 7;
 
   private final Codec codec;
   private final Key[] keys;
   private final int[][] sizeTables;
   private final int[] valueSizeTable;
-  private final int[] columnGroupSizeTable;
   private final Event[] events;
   private int index;
-  private int columnGroupIndex;
 
   CraftParserState(Codec codec, Key[] keys, int[][] sizeTables) {
     this(codec, keys, sizeTables, new Event[keys.length]);
@@ -95,11 +55,6 @@ public class CraftParserState implements Iterator<Event> {
     this.events = events;
     this.sizeTables = sizeTables;
     this.valueSizeTable = sizeTables[CraftParser.VALUE_SIZE_TABLE_INDEX];
-    if (sizeTables.length > CraftParser.COLUMN_GROUP_SIZE_TABLE_START_INDEX) {
-      this.columnGroupSizeTable = sizeTables[CraftParser.COLUMN_GROUP_SIZE_TABLE_START_INDEX];
-    } else {
-      this.columnGroupSizeTable = null;
-    }
   }
 
   @Override
@@ -134,58 +89,76 @@ public class CraftParserState implements Iterator<Event> {
     if (value == null) {
       return null;
     }
-    switch ((int) type) {
-      case MYSQL_TYPE_DATE:
+    switch (RowColumn.getType((int) type)) {
+      case DATE:
         // FALLTHROUGH
-      case MYSQL_TYPE_DATETIME:
+      case DATETIME:
         // FALLTHROUGH
-      case MYSQL_TYPE_NEWDATE:
+      case NEWDATE:
         // FALLTHROUGH
-      case MYSQL_TYPE_TIMESTAMP:
+      case TIMESTAMP:
         // FALLTHROUGH
-      case MYSQL_TYPE_DURATION:
+      case TIME:
         // FALLTHROUGH
-      case MYSQL_TYPE_JSON:
+      case DECIMAL:
         // FALLTHROUGH
-      case MYSQL_TYPE_NEWDECIMAL:
-        // value type for these mysql types are string
+      case JSON:
+        // value type for these mysql types is string
         return new String(value, StandardCharsets.UTF_8);
-      case MYSQL_TYPE_ENUM:
+      case CHAR:
         // FALLTHROUGH
-      case MYSQL_TYPE_SET:
+      case BINARY:
         // FALLTHROUGH
-      case MYSQL_TYPE_BIT:
-        // value type for thest mysql types are uint64
-        return new Codec(value).decodeUvarint();
-      case MYSQL_TYPE_STRING:
-      case MYSQL_TYPE_VARSTRING:
-      case MYSQL_TYPE_VARCHAR:
-      case MYSQL_TYPE_TINYBLOB:
-      case MYSQL_TYPE_MEDIUMBLOB:
-      case MYSQL_TYPE_LONGBLOB:
-      case MYSQL_TYPE_BLOB:
-        // value type for these mysql types are []byte
+      case VARBINARY:
+        // FALLTHROUGH
+      case VARCHAR:
+        // FALLTHROUGH
+      case TINYTEXT:
+        // FALLTHROUGH
+      case TINYBLOB:
+        // FALLTHROUGH
+      case MEDIUMTEXT:
+        // FALLTHROUGH
+      case MEDIUMBLOB:
+        // FALLTHROUGH
+      case LONGTEXT:
+        // FALLTHROUGH
+      case LONGBLOB:
+        // FALLTHROUGH
+      case TEXT:
+        // FALLTHROUGH
+      case BLOB:
+        // raw value type for these mysql types is []byte
         return value;
-      case MYSQL_TYPE_FLOAT:
-      case MYSQL_TYPE_DOUBLE:
-        // value type for these mysql types are float64
+      case ENUM:
+        // FALLTHROUGH
+      case SET:
+        // FALLTHROUGH
+      case BIT:
+        // value type for thest mysql types is uint64
+        return new Codec(value).decodeUvarint();
+      case FLOAT:
+      case DOUBLE:
+        // value type for these mysql types is float64
         return new Codec(value).decodeFloat64();
-      case MYSQL_TYPE_TINY:
-      case MYSQL_TYPE_SHORT:
-      case MYSQL_TYPE_LONG:
-      case MYSQL_TYPE_LONGLONG:
-      case MYSQL_TYPE_INT24:
-      case MYSQL_TYPE_YEAR:
-        // value type for these mysql types are int64 or uint64 depends on flags
+      case TINYINT:
+      case BOOL:
+      case SMALLINT:
+      case INT:
+      case BIGINT:
+      case MEDIUMINT:
+        // value types for these mysql types are int64 or uint64 depends on flags
         Codec codec = new Codec(value);
-        if ((flags & UNSIGNED_FLAG) == UNSIGNED_FLAG) {
+        if (RowColumn.isUnsigned(flags)) {
           return codec.decodeUvarint();
         } else {
           return codec.decodeVarint();
         }
-      case MYSQL_TYPE_NULL:
+      case YEAR:
+        return new Codec(value).decodeVarint();
+      case NULL:
         // FALLTHROUGH
-      case MYSQL_TYPE_GEOMETRY:
+      case GEOMETRY:
         // FALLTHROUGH
       default:
         return null;
@@ -212,14 +185,14 @@ public class CraftParserState implements Iterator<Event> {
   private RowChangedValue decodeRowChanged(Codec codec) throws IOException {
     RowColumn[] oldColumns = null;
     RowColumn[] newColumns = null;
+    int[] sizeTable = sizeTables[CraftParser.COLUMN_GROUP_SIZE_TABLE_START_INDEX + index];
+    int columnGroupIndex = 0;
     while (codec.available() > 0) {
-      final int size = columnGroupSizeTable[columnGroupIndex++];
+      final int size = sizeTable[columnGroupIndex++];
       final Codec columnGroupCodec = codec.truncateHeading(size);
       byte type = (byte) columnGroupCodec.decodeUint8();
       RowColumn[] columns = decodeColumnGroup(columnGroupCodec);
       switch (type) {
-        case COLUMN_GROUP_TYPE_DELETE:
-          return new RowDeletedValue(columns);
         case COLUMN_GROUP_TYPE_OLD:
           oldColumns = columns;
           break;
@@ -231,7 +204,11 @@ public class CraftParserState implements Iterator<Event> {
       }
     }
     if (oldColumns != null) {
-      return new RowUpdatedValue(oldColumns, newColumns);
+      if (newColumns == null) {
+        return new RowDeletedValue(oldColumns);
+      } else {
+        return new RowUpdatedValue(oldColumns, newColumns);
+      }
     } else {
       return new RowInsertedValue(newColumns);
     }

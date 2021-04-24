@@ -34,6 +34,7 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.function.BiConsumer;
 import junit.framework.TestCase;
 import org.junit.Assert;
@@ -97,14 +98,14 @@ public class RowColumnTest extends TestCase {
     final byte[] decoded = "测试text".getBytes(StandardCharsets.UTF_8);
     return Arrays.stream(new Type[]{Type.BINARY, Type.VARBINARY,
         Type.BLOB, Type.TINYBLOB, Type.MEDIUMBLOB, Type.LONGBLOB})
-        .map(t -> new CoercionTest(encoded, decoded, t)).toArray(CoercionTest[]::new);
+        .map(t -> new CoercionTest(Base64.getDecoder().decode(encoded), decoded, t))
+        .toArray(CoercionTest[]::new);
   }
 
   private static CoercionTest[] createStringCoercionTests() {
     final String from = "test";
     final String to = "test";
-    return Arrays.stream(new Type[]{Type.CHAR, Type.VARCHAR, Type.TEXT,
-        Type.TINYTEXT, Type.MEDIUMTEXT, Type.LONGTEXT, Type.JSON})
+    return Arrays.stream(new Type[]{Type.VARCHAR, Type.JSON})
         .map(t -> new CoercionTest(from, to, t)).toArray(CoercionTest[]::new);
   }
 

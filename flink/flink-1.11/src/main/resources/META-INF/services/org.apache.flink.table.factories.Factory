@@ -14,3 +14,4 @@
 # limitations under the License.
 
 io.tidb.bigdata.flink.tidb.TiDBDynamicTableFactory
+io.tidb.bigdata.flink.format.cdc.CraftFormatFactory

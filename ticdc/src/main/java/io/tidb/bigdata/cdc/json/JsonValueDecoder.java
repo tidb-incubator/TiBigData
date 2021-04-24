@@ -29,6 +29,7 @@ import io.tidb.bigdata.cdc.ValueDecoder;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
@@ -60,17 +61,37 @@ public class JsonValueDecoder implements ValueDecoder {
     this(new DataInputStream(new ByteArrayInputStream(input)), parser);
   }
 
-  private DdlValue parseDdlValue(final JsonNode node) {
+  private static DdlValue parseDdlValue(final JsonNode node) {
     return new DdlValue(node.mustGetText(DDL_QUERY_TOKEN), node.mustGetInt(TYPE_TOKEN));
   }
 
-  private RowColumn[] parseColumns(final JsonNode row) {
+  private static Object checkAndConvertFromString(int type, long flags, String value) {
+    if (RowColumn.isUnsigned(flags)) {
+      switch (RowColumn.getType(type)) {
+        case TINYTEXT:
+          // FALLTHROUGH
+        case MEDIUMTEXT:
+          // FALLTHROUGH
+        case LONGTEXT:
+          // FALLTHROUGH
+        case TEXT:
+          return Base64.getDecoder().decode(value);
+        default:
+          break;
+      }
+    }
+    return value;
+  }
+
+  private static RowColumn[] parseColumns(final JsonNode row) {
     final ArrayList<RowColumn> buffer = tlsRowColumnBuffer.get();
     for (final Iterator<Map.Entry<String, JsonNode>> it = row.fields(); it.hasNext(); ) {
       final Map.Entry<String, JsonNode> entry = it.next();
       final JsonNode node = entry.getValue();
       final JsonNode valueNode = node.mustGet(COLUMN_VALUE_TOKEN);
       final Object value;
+      final int type = node.mustGetInt(TYPE_TOKEN);
+      final long flags = node.getLong(COLUMN_FLAG_TOKEN, 0);
 
       switch (valueNode.getType()) {
         case BOOLEAN:
@@ -80,7 +101,7 @@ public class JsonValueDecoder implements ValueDecoder {
           value = valueNode.numberValue();
           break;
         case STRING:
-          value = valueNode.textValue();
+          value = checkAndConvertFromString(type, flags, valueNode.textValue());
           break;
         case NULL:
           value = null;
@@ -92,26 +113,25 @@ public class JsonValueDecoder implements ValueDecoder {
           entry.getKey(),
           value,
           node.getBoolean(COLUMN_WHERE_HANDLE_TOKEN, false),
-          node.mustGetInt(TYPE_TOKEN),
-          node.getLong(COLUMN_FLAG_TOKEN, 0)));
+          type, flags));
     }
     final RowColumn[] columns = buffer.toArray(new RowColumn[0]);
     buffer.clear();
     return columns;
   }
 
-  private RowChangedValue parseRowChangedDeleteValue(final JsonNode object) {
+  private static RowChangedValue parseRowChangedDeleteValue(final JsonNode object) {
     return new RowDeletedValue(parseColumns(object));
   }
 
-  private RowChangedValue parseRowChangedUpdateValue(final Optional<JsonNode> oldValue,
+  private static RowChangedValue parseRowChangedUpdateValue(final Optional<JsonNode> oldValue,
       final JsonNode newValue) {
     return oldValue
         .map(o -> (RowChangedValue) (new RowUpdatedValue(parseColumns(o), parseColumns(newValue))))
         .orElseGet(() -> new RowInsertedValue(parseColumns(newValue)));
   }
 
-  private RowChangedValue parseRowChangedValue(final JsonNode node) {
+  private static RowChangedValue parseRowChangedValue(final JsonNode node) {
     if (node.has(UPDATE_NEW_VALUE_TOKEN)) {
       return parseRowChangedUpdateValue(node.get(UPDATE_OLD_VALUE_TOKEN),
           node.mustGet(UPDATE_NEW_VALUE_TOKEN));
