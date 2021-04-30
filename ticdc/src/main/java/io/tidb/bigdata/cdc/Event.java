@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.Objects;
 
 /*
@@ -23,6 +24,7 @@ import java.util.Objects;
  */
 public final class Event {
 
+  static final JacksonFactory defaultJacksonFactory = JacksonFactory.create();
   private final Key key;
   private final Value value;
 

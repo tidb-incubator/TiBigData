@@ -50,8 +50,16 @@ public class JacksonContext implements Serializable {
 
   private String shadePrefix;
   private Constructor<Object> objectMapperConstructor;
+  private Method createWriter;
+  private Method writeValueAsString;
   private Method createReader;
   private Method readTree;
+
+  // JsonNodeFactory
+  private Object jsonNodeFactory;
+  private Method jsonNodeFactoryObjectNode;
+
+  // JsonNode
   private Method has;
   private Method get;
   private Method binaryValue;
@@ -65,6 +73,20 @@ public class JacksonContext implements Serializable {
   private Method getNodeType;
   private Method fields;
   private Method valueOf;
+
+  // ObjectNode
+  private Method objectNodePutBigDecimal;
+  private Method objectNodePutBoolean;
+  private Method objectNodePutByteArray;
+  private Method objectNodePutDouble;
+  private Method objectNodePutFloat;
+  private Method objectNodePutShort;
+  private Method objectNodePutInteger;
+  private Method objectNodePutLong;
+  private Method objectNodePutString;
+  private Method objectNodePutNull;
+  private Method objectNodePutObject;
+
   private Map<Object, Type> nodeTypesMapping;
 
   JacksonContext(@NotNull final String prefix) {
@@ -89,9 +111,22 @@ public class JacksonContext implements Serializable {
         className(shadePrefix, "com.fasterxml.jackson.databind.ObjectMapper"));
     objectMapperConstructor = uncheckedGetConstructor(objectMapperClass);
     createReader = uncheckedGetMethod(objectMapperClass, "reader");
+    createWriter = uncheckedGetMethod(objectMapperClass, "writer");
+
+    final Class<Object> objectWriterClass = uncheckedLoadClass(
+        className(shadePrefix, "com.fasterxml.jackson.databind.ObjectWriter"));
+    writeValueAsString = uncheckedGetMethod(objectWriterClass,
+        "writeValueAsString", Object.class);
+
     final Class<Object> objectReaderClass = uncheckedLoadClass(
         className(shadePrefix, "com.fasterxml.jackson.databind.ObjectReader"));
     readTree = uncheckedGetMethod(objectReaderClass, "readTree", InputStream.class);
+
+    final Class<Object> jsonNodeFactoryClass = uncheckedLoadClass(
+        className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeFactory"));
+    jsonNodeFactory = uncheckedRun(() -> jsonNodeFactoryClass.getField("instance").get(null));
+    jsonNodeFactoryObjectNode = uncheckedGetMethod(jsonNodeFactoryClass, "objectNode");
+
     final Class<Object> jsonNodeClass = uncheckedLoadClass(
         className(shadePrefix, "com.fasterxml.jackson.databind.JsonNode"));
     has = uncheckedGetMethod(jsonNodeClass, "has", String.class);
@@ -106,6 +141,33 @@ public class JacksonContext implements Serializable {
     bigDecimalValue = uncheckedGetMethod(jsonNodeClass, "decimalValue");
     getNodeType = uncheckedGetMethod(jsonNodeClass, "getNodeType");
     fields = uncheckedGetMethod(jsonNodeClass, "fields");
+
+    final Class<Object> objectNodeClass = uncheckedLoadClass(
+        className(shadePrefix, "com.fasterxml.jackson.databind.node.ObjectNode"));
+
+    objectNodePutBigDecimal = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, BigDecimal.class);
+    objectNodePutBoolean = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Boolean.class);
+    objectNodePutByteArray = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, byte[].class);
+    objectNodePutDouble = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Double.class);
+    objectNodePutFloat = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Float.class);
+    objectNodePutShort = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Short.class);
+    objectNodePutInteger = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Integer.class);
+    objectNodePutLong = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, Long.class);
+    objectNodePutString = uncheckedGetMethod(objectNodeClass,
+        "put", String.class, String.class);
+    objectNodePutNull = uncheckedGetMethod(objectNodeClass,
+        "putNull", String.class);
+    objectNodePutObject = uncheckedGetMethod(objectNodeClass,
+        "putObject", String.class);
+
     final Class<Object> jsonNodeTypeClass = uncheckedLoadClass(
         className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeType"));
     valueOf = uncheckedGetMethod(jsonNodeTypeClass, "valueOf", String.class);
@@ -137,12 +199,24 @@ public class JacksonContext implements Serializable {
     return uncheckedRun(() -> objectMapperConstructor.newInstance());
   }
 
+  Object newWriter(final Object mapper) {
+    return uncheckedRun(() -> createWriter.invoke(mapper));
+  }
+
+  Object newObject() {
+    return uncheckedRun(() -> jsonNodeFactoryObjectNode.invoke(jsonNodeFactory));
+  }
+
   Object newReader(final Object mapper) {
     return uncheckedRun(() -> createReader.invoke(mapper));
   }
 
   Object readTree(final Object reader, final byte[] input) {
     return uncheckedRun(() -> readTree.invoke(reader, new ByteArrayInputStream(input)));
+  }
+
+  String writeValueAsString(final Object writer, final Object value) {
+    return uncheckedRun(() -> (String) writeValueAsString.invoke(writer, value));
   }
 
   boolean has(final Object node, final String fieldName) {
@@ -193,5 +267,49 @@ public class JacksonContext implements Serializable {
   @SuppressWarnings("unchecked")
   Iterator<Entry<String, Object>> fields(final Object node) {
     return uncheckedRun(() -> (Iterator<Map.Entry<String, Object>>) fields.invoke(node));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final BigDecimal v) {
+    uncheckedRun(() -> objectNodePutBigDecimal.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Boolean v) {
+    uncheckedRun(() -> objectNodePutBoolean.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final byte[] v) {
+    uncheckedRun(() -> objectNodePutByteArray.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Double v) {
+    uncheckedRun(() -> objectNodePutDouble.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Float v) {
+    uncheckedRun(() -> objectNodePutFloat.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Short v) {
+    uncheckedRun(() -> objectNodePutShort.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Integer v) {
+    uncheckedRun(() -> objectNodePutInteger.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final Long v) {
+    uncheckedRun(() -> objectNodePutLong.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePut(final Object objectNode, final String fieldName, final String v) {
+    uncheckedRun(() -> objectNodePutString.invoke(objectNode, fieldName, v));
+  }
+
+  void objectNodePutNull(final Object objectNode, final String fieldName) {
+    uncheckedRun(() -> objectNodePutNull.invoke(objectNode, fieldName));
+  }
+
+  Object objectNodePutObject(final Object objectNode, final String fieldName) {
+    return uncheckedRun(() -> objectNodePutObject.invoke(objectNode, fieldName));
   }
 }

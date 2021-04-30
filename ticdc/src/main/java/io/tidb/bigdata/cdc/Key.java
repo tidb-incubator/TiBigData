@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.Objects;
 
 /*
@@ -37,19 +38,14 @@ public final class Key {
     this.rowId = rowId;
     this.partition = partition;
     this.ts = ts;
-    switch (type) {
-      case 1:
-        this.type = Type.ROW_CHANGED;
-        break;
-      case 2:
-        this.type = Type.DDL;
-        break;
-      case 3:
-        this.type = Type.RESOLVED;
-        break;
-      default:
-        throw new RuntimeException("Invalid event type: " + type);
+    this.type = Type.of(type);
+  }
+
+  public static long fromTimestamp(long ms) {
+    if (ms > 0) {
+      return ms << 18;
     }
+    return -1L;
   }
 
   public long getTimestamp() {
@@ -106,9 +102,45 @@ public final class Key {
     return Objects.hash(ts, schema, table, rowId, partition, type);
   }
 
+  public String toJson() {
+    return toJson(Event.defaultJacksonFactory);
+  }
+
+  public String toJson(JacksonFactory factory) {
+    return factory.toJson(factory.createObject()
+        .put("ts", getTs())
+        .put("scm", getSchema())
+        .put("tbl", getTable())
+        .put("t", getType().code())
+    );
+  }
+
   public enum Type {
-    ROW_CHANGED,
-    DDL,
-    RESOLVED
+    ROW_CHANGED(1),
+    DDL(2),
+    RESOLVED(3);
+
+    private int code;
+
+    Type(int code) {
+      this.code = code;
+    }
+
+    public static Type of(final int code) {
+      switch (code) {
+        case 1:
+          return ROW_CHANGED;
+        case 2:
+          return DDL;
+        case 3:
+          return RESOLVED;
+        default:
+          throw new IllegalArgumentException("Invalid event type code: " + code);
+      }
+    }
+
+    public int code() {
+      return this.code;
+    }
   }
 }

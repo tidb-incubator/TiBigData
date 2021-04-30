@@ -22,6 +22,7 @@ import io.tidb.bigdata.cdc.Key;
 import io.tidb.bigdata.cdc.Parser;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class CraftParser implements Parser<CraftParserState> {
 
@@ -71,11 +72,8 @@ public class CraftParser implements Parser<CraftParserState> {
     ArrayList<int[]> tables = new ArrayList<>();
     while (slice.available() > 0) {
       int elements = slice.decodeUvarintLength();
-      int[] table = new int[elements];
-      for (int idx = 0; idx < elements; ++idx) {
-        table[idx] = slice.decodeUvarintLength();
-      }
-      tables.add(table);
+      tables.add(
+          Arrays.stream(slice.decodeDeltaUvarintChunk(elements)).mapToInt(l -> (int) l).toArray());
     }
     return tables.toArray(new int[0][]);
   }

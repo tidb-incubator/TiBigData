@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.Optional;
 
 /*
@@ -28,4 +29,10 @@ public interface Value {
   Optional<ResolvedValue> asResolved();
 
   Optional<DdlValue> asDdl();
+
+  default String toJson() {
+    return toJson(Event.defaultJacksonFactory);
+  }
+
+  String toJson(JacksonFactory factory);
 }

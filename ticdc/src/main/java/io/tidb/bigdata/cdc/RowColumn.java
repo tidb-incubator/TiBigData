@@ -127,12 +127,12 @@ public class RowColumn {
     return type;
   }
 
-  public boolean isBinary() {
-    return type.isBinary();
-  }
-
   public static boolean isBinary(long flags) {
     return (flags & FLAG_BINARY) == FLAG_BINARY;
+  }
+
+  public boolean isBinary() {
+    return type.isBinary();
   }
 
   public static boolean isHandleKey(long flags) {
@@ -559,11 +559,11 @@ public class RowColumn {
 
     static {
       for (Type t : Type.values()) {
-        if (byId.containsKey(t.getCode())) {
+        if (byId.containsKey(t.code())) {
           // we use the first definition for those types sharing the same code
           continue;
         }
-        byId.put(t.getCode(), t);
+        byId.put(t.code(), t);
       }
       // 14 map to DATE as well
       byId.put(14, DATE);
@@ -647,7 +647,7 @@ public class RowColumn {
       return javaType;
     }
 
-    public int getCode() {
+    public int code() {
       return code;
     }
 

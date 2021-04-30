@@ -19,7 +19,7 @@ package io.tidb.bigdata.flink.format.cdc;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 import io.tidb.bigdata.cdc.Event;
-import io.tidb.bigdata.cdc.Key;
+import io.tidb.bigdata.cdc.Key.Type;
 import io.tidb.bigdata.cdc.ParserFactory;
 import io.tidb.bigdata.cdc.RowChangedValue;
 import io.tidb.bigdata.cdc.RowColumn;
@@ -30,10 +30,11 @@ import io.tidb.bigdata.flink.format.cdc.RowColumnConverters.Converter;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
-import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.data.GenericRowData;
@@ -54,80 +55,81 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
    * TypeInformation of the produced {@link RowData}.
    */
   private final TypeInformation<RowData> resultTypeInfo;
-
   /**
-   * Only read changelogs from the specific schema.
+   * Only read changelogs from the specific schemas.
    */
   @Nullable
-  private final String schema;
+  private final Set<String> schemas;
   /**
-   * Only read changelogs from the specific table.
+   * Only read changelogs from the specific tables.
    */
   @Nullable
-  private final String table;
+  private final Set<String> tables;
+  /**
+   * Only read changelogs of some specific types.
+   */
+  @Nullable
+  private final Set<Type> types;
+  private final long earliestTs;
   /**
    * Number of fields.
    */
-  private final int fieldCount;
+  private final int physicalFieldCount;
+  private final int producedFieldCount;
   private final ParserFactory<CraftParser, CraftParserState> parserFactory;
   private final Map<String, ColumnContext> columns;
+  private final List<ReadableMetadata> requestedMetadata;
 
-  private CraftDeserializationSchema(
+  CraftDeserializationSchema(
       final RowType rowType,
+      List<ReadableMetadata> requestedMetadata,
       final TypeInformation<RowData> resultTypeInfo,
-      @Nullable final String schema,
-      @Nullable final String table,
-      final boolean ignoreParseErrors,
-      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+      final long earliestTs,
+      @Nullable final Set<Type> types,
+      @Nullable final Set<String> schemas,
+      @Nullable final Set<String> tables,
+      final boolean ignoreParseErrors) {
+    this.requestedMetadata = requestedMetadata;
     this.resultTypeInfo = checkNotNull(resultTypeInfo);
-    this.schema = schema;
-    this.table = table;
+    this.earliestTs = earliestTs;
+    this.types = types;
+    this.schemas = schemas;
+    this.tables = tables;
     this.ignoreParseErrors = ignoreParseErrors;
-    this.fieldCount = rowType.getFieldCount();
-    this.parserFactory = parserFactory;
+    this.physicalFieldCount = rowType.getFieldCount();
+    this.producedFieldCount = this.physicalFieldCount + requestedMetadata.size();
+    this.parserFactory = ParserFactory.craft();
     int index = 0;
     this.columns = new HashMap<>();
-    for (final RowType.RowField field : rowType.getFields()) {
+    for (final RowField field : rowType.getFields()) {
       columns.put(field.getName(), new ColumnContext(index++, field));
     }
   }
 
-  /**
-   * Creates A builder for building a {@link CraftDeserializationSchema}.
-   */
-  public static CraftDeserializationSchema.Builder builder(final RowType rowType,
-      final TypeInformation<RowData> resultTypeInfo) {
-    return new CraftDeserializationSchema.Builder(rowType, resultTypeInfo);
-  }
-
-  // ------------------------------------------------------------------------------------------
-  // Builder
-  // ------------------------------------------------------------------------------------------
-
-  private boolean accept(final Event event) {
-    switch (event.getType()) {
-      case RESOLVED:
-        // FALLTHROUGH
-      case DDL:
-        return false;
-      default:
-        break;
+  private boolean acceptEvent(final Event event) {
+    if (event.getTs() < earliestTs) {
+      // skip not events that have ts older than specific
+      return false;
     }
-    if (schema != null) {
-      if (!event.getSchema().equals(schema)) {
-        return false;
-      }
-    }
-    if (table != null) {
-      if (!event.getTable().equals(table)) {
-        return false;
-      }
+    if (types != null && !types.contains(event.getType())) {
+      // skip not interested types
+      return false;
     }
     return true;
   }
 
-  private Object[] convert(final RowColumn[] columns) {
-    final Object[] objects = new Object[this.columns.size()];
+  private boolean acceptSchemaAndTable(final Event event) {
+    if (schemas != null && !schemas.contains(event.getSchema())) {
+      return false;
+    }
+    if (tables != null && !tables.contains(event.getTable())) {
+      return false;
+    }
+    return true;
+  }
+
+  private Object[] convert(final Event event, final RowColumn[] columns) {
+    final Object[] objects = new Object[producedFieldCount];
     for (final RowColumn column : columns) {
       final ColumnContext ctx = this.columns.get(column.getName());
       if (ctx == null) {
@@ -135,14 +137,18 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
       }
       objects[ctx.index] = ctx.converter.convert(column);
     }
+    return convertMeta(event, objects);
+  }
+
+  private Object[] convertMeta(final Event event, Object[] objects) {
+    int metaIndex = physicalFieldCount;
+    for (final ReadableMetadata metadata : requestedMetadata) {
+      objects[metaIndex++] = metadata.extractor.apply(event);
+    }
     return objects;
   }
 
-  // ------------------------------------------------------------------------------------------
-  private void collectEvent(final Event event, final Collector<RowData> out) {
-    if (!accept(event)) {
-      return;
-    }
+  private void collectRowChanged(final Event event, final Collector<RowData> out) {
     final RowChangedValue value = event.asRowChanged();
     final RowChangedValue.Type type = value.getType();
 
@@ -153,17 +159,17 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
     switch (type) {
       case DELETE:
         kind = RowKind.DELETE;
-        data = convert(value.getOldValue());
+        data = convert(event, value.getOldValue());
         break;
       case INSERT:
         kind = RowKind.INSERT;
-        data = convert(value.getNewValue());
+        data = convert(event, value.getNewValue());
         break;
       case UPDATE:
         kind = RowKind.UPDATE_BEFORE;
-        data = convert(value.getOldValue());
+        data = convert(event, value.getOldValue());
         kind2 = RowKind.UPDATE_AFTER;
-        data2 = convert(value.getNewValue());
+        data2 = convert(event, value.getNewValue());
         break;
       default:
         if (!ignoreParseErrors) {
@@ -173,6 +179,42 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
     out.collect(GenericRowData.ofKind(kind, data));
     if (data2 != null) {
       out.collect(GenericRowData.ofKind(kind2, data2));
+    }
+  }
+
+  private void collectDdl(final Event event, final Collector<RowData> out) {
+    out.collect(GenericRowData.ofKind(
+        RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
+  }
+
+  private void collectResolved(final Event event, final Collector<RowData> out) {
+    out.collect(GenericRowData.ofKind(
+        RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
+  }
+
+  // ------------------------------------------------------------------------------------------
+  private void collectEvent(final Event event, final Collector<RowData> out) {
+    if (!acceptEvent(event)) {
+      return;
+    }
+    Type type = event.getType();
+    if (type == Type.RESOLVED) {
+      // Resolved event is always eligible even though they don't have schema and table specified
+      collectResolved(event, out);
+      return;
+    }
+    if (!acceptSchemaAndTable(event)) {
+      return;
+    }
+    switch (type) {
+      case ROW_CHANGED:
+        collectRowChanged(event, out);
+        break;
+      case DDL:
+        collectDdl(event, out);
+        break;
+      default:
+        throw new IllegalStateException("Unknown event type: " + event.getType());
     }
   }
 
@@ -214,13 +256,14 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
     }
     CraftDeserializationSchema that = (CraftDeserializationSchema) o;
     return ignoreParseErrors == that.ignoreParseErrors
-        && fieldCount == that.fieldCount
+        && physicalFieldCount == that.physicalFieldCount
+        && producedFieldCount == that.producedFieldCount
         && Objects.equals(resultTypeInfo, that.resultTypeInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(resultTypeInfo, ignoreParseErrors, fieldCount);
+    return Objects.hash(resultTypeInfo, ignoreParseErrors, physicalFieldCount, producedFieldCount);
   }
 
   private static class ColumnContext implements Serializable {
@@ -233,47 +276,6 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
       this.index = index;
       this.field = field;
       this.converter = RowColumnConverters.createConverter(field.getType());
-    }
-  }
-
-  /**
-   * A builder for creating a {@link CraftDeserializationSchema}.
-   */
-  @Internal
-  public static final class Builder {
-
-    private final RowType rowType;
-    private final TypeInformation<RowData> resultTypeInfo;
-    private final ParserFactory<CraftParser, CraftParserState> parserFactory;
-    private String schema = null;
-    private String table = null;
-    private boolean ignoreParseErrors = false;
-
-    private Builder(final RowType rowType, final TypeInformation<RowData> resultTypeInfo) {
-      this.rowType = rowType;
-      this.resultTypeInfo = resultTypeInfo;
-      this.parserFactory = ParserFactory.craft();
-    }
-
-    public CraftDeserializationSchema.Builder setSchema(final String schema) {
-      this.schema = schema;
-      return this;
-    }
-
-    public CraftDeserializationSchema.Builder setTable(final String table) {
-      this.table = table;
-      return this;
-    }
-
-    public CraftDeserializationSchema.Builder setIgnoreParseErrors(
-        final boolean ignoreParseErrors) {
-      this.ignoreParseErrors = ignoreParseErrors;
-      return this;
-    }
-
-    public CraftDeserializationSchema build() {
-      return new CraftDeserializationSchema(rowType, resultTypeInfo, schema, table,
-          ignoreParseErrors, parserFactory);
     }
   }
 }

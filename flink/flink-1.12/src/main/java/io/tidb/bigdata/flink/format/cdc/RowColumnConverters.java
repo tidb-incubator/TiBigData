@@ -60,7 +60,6 @@ public final class RowColumnConverters {
           final LocalTime localTime = parsedTimestamp.query(TemporalQueries.localTime());
           final LocalDate localDate = parsedTimestamp.query(TemporalQueries.localDate());
           return TimestampData.fromLocalDateTime(LocalDateTime.of(localDate, localTime));
-
         };
       case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
         return column -> {
