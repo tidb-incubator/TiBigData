@@ -43,7 +43,11 @@ public class TiDBDriver extends LoadBalancingDriver {
 
   public static final String MYSQL_URL_PREFIX_REGEX = "jdbc:mysql://[^/]+:\\d+";
 
-  public static final String MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+  public static final String MYSQL_DRIVER_NAME;
+  
+  public static final String NEW_MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
+  
+  public static final String OLD_MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
   public static final String QUERY_TIDB_SERVER_SQL =
       "SELECT `IP`,`PORT` FROM `INFORMATION_SCHEMA`.`TIDB_SERVERS_INFO` ";
@@ -55,9 +59,19 @@ public class TiDBDriver extends LoadBalancingDriver {
 
   static {
     try {
+      MYSQL_DRIVER_NAME = determineDriverName();
       java.sql.DriverManager.registerDriver(new TiDBDriver());
     } catch (SQLException e) {
       throw new RuntimeException("Can't register driver!");
+    }
+  }
+  
+  private static String determineDriverName(){
+    try {
+      Class.forName(NEW_MYSQL_DRIVER_NAME);
+      return NEW_MYSQL_DRIVER_NAME;
+    } catch (ClassNotFoundException e) {
+      return OLD_MYSQL_DRIVER_NAME;
     }
   }
 
