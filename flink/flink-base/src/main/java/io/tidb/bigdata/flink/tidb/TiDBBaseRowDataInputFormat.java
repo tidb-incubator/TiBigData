@@ -135,11 +135,23 @@ public abstract class TiDBBaseRowDataInputFormat extends
     columnHandleInternals = Arrays.stream(this.fieldNames)
         .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
     projectedFieldIndexes = IntStream.range(0, this.fieldNames.length).toArray();
-    timestamp = Optional
+    timestamp = getOptionalVersion()
+        .orElse(getOptionalTimestamp().orElse(null));
+  }
+
+  private Optional<TiTimestamp> getOptionalTimestamp() {
+    return Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNoneEmpty)
-        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0))
-        .orElse(null);
+        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
+  }
+
+  private Optional<TiTimestamp> getOptionalVersion() {
+    return Optional
+        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+        .filter(StringUtils::isNoneEmpty)
+        .map(Long::parseUnsignedLong)
+        .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }
 
   @Override

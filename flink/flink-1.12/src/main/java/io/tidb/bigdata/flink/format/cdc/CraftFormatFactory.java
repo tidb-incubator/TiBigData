@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.format.cdc;
 
-import static io.tidb.bigdata.flink.format.cdc.FormatOptions.EARLIEST_MS;
-import static io.tidb.bigdata.flink.format.cdc.FormatOptions.EARLIEST_TS;
+import static io.tidb.bigdata.flink.format.cdc.FormatOptions.EARLIEST_TIMESTAMP;
+import static io.tidb.bigdata.flink.format.cdc.FormatOptions.EARLIEST_VERSION;
 import static io.tidb.bigdata.flink.format.cdc.FormatOptions.IGNORE_PARSE_ERRORS;
 import static io.tidb.bigdata.flink.format.cdc.FormatOptions.SCHEMA_INCLUDE;
 import static io.tidb.bigdata.flink.format.cdc.FormatOptions.TABLE_INCLUDE;
@@ -150,8 +150,8 @@ public class CraftFormatFactory
     options.add(SCHEMA_INCLUDE);
     options.add(TABLE_INCLUDE);
     options.add(TYPE_INCLUDE);
-    options.add(EARLIEST_MS);
-    options.add(EARLIEST_TS);
+    options.add(EARLIEST_VERSION);
+    options.add(EARLIEST_TIMESTAMP);
     return options;
   }
 }

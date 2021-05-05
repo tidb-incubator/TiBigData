@@ -47,12 +47,12 @@ public class FormatOptions {
       ConfigOptions.key("type.include").stringType().noDefaultValue()
           .withDescription("Only read events of some specific types");
 
-  public static final ConfigOption<Long> EARLIEST_TS =
-      ConfigOptions.key("earliest.ts").longType().noDefaultValue()
-          .withDescription("Only read events older than given ts");
+  public static final ConfigOption<Long> EARLIEST_VERSION =
+      ConfigOptions.key("earliest.version").longType().noDefaultValue()
+          .withDescription("Only read events older than given version");
 
-  public static final ConfigOption<Long> EARLIEST_MS =
-      ConfigOptions.key("earliest.ms").longType().defaultValue(0L)
+  public static final ConfigOption<Long> EARLIEST_TIMESTAMP =
+      ConfigOptions.key("earliest.timestamp").longType().defaultValue(0L)
           .withDescription("Only read events older than given timestamp in milliseconds");
 
   /**
@@ -88,7 +88,7 @@ public class FormatOptions {
   }
 
   static long getEarliestTs(final ReadableConfig config) {
-    return config.getOptional(EARLIEST_TS)
-        .orElseGet(() -> Key.fromTimestamp(config.get(EARLIEST_MS)));
+    return config.getOptional(EARLIEST_VERSION)
+        .orElseGet(() -> Key.fromTimestamp(config.get(EARLIEST_TIMESTAMP)));
   }
 }
