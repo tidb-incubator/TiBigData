@@ -18,14 +18,19 @@ package io.tidb.bigdata.flink.tidb;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.Map;
+import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
+import org.apache.flink.connector.jdbc.table.JdbcRowDataLookupFunction;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
+import org.apache.flink.table.connector.source.LookupTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
+import org.apache.flink.table.connector.source.TableFunctionProvider;
+import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class TiDBBaseDynamicTableSource implements ScanTableSource {
+public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, LookupTableSource {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBBaseDynamicTableSource.class);
 
@@ -35,10 +40,35 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource {
 
   protected final ClientConfig config;
 
-  public TiDBBaseDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
+  protected final JdbcLookupOptions lookupOptions;
+
+  public TiDBBaseDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
+      JdbcLookupOptions lookupOptions) {
     this.tableSchema = tableSchema;
     this.properties = properties;
     this.config = new ClientConfig(properties);
+    this.lookupOptions = lookupOptions;
+  }
+
+  @Override
+  public LookupRuntimeProvider getLookupRuntimeProvider(LookupContext context) {
+    LOG.info("use jdbc lookup table source");
+    // JDBC only support non-nested look up keys
+    String[] keyNames = new String[context.getKeys().length];
+    for (int i = 0; i < keyNames.length; i++) {
+      int[] innerKeyArr = context.getKeys()[i];
+      Preconditions.checkArgument(innerKeyArr.length == 1,
+          "JDBC only support non-nested look up keys");
+      keyNames[i] = tableSchema.getFieldNames()[innerKeyArr[0]];
+    }
+    RowType rowType = (RowType) tableSchema.toRowDataType().getLogicalType();
+    return TableFunctionProvider.of(new JdbcRowDataLookupFunction(
+        JdbcUtils.getJdbcOptions(properties),
+        lookupOptions,
+        tableSchema.getFieldNames(),
+        tableSchema.getFieldDataTypes(),
+        keyNames,
+        rowType));
   }
 
   @Override
