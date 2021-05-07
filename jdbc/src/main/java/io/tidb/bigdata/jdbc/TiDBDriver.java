@@ -66,7 +66,7 @@ public class TiDBDriver extends LoadBalancingDriver {
     }
   }
   
-  private static String determineDriverName(){
+  private static String determineDriverName() {
     try {
       Class.forName(NEW_MYSQL_DRIVER_NAME);
       return NEW_MYSQL_DRIVER_NAME;
