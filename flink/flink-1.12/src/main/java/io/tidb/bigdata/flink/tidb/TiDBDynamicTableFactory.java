@@ -24,6 +24,6 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
   @Override
   public DynamicTableSource createDynamicTableSource(Context context) {
     return new TiDBDynamicTableSource(context.getCatalogTable().getSchema(),
-        context.getCatalogTable().toProperties());
+        context.getCatalogTable().toProperties(), getLookupOptions(context));
   }
 }

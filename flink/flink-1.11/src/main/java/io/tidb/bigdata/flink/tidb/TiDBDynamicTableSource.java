@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.tidb;
 
 import java.util.Map;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.InputFormatProvider;
@@ -29,8 +30,9 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
-    super(tableSchema, properties);
+  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
+      JdbcLookupOptions lookupOptions) {
+    super(tableSchema, properties, lookupOptions);
   }
 
   @Override
@@ -45,6 +47,6 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource {
 
   @Override
   public DynamicTableSource copy() {
-    return new TiDBDynamicTableSource(tableSchema, properties);
+    return new TiDBDynamicTableSource(tableSchema, properties, lookupOptions);
   }
 }
