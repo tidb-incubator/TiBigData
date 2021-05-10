@@ -11,13 +11,21 @@ import static java.lang.String.format;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -230,6 +238,7 @@ public class FlinkTest {
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`");
     tiDBCatalog.sqlUpdate("CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
         "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
     String propertiesString = properties.entrySet().stream()
@@ -253,8 +262,6 @@ public class FlinkTest {
     row1 = new Row(1);
     row1.setField(0, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
-
-    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`");
     tiDBCatalog.close();
   }
 
@@ -268,6 +275,45 @@ public class FlinkTest {
     row.setField(0, (byte) 1);
     row.setField(1, (short) 2);
     Assert.assertEquals(row, upsertAndRead());
+  }
+
+  @Test
+  public void testLookupTableSource() throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = getDefaultProperties();
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tiDBCatalog.open();
+    String tableName = getRandomTableName();
+    String createTableSql1 = String
+        .format("CREATE TABLE `%s`.`%s` (c1 int, c2 varchar(255), PRIMARY KEY(`c1`))",
+            DATABASE_NAME, tableName);
+    String insertDataSql = String
+        .format("INSERT INTO `%s`.`%s` VALUES (1,'data1'),(2,'data2'),(3,'data3'),(4,'data4')",
+            DATABASE_NAME, tableName);
+    tiDBCatalog.sqlUpdate(createTableSql1, insertDataSql);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    List<Row> rows = IntStream.range(1, 11).mapToObj(Row::of)
+        .collect(Collectors.toList());
+    TableSchema tableSchema = TableSchema.builder().field("c1", DataTypes.INT().notNull()).build();
+    Table table = tableEnvironment.fromValues(tableSchema.toRowDataType(), rows);
+    tableEnvironment.registerTable("data", table);
+    String sql = String.format(
+        "SELECT * FROM (SELECT c1,PROCTIME() AS proctime FROM data) AS `datagen` "
+            + "LEFT JOIN `%s`.`%s`.`%s` FOR SYSTEM_TIME AS OF datagen.proctime AS `dim_table` "
+            + "ON datagen.c1 = dim_table.c1 ",
+        "tidb", DATABASE_NAME, tableName);
+    CloseableIterator<Row> iterator = tableEnvironment.executeSql(sql).collect();
+    while (iterator.hasNext()) {
+      Row row = iterator.next();
+      Object c1 = row.getField(0);
+      String c2 = String.format("data%s", c1);
+      boolean isJoin = (int) c1 <= 4;
+      Row row1 = Row.of(c1, row.getField(1), isJoin ? c1 : null, isJoin ? c2 : null);
+      Assert.assertEquals(row, row1);
+    }
   }
 
 }

@@ -1,15 +1,9 @@
 package io.tidb.bigdata.flink.tidb;
 
-import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TiDBBaseDynamicTableFactoryTest extends TiDBBaseDynamicTableFactory {
-
-  @Override
-  public DynamicTableSource createDynamicTableSource(Context context) {
-    return null;
-  }
+public class JdbcUtilsTest {
 
   @Test
   public void testRewriteJdbcUrlPath() {
@@ -31,7 +25,7 @@ public class TiDBBaseDynamicTableFactoryTest extends TiDBBaseDynamicTableFactory
         "jdbc:tidb://127.0.0.1:4000/test"
     };
     for (int i = 0; i < inputs.length; i++) {
-      Assert.assertEquals(rewriteJdbcUrlPath(inputs[i], database), outputs[i]);
+      Assert.assertEquals(JdbcUtils.rewriteJdbcUrlPath(inputs[i], database), outputs[i]);
     }
   }
 
