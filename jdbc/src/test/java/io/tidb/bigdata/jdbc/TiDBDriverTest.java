@@ -28,11 +28,43 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class TiDBDriverTest {
-  static final String JDBC_DRIVER = "io.tidb.bigdata.jdbc.TiDBDriver";
-  static final String TIDB_URL_KEY = "TIDB_URL";
-  static final String DEFAULT_TIDB_URL = "jdbc:tidb://127.0.0.1:4000?user=root&password=";
 
-  private final String tidbUrl = getTiDBUrl();
+  public static final String JDBC_DRIVER = "io.tidb.bigdata.jdbc.TiDBDriver";
+
+  public static final String TIDB_HOST = "TIDB_HOST";
+
+  public static final String TIDB_PORT = "TIDB_PORT";
+
+  public static final String TIDB_USER = "TIDB_USER";
+
+  public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
+
+  public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
+
+  public static final String tidbPort = getEnvOrDefault(TIDB_PORT, "4000");
+
+  public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
+
+  public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
+
+  private static String getEnvOrDefault(String key, String default0) {
+    String tmp = System.getenv(key);
+    if (tmp != null && !tmp.equals("")) {
+      return tmp;
+    }
+
+    tmp = System.getProperty(key);
+    if (tmp != null && !tmp.equals("")) {
+      return tmp;
+    }
+
+    return default0;
+  }
+
+  public static final String tidbUrl = String
+      .format("jdbc:tidb://%s:%s?user=%s&password=%s", tidbHost, tidbPort, tidbUser,
+          tidbPassword);
+
   private Connection conn = null;
 
   @Test
@@ -48,20 +80,6 @@ public class TiDBDriverTest {
     Assert.assertEquals(result.get(0).get(0), 3L);
 
     conn.close();
-  }
-
-  private String getTiDBUrl() {
-    String tmp = System.getenv(TIDB_URL_KEY);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    tmp = System.getProperty(TIDB_URL_KEY);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    return DEFAULT_TIDB_URL;
   }
 
   private void executeUpdate(String sql) throws SQLException {

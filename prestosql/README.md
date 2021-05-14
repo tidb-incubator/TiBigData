@@ -7,8 +7,8 @@ git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
 # need Java 11
 mvn clean package -DskipTests -am -pl prestosql
-tar -zxf prestosql/target/prestosql-connector-0.0.3-SNAPSHOT-plugin.tar.gz -C prestosql/target
-cp -r prestosql/target/prestosql-connector-0.0.3-SNAPSHOT/tidb ${PRESTO_HOME}/plugin
+tar -zxf prestosql/target/prestosql-connector-0.0.4-SNAPSHOT-plugin.tar.gz -C prestosql/target
+cp -r prestosql/target/prestosql-connector-0.0.4-SNAPSHOT/tidb ${PRESTO_HOME}/plugin
 cp ${YOUR_MYSQL_JDBC_DRIVER_PATH}/mysql-connector-java-${version}.jar ${PRESTO_HOME}/plugin/tidb
 ```
 

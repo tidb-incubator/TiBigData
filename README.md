@@ -25,6 +25,9 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 Use the following command to run all the tests.
 
 ```
-TIDB_URL="jdbc:tidb://172.0.0.1:4000?user=root&password="
+export TIDB_HOST="127.0.0.1"
+export TIDB_PORT="4000"
+export TIDB_USER="root"
+export TIDB_PASSWORD=""
 mvn test
 ```

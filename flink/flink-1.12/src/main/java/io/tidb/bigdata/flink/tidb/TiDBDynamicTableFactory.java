@@ -89,7 +89,7 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     }
 
     TableSchema schema = context.getCatalogTable().getSchema();
-    return new TiDBDynamicTableSource(schema, properties, streamingSource);
+    return new TiDBDynamicTableSource(schema, properties, getLookupOptions(context), streamingSource);
   }
 
   @Override
