@@ -109,15 +109,20 @@ public abstract class TiDBBaseDynamicTableFactory implements DynamicTableSourceF
 
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
-    return ImmutableSet.of(
+    return optionalOptions();
+  }
+
+  protected Set<ConfigOption<?>> optionalOptions(ConfigOption... options) {
+    return ImmutableSet.<ConfigOption<?>>builder().add(
         PASSWORD,
         MAX_POOL_SIZE,
         MIN_IDLE_SIZE,
         SINK_BUFFER_FLUSH_INTERVAL,
         SINK_BUFFER_FLUSH_MAX_ROWS,
         SINK_MAX_RETRIES,
-        WRITE_MODE
-    );
+        WRITE_MODE)
+        .add(options)
+        .build();
   }
 
   /**

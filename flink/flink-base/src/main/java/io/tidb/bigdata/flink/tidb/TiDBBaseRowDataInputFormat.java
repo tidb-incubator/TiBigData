@@ -111,6 +111,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
     this.typeInformation = typeInformation;
     List<ColumnHandleInternal> columns;
     Map<String, Integer> nameAndIndex = new HashMap<>();
+    final TiTimestamp splitSnapshotVersion;
     // get split
     try (ClientSession splitSession = ClientSession
         .createWithSingleConnection(new ClientConfig(properties))) {
@@ -124,6 +125,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
       IntStream.range(0, columns.size())
           .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
+      splitSnapshotVersion = splitSession.getSnapshotVersion();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -136,7 +138,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
         .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
     projectedFieldIndexes = IntStream.range(0, this.fieldNames.length).toArray();
     timestamp = getOptionalVersion()
-        .orElse(getOptionalTimestamp().orElse(null));
+        .orElseGet(() -> getOptionalTimestamp().orElse(splitSnapshotVersion));
   }
 
   private Optional<TiTimestamp> getOptionalTimestamp() {
@@ -152,6 +154,10 @@ public abstract class TiDBBaseRowDataInputFormat extends
         .filter(StringUtils::isNoneEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
+  }
+
+  public long getSnapshotVersion() {
+    return timestamp.getVersion();
   }
 
   @Override

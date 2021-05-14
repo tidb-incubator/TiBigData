@@ -25,12 +25,15 @@ import io.tidb.bigdata.tidb.Expressions;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.connector.source.InputFormatProvider;
+import org.apache.flink.table.connector.source.ScanTableSource;
+import org.apache.flink.table.connector.source.SourceFunctionProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
@@ -69,13 +72,22 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
 
   protected Map<String, DataType> nameTypeMap;
 
+  private final Optional<ScanTableSource> streamingSource;
+
   public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties) {
-    super(tableSchema, properties);
+    this(tableSchema, properties, Optional.empty());
   }
 
-  @Override
-  public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-    TypeInformation<RowData> typeInformation = runtimeProviderContext
+  public TiDBDynamicTableSource(
+      TableSchema tableSchema,
+      Map<String, String> properties,
+      Optional<ScanTableSource> streamingSource) {
+    super(tableSchema, properties);
+    this.streamingSource = streamingSource;
+  }
+
+  private TiDBRowDataInputFormat getInputFormat(ScanContext context) {
+    TypeInformation<RowData> typeInformation = context
         .createTypeInformation(tableSchema.toRowDataType());
     TiDBRowDataInputFormat tidbRowDataInputFormat = new TiDBRowDataInputFormat(properties,
         tableSchema.getFieldNames(), tableSchema.getFieldDataTypes(), typeInformation);
@@ -86,7 +98,24 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
     if (expression != null) {
       tidbRowDataInputFormat.setExpression(expression);
     }
-    return InputFormatProvider.of(tidbRowDataInputFormat);
+    return tidbRowDataInputFormat;
+  }
+
+  private ScanRuntimeProvider getBatchRuntimeProvider(ScanContext context) {
+    return InputFormatProvider.of(getInputFormat(context));
+  }
+
+  private ScanRuntimeProvider getStreamingRuntimeProvider(
+      ScanContext context, ScanRuntimeProvider streaming) {
+    return SourceFunctionProvider.of(
+        new TiDBStreamingSourceFunction(getInputFormat(context), streaming), false);
+  }
+
+  @Override
+  public ScanRuntimeProvider getScanRuntimeProvider(ScanContext ctx) {
+    return streamingSource
+        .map(x -> this.getStreamingRuntimeProvider(ctx, x.getScanRuntimeProvider(ctx)))
+        .orElseGet(() -> this.getBatchRuntimeProvider(ctx));
   }
 
   @Override

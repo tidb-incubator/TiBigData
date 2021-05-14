@@ -58,6 +58,8 @@ import org.apache.flink.types.RowKind;
 public class CraftFormatFactory
     implements DeserializationFormatFactory, SerializationFormatFactory {
 
+  public static final String IDENTIFIER = "ticdc-craft";
+
   @Override
   public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(
       final Context context, final ReadableConfig formatOptions) {
@@ -135,7 +137,7 @@ public class CraftFormatFactory
 
   @Override
   public String factoryIdentifier() {
-    return "ticdc-craft";
+    return IDENTIFIER;
   }
 
   @Override
