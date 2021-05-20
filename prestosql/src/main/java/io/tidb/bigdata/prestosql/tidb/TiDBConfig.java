@@ -102,15 +102,4 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
     this.writeMode = writeMode;
     return this;
   }
-
-  public boolean isReplicaRead() {
-    return getInternal().isReplicaRead();
-  }
-
-  @Config(TIDB_REPLICA_READ)
-  public TiDBConfig setReplicaRead(boolean isReplicaRead) {
-    getInternal().setReplicaRead(isReplicaRead);
-    return this;
-  }
-
 }

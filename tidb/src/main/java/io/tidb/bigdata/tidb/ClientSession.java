@@ -60,7 +60,7 @@ import org.tikv.common.row.Row;
 import org.tikv.common.util.KeyRangeUtils;
 import org.tikv.common.util.RangeSplitter;
 import org.tikv.kvproto.Coprocessor;
-import shade.com.google.protobuf.ByteString;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 public final class ClientSession implements AutoCloseable {
 
@@ -88,7 +88,9 @@ public final class ClientSession implements AutoCloseable {
     });
     loadPdAddresses();
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
-    tiConfiguration.setReplicaRead(config.isReplicaRead());
+    ReplicaReadPolicy policy = config.getReplicaReadPolicy();
+    tiConfiguration.setReplicaRead(policy.toReplicaRead());
+    tiConfiguration.setReplicaSelector(policy);
     session = TiSession.create(tiConfiguration);
     catalog = session.getCatalog();
   }
