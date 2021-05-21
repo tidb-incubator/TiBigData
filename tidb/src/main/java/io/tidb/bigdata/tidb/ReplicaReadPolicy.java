@@ -112,7 +112,7 @@ public abstract class ReplicaReadPolicy implements ReplicaSelector  {
 
   private static Map<String, String> extractLabels(final Map<String, String> properties) {
     String[] labels = properties.getOrDefault(ClientConfig.TIDB_REPLICA_READ_LABEL,
-        ClientConfig.TIDB_REPLICA_READ_DEFAULT).split(",");
+        ClientConfig.TIDB_REPLICA_READ_LABEL_DEFAULT).split(",");
     Map<String, String> map = new HashMap<>(labels.length);
     String key;
     String value;
