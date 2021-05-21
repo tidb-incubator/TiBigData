@@ -46,7 +46,10 @@ public final class ClientConfig {
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
 
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
-  public static final String TIDB_REPLICA_READ_DEFAULT = "leader";
+  public static final String TIDB_REPLICA_READ_LEADER = "leader";
+  public static final String TIDB_REPLICA_READ_FOLLOWER = "follower";
+  public static final String TIDB_REPLICA_READ_LEADER_AND_FOLLOWER = "leader_and_follower";
+  public static final String TIDB_REPLICA_READ_DEFAULT = TIDB_REPLICA_READ_LEADER;
 
   public static final String TIDB_REPLICA_READ_LABEL = "tidb.replica-read.label";
   public static final String TIDB_REPLICA_READ_LABEL_DEFAULT = "";

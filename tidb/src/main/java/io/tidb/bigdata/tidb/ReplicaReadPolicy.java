@@ -145,12 +145,13 @@ public abstract class ReplicaReadPolicy implements ReplicaSelector  {
     Set<String> blacklist = extractList(properties,
         ClientConfig.TIDB_REPLICA_READ_ADDRESS_BLACKLIST,
         ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT);
-    switch (properties.getOrDefault(ClientConfig.TIDB_REPLICA_READ, "leader")) {
-      case "follower":
+    switch (properties.getOrDefault(ClientConfig.TIDB_REPLICA_READ,
+        ClientConfig.TIDB_REPLICA_READ_DEFAULT)) {
+      case ClientConfig.TIDB_REPLICA_READ_FOLLOWER:
         return new FollowerReadPolicy(labels, whitelist, blacklist);
-      case "leader_and_follower":
+      case ClientConfig.TIDB_REPLICA_READ_LEADER_AND_FOLLOWER:
         return new LeaderAndFollowerReadPolicy(labels, whitelist, blacklist);
-      case "leader":
+      case ClientConfig.TIDB_REPLICA_READ_LEADER:
         // FALLTHROUGH
       default:
         return DEFAULT;
