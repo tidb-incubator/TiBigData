@@ -65,6 +65,9 @@ public final class ClientConfig {
 
   public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
 
+  public static final String TIDB_DNS_SEARCH = "tidb.dns.search";
+  public static final String TIDB_DNS_SEARCH_DEFAULT = null;
+
   private String pdAddresses;
 
   private String databaseUrl;
@@ -83,6 +86,8 @@ public final class ClientConfig {
 
   private boolean isFilterPushDown;
 
+  private String dnsSearch;
+
   public boolean isFilterPushDown() {
     return isFilterPushDown;
   }
@@ -98,17 +103,19 @@ public final class ClientConfig {
   public ClientConfig() {
     this(null, null, null, MAX_POOL_SIZE_DEFAULT,
         MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
-        ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+        ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
     this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
-        TIDB_WRITE_MODE_DEFAULT, ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+        TIDB_WRITE_MODE_DEFAULT, ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
       int minimumIdleSize, String writeMode, ReplicaReadPolicy replicaRead,
-      boolean isFilterPushDown) {
+      boolean isFilterPushDown, String dnsSearch) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
@@ -117,6 +124,7 @@ public final class ClientConfig {
     this.writeMode = writeMode;
     this.replicaReadPolicy = replicaRead;
     this.isFilterPushDown = isFilterPushDown;
+    this.dnsSearch = dnsSearch;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -130,7 +138,8 @@ public final class ClientConfig {
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
         ReplicaReadPolicy.create(properties),
         Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT)))
+            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT))),
+        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT)
     );
   }
 
@@ -142,7 +151,8 @@ public final class ClientConfig {
         config.getMinimumIdleSize(),
         config.getWriteMode(),
         config.getReplicaReadPolicy(),
-        config.isFilterPushDown());
+        config.isFilterPushDown(),
+        config.getDnsSearch());
   }
 
   public String getPdAddresses() {
@@ -209,6 +219,14 @@ public final class ClientConfig {
       return TIDB_DRIVER_NAME;
     }
     throw new IllegalArgumentException("can not parse driver by " + databaseUrl);
+  }
+
+  public String getDnsSearch() {
+    return dnsSearch;
+  }
+
+  public void setDnsSearch(String dnsSearch) {
+    this.dnsSearch = dnsSearch;
   }
 
   @Override
