@@ -224,16 +224,25 @@ public final class ClientSession implements AutoCloseable {
           Statement statement = connection.createStatement();
           ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
-        StringBuilder sb = new StringBuilder();
         String dnsSearch = config.getDnsSearch();
         if (dnsSearch != null && !dnsSearch.isEmpty()) {
-          sb.append(".");
-          sb.append(dnsSearch);
+          dnsSearch = "." + dnsSearch;
+        } else {
+          dnsSearch = "";
         }
-        int len = sb.length();
+        StringBuilder sb = new StringBuilder();
         while (resultSet.next()) {
-          sb.setLength(len);
-          sb.append(resultSet.getString("INSTANCE"));
+          String instance = resultSet.getString("INSTANCE");
+          sb.setLength(0);
+          int colon = instance.lastIndexOf(":");
+          if (colon != -1) {
+            sb.append(instance.substring(0, colon));
+            sb.append(dnsSearch);
+            sb.append(instance.substring(colon));
+          } else {
+            sb.append(instance);
+            sb.append(dnsSearch);
+          }
           pdAddressesList.add(sb.toString());
         }
       } catch (Exception e) {
