@@ -29,6 +29,7 @@ import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
+import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogTable;
@@ -41,9 +42,6 @@ import org.apache.flink.table.factories.FactoryUtil.TableFactoryHelper;
 import org.apache.flink.util.ExceptionUtils;
 
 public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
-  public static final ConfigOption<Boolean> STREAMING_MODE = ConfigOptions
-      .key("tidb.streaming").booleanType().defaultValue(false);
-
   public static final ConfigOption<String> STREAMING_SOURCE = ConfigOptions
       .key("tidb.streaming.source").stringType().noDefaultValue();
 
@@ -57,8 +55,7 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
       return clientSession.getSnapshotVersion().getVersion();
     } finally {
       if (clientSession != null) {
-        final ClientSession session = clientSession;
-        ExceptionUtils.suppressExceptions(() -> session.close());
+        ExceptionUtils.suppressExceptions(clientSession::close);
       }
     }
   }
@@ -67,35 +64,36 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
   public DynamicTableSource createDynamicTableSource(Context context) {
     final TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
     final ReadableConfig options = helper.getOptions();
-    Optional<ScanTableSource> streamingSource = Optional.empty();
-    Map<String, String> properties = context.getCatalogTable().toProperties();
-    if (options.get(STREAMING_MODE).booleanValue()) {
-      final String source = options.getOptional(STREAMING_SOURCE)
-          .map(String::toLowerCase)
-          .orElseThrow(IllegalArgumentException::new);
-      final long version;
-      switch (source) {
-        case STREAMING_SOURCE_KAFKA:
-          // FALLTHROUGH
-        case STREAMING_SOURCE_PULSAR:
-          version = getSnapshotTimestamp(properties);
-          streamingSource = Optional.of(createStreamingSource(source, context, version));
-          break;
-        default:
-          throw new IllegalStateException("Not supported TiDB streaming source: " + source);
-      }
-      properties = new HashMap<>(properties);
-      properties.put(ClientConfig.SNAPSHOT_VERSION, Long.toString(version));
-    }
+    final Map<String, String> properties = context.getCatalogTable().toProperties();
+    final TableSchema schema = context.getCatalogTable().getSchema();
+    final JdbcLookupOptions lookupOptions = getLookupOptions(context);
+    return options.getOptional(STREAMING_SOURCE)
+        .map(s -> createStreamingTableSource(context, s, schema, properties, lookupOptions))
+        .orElseGet(() -> new TiDBBatchDynamicTableSource(schema, properties, lookupOptions));
 
-    TableSchema schema = context.getCatalogTable().getSchema();
-    return new TiDBDynamicTableSource(
-        schema, properties, getLookupOptions(context), streamingSource);
   }
 
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
-    return optionalOptions(STREAMING_MODE, STREAMING_SOURCE);
+    return withMoreOptionalOptions(STREAMING_SOURCE);
+  }
+
+  private DynamicTableSource createStreamingTableSource(Context context, String source,
+      TableSchema schema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
+    final long version;
+    switch (source) {
+      case STREAMING_SOURCE_KAFKA:
+        // FALLTHROUGH
+      case STREAMING_SOURCE_PULSAR:
+        version = getSnapshotTimestamp(properties);
+        break;
+      default:
+        throw new IllegalStateException("Not supported TiDB streaming source: " + source);
+    }
+    properties = new HashMap<>(properties);
+    properties.put(ClientConfig.SNAPSHOT_VERSION, Long.toString(version));
+    return new TiDBStreamingDynamicTableSource(schema, properties, lookupOptions,
+        createStreamingSource(source, context, version), version);
   }
 
   private static Context wrapContext(final Context context, final String type, final long version) {

@@ -1,5 +1,8 @@
 package io.tidb.bigdata.flink.tidb;
 
+import io.tidb.bigdata.cdc.Key;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.flink.api.common.functions.AbstractRichFunction;
 import org.apache.flink.api.common.functions.RuntimeContext;
@@ -15,7 +18,9 @@ import org.apache.flink.streaming.api.functions.source.RichSourceFunction;
 import org.apache.flink.streaming.api.functions.source.SourceFunction;
 import org.apache.flink.table.connector.source.ScanTableSource.ScanRuntimeProvider;
 import org.apache.flink.table.connector.source.SourceFunctionProvider;
+import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.util.ExceptionUtils;
 
 public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
@@ -29,10 +34,14 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
   private final ResultTypeQueryable<RowData> resultTypeQueryable;
 
   private final AtomicBoolean runningSnapshot = new AtomicBoolean(true);
+  private final StreamingReadableMetadata[] metadata;
+  private final long version;
 
   public TiDBStreamingSourceFunction(TiDBRowDataInputFormat inputFormat,
-      ScanRuntimeProvider streamingProvider) {
+      StreamingReadableMetadata[] metadata, long version, ScanRuntimeProvider streamingProvider) {
     this.inputFormat = inputFormat;
+    this.metadata = metadata;
+    this.version = version;
     this.sourceFunction = ((SourceFunctionProvider) streamingProvider).createSourceFunction();
     if (sourceFunction instanceof CheckpointListener) {
       this.checkpointListener = (CheckpointListener) sourceFunction;
@@ -50,12 +59,9 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
       this.abstractRichFunction = null;
     }
     if (sourceFunction instanceof ResultTypeQueryable) {
-      this.resultTypeQueryable = (ResultTypeQueryable) sourceFunction;
+      this.resultTypeQueryable = (ResultTypeQueryable<RowData>) sourceFunction;
     } else {
       this.resultTypeQueryable = null;
-    }
-    if (abstractRichFunction == null) {
-      return;
     }
   }
 
@@ -106,18 +112,54 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
     checkpointedFunction.initializeState(functionInitializationContext);
   }
 
+  private void runBatchSplitWithMetadata(SourceContext<RowData> sourceContext,
+      Object[] realMetadata) throws IOException  {
+    while (!inputFormat.reachedEnd()) {
+      GenericRowData row = inputFormat.nextRecordWithFactory(
+          s -> new GenericRowData(s + realMetadata.length));
+      int field = row.getArity() - realMetadata.length;
+      for (Object meta : realMetadata) {
+        row.setField(field++, meta);
+      }
+      sourceContext.collect(row);
+    }
+  }
+
+  private void runBatchSplit(SourceContext<RowData> sourceContext) throws IOException  {
+    while (!inputFormat.reachedEnd()) {
+      sourceContext.collect(inputFormat.nextRecord(null));
+    }
+  }
+
+  private Object convertMetadata(StreamingReadableMetadata metadata) {
+    switch (metadata) {
+      case COMMIT_TIMESTAMP:
+        return TimestampData.fromEpochMillis(Key.toTimestamp(version));
+      case COMMIT_VERSION:
+        return version;
+      default:
+        throw new IllegalStateException("Not supported metadata type:" + metadata);
+    }
+  }
+
   private void runBatch(SourceContext<RowData> sourceContext) throws Exception {
     try {
+      Object[] realMetadata = null;
+      if (metadata != null) {
+        realMetadata = Arrays.stream(metadata).map(this::convertMetadata).toArray(Object[]::new);
+      }
       inputFormat.openInputFormat();
       for (InputSplit split : inputFormat.createInputSplits(1)) {
         inputFormat.open(split);
-        while (!inputFormat.reachedEnd()) {
-          sourceContext.collect(inputFormat.nextRecord(null));
+        if (realMetadata == null) {
+          runBatchSplit(sourceContext);
+        } else {
+          runBatchSplitWithMetadata(sourceContext, realMetadata);
         }
-        ExceptionUtils.suppressExceptions(() -> inputFormat.close());
+        ExceptionUtils.suppressExceptions(inputFormat::close);
       }
     } finally {
-      ExceptionUtils.suppressExceptions(() -> inputFormat.closeInputFormat());
+      ExceptionUtils.suppressExceptions(inputFormat::closeInputFormat);
       this.runningSnapshot.set(false);
     }
   }

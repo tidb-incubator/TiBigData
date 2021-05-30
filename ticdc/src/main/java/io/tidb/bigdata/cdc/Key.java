@@ -48,11 +48,15 @@ public final class Key {
     return -1L;
   }
 
-  public long getTimestamp() {
+  public static long toTimestamp(long ts) {
     if (ts > 0) {
       return ts >> 18;
     }
     return -1L;
+  }
+
+  public long getTimestamp() {
+    return toTimestamp(ts);
   }
 
   public long getTs() {

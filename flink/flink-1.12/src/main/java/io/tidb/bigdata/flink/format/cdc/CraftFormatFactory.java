@@ -106,12 +106,7 @@ public class CraftFormatFactory
 
       @Override
       public ChangelogMode getChangelogMode() {
-        return ChangelogMode.newBuilder()
-            .addContainedKind(RowKind.INSERT)
-            .addContainedKind(RowKind.DELETE)
-            .addContainedKind(RowKind.UPDATE_BEFORE)
-            .addContainedKind(RowKind.UPDATE_AFTER)
-            .build();
+        return CraftFormatFactory.getChangelogMode();
       }
 
       @Override
@@ -127,6 +122,15 @@ public class CraftFormatFactory
         this.metadataKeys = metadataKeys;
       }
     };
+  }
+
+  public static ChangelogMode getChangelogMode() {
+    return ChangelogMode.newBuilder()
+        .addContainedKind(RowKind.INSERT)
+        .addContainedKind(RowKind.DELETE)
+        .addContainedKind(RowKind.UPDATE_BEFORE)
+        .addContainedKind(RowKind.UPDATE_AFTER)
+        .build();
   }
 
   @Override

@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
@@ -232,9 +233,9 @@ public abstract class TiDBBaseRowDataInputFormat extends
     return recordCount >= limit || !cursor.advanceNextPosition();
   }
 
-  @Override
-  public RowData nextRecord(RowData rowData) throws IOException {
-    GenericRowData row = new GenericRowData(projectedFieldIndexes.length);
+  public GenericRowData nextRecordWithFactory(Function<Integer, GenericRowData> rowDataFactory)
+      throws IOException {
+    GenericRowData row = rowDataFactory.apply(projectedFieldIndexes.length);
     for (int i = 0; i < projectedFieldIndexes.length; i++) {
       int projectedFieldIndex = projectedFieldIndexes[i];
       DataType fieldType = fieldTypes[projectedFieldIndex];
@@ -247,6 +248,11 @@ public abstract class TiDBBaseRowDataInputFormat extends
     }
     recordCount++;
     return row;
+  }
+
+  @Override
+  public RowData nextRecord(RowData rowData) throws IOException {
+    return nextRecordWithFactory(GenericRowData::new);
   }
 
   @Override
@@ -276,5 +282,4 @@ public abstract class TiDBBaseRowDataInputFormat extends
   public void setExpression(Expression expression) {
     this.expression = expression;
   }
-
 }
