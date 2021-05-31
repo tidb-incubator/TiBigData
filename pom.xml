@@ -46,6 +46,7 @@
         <module>prestosql</module>
         <module>flink</module>
         <module>jdbc</module>
+        <module>mapreduce</module>
     </modules>
 
     <build>
