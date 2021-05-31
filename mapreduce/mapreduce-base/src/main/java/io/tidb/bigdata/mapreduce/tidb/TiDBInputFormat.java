@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 TiDB Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ public class TiDBInputFormat<T extends TiDBWritable>
     TiDBConfiguration dbConf = new TiDBConfiguration(job.getConfiguration());
     dbConf.setInputClass(inputClass);
     dbConf.setInputTableName(tableName);
-    if (null == fieldNames) {
+    if (null == fieldNames || 0 == fieldNames.length) {
       dbConf.setInputFieldNames(new String[] {"*"});
     } else {
       dbConf.setInputFieldNames(fieldNames);
