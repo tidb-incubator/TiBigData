@@ -6,7 +6,7 @@
 git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
 mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base
-cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.3-SNAPSHOT.jar ${HOME}/lib
+cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar ${HOME}/lib
 ```
 
 ## Version
@@ -17,7 +17,7 @@ cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.3-SNAPSHOT.j
 ## Demo
 
 ```bash
-hadoop jar mapreduce-tidb-connector-base-0.0.3-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.examples.TiDBMapreduceDemo  \
+hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.examples.TiDBMapreduceDemo  \
  -du  ${DATABASE_URL} \
  -u   ${USERNAME} \
  -p   ${PASSWORD}  \

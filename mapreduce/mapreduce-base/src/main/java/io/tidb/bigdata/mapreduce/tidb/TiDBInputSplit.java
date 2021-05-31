@@ -29,6 +29,8 @@ public class TiDBInputSplit extends InputSplit implements Writable {
   private String schemaName;
   private String tableName;
 
+  public static final String [] EMPTY_STRING_ARRAY = new String[0];
+
   public TiDBInputSplit(){
 
   }
@@ -69,7 +71,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
   @Override
   public String[] getLocations() {
-    return new String[0];
+    return EMPTY_STRING_ARRAY;
   }
 
   @Override

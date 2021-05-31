@@ -118,7 +118,8 @@ public class TiDBInputFormat<T extends TiDBWritable>
     IntStream.range(0, columns.size())
         .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
 
-    String[] fieldNames = getLowCaseFields(dbConf.getInputFieldNames());
+    String[] fieldNames =
+        Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
 
     if (1 == fieldNames.length && "*".equals(fieldNames[0])) {
       this.columnHandleInternals = columns;
@@ -157,14 +158,6 @@ public class TiDBInputFormat<T extends TiDBWritable>
   @Override
   public Configuration getConf() {
     return dbConf.getConf();
-  }
-
-  private String[] getLowCaseFields(String[] fields) {
-    String[] lowCaseFields = new String[fields.length];
-    for (int index = 0; index < fields.length; index++) {
-      lowCaseFields[index] = fields[index].toLowerCase();
-    }
-    return lowCaseFields;
   }
 
   public TiDBConfiguration getTiDBConf() {
