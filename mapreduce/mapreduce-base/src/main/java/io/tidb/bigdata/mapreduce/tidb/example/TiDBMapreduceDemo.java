@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.mapreduce.tidb.example;
 
-import io.tidb.bigdata.mapreduce.tidb.MapreduceCmd;
 import io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration;
 import io.tidb.bigdata.mapreduce.tidb.TiDBInputFormat;
 import io.tidb.bigdata.mapreduce.tidb.TiDBWritable;
@@ -68,7 +67,6 @@ public class TiDBMapreduceDemo {
     protected void map(LongWritable key, TiDBRowData value, Context context) {
       // do mapper here
       printRowData(key.get(), value.toString());
-
     }
 
     private void printFields(String[] fileds) {

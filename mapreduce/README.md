@@ -13,7 +13,6 @@ cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.j
 
 `hadoop 2.X` and `hadoop 3.X` are supported.
 
-
 ## Demo
 
 ```bash
@@ -29,23 +28,109 @@ hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapr
  -ts  ${SNAPSHOT_TIMESTAMP} \
  -l   ${LIMIT} 
 ```
+
+### create table and insert record
+
+you could use mysql client to create table and insert record:
+
+```sql
+CREATE TABLE IF NOT EXISTS test.test_table
+    (
+        c1  tinyint,
+        c2  smallint,
+        c3  mediumint,
+        c4  int,
+        c5  bigint,
+        c6  char(10),
+        c7  varchar(20),
+        c8  tinytext,
+        c9  mediumtext,
+        c10 text,
+        c11 longtext,
+        c12 binary(20),
+        c13 varbinary(20),
+        c14 tinyblob,
+        c15 mediumblob,
+        c16 blob,
+        c17 longblob,
+        c18 float,
+        c19 double,
+        c20 decimal(6, 3),
+        c21 date,
+        c22 time,
+        c23 datetime,
+        c24 timestamp,
+        c25 year,
+        c26 boolean,
+        c27 json,
+        c28 enum ('1','2','3'),
+        c29 set ('a','b','c'),
+        PRIMARY KEY(c1),
+        UNIQUE KEY(c2)
+    );
+    
+INSERT INTO test.test_table VALUES                                                                                                                                                                                                                                                                                                                                                                                                              
+    (
+        127,32767,
+        8388607,
+        2147483647,
+        9223372036854775807,
+        "chartype",
+        "varchartype",
+        "tinytexttype",
+        "mediumtexttype",
+        "texttype",
+        "longtexttype",
+        "binarytype",
+        "varbinarytype",
+        "tinyblobtype",
+        "mediumblobtype",
+        "blobtype",
+        "longblobtype",
+        1.324235235345,
+        2.123423423423,
+        999.999,
+        "9999-12-31",
+        "23:59:59",
+        "9999-12-31 23:59:59",
+        "2038-01-19 03:14:07",
+        "2155",
+        0,
+        '{"a": 1, "b": 2}',
+        "1","a"
+    );
+```
+
+### params
+
+| param_name                | require |     example                                                                     |   
+| :-----------------------: | :-----: | :-----------------------------------------------------------------------------: | 
+| filed_name, -f            | false   |  -f f1 -f f2(select f1, f2 from ...), Not having this param(select * from ...)  |  
+| database_url, -du         | true    |  -du "jdbc:mysql://127.0.0.1:4005/pingcap"                                      |   
+| username, -u              | true    |  -u root                                                                        |   
+| password, -p              | true    |  -p ""                                                                          |   
+| database_name, -dn        | true    |  -dn test                                                                       |   
+| table_name, -t            | true    |  -t test_table                                                                  |   
+| snapshot_timestamp, -ts   | false   |  -ts "2021-05-08T15:23:38+08:00[Asia/Shanghai]"                                 |   
+| limit, -l                 | false   |  -l 3                                                                           |
+
 ### example
 
 ```bash
 hadoop jar mapreduce-tidb-connector-base-0.0.3-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo \
- -du "jdbc:tidb://127.0.0.1:4005/pingcap" \
- -u  root \
- -p  "" \
- -dn pingcap \
+ -du "jdbc:mysql://127.0.0.1:4005/pingcap" \
  -f  filed1 \
  -f  filed2 \
  -f  filed3  \
- -f  filed4 \
+ -f  filed4 \ 
+ -u  root \
+ -p  "" \
+ -dn pingcap \
  -t  tablename \
  -ts "2021-05-08T15:23:38+08:00[Asia/Shanghai]" \
  -l  3
 
-no filed param means all fields
+note: no filed param means all fields
 ```
 
 Mapper output can be found in console, like:

@@ -31,7 +31,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
   public static final String [] EMPTY_STRING_ARRAY = new String[0];
 
-  public TiDBInputSplit(){
+  public TiDBInputSplit() {
 
   }
 
@@ -91,5 +91,4 @@ public class TiDBInputSplit extends InputSplit implements Writable {
     this.schemaName = in.readUTF();
     this.tableName = in.readUTF();
   }
-
 }

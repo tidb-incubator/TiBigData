@@ -86,7 +86,7 @@ public class TiDBConfiguration {
 
   public ClientSession getSingleConnection() {
 
-    Map<String, String> properties = new HashMap<>();
+    Map<String, String> properties = new HashMap<>(3);
     properties.put(ClientConfig.DATABASE_URL, conf.get(URL_PROPERTY));
     properties.put(ClientConfig.USERNAME, conf.get(USERNAME_PROPERTY));
     properties.put(ClientConfig.PASSWORD, conf.get(PASSWORD_PROPERTY));
@@ -101,12 +101,6 @@ public class TiDBConfiguration {
 
   public Configuration getConf() {
     return conf;
-  }
-
-
-  public DateTimeFormatter getFieldTimestampFormat(String fieldName) {
-    String pattern = conf.get(TiDBConfiguration.TIMESTAMP_FORMAT_PREFIX + "." + fieldName);
-    return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
   }
 
   public void setInputTableName(String tableName) {

@@ -14,36 +14,31 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.mapreduce.tidb;
-
-import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
-import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
-import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
+package io.tidb.bigdata.mapreduce.tidb.example;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.hadoop.conf.Configuration;
 
 public class MapreduceCmd {
   @Parameter(names = {"-field", "-f"}, description = "fields need query")
   public List<String> fields = new ArrayList<>();
 
-  @Parameter(names = {"-databaseurl", "-du"}, description = "database url")
+  @Parameter(names = {"-databaseurl", "-du"}, description = "database url", required = true)
   public String databaseUrl;
 
-  @Parameter(names = {"-username", "-u"}, description = "username")
+  @Parameter(names = {"-username", "-u"}, description = "username", required = true)
   public String username;
 
-  @Parameter(names = {"-password", "-p"}, description = "password", password = true)
+  @Parameter(names = {"-password",
+      "-p"}, description = "password", password = true, required = true)
   public String password;
 
-  @Parameter(names = {"-databasename", "-dn"}, description = "database name")
+  @Parameter(names = {"-databasename", "-dn"}, description = "database name", required = true)
   public String databaseName;
 
-  @Parameter(names = {"-tablename", "-t"}, description = "table name")
+  @Parameter(names = {"-tablename", "-t"}, description = "table name", required = true)
   public String tableName;
 
   @Parameter(names = {"-timestamp", "-ts"}, description = "TiDB snapshot timestamp")
@@ -55,23 +50,4 @@ public class MapreduceCmd {
   public MapreduceCmd(String[] args) {
     JCommander.newBuilder().addObject(this).build().parse(args);
   }
-
-  public Configuration toConf() {
-    Configuration conf = new Configuration();
-
-    String[] fileds = fields.toArray(new String[0]);
-    conf.setStrings("tidb.field.names", fileds);
-    conf.set(DATABASE_URL, databaseUrl);
-    conf.set(USERNAME, username);
-    conf.set(PASSWORD, password);
-    conf.set("tidb.database.name", databaseName);
-    conf.set("tidb.table.name", tableName);
-    if (null != timestamp) {
-      conf.set(ClientConfig.SNAPSHOT_TIMESTAMP, timestamp);
-    }
-    conf.setLong("mapper.record.limit", limit);
-
-    return conf;
-  }
-
 }

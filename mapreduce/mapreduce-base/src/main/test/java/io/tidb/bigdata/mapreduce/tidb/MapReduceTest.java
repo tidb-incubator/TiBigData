@@ -282,6 +282,5 @@ public class MapReduceTest {
     }
 
     clientSession.close();
-    
   }
 }

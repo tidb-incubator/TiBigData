@@ -29,7 +29,6 @@ import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.RowId;
-import java.sql.SQLException;
 import java.sql.SQLType;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
@@ -55,7 +54,7 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public String getString(int columnIndex) throws SQLException {
+  public String getString(int columnIndex) {
     if (values[columnIndex] instanceof Date || values[columnIndex] instanceof Time
         || values[columnIndex] instanceof Timestamp) {
       return values[columnIndex].toString();
@@ -64,12 +63,12 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public String getString(String columnLabel) throws SQLException {
+  public String getString(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean getBoolean(int columnIndex) throws SQLException {
+  public boolean getBoolean(int columnIndex) {
     if (values[columnIndex] instanceof Long) {
       return ((Long) values[columnIndex]) > 0;
     }
@@ -80,32 +79,32 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public boolean getBoolean(String columnLabel) throws SQLException {
+  public boolean getBoolean(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public byte getByte(int columnIndex) throws SQLException {
+  public byte getByte(int columnIndex) {
     return (Byte) values[columnIndex];
   }
 
   @Override
-  public byte getByte(String columnLabel) throws SQLException {
+  public byte getByte(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public short getShort(int columnIndex) throws SQLException {
+  public short getShort(int columnIndex) {
     return (Short) values[columnIndex];
   }
 
   @Override
-  public short getShort(String columnLabel) throws SQLException {
+  public short getShort(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public int getInt(int columnIndex) throws SQLException {
+  public int getInt(int columnIndex) {
     if (values[columnIndex] instanceof Long) {
       return ((Long) values[columnIndex]).intValue();
     } else if (values[columnIndex] instanceof Boolean) {
@@ -115,22 +114,22 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public int getInt(String columnLabel) throws SQLException {
+  public int getInt(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public long getLong(int columnIndex) throws SQLException {
+  public long getLong(int columnIndex) {
     return (Long) values[columnIndex];
   }
 
   @Override
-  public long getLong(String columnLabel) throws SQLException {
+  public long getLong(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public float getFloat(int columnIndex) throws SQLException {
+  public float getFloat(int columnIndex) {
     if (values[columnIndex] instanceof Double) {
       return ((Double) values[columnIndex]).floatValue();
     }
@@ -138,32 +137,32 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public float getFloat(String columnLabel) throws SQLException {
+  public float getFloat(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public double getDouble(int columnIndex) throws SQLException {
+  public double getDouble(int columnIndex) {
     return (Double) values[columnIndex];
   }
 
   @Override
-  public double getDouble(String columnLabel) throws SQLException {
+  public double getDouble(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public byte[] getBytes(int columnIndex) throws SQLException {
+  public byte[] getBytes(int columnIndex) {
     return (byte[]) values[columnIndex];
   }
 
   @Override
-  public byte[] getBytes(String columnLabel) throws SQLException {
+  public byte[] getBytes(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Date getDate(int columnIndex) throws SQLException {
+  public Date getDate(int columnIndex) {
     if (values[columnIndex] instanceof Long) {
       return Date.valueOf(LocalDate.ofEpochDay((Long) values[columnIndex]));
     }
@@ -171,22 +170,22 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public Date getDate(String columnLabel) throws SQLException {
+  public Date getDate(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Date getDate(int columnIndex, Calendar cal) throws SQLException {
+  public Date getDate(int columnIndex, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Date getDate(String columnLabel, Calendar cal) throws SQLException {
+  public Date getDate(String columnLabel, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Time getTime(int columnIndex) throws SQLException {
+  public Time getTime(int columnIndex) {
     if (values[columnIndex] instanceof Long) {
       return Time.valueOf(LocalTime.ofNanoOfDay((Long) values[columnIndex]));
     }
@@ -194,22 +193,22 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public Time getTime(String columnLabel) throws SQLException {
+  public Time getTime(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Time getTime(int columnIndex, Calendar cal) throws SQLException {
+  public Time getTime(int columnIndex, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Time getTime(String columnLabel, Calendar cal) throws SQLException {
+  public Time getTime(String columnLabel, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Timestamp getTimestamp(int columnIndex) throws SQLException {
+  public Timestamp getTimestamp(int columnIndex) {
     if (values[columnIndex] instanceof Long) {
       return new Timestamp((Long) values[columnIndex] / 1000);
     }
@@ -217,853 +216,842 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public Timestamp getTimestamp(String columnLabel) throws SQLException {
+  public Timestamp getTimestamp(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Timestamp getTimestamp(int columnIndex, Calendar cal) throws SQLException {
+  public Timestamp getTimestamp(int columnIndex, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Timestamp getTimestamp(String columnLabel, Calendar cal) throws SQLException {
+  public Timestamp getTimestamp(String columnLabel, Calendar cal) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public BigDecimal getBigDecimal(int columnIndex) throws SQLException {
+  public BigDecimal getBigDecimal(int columnIndex) {
     return (BigDecimal) values[columnIndex];
   }
 
   @Override
-  public BigDecimal getBigDecimal(int columnIndex, int scale) throws SQLException {
+  public BigDecimal getBigDecimal(int columnIndex, int scale) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public BigDecimal getBigDecimal(String columnLabel, int scale) throws SQLException {
+  public BigDecimal getBigDecimal(String columnLabel, int scale) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public BigDecimal getBigDecimal(String columnLabel) throws SQLException {
+  public BigDecimal getBigDecimal(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public ResultSetMetaData getMetaData() throws SQLException {
+  public ResultSetMetaData getMetaData() {
     return resultSetMetaData;
   }
 
   @Override
-  public boolean next() throws SQLException {
+  public boolean next() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void close() throws SQLException {
+  public void close() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean wasNull() throws SQLException {
+  public boolean wasNull() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getAsciiStream(int columnIndex) throws SQLException {
+  public InputStream getAsciiStream(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getAsciiStream(String columnLabel) throws SQLException {
+  public InputStream getAsciiStream(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getUnicodeStream(int columnIndex) throws SQLException {
+  public InputStream getUnicodeStream(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getUnicodeStream(String columnLabel) throws SQLException {
+  public InputStream getUnicodeStream(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getBinaryStream(int columnIndex) throws SQLException {
+  public InputStream getBinaryStream(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public InputStream getBinaryStream(String columnLabel) throws SQLException {
+  public InputStream getBinaryStream(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public SQLWarning getWarnings() throws SQLException {
+  public SQLWarning getWarnings() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void clearWarnings() throws SQLException {
+  public void clearWarnings() {
 
   }
 
   @Override
-  public String getCursorName() throws SQLException {
+  public String getCursorName() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public int findColumn(String columnLabel) throws SQLException {
+  public int findColumn(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Reader getCharacterStream(int columnIndex) throws SQLException {
+  public Reader getCharacterStream(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Reader getCharacterStream(String columnLabel) throws SQLException {
+  public Reader getCharacterStream(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isBeforeFirst() throws SQLException {
+  public boolean isBeforeFirst() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isAfterLast() throws SQLException {
+  public boolean isAfterLast() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isFirst() throws SQLException {
+  public boolean isFirst() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isLast() throws SQLException {
+  public boolean isLast() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void beforeFirst() throws SQLException {
+  public void beforeFirst() {
 
   }
 
   @Override
-  public void afterLast() throws SQLException {
+  public void afterLast() {
 
   }
 
   @Override
-  public boolean first() throws SQLException {
+  public boolean first() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean last() throws SQLException {
+  public boolean last() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public int getRow() throws SQLException {
+  public int getRow() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean absolute(int row) throws SQLException {
+  public boolean absolute(int row) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean relative(int rows) throws SQLException {
+  public boolean relative(int rows) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean previous() throws SQLException {
+  public boolean previous() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void setFetchDirection(int direction) throws SQLException {
+  public void setFetchDirection(int direction) {
 
   }
 
   @Override
-  public int getFetchDirection() throws SQLException {
+  public int getFetchDirection() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void setFetchSize(int rows) throws SQLException {
+  public void setFetchSize(int rows) {
 
   }
 
   @Override
-  public int getFetchSize() throws SQLException {
+  public int getFetchSize() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public int getType() throws SQLException {
+  public int getType() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public int getConcurrency() throws SQLException {
+  public int getConcurrency() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean rowUpdated() throws SQLException {
+  public boolean rowUpdated() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean rowInserted() throws SQLException {
+  public boolean rowInserted() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean rowDeleted() throws SQLException {
+  public boolean rowDeleted() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateBoolean(int columnIndex, boolean x) throws SQLException {
+  public void updateBoolean(int columnIndex, boolean x) {
 
   }
 
   @Override
-  public void updateBoolean(String columnLabel, boolean x) throws SQLException {
+  public void updateBoolean(String columnLabel, boolean x) {
 
   }
 
   @Override
-  public void updateByte(int columnIndex, byte x) throws SQLException {
+  public void updateByte(int columnIndex, byte x) {
 
   }
 
   @Override
-  public void updateByte(String columnLabel, byte x) throws SQLException {
+  public void updateByte(String columnLabel, byte x) {
 
   }
 
   @Override
-  public void updateShort(int columnIndex, short x) throws SQLException {
+  public void updateShort(int columnIndex, short x) {
 
   }
 
   @Override
-  public void updateShort(String columnLabel, short x) throws SQLException {
+  public void updateShort(String columnLabel, short x) {
 
   }
 
   @Override
-  public void updateInt(int columnIndex, int x) throws SQLException {
+  public void updateInt(int columnIndex, int x) {
 
   }
 
   @Override
-  public void updateInt(String columnLabel, int x) throws SQLException {
+  public void updateInt(String columnLabel, int x) {
 
   }
 
   @Override
-  public void updateLong(int columnIndex, long x) throws SQLException {
+  public void updateLong(int columnIndex, long x) {
 
   }
 
   @Override
-  public void updateLong(String columnLabel, long x) throws SQLException {
+  public void updateLong(String columnLabel, long x) {
 
   }
 
   @Override
-  public void updateFloat(int columnIndex, float x) throws SQLException {
+  public void updateFloat(int columnIndex, float x) {
 
   }
 
   @Override
-  public void updateFloat(String columnLabel, float x) throws SQLException {
+  public void updateFloat(String columnLabel, float x) {
 
   }
 
   @Override
-  public void updateDouble(int columnIndex, double x) throws SQLException {
+  public void updateDouble(int columnIndex, double x) {
 
   }
 
   @Override
-  public void updateDouble(String columnLabel, double x) throws SQLException {
+  public void updateDouble(String columnLabel, double x) {
 
   }
 
   @Override
-  public void updateBigDecimal(int columnIndex, BigDecimal x) throws SQLException {
+  public void updateBigDecimal(int columnIndex, BigDecimal x) {
 
   }
 
   @Override
-  public void updateBigDecimal(String columnLabel, BigDecimal x) throws SQLException {
+  public void updateBigDecimal(String columnLabel, BigDecimal x) {
 
   }
 
   @Override
-  public void updateString(int columnIndex, String x) throws SQLException {
+  public void updateString(int columnIndex, String x) {
 
   }
 
   @Override
-  public void updateString(String columnLabel, String x) throws SQLException {
+  public void updateString(String columnLabel, String x) {
 
   }
 
   @Override
-  public void updateBytes(int columnIndex, byte[] x) throws SQLException {
+  public void updateBytes(int columnIndex, byte[] x) {
 
   }
 
   @Override
-  public void updateBytes(String columnLabel, byte[] x) throws SQLException {
+  public void updateBytes(String columnLabel, byte[] x) {
 
   }
 
   @Override
-  public void updateDate(int columnIndex, Date x) throws SQLException {
+  public void updateDate(int columnIndex, Date x) {
 
   }
 
   @Override
-  public void updateDate(String columnLabel, Date x) throws SQLException {
+  public void updateDate(String columnLabel, Date x) {
 
   }
 
   @Override
-  public void updateTime(int columnIndex, Time x) throws SQLException {
+  public void updateTime(int columnIndex, Time x) {
 
   }
 
   @Override
-  public void updateTime(String columnLabel, Time x) throws SQLException {
+  public void updateTime(String columnLabel, Time x) {
 
   }
 
   @Override
-  public void updateTimestamp(int columnIndex, Timestamp x) throws SQLException {
+  public void updateTimestamp(int columnIndex, Timestamp x) {
 
   }
 
   @Override
-  public void updateTimestamp(String columnLabel, Timestamp x) throws SQLException {
+  public void updateTimestamp(String columnLabel, Timestamp x) {
 
   }
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x, int length) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x, int length) {
 
   }
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x, int length)
-      throws SQLException {
+  public void updateBinaryStream(String columnLabel, InputStream x, int length) {
 
   }
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x, long length) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x, long length) {
 
   }
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x, long length)
-      throws SQLException {
+  public void updateBinaryStream(String columnLabel, InputStream x, long length) {
 
   }
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x) throws SQLException {
+  public void updateBinaryStream(int columnIndex, InputStream x) {
 
   }
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x) throws SQLException {
+  public void updateBinaryStream(String columnLabel, InputStream x) {
 
   }
 
   @Override
-  public void updateNull(String columnLabel) throws SQLException {
+  public void updateNull(String columnLabel) {
 
   }
 
   @Override
-  public void updateNull(int columnIndex) throws SQLException {
+  public void updateNull(int columnIndex) {
 
   }
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader, int length)
-      throws SQLException {
+  public void updateCharacterStream(String columnLabel, Reader reader, int length) {
 
   }
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x, int length) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x, int length) {
 
   }
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x, long length) {
 
   }
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader, long length)
-      throws SQLException {
+  public void updateCharacterStream(String columnLabel, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x) throws SQLException {
+  public void updateCharacterStream(int columnIndex, Reader x) {
 
   }
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader) throws SQLException {
+  public void updateCharacterStream(String columnLabel, Reader reader) {
 
   }
 
   @Override
-  public void updateObject(int columnIndex, Object x, int scaleOrLength) throws SQLException {
+  public void updateObject(int columnIndex, Object x, int scaleOrLength) {
 
   }
 
   @Override
-  public void updateObject(int columnIndex, Object x) throws SQLException {
+  public void updateObject(int columnIndex, Object x) {
 
   }
 
   @Override
-  public void updateObject(String columnLabel, Object x, int scaleOrLength) throws SQLException {
+  public void updateObject(String columnLabel, Object x, int scaleOrLength) {
 
   }
 
   @Override
-  public void updateObject(String columnLabel, Object x) throws SQLException {
+  public void updateObject(String columnLabel, Object x) {
 
   }
 
   @Override
-  public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength)
-      throws SQLException {
+  public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) {
 
   }
 
   @Override
-  public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength)
-      throws SQLException {
+  public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) {
 
   }
 
   @Override
-  public void updateObject(int columnIndex, Object x, SQLType targetSqlType) throws SQLException {
+  public void updateObject(int columnIndex, Object x, SQLType targetSqlType) {
 
   }
 
   @Override
-  public void updateObject(String columnLabel, Object x, SQLType targetSqlType)
-      throws SQLException {
+  public void updateObject(String columnLabel, Object x, SQLType targetSqlType) {
 
   }
 
   @Override
-  public void insertRow() throws SQLException {
+  public void insertRow() {
 
   }
 
   @Override
-  public void updateRow() throws SQLException {
+  public void updateRow() {
 
   }
 
   @Override
-  public void deleteRow() throws SQLException {
+  public void deleteRow() {
 
   }
 
   @Override
-  public void refreshRow() throws SQLException {
+  public void refreshRow() {
 
   }
 
   @Override
-  public void cancelRowUpdates() throws SQLException {
+  public void cancelRowUpdates() {
 
   }
 
   @Override
-  public void moveToInsertRow() throws SQLException {
+  public void moveToInsertRow() {
 
   }
 
   @Override
-  public void moveToCurrentRow() throws SQLException {
+  public void moveToCurrentRow() {
 
   }
 
   @Override
-  public Statement getStatement() throws SQLException {
+  public Statement getStatement() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Ref getRef(int columnIndex) throws SQLException {
+  public Ref getRef(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Ref getRef(String columnLabel) throws SQLException {
+  public Ref getRef(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Blob getBlob(int columnIndex) throws SQLException {
+  public Blob getBlob(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Blob getBlob(String columnLabel) throws SQLException {
+  public Blob getBlob(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Clob getClob(int columnIndex) throws SQLException {
+  public Clob getClob(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Clob getClob(String columnLabel) throws SQLException {
+  public Clob getClob(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Array getArray(int columnIndex) throws SQLException {
+  public Array getArray(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Array getArray(String columnLabel) throws SQLException {
+  public Array getArray(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Object getObject(int columnIndex) throws SQLException {
+  public Object getObject(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Object getObject(String columnLabel) throws SQLException {
+  public Object getObject(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Object getObject(String columnLabel, Map<String, Class<?>> map) throws SQLException {
+  public Object getObject(String columnLabel, Map<String, Class<?>> map) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+  public <T> T getObject(int columnIndex, Class<T> type) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+  public <T> T getObject(String columnLabel, Class<T> type) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Object getObject(int columnIndex, Map<String, Class<?>> map) throws SQLException {
+  public Object getObject(int columnIndex, Map<String, Class<?>> map) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public URL getURL(int columnIndex) throws SQLException {
+  public URL getURL(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public URL getURL(String columnLabel) throws SQLException {
+  public URL getURL(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateRef(int columnIndex, Ref x) throws SQLException {
+  public void updateRef(int columnIndex, Ref x) {
 
   }
 
   @Override
-  public void updateRef(String columnLabel, Ref x) throws SQLException {
+  public void updateRef(String columnLabel, Ref x) {
 
   }
 
   @Override
-  public void updateBlob(int columnIndex, Blob x) throws SQLException {
+  public void updateBlob(int columnIndex, Blob x) {
 
   }
 
   @Override
-  public void updateBlob(String columnLabel, Blob x) throws SQLException {
+  public void updateBlob(String columnLabel, Blob x) {
 
   }
 
   @Override
-  public void updateBlob(int columnIndex, InputStream inputStream, long length)
-      throws SQLException {
+  public void updateBlob(int columnIndex, InputStream inputStream, long length) {
 
   }
 
   @Override
-  public void updateBlob(String columnLabel, InputStream inputStream, long length)
-      throws SQLException {
+  public void updateBlob(String columnLabel, InputStream inputStream, long length) {
 
   }
 
   @Override
-  public void updateBlob(int columnIndex, InputStream inputStream) throws SQLException {
+  public void updateBlob(int columnIndex, InputStream inputStream) {
 
   }
 
   @Override
-  public void updateBlob(String columnLabel, InputStream inputStream) throws SQLException {
+  public void updateBlob(String columnLabel, InputStream inputStream) {
 
   }
 
   @Override
-  public void updateClob(int columnIndex, Clob x) throws SQLException {
+  public void updateClob(int columnIndex, Clob x) {
 
   }
 
   @Override
-  public void updateClob(String columnLabel, Clob x) throws SQLException {
+  public void updateClob(String columnLabel, Clob x) {
 
   }
 
   @Override
-  public void updateClob(int columnIndex, Reader reader, long length) throws SQLException {
+  public void updateClob(int columnIndex, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateClob(String columnLabel, Reader reader, long length) throws SQLException {
+  public void updateClob(String columnLabel, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateClob(int columnIndex, Reader reader) throws SQLException {
+  public void updateClob(int columnIndex, Reader reader) {
 
   }
 
   @Override
-  public void updateClob(String columnLabel, Reader reader) throws SQLException {
+  public void updateClob(String columnLabel, Reader reader) {
 
   }
 
   @Override
-  public void updateArray(int columnIndex, Array x) throws SQLException {
+  public void updateArray(int columnIndex, Array x) {
 
   }
 
   @Override
-  public void updateArray(String columnLabel, Array x) throws SQLException {
+  public void updateArray(String columnLabel, Array x) {
 
   }
 
   @Override
-  public RowId getRowId(int columnIndex) throws SQLException {
+  public RowId getRowId(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public RowId getRowId(String columnLabel) throws SQLException {
+  public RowId getRowId(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateRowId(int columnIndex, RowId x) throws SQLException {
+  public void updateRowId(int columnIndex, RowId x) {
 
   }
 
   @Override
-  public void updateRowId(String columnLabel, RowId x) throws SQLException {
+  public void updateRowId(String columnLabel, RowId x) {
 
   }
 
   @Override
-  public int getHoldability() throws SQLException {
+  public int getHoldability() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isClosed() throws SQLException {
+  public boolean isClosed() {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateNString(int columnIndex, String nstring) throws SQLException {
+  public void updateNString(int columnIndex, String nstring) {
 
   }
 
   @Override
-  public void updateNString(String columnLabel, String nstring) throws SQLException {
+  public void updateNString(String columnLabel, String nstring) {
 
   }
 
   @Override
-  public void updateNClob(int columnIndex, NClob nclob) throws SQLException {
+  public void updateNClob(int columnIndex, NClob nclob) {
 
   }
 
   @Override
-  public void updateNClob(String columnLabel, NClob nclob) throws SQLException {
+  public void updateNClob(String columnLabel, NClob nclob) {
 
   }
 
   @Override
-  public void updateNClob(int columnIndex, Reader reader, long length) throws SQLException {
+  public void updateNClob(int columnIndex, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateNClob(String columnLabel, Reader reader, long length) throws SQLException {
+  public void updateNClob(String columnLabel, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateNClob(int columnIndex, Reader reader) throws SQLException {
+  public void updateNClob(int columnIndex, Reader reader) {
 
   }
 
   @Override
-  public void updateNClob(String columnLabel, Reader reader) throws SQLException {
+  public void updateNClob(String columnLabel, Reader reader) {
 
   }
 
   @Override
-  public NClob getNClob(int columnIndex) throws SQLException {
+  public NClob getNClob(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public NClob getNClob(String columnLabel) throws SQLException {
+  public NClob getNClob(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public SQLXML getSQLXML(int columnIndex) throws SQLException {
+  public SQLXML getSQLXML(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public SQLXML getSQLXML(String columnLabel) throws SQLException {
+  public SQLXML getSQLXML(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateSQLXML(int columnIndex, SQLXML xmlObject) throws SQLException {
+  public void updateSQLXML(int columnIndex, SQLXML xmlObject) {
 
   }
 
   @Override
-  public void updateSQLXML(String columnLabel, SQLXML xmlObject) throws SQLException {
+  public void updateSQLXML(String columnLabel, SQLXML xmlObject) {
 
   }
 
   @Override
-  public String getNString(int columnIndex) throws SQLException {
+  public String getNString(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public String getNString(String columnLabel) throws SQLException {
+  public String getNString(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Reader getNCharacterStream(int columnIndex) throws SQLException {
+  public Reader getNCharacterStream(int columnIndex) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public Reader getNCharacterStream(String columnLabel) throws SQLException {
+  public Reader getNCharacterStream(String columnLabel) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public void updateNCharacterStream(int columnIndex, Reader x, long length) throws SQLException {
+  public void updateNCharacterStream(int columnIndex, Reader x, long length) {
 
   }
 
   @Override
-  public void updateNCharacterStream(String columnLabel, Reader reader, long length)
-      throws SQLException {
+  public void updateNCharacterStream(String columnLabel, Reader reader, long length) {
 
   }
 
   @Override
-  public void updateNCharacterStream(int columnIndex, Reader x) throws SQLException {
+  public void updateNCharacterStream(int columnIndex, Reader x) {
 
   }
 
   @Override
-  public void updateNCharacterStream(String columnLabel, Reader reader) throws SQLException {
+  public void updateNCharacterStream(String columnLabel, Reader reader) {
 
   }
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x) {
 
   }
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x) throws SQLException {
+  public void updateAsciiStream(String columnLabel, InputStream x) {
 
   }
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x, int length) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x, int length) {
 
   }
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x, int length) throws SQLException {
+  public void updateAsciiStream(String columnLabel, InputStream x, int length) {
 
   }
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x, long length) throws SQLException {
+  public void updateAsciiStream(int columnIndex, InputStream x, long length) {
 
   }
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x, long length)
-      throws SQLException {
+  public void updateAsciiStream(String columnLabel, InputStream x, long length) {
 
   }
 
   @Override
-  public <T> T unwrap(Class<T> iface) throws SQLException {
+  public <T> T unwrap(Class<T> iface) {
     throw new IllegalArgumentException("no function");
   }
 
   @Override
-  public boolean isWrapperFor(Class<?> iface) throws SQLException {
+  public boolean isWrapperFor(Class<?> iface) {
     throw new IllegalArgumentException("no function");
   }
 }
