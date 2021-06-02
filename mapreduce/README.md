@@ -31,7 +31,7 @@ hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapr
 
 ### create table and insert record
 
-you could use mysql client to create table and insert record:
+you could use mysql client to create the table and insert the record:
 
 ```sql
 CREATE TABLE IF NOT EXISTS test.test_table
