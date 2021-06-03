@@ -21,26 +21,32 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.Serializable;
 import java.util.Objects;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class SplitInternal implements Serializable {
 
   private final TableHandleInternal table;
   private final String startKey;
   private final String endKey;
+  private final TiTimestamp timestamp;
 
   public SplitInternal(
       TableHandleInternal table,
       String startKey,
-      String endKey) {
+      String endKey,
+      TiTimestamp timestamp) {
     this.table = requireNonNull(table, "table is null");
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
+    this.timestamp = requireNonNull(timestamp, "timestamp is null");
+    ;
   }
 
   public SplitInternal(
       TableHandleInternal table,
-      Base64KeyRange range) {
-    this(table, range.getStartKey(), range.getEndKey());
+      Base64KeyRange range,
+      TiTimestamp timestamp) {
+    this(table, range.getStartKey(), range.getEndKey(), timestamp);
   }
 
   public TableHandleInternal getTable() {
@@ -53,6 +59,10 @@ public final class SplitInternal implements Serializable {
 
   public String getEndKey() {
     return endKey;
+  }
+
+  public TiTimestamp getTimestamp() {
+    return timestamp;
   }
 
   @Override
@@ -72,7 +82,8 @@ public final class SplitInternal implements Serializable {
     SplitInternal other = (SplitInternal) obj;
     return Objects.equals(this.table, other.table)
         && Objects.equals(this.startKey, other.startKey)
-        && Objects.equals(this.endKey, other.endKey);
+        && Objects.equals(this.endKey, other.endKey)
+        && Objects.equals(this.timestamp, other.timestamp);
   }
 
   @Override
@@ -81,6 +92,7 @@ public final class SplitInternal implements Serializable {
         .add("table", table)
         .add("startKey", startKey)
         .add("endKey", endKey)
+        .add("timestamp", timestamp)
         .toString();
   }
 }

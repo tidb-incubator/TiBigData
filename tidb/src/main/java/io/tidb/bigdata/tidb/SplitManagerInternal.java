@@ -23,6 +23,7 @@ import static java.util.stream.Collectors.toCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class SplitManagerInternal {
 
@@ -33,9 +34,10 @@ public final class SplitManagerInternal {
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
+    TiTimestamp timestamp = session.getTimestamp();
     List<SplitInternal> splits = session.getTableRanges(tableHandle)
         .stream()
-        .map(range -> new SplitInternal(tableHandle, range))
+        .map(range -> new SplitInternal(tableHandle, range, timestamp))
         .collect(toCollection(ArrayList::new));
     Collections.shuffle(splits);
     return Collections.unmodifiableList(splits);

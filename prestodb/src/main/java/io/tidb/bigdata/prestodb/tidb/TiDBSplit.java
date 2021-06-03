@@ -29,6 +29,7 @@ import io.tidb.bigdata.tidb.SplitInternal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class TiDBSplit implements ConnectorSplit {
 
@@ -36,6 +37,7 @@ public final class TiDBSplit implements ConnectorSplit {
   private TiDBTableHandle table;
   private String startKey;
   private String endKey;
+  private TiTimestamp timestamp;
   private Optional<String> additionalPredicate;
 
   @JsonCreator
@@ -43,16 +45,18 @@ public final class TiDBSplit implements ConnectorSplit {
       @JsonProperty("table") TiDBTableHandle table,
       @JsonProperty("startKey") String startKey,
       @JsonProperty("endKey") String endKey,
+      @JsonProperty("timestamp") TiTimestamp timestamp,
       @JsonProperty("additionalPredicate") Optional<String> additionalPredicate) {
     this.table = requireNonNull(table, "table is null");
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
+    this.timestamp = requireNonNull(timestamp, "timestamp is null");
     this.additionalPredicate = requireNonNull(additionalPredicate, "additionalPredicate is null");
   }
 
   TiDBSplit(SplitInternal from, Optional<String> additionalPredicate) {
     this(new TiDBTableHandle(from.getTable()), from.getStartKey(), from.getEndKey(),
-        additionalPredicate);
+        from.getTimestamp(), additionalPredicate);
   }
 
   @Override
@@ -85,13 +89,17 @@ public final class TiDBSplit implements ConnectorSplit {
     return endKey;
   }
 
+  public TiTimestamp getTimestamp() {
+    return timestamp;
+  }
+
   @JsonProperty
   public Optional<String> getAdditionalPredicate() {
     return additionalPredicate;
   }
 
   SplitInternal toInternal() {
-    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey());
+    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey(), timestamp);
   }
 
   @Override

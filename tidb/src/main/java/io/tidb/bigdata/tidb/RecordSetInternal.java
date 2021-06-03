@@ -52,6 +52,8 @@ public final class RecordSetInternal {
     TiDAGRequest.Builder request = session.request(split.getTable(), columns);
     request.setLimit(limit);
     expression.ifPresent(request::addFilter);
+    request.setStartTs(split.getTimestamp());
+    // snapshot read
     timestamp.ifPresent(request::setStartTs);
     iterator = session.iterate(request, new Base64KeyRange(split.getStartKey(), split.getEndKey()));
   }
