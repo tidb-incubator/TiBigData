@@ -93,7 +93,7 @@ public class TiDBInputFormat<T extends TiDBWritable>
   public RecordReader<LongWritable, T> createRecordReader(InputSplit inputSplit,
       TaskAttemptContext taskAttemptContext) {
 
-    return new TiDBRecorderReader((TiDBInputSplit) inputSplit, getConf(), getClientSession(),
+    return new TiDBRecordReader((TiDBInputSplit) inputSplit, getConf(), getClientSession(),
         columnHandleInternals, resultSetMetaData);
   }
 

@@ -45,10 +45,10 @@ import org.tikv.common.meta.TiTimestamp;
 /**
  * A RecordReader that reads records from a TiDB table.
  */
-public class TiDBRecorderReader<T extends TiDBWritable> extends
+public class TiDBRecordReader<T extends TiDBWritable> extends
     RecordReader<LongWritable, T> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(TiDBRecorderReader.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TiDBRecordReader.class);
 
   private LongWritable key = null;
 
@@ -78,7 +78,7 @@ public class TiDBRecorderReader<T extends TiDBWritable> extends
 
   private TiDBResultSet tiDBResultSet;
 
-  public TiDBRecorderReader(TiDBInputSplit split, Configuration conf,
+  public TiDBRecordReader(TiDBInputSplit split, Configuration conf,
       ClientSession clientSession, List<ColumnHandleInternal> columnHandleInternals,
       ResultSetMetaData resultSetMetaData) {
 
@@ -87,7 +87,8 @@ public class TiDBRecorderReader<T extends TiDBWritable> extends
     this.columnHandleInternals = columnHandleInternals;
     this.splitInternal = new SplitInternal(
         new TableHandleInternal(split.getConnectorId(), split.getSchemaName(),
-            split.getTableName()), split.getStartKey(), split.getEndKey());
+            split.getTableName()), split.getStartKey(), split.getEndKey(),
+        clientSession.getTimestamp());
     this.clientSession = clientSession;
     this.projectedFieldIndexes = IntStream.range(0, dfConf.getInputFieldNames().length).toArray();
     this.timestamp = Optional
