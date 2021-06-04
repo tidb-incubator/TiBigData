@@ -37,7 +37,8 @@ public final class TiDBSplit implements ConnectorSplit {
   private TiDBTableHandle table;
   private String startKey;
   private String endKey;
-  private TiTimestamp timestamp;
+  private long physicalTimestamp;
+  private long logicalTimestamp;
   private Optional<String> additionalPredicate;
 
   @JsonCreator
@@ -45,18 +46,20 @@ public final class TiDBSplit implements ConnectorSplit {
       @JsonProperty("table") TiDBTableHandle table,
       @JsonProperty("startKey") String startKey,
       @JsonProperty("endKey") String endKey,
-      @JsonProperty("timestamp") TiTimestamp timestamp,
+      @JsonProperty("physicalTimestamp") long physicalTimestamp,
+      @JsonProperty("logicalTimestamp") long logicalTimestamp,
       @JsonProperty("additionalPredicate") Optional<String> additionalPredicate) {
     this.table = requireNonNull(table, "table is null");
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
-    this.timestamp = requireNonNull(timestamp, "timestamp is null");
+    this.physicalTimestamp = physicalTimestamp;
+    this.logicalTimestamp = logicalTimestamp;
     this.additionalPredicate = requireNonNull(additionalPredicate, "additionalPredicate is null");
   }
 
   TiDBSplit(SplitInternal from, Optional<String> additionalPredicate) {
     this(new TiDBTableHandle(from.getTable()), from.getStartKey(), from.getEndKey(),
-        from.getTimestamp(), additionalPredicate);
+        from.getTimestamp().getPhysical(), from.getTimestamp().getLogical(), additionalPredicate);
   }
 
   @Override
@@ -89,9 +92,16 @@ public final class TiDBSplit implements ConnectorSplit {
     return endKey;
   }
 
-  public TiTimestamp getTimestamp() {
-    return timestamp;
+  @JsonProperty
+  public long getPhysicalTimestamp() {
+    return physicalTimestamp;
   }
+
+  @JsonProperty
+  public long getLogicalTimestamp() {
+    return logicalTimestamp;
+  }
+
 
   @JsonProperty
   public Optional<String> getAdditionalPredicate() {
@@ -99,7 +109,8 @@ public final class TiDBSplit implements ConnectorSplit {
   }
 
   SplitInternal toInternal() {
-    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey(), timestamp);
+    TiTimestamp tiTimestamp = new TiTimestamp(physicalTimestamp, logicalTimestamp);
+    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey(), tiTimestamp);
   }
 
   @Override
