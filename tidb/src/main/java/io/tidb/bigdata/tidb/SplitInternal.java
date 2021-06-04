@@ -39,7 +39,6 @@ public final class SplitInternal implements Serializable {
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
     this.timestamp = requireNonNull(timestamp, "timestamp is null");
-    ;
   }
 
   public SplitInternal(
