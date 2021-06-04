@@ -20,6 +20,8 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NA
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
+import static java.lang.String.format;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -34,6 +36,7 @@ import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -103,9 +106,11 @@ public abstract class TiDBBaseRowDataInputFormat extends
     this.properties = Preconditions.checkNotNull(properties, "properties can not be null");
     this.databaseName = getRequiredProperties(DATABASE_NAME.key());
     this.tableName = getRequiredProperties(TABLE_NAME.key());
-    this.fieldNames = fieldNames;
+    this.fieldNames = Arrays.stream(fieldNames).map(String::toLowerCase).toArray(String[]::new);
     this.fieldTypes = fieldTypes;
     this.typeInformation = typeInformation;
+    List<ColumnHandleInternal> columns;
+    Map<String, Integer> nameAndIndex = new HashMap<>();
     // get split
     try (ClientSession splitSession = ClientSession
         .createWithSingleConnection(new ClientConfig(properties))) {
@@ -115,12 +120,21 @@ public abstract class TiDBBaseRowDataInputFormat extends
           UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
       splits = splitManagerInternal.getSplits(tableHandleInternal);
-      columnHandleInternals = splitSession.getTableColumns(tableHandleInternal)
+      columns = splitSession.getTableColumns(tableHandleInternal)
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+      IntStream.range(0, columns.size())
+          .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-    projectedFieldIndexes = IntStream.range(0, fieldNames.length).toArray();
+    // check flink table column names
+    Arrays.stream(this.fieldNames)
+        .forEach(name -> Preconditions.checkState(nameAndIndex.containsKey(name),
+            format("can not find column: %s in table `%s`.`%s`", name, databaseName, tableName)));
+    // We should filter columns, because the number of tidb columns may greater than flink columns
+    columnHandleInternals = Arrays.stream(this.fieldNames)
+        .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
+    projectedFieldIndexes = IntStream.range(0, this.fieldNames.length).toArray();
     timestamp = Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNoneEmpty)
@@ -156,7 +170,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
   public void openInputFormat() throws IOException {
     formatters = Arrays.stream(fieldNames).map(name -> {
       String pattern = properties.get(TIMESTAMP_FORMAT_PREFIX + "." + name);
-      return pattern == null ? null : DateTimeFormatter.ofPattern(pattern);
+      return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
     }).toArray(DateTimeFormatter[]::new);
     clientSession = ClientSession.createWithSingleConnection(new ClientConfig(properties));
   }
@@ -209,7 +223,9 @@ public abstract class TiDBBaseRowDataInputFormat extends
       Object object = cursor.getObject(i);
       // data can be null here
       row.setField(i, toRowDataType(
-          getObjectWithDataType(object, fieldType, formatters[projectedFieldIndex]).orElse(null)));
+          getObjectWithDataType(object, fieldType,
+              columnHandleInternals.get(projectedFieldIndex).getType(),
+              formatters[projectedFieldIndex]).orElse(null)));
     }
     recordCount++;
     return row;

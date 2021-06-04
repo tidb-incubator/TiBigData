@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.tidb</groupId>
         <artifactId>bigdata</artifactId>
-        <version>0.0.3-SNAPSHOT</version>
+        <version>0.0.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>bigdata-core</artifactId>
@@ -16,7 +16,6 @@
     <properties>
         <dep.tikv-client.version>3.0.1</dep.tikv-client.version>
         <dep.guava.version>29.0-jre</dep.guava.version>
-        <dep.junit.version>4.13.1</dep.junit.version>
         <dep.HikariCP.version>3.4.5</dep.HikariCP.version>
     </properties>
 
