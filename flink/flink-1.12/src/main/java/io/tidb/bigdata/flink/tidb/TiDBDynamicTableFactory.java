@@ -26,6 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
@@ -40,8 +42,12 @@ import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 import org.apache.flink.table.factories.FactoryUtil.TableFactoryHelper;
 import org.apache.flink.util.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
+  static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableFactory.class);
+
   public static final ConfigOption<String> STREAMING_SOURCE = ConfigOptions
       .key("tidb.streaming.source").stringType().noDefaultValue();
 
@@ -78,27 +84,45 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     return withMoreOptionalOptions(STREAMING_SOURCE);
   }
 
+  private static String randomID() {
+    return UUID.randomUUID().toString();
+  }
+
+  private static Map<String, String> kafkaDefaultParameters(Map<String, String> props) {
+    props.put("properties.group.id", randomID());
+    return props;
+  }
+
+  private static Map<String, String> pulsarDefaultParameters(Map<String, String> props) {
+    props.put("scan.startup.mode", "external-subscription");
+    props.put("scan.startup.sub-name", randomID());
+    return props;
+  }
+
   private DynamicTableSource createStreamingTableSource(Context context, String source,
       TableSchema schema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
-    final long version;
+    final Function<Map<String, String>, Map<String, String>> populateDefault;
     switch (source) {
       case STREAMING_SOURCE_KAFKA:
-        // FALLTHROUGH
+        populateDefault = TiDBDynamicTableFactory::kafkaDefaultParameters;
+        break;
       case STREAMING_SOURCE_PULSAR:
-        version = getSnapshotTimestamp(properties);
+        populateDefault = TiDBDynamicTableFactory::pulsarDefaultParameters;
         break;
       default:
         throw new IllegalStateException("Not supported TiDB streaming source: " + source);
     }
+    final long version = getSnapshotTimestamp(properties);
     properties = new HashMap<>(properties);
     properties.put(ClientConfig.SNAPSHOT_VERSION, Long.toString(version));
     return new TiDBStreamingDynamicTableSource(schema, properties, lookupOptions,
-        createStreamingSource(source, context, version), version);
+        createStreamingSource(
+            new StreamingSourceContext(source, context, version, populateDefault)), version);
   }
 
-  private static Context wrapContext(final Context context, final String type, final long version) {
+  private static Context wrapContext(final StreamingSourceContext context) {
     final CatalogTable table = context.getCatalogTable();
-    final String prefix = "tidb.streaming." + type + ".";
+    final String prefix = "tidb.streaming." + context.getSourceType() + ".";
 
     return new Context() {
       @Override
@@ -157,8 +181,9 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
             newProperties.put(
                 formatKeyPrefix + FormatOptions.TYPE_INCLUDE.key(), Type.ROW_CHANGED.name());
             newProperties.put(
-                formatKeyPrefix + FormatOptions.EARLIEST_VERSION.key(), Long.toString(version));
-            return newProperties;
+                formatKeyPrefix + FormatOptions.EARLIEST_VERSION.key(),
+                Long.toString(context.getVersion()));
+            return context.populateDefault(newProperties);
           }
 
           private Map<String, String> convertProperties(Map<String, String> properties) {
@@ -168,6 +193,7 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
                 newProperties.put(entry.getKey().substring(prefix.length()), entry.getValue());
               }
             }
+            LOG.info("Final properties for streaming source: {}", newProperties.toString());
             return newProperties;
           }
 
@@ -210,12 +236,62 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     };
   }
 
-  private static ScanTableSource createStreamingSource(final String source,
-      final Context context, final long version) {
+  private static ScanTableSource createStreamingSource(final StreamingSourceContext context) {
     return (ScanTableSource) FactoryUtil.discoverFactory(
         Thread.currentThread().getContextClassLoader(),
         DynamicTableSourceFactory.class,
-        source)
-        .createDynamicTableSource(wrapContext(context, source, version));
+        context.source)
+        .createDynamicTableSource(wrapContext(context));
+  }
+
+  private static class StreamingSourceContext {
+    final String source;
+    final Context context;
+    final long version;
+    final Function<Map<String, String>, Map<String, String>> populateDefault;
+
+    private StreamingSourceContext(final String source, final Context context, final long version,
+        final Function<Map<String, String>, Map<String, String>> populateDefault) {
+      this.source = source;
+      this.context = context;
+      this.version = version;
+      this.populateDefault = populateDefault;
+    }
+
+    private CatalogTable getCatalogTable() {
+      return context.getCatalogTable();
+    }
+
+    private Context getContext() {
+      return context;
+    }
+
+    private String getSourceType() {
+      return source;
+    }
+
+    private long getVersion() {
+      return version;
+    }
+
+    private ObjectIdentifier getObjectIdentifier() {
+      return context.getObjectIdentifier();
+    }
+
+    private ReadableConfig getConfiguration() {
+      return context.getConfiguration();
+    }
+
+    private ClassLoader getClassLoader() {
+      return context.getClassLoader();
+    }
+
+    private boolean isTemporary() {
+      return context.isTemporary();
+    }
+
+    private Map<String, String> populateDefault(Map<String, String> props) {
+      return populateDefault.apply(props);
+    }
   }
 }
