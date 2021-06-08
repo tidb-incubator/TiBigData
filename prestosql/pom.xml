@@ -14,7 +14,7 @@
     <url>https://github.com/pingcap-incubator/TiBigData</url>
 
     <properties>
-        <dep.airlift.version>0.197</dep.airlift.version>
+        <dep.airlift.version>202</dep.airlift.version>
         <dep.prestosql.version>350</dep.prestosql.version>
     </properties>
 
@@ -44,6 +44,30 @@
             <groupId>io.airlift</groupId>
             <artifactId>json</artifactId>
             <version>${dep.airlift.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${dep.junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${dep.mysql.jdbc.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.prestosql</groupId>
+            <artifactId>presto-main</artifactId>
+            <version>${dep.prestosql.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.prestosql</groupId>
+            <artifactId>presto-tests</artifactId>
+            <version>${dep.prestosql.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -82,9 +106,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <skipTests>true</skipTests>
-                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
