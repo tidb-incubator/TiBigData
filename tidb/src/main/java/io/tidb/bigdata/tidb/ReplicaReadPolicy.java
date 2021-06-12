@@ -159,14 +159,23 @@ public abstract class ReplicaReadPolicy implements ReplicaSelector  {
   }
 
   private boolean inWhitelist(Store store) {
+    if (whitelist.isEmpty()) {
+      return false;
+    }
     return whitelist.stream().anyMatch(a -> a.equals(store.getAddress()));
   }
 
   private boolean notInBlacklist(Store store) {
+    if (blacklist.isEmpty()) {
+      return true;
+    }
     return blacklist.stream().noneMatch(a -> a.equals(store.getAddress()));
   }
 
   private boolean matchLabels(Store store) {
+    if (labels.isEmpty()) {
+      return true;
+    }
     int matched = 0;
     for (Label label : store.getLabels()) {
       if (label.getValue().equals(labels.get(label.getKey()))) {
@@ -177,7 +186,7 @@ public abstract class ReplicaReadPolicy implements ReplicaSelector  {
   }
 
   protected boolean accept(Store store) {
-    return matchLabels(store) && inWhitelist(store) && notInBlacklist(store);
+    return (matchLabels(store) || inWhitelist(store)) && notInBlacklist(store);
   }
 
   public abstract ReplicaRead toReplicaRead();
