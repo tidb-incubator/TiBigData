@@ -65,7 +65,7 @@ public class CraftParser implements Parser<CraftParserState> {
       CraftTermDictionary termDictionary) throws IOException {
     Codec keysCodec = codec.truncateHeading(keyBytes);
     long[] ts = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
-    long[] type = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
+    long[] type = keysCodec.decodeDeltaVarintChunk(numOfKeys);
     long[] partition = keysCodec.decodeDeltaVarintChunk(numOfKeys);
     String[] schema = termDictionary.decodeNullableChunk(keysCodec, numOfKeys);
     String[] table = termDictionary.decodeNullableChunk(keysCodec, numOfKeys);
