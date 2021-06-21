@@ -26,9 +26,13 @@ import java.util.Arrays;
 
 public class CraftParser implements Parser<CraftParserState> {
 
-  static final int KEY_SIZE_TABLE_INDEX = 0;
+  static final int META_SIZE_TABLE_INDEX = 0;
   static final int VALUE_SIZE_TABLE_INDEX = 1;
   static final int COLUMN_GROUP_SIZE_TABLE_START_INDEX = 2;
+
+  static final int KEY_SIZE_INDEX = 0;
+  static final int TERM_DICTIONARY_SIZE_INDEX = 1;
+
   private static final int CURRENT_VERSION = 1;
   private static final CraftParser INSTANCE = new CraftParser();
 
@@ -39,29 +43,35 @@ public class CraftParser implements Parser<CraftParserState> {
     return INSTANCE;
   }
 
-  private static CraftParserState doParse(Codec codec, byte[] bits) throws IOException {
+  private static CraftParserState doParse(Codec codec) throws IOException {
     if (codec.decodeUvarint() != CURRENT_VERSION) {
       throw new RuntimeException("Illegal version, should be " + CURRENT_VERSION);
     }
-    int numOfPairs = (int) codec.decodeUvarint();
-    int[][] sizeTables = parseSizeTables(codec);
-    int keyBytes = sizeTables[KEY_SIZE_TABLE_INDEX][0];
-    Key[] keys = parseKeys(codec, numOfPairs, keyBytes);
-    return new CraftParserState(codec, keys, sizeTables);
+    final int[][] sizeTables = parseSizeTables(codec);
+    final int[] metaSizeTable = sizeTables[META_SIZE_TABLE_INDEX];
+    int numOfPairs = sizeTables[VALUE_SIZE_TABLE_INDEX].length;
+    int keyBytes = metaSizeTable[KEY_SIZE_INDEX];
+    int keyAndValueBytes =
+        Arrays.stream(sizeTables[VALUE_SIZE_TABLE_INDEX]).sum() + keyBytes;
+    Codec headerAndBodyCodec = codec.truncateHeading(keyAndValueBytes);
+    int termDictionarySize = metaSizeTable[TERM_DICTIONARY_SIZE_INDEX];
+    CraftTermDictionary termDictionary = termDictionarySize == 0 ? CraftTermDictionary.empty()
+        : new CraftTermDictionary(codec.truncateHeading(metaSizeTable[TERM_DICTIONARY_SIZE_INDEX]));
+    Key[] keys = parseKeys(headerAndBodyCodec, numOfPairs, keyBytes, termDictionary);
+    return new CraftParserState(headerAndBodyCodec, keys, sizeTables, termDictionary);
   }
 
-  private static Key[] parseKeys(Codec codec, int numOfKeys, int keyBytes) throws IOException {
+  private static Key[] parseKeys(Codec codec, int numOfKeys, int keyBytes,
+      CraftTermDictionary termDictionary) throws IOException {
     Codec keysCodec = codec.truncateHeading(keyBytes);
     long[] ts = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
     long[] type = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
-    long[] rowId = keysCodec.decodeDeltaVarintChunk(numOfKeys);
     long[] partition = keysCodec.decodeDeltaVarintChunk(numOfKeys);
-    String[] schema = keysCodec.decodeNullableStringChunk(numOfKeys);
-    String[] table = keysCodec.decodeNullableStringChunk(numOfKeys);
+    String[] schema = termDictionary.decodeNullableChunk(keysCodec, numOfKeys);
+    String[] table = termDictionary.decodeNullableChunk(keysCodec, numOfKeys);
     Key[] keys = new Key[numOfKeys];
-    for (int idx = 0; idx < numOfKeys; idx++) {
-      keys[idx] = new Key(schema[idx], table[idx], rowId[idx], partition[idx], (int) type[idx],
-          ts[idx]);
+    for (int idx = 0; idx < numOfKeys; ++idx) {
+      keys[idx] = new Key(schema[idx], table[idx], partition[idx], (int) type[idx], ts[idx]);
     }
     return keys;
   }
@@ -73,13 +83,13 @@ public class CraftParser implements Parser<CraftParserState> {
     while (slice.available() > 0) {
       int elements = slice.decodeUvarintLength();
       tables.add(
-          Arrays.stream(slice.decodeDeltaUvarintChunk(elements)).mapToInt(l -> (int) l).toArray());
+          Arrays.stream(slice.decodeDeltaVarintChunk(elements)).mapToInt(l -> (int) l).toArray());
     }
     return tables.toArray(new int[0][]);
   }
 
   @Override
   public CraftParserState parse(byte[] bits) {
-    return uncheckedRun(() -> doParse(new Codec(bits), bits));
+    return uncheckedRun(() -> doParse(new Codec(bits)));
   }
 }

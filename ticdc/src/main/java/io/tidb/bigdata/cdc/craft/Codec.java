@@ -17,7 +17,6 @@
 package io.tidb.bigdata.cdc.craft;
 
 import io.tidb.bigdata.cdc.Misc;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Supplier;
 
@@ -73,11 +72,11 @@ public class Codec {
   }
 
   // Primitive type decoders
-  public int decodeUvarintLength() throws IOException {
+  public int decodeUvarintLength() {
     return checkedCast(decodeUvarint());
   }
 
-  public long decodeVarint() throws IOException {
+  public long decodeVarint() {
     return decodeZigZag64(readRawVarint64());
   }
 
@@ -89,11 +88,11 @@ public class Codec {
     return (int) from;
   }
 
-  public int decodeUvarintReversedLength() throws IOException {
+  public int decodeUvarintReversedLength() {
     return checkedCast(decodeUvarintReversed());
   }
 
-  public long decodeUvarintReversed() throws IOException {
+  public long decodeUvarintReversed() {
     // Implementation notes:
     //
     // Optimized for one-byte values, expected to be common.
@@ -183,19 +182,19 @@ public class Codec {
     throw new IllegalStateException("Malformated varint");
   }
 
-  public long decodeUvarint() throws IOException {
+  public long decodeUvarint() {
     return readRawVarint64();
   }
 
-  public short decodeUint8() throws IOException {
+  public short decodeUint8() {
     return readRawByte();
   }
 
-  public double decodeFloat64() throws IOException {
+  public double decodeFloat64() {
     return Double.longBitsToDouble(readRawLittleEndian64());
   }
 
-  public byte[] decodeBytes() throws IOException {
+  public byte[] decodeBytes() {
     final int length = decodeUvarintLength();
     checkAvailableBytes(length);
     final byte[] bytes = new byte[length];
@@ -204,12 +203,12 @@ public class Codec {
     return bytes;
   }
 
-  public String decodeString() throws IOException {
+  public String decodeString() {
     return new String(decodeBytes(), StandardCharsets.UTF_8);
   }
 
   // Chunk decoders
-  public String[] decodeStringChunk(int size) throws IOException {
+  public String[] decodeStringChunk(int size) {
     final byte[][] bytesChunk = decodeBytesChunk(size);
     final String[] strings = new String[size];
     for (int idx = 0; idx < size; idx++) {
@@ -218,7 +217,7 @@ public class Codec {
     return strings;
   }
 
-  public String[] decodeNullableStringChunk(int size) throws IOException {
+  public String[] decodeNullableStringChunk(int size) {
     final byte[][] bytesChunk = decodeNullableBytesChunk(size);
     final String[] strings = new String[size];
     for (int idx = 0; idx < size; idx++) {
@@ -248,19 +247,19 @@ public class Codec {
     return bytes;
   }
 
-  public byte[][] decodeBytesChunk(int size) throws IOException {
+  public byte[][] decodeBytesChunk(int size) {
     return doDecodeBytesChunk(size, () -> {
       return Misc.uncheckedRun(this::decodeUvarint).intValue();
     });
   }
 
-  public byte[][] decodeNullableBytesChunk(int size) throws IOException {
+  public byte[][] decodeNullableBytesChunk(int size) {
     return doDecodeBytesChunk(size, () -> {
       return Misc.uncheckedRun(this::decodeVarint).intValue();
     });
   }
 
-  public long[] decodeVarintChunk(int size) throws IOException {
+  public long[] decodeVarintChunk(int size) {
     long[] result = new long[size];
     for (int idx = 0; idx < size; ++idx) {
       result[idx] = decodeVarint();
@@ -268,7 +267,7 @@ public class Codec {
     return result;
   }
 
-  public long[] decodeUvarintChunk(int size) throws IOException {
+  public long[] decodeUvarintChunk(int size) {
     long[] result = new long[size];
     for (int idx = 0; idx < size; ++idx) {
       result[idx] = decodeUvarint();
@@ -276,7 +275,7 @@ public class Codec {
     return result;
   }
 
-  public long[] decodeDeltaVarintChunk(int size) throws IOException {
+  public long[] decodeDeltaVarintChunk(int size) {
     long[] result = new long[size];
     result[0] = decodeVarint();
     for (int idx = 1; idx < size; ++idx) {
@@ -286,7 +285,7 @@ public class Codec {
     return result;
   }
 
-  public long[] decodeDeltaUvarintChunk(int size) throws IOException {
+  public long[] decodeDeltaUvarintChunk(int size) {
     long[] result = new long[size];
     result[0] = decodeUvarint();
     for (int idx = 1; idx < size; ++idx) {
@@ -305,7 +304,7 @@ public class Codec {
     return bufferPos;
   }
 
-  private byte readRawByte() throws IOException {
+  private byte readRawByte() {
     final int expecting = 1;
     final int pos = checkAvailableBytes(expecting);
     bufferPos += expecting;
@@ -315,7 +314,7 @@ public class Codec {
   /*
    * copied from com.google.protobuf.CodedInputStream (protobuf)
    */
-  private long readRawLittleEndian64() throws IOException {
+  private long readRawLittleEndian64() {
     final int expecting = 8;
     final int pos = checkAvailableBytes(expecting);
     bufferPos += expecting;
@@ -332,7 +331,7 @@ public class Codec {
   /*
    * copied from com.google.protobuf.CodedInputStream (protobuf)
    */
-  public long readRawVarint64() throws IOException {
+  public long readRawVarint64() {
     // Implementation notes:
     //
     // Optimized for one-byte values, expected to be common.
@@ -407,7 +406,7 @@ public class Codec {
   /*
    * copied from com.google.protobuf.CodedInputStream (protobuf)
    */
-  private long readRawVarint64SlowPath() throws IOException {
+  private long readRawVarint64SlowPath() {
     long result = 0;
     for (int shift = 0; shift < 64; shift += 7) {
       final byte b = readRawByte();

@@ -28,7 +28,6 @@ public class CraftDecoderTest {
 
   private static long verifyResolved(final String fileName, long lastTs) throws IOException {
     final EventDecoder decoder = decode("craft", fileName);
-    int idx = 0;
     for (Event evt : decoder) {
       Assert.assertEquals(evt.getType(), Type.RESOLVED);
       Assert.assertTrue(evt.getTs() >= lastTs);

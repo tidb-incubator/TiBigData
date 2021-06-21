@@ -27,15 +27,13 @@ public final class Key {
   private final long ts;
   private final String schema;
   private final String table;
-  private final long rowId;
   private final long partition;
   private final Type type;
 
-  public Key(final String schema, final String table, final long rowId, final long partition,
+  public Key(final String schema, final String table, final long partition,
       final int type, final long ts) {
     this.schema = schema;
     this.table = table;
-    this.rowId = rowId;
     this.partition = partition;
     this.ts = ts;
     this.type = Type.of(type);
@@ -79,8 +77,10 @@ public final class Key {
     return partition;
   }
 
+  // RowId was deprecated in TiCDC protocol, therefore we always return -1 for this field
+  @Deprecated
   public long getRowId() {
-    return rowId;
+    return -1;
   }
 
   @Override
@@ -96,14 +96,13 @@ public final class Key {
     return Objects.equals(ts, other.ts)
         && Objects.equals(schema, other.schema)
         && Objects.equals(table, other.table)
-        && Objects.equals(rowId, other.rowId)
         && Objects.equals(partition, other.partition)
         && Objects.equals(type, other.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ts, schema, table, rowId, partition, type);
+    return Objects.hash(ts, schema, table, partition, type);
   }
 
   public String toJson() {
@@ -124,7 +123,7 @@ public final class Key {
     DDL(2),
     RESOLVED(3);
 
-    private int code;
+    private final int code;
 
     Type(int code) {
       this.code = code;

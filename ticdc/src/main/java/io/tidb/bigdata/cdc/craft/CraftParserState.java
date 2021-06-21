@@ -43,24 +43,28 @@ public class CraftParserState implements Iterator<Event> {
   private final int[] valueSizeTable;
   private final Event[] events;
   private int index;
+  private final CraftTermDictionary termDictionary;
 
-  CraftParserState(Codec codec, Key[] keys, int[][] sizeTables) {
-    this(codec, keys, sizeTables, new Event[keys.length]);
+  CraftParserState(Codec codec, Key[] keys, int[][] sizeTables,
+      CraftTermDictionary termDictionary) {
+    this(codec, keys, sizeTables, new Event[keys.length], termDictionary);
   }
 
-  private CraftParserState(Codec codec, Key[] keys, int[][] sizeTables, Event[] events) {
+  private CraftParserState(Codec codec, Key[] keys, int[][] sizeTables,
+      Event[] events, CraftTermDictionary termDictionary) {
     this.codec = codec;
     this.keys = keys;
     this.index = 0;
     this.events = events;
     this.sizeTables = sizeTables;
     this.valueSizeTable = sizeTables[CraftParser.VALUE_SIZE_TABLE_INDEX];
+    this.termDictionary = termDictionary;
   }
 
   @Override
   public CraftParserState clone() {
     return new CraftParserState(codec.clone(), keys, sizeTables,
-        Arrays.copyOf(events, events.length));
+        Arrays.copyOf(events, events.length), termDictionary);
   }
 
   @Override
@@ -135,7 +139,7 @@ public class CraftParserState implements Iterator<Event> {
       case SET:
         // FALLTHROUGH
       case BIT:
-        // value type for thest mysql types is uint64
+        // value type for these mysql types is uint64
         return new Codec(value).decodeUvarint();
       case FLOAT:
       case DOUBLE:
@@ -167,7 +171,7 @@ public class CraftParserState implements Iterator<Event> {
 
   private RowColumn[] decodeColumnGroup(Codec codec) throws IOException {
     int numOfColumns = (int) codec.decodeUvarint();
-    String[] names = codec.decodeStringChunk(numOfColumns);
+    String[] names = termDictionary.decodeChunk(codec, numOfColumns);
     long[] types = codec.decodeUvarintChunk(numOfColumns);
     long[] flags = codec.decodeUvarintChunk(numOfColumns);
     byte[][] values = codec.decodeNullableBytesChunk(numOfColumns);
