@@ -16,11 +16,8 @@
 
 package io.tidb.bigdata.cdc.craft;
 
-import static io.tidb.bigdata.cdc.Misc.uncheckedRun;
-
 import io.tidb.bigdata.cdc.Key;
 import io.tidb.bigdata.cdc.Parser;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -43,7 +40,7 @@ public class CraftParser implements Parser<CraftParserState> {
     return INSTANCE;
   }
 
-  private static CraftParserState doParse(Codec codec) throws IOException {
+  private static CraftParserState doParse(Codec codec) {
     if (codec.decodeUvarint() != CURRENT_VERSION) {
       throw new RuntimeException("Illegal version, should be " + CURRENT_VERSION);
     }
@@ -62,7 +59,7 @@ public class CraftParser implements Parser<CraftParserState> {
   }
 
   private static Key[] parseKeys(Codec codec, int numOfKeys, int keyBytes,
-      CraftTermDictionary termDictionary) throws IOException {
+      CraftTermDictionary termDictionary) {
     Codec keysCodec = codec.truncateHeading(keyBytes);
     long[] ts = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
     long[] type = keysCodec.decodeUvarintChunk(numOfKeys);
@@ -76,7 +73,7 @@ public class CraftParser implements Parser<CraftParserState> {
     return keys;
   }
 
-  private static int[][] parseSizeTables(Codec codec) throws IOException {
+  private static int[][] parseSizeTables(Codec codec) {
     int size = codec.decodeUvarintReversedLength();
     Codec slice = codec.truncateTailing(size);
     ArrayList<int[]> tables = new ArrayList<>();
@@ -90,6 +87,6 @@ public class CraftParser implements Parser<CraftParserState> {
 
   @Override
   public CraftParserState parse(byte[] bits) {
-    return uncheckedRun(() -> doParse(new Codec(bits)));
+    return doParse(new Codec(bits));
   }
 }

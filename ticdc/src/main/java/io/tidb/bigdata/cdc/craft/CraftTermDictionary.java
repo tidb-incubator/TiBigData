@@ -1,6 +1,5 @@
 package io.tidb.bigdata.cdc.craft;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 public class CraftTermDictionary {
@@ -42,11 +41,11 @@ public class CraftTermDictionary {
     return terms;
   }
 
-  public String[] decodeChunk(Codec codec, int elements) throws IOException {
+  public String[] decodeChunk(Codec codec, int elements) {
     return doDecodeChunk(codec, elements, this::decode);
   }
 
-  public String[] decodeNullableChunk(Codec codec, int elements) throws IOException {
+  public String[] decodeNullableChunk(Codec codec, int elements) {
     return doDecodeChunk(codec, elements, this::decodeNullable);
   }
 }

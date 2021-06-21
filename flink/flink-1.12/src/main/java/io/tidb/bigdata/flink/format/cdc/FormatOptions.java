@@ -68,10 +68,8 @@ public class FormatOptions {
   private static Optional<Stream<String>> getOptionalStream(final ReadableConfig config,
       final ConfigOption<String> key) {
     return config.getOptional(key)
-        .map(l -> {
-          return Arrays.stream(l.split("[ ]*[,;|][ ]*"))
-              .filter(FormatOptions::isNotEmpty);
-        });
+        .map(l -> Arrays.stream(l.split("[ ]*[,;|][ ]*"))
+            .filter(FormatOptions::isNotEmpty));
   }
 
   static Set<String> getOptionalSet(final ReadableConfig config,

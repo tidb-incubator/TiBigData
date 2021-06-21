@@ -262,10 +262,6 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
       return context.getCatalogTable();
     }
 
-    private Context getContext() {
-      return context;
-    }
-
     private String getSourceType() {
       return source;
     }

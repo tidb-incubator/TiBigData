@@ -29,6 +29,7 @@ import io.tidb.bigdata.cdc.craft.CraftParserState;
 import io.tidb.bigdata.flink.format.cdc.RowColumnConverters.Converter;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,21 +112,15 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
       // skip not events that have ts older than specific
       return false;
     }
-    if (types != null && !types.contains(event.getType())) {
-      // skip not interested types
-      return false;
-    }
-    return true;
+    // skip not interested types
+    return types == null || types.contains(event.getType());
   }
 
   private boolean acceptSchemaAndTable(final Event event) {
     if (schemas != null && !schemas.contains(event.getSchema())) {
       return false;
     }
-    if (tables != null && !tables.contains(event.getTable())) {
-      return false;
-    }
-    return true;
+    return tables == null || tables.contains(event.getTable());
   }
 
   private Object[] convert(final Event event, final RowColumn[] columns) {
@@ -166,10 +161,14 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
         data = convert(event, value.getNewValue());
         break;
       case UPDATE:
-        kind = RowKind.UPDATE_BEFORE;
         data = convert(event, value.getOldValue());
-        kind2 = RowKind.UPDATE_AFTER;
         data2 = convert(event, value.getNewValue());
+        if (Arrays.deepEquals(data, data2)) {
+          // All selected data remain the same, skip this event
+          return;
+        }
+        kind = RowKind.UPDATE_BEFORE;
+        kind2 = RowKind.UPDATE_AFTER;
         break;
       default:
         if (!ignoreParseErrors) {
@@ -232,7 +231,7 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
   }
 
   @Override
-  public RowData deserialize(final byte[] message) throws IOException {
+  public RowData deserialize(final byte[] message) {
     throw new IllegalStateException("A collector is required for deserializing.");
   }
 
@@ -269,12 +268,10 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
   private static class ColumnContext implements Serializable {
 
     private final int index;
-    private final RowField field;
     private final Converter converter;
 
     private ColumnContext(final int index, final RowField field) {
       this.index = index;
-      this.field = field;
       this.converter = RowColumnConverters.createConverter(field.getType());
     }
   }

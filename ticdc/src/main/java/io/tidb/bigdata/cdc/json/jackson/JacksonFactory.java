@@ -22,16 +22,15 @@ import io.tidb.bigdata.cdc.json.JsonParser;
 
 public class JacksonFactory implements ParserFactory<JsonParser, JsonNode>, JsonParser {
 
-  private final Object mapper;
   private final JacksonContext context;
   private final Object reader;
   private final Object writer;
 
   private JacksonFactory(final JacksonContext context) {
     this.context = context;
-    this.mapper = context.newMapper();
-    this.reader = context.newReader(this.mapper);
-    this.writer = context.newWriter(this.mapper);
+    final Object mapper = context.newMapper();
+    this.reader = context.newReader(mapper);
+    this.writer = context.newWriter(mapper);
   }
 
   public static JacksonFactory create() {

@@ -19,7 +19,6 @@ package io.tidb.bigdata.cdc.craft;
 import io.tidb.bigdata.cdc.DdlValue;
 import io.tidb.bigdata.cdc.Event;
 import io.tidb.bigdata.cdc.Key;
-import io.tidb.bigdata.cdc.Misc;
 import io.tidb.bigdata.cdc.ResolvedValue;
 import io.tidb.bigdata.cdc.RowChangedValue;
 import io.tidb.bigdata.cdc.RowColumn;
@@ -27,7 +26,6 @@ import io.tidb.bigdata.cdc.RowDeletedValue;
 import io.tidb.bigdata.cdc.RowInsertedValue;
 import io.tidb.bigdata.cdc.RowUpdatedValue;
 import io.tidb.bigdata.cdc.Value;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -78,18 +76,18 @@ public class CraftParserState implements Iterator<Event> {
     if (event != null) {
       return event;
     }
-    event = events[index] = new Event(keys[index], Misc.uncheckedRun(this::decodeValue));
+    event = events[index] = new Event(keys[index], this.decodeValue());
     index++;
     return event;
   }
 
-  private DdlValue decodeDdl(Codec codec) throws IOException {
+  private DdlValue decodeDdl(Codec codec) {
     long type = codec.decodeUvarint();
     String query = codec.decodeString();
     return new DdlValue(query, (int) type);
   }
 
-  private Object decodeTiDBType(long type, long flags, byte[] value) throws IOException {
+  private Object decodeTiDBType(long type, long flags, byte[] value) {
     if (value == null) {
       return null;
     }
@@ -169,7 +167,7 @@ public class CraftParserState implements Iterator<Event> {
     }
   }
 
-  private RowColumn[] decodeColumnGroup(Codec codec) throws IOException {
+  private RowColumn[] decodeColumnGroup(Codec codec) {
     int numOfColumns = (int) codec.decodeUvarint();
     String[] names = termDictionary.decodeChunk(codec, numOfColumns);
     long[] types = codec.decodeUvarintChunk(numOfColumns);
@@ -186,7 +184,7 @@ public class CraftParserState implements Iterator<Event> {
     return columns;
   }
 
-  private RowChangedValue decodeRowChanged(Codec codec) throws IOException {
+  private RowChangedValue decodeRowChanged(Codec codec) {
     RowColumn[] oldColumns = null;
     RowColumn[] newColumns = null;
     int[] sizeTable = sizeTables[CraftParser.COLUMN_GROUP_SIZE_TABLE_START_INDEX + index];
@@ -218,7 +216,7 @@ public class CraftParserState implements Iterator<Event> {
     }
   }
 
-  private Value decodeValue() throws IOException {
+  private Value decodeValue() {
     int size = valueSizeTable[index];
     Key.Type type = keys[index].getType();
     switch (keys[index].getType()) {

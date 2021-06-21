@@ -54,13 +54,11 @@ public abstract class RowChangedValue implements Value {
           node.put("v", column.asInt());
           break;
         case BIGINT:
+        case YEAR:
           node.put("v", column.asBigInt());
           break;
         case MEDIUMINT:
           node.put("v", column.asMediumInt());
-          break;
-        case YEAR:
-          node.put("v", column.asBigInt());
           break;
         case FLOAT:
           node.put("v", column.asFloat());
@@ -69,6 +67,7 @@ public abstract class RowChangedValue implements Value {
           node.put("v", column.asDouble());
           break;
         case NULL:
+        case GEOMETRY:
           node.putNull("v");
           break;
         case TIMESTAMP:
@@ -137,9 +136,6 @@ public abstract class RowChangedValue implements Value {
         case BINARY:
           node.put("v", column.asBinary());
           break;
-        case GEOMETRY:
-          node.putNull("v");
-          break;
         default:
           throw new IllegalArgumentException("Unknown column type: " + column.getType());
       }
@@ -180,7 +176,7 @@ public abstract class RowChangedValue implements Value {
 
   @Override
   public int hashCode() {
-    return Objects.hash(getType(), getNewValue(), getOldValue());
+    return Objects.hash(getType(), Arrays.hashCode(getNewValue()), Arrays.hashCode(getOldValue()));
   }
 
   @Override
