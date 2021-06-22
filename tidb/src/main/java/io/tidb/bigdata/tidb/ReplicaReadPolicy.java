@@ -186,7 +186,9 @@ public abstract class ReplicaReadPolicy implements ReplicaSelector  {
   }
 
   protected boolean accept(Store store) {
-    return (matchLabels(store) || inWhitelist(store)) && notInBlacklist(store);
+    return !store.isLearner()
+        && (matchLabels(store) || inWhitelist(store))
+        && notInBlacklist(store);
   }
 
   public abstract ReplicaRead toReplicaRead();
