@@ -34,6 +34,7 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.function.BiConsumer;
 import junit.framework.TestCase;
 import org.junit.Assert;
@@ -42,23 +43,12 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class RowColumnTest extends TestCase {
 
-  private static final ExpectedColumnData[] expectedRowData = new ExpectedColumnData[]{
-      new ExpectedColumnData("c1", (byte) 1, Type.TINYINT, Byte.class, 0,
-          RowColumnTest::asSmallIntTest, RowColumnTest::asIntTest, RowColumnTest::asBigIntTest),
+  private static final Expect.ColumnData[] expectedRowData = new Expect.ColumnData[]{
+      new Expect.ColumnData("c1", (byte) 1, Type.TINYINT, Byte.class, 0,
+          Expect.ColumnData::asSmallIntTest, Expect.ColumnData::asIntTest,
+          Expect.ColumnData::asBigIntTest),
   };
   private byte[] value;
-
-  private static void asSmallIntTest(final RowColumn column, final Object expected) {
-    Assert.assertEquals(Type.SMALLINT.coerce(expected), column.asSmallInt());
-  }
-
-  private static void asIntTest(final RowColumn column, final Object expected) {
-    Assert.assertEquals(Type.INT.coerce(expected), column.asInt());
-  }
-
-  private static void asBigIntTest(final RowColumn column, final Object expected) {
-    Assert.assertEquals(Type.BIGINT.coerce(expected), column.asBigInt());
-  }
 
   private static byte[] encodeValue(final byte[] json) throws IOException {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -108,14 +98,14 @@ public class RowColumnTest extends TestCase {
     final byte[] decoded = "测试text".getBytes(StandardCharsets.UTF_8);
     return Arrays.stream(new Type[]{Type.BINARY, Type.VARBINARY,
         Type.BLOB, Type.TINYBLOB, Type.MEDIUMBLOB, Type.LONGBLOB})
-        .map(t -> new CoercionTest(encoded, decoded, t)).toArray(CoercionTest[]::new);
+        .map(t -> new CoercionTest(Base64.getDecoder().decode(encoded), decoded, t))
+        .toArray(CoercionTest[]::new);
   }
 
   private static CoercionTest[] createStringCoercionTests() {
     final String from = "test";
     final String to = "test";
-    return Arrays.stream(new Type[]{Type.CHAR, Type.VARCHAR, Type.TEXT,
-        Type.TINYTEXT, Type.MEDIUMTEXT, Type.LONGTEXT, Type.JSON})
+    return Arrays.stream(new Type[]{Type.VARCHAR, Type.JSON})
         .map(t -> new CoercionTest(from, to, t)).toArray(CoercionTest[]::new);
   }
 
@@ -154,33 +144,23 @@ public class RowColumnTest extends TestCase {
 
   @Override
   public void setUp() {
-    value = Misc.uncheckedRun(() -> encodeValue(getFileContent(getFile("row.json"))));
+    value = Misc.uncheckedRun(() -> encodeValue(getFileContent(getFile("json", "row.json", true))));
   }
 
   @Override
   public void tearDown() {
   }
 
-  private <T> void verifyColumn(final RowColumn column, final ExpectedColumnData expected) {
-    Assert.assertEquals(expected.name, column.getName());
-    Assert.assertEquals(expected.value, column.getValue());
-    Assert.assertEquals(expected.type, column.getType());
-    Assert.assertEquals(expected.javaType, column.getJavaType());
-    Assert.assertEquals(expected.flags, column.getFlags());
-    for (final BiConsumer<RowColumn, Object> asTest : expected.asTests) {
-      asTest.accept(column, expected.value);
-    }
-  }
-
   @Test
   public void testDecode() {
-    for (final JsonValueDecoder it = new JsonValueDecoder(value, ParserFactory.json().createParser());
+    for (final JsonValueDecoder it = new JsonValueDecoder(value,
+        ParserFactory.json().createParser());
         it.hasNext(); ) {
       final RowInsertedValue insert = (RowInsertedValue) it.next();
       Assert.assertEquals(insert.getNewValue().length, 27);
       final RowColumn[] columns = insert.getNewValue();
       for (int idx = 0, size = expectedRowData.length; idx < size; ++idx) {
-        verifyColumn(columns[idx], expectedRowData[idx]);
+        expectedRowData[idx].verify(columns[idx]);
       }
     }
   }
@@ -200,28 +180,6 @@ public class RowColumnTest extends TestCase {
     runCoercionTests(createFromStringCoercionTests());
   }
 
-  private static class ExpectedColumnData {
-
-    final String name;
-    final Object value;
-    final Type type;
-    final Class javaType;
-    final long flags;
-    final BiConsumer<RowColumn, Object>[] asTests;
-
-    @SuppressWarnings("unchecked")
-    private ExpectedColumnData(final String name, final Object value, final Type type,
-        final Class javaType, final long flags,
-        final BiConsumer<RowColumn, Object>... asTests) {
-      this.name = name;
-      this.value = value;
-      this.type = type;
-      this.javaType = javaType;
-      this.flags = flags;
-      this.asTests = asTests;
-    }
-  }
-
   private static class CoercionTest {
 
     final Object from;
@@ -239,15 +197,6 @@ public class RowColumnTest extends TestCase {
       this.to = to;
       this.type = type;
       this.verify = verify;
-    }
-
-    private static Object[] toObjectArray(final Object from) {
-      final int length = Array.getLength(from);
-      final Object[] target = new Object[length];
-      for (int idx = 0; idx < length; ++idx) {
-        target[idx] = Array.get(from, idx);
-      }
-      return target;
     }
 
     private static void verify(final Object o1, final Object o2) {

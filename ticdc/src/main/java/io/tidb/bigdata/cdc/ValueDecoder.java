@@ -16,6 +16,10 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.craft.CraftParser;
+import io.tidb.bigdata.cdc.craft.CraftParserState;
+import io.tidb.bigdata.cdc.craft.CraftValueDecoder;
+import io.tidb.bigdata.cdc.json.JsonNode;
 import io.tidb.bigdata.cdc.json.JsonParser;
 import io.tidb.bigdata.cdc.json.JsonValueDecoder;
 import java.util.Iterator;
@@ -25,8 +29,14 @@ import java.util.Iterator;
  */
 public interface ValueDecoder extends Iterator<Value> {
 
-  static ValueDecoder create(final byte[] value, final JsonParser parser) {
-    return new JsonValueDecoder(value, parser);
+  static ValueDecoder json(final byte[] value,
+      final ParserFactory<JsonParser, JsonNode> parserFactory) {
+    return new JsonValueDecoder(value, parserFactory.createParser());
+  }
+
+  static ValueDecoder craft(final byte[] payload,
+      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+    return new CraftValueDecoder(payload, parserFactory.createParser());
   }
 
   Value next(Key key);

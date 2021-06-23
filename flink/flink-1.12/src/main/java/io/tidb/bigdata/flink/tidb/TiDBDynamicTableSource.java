@@ -22,6 +22,7 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.Expressions;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +31,7 @@ import java.util.stream.Collectors;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.connector.source.DynamicTableSource;
-import org.apache.flink.table.connector.source.InputFormatProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown;
-import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
-import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.expressions.CallExpression;
 import org.apache.flink.table.expressions.FieldReferenceExpression;
@@ -47,9 +44,8 @@ import org.tikv.common.expression.visitor.SupportedExpressionValidator;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.types.DataType;
 
-public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implements
-    SupportsLimitPushDown, SupportsProjectionPushDown, SupportsFilterPushDown {
-
+public abstract class TiDBDynamicTableSource
+    extends TiDBBaseDynamicTableSource implements SupportsFilterPushDown {
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
   protected static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
@@ -62,58 +58,32 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
       "like"
   );
 
-  protected long limit = Long.MAX_VALUE;
-
-  protected int[][] projectedFields;
-
   protected Expression expression;
 
   protected Map<String, DataType> nameTypeMap;
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
+  public TiDBDynamicTableSource(
+      TableSchema tableSchema,
+      Map<String, String> properties,
       JdbcLookupOptions lookupOptions) {
     super(tableSchema, properties, lookupOptions);
   }
 
-  @Override
-  public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-    TypeInformation<RowData> typeInformation = runtimeProviderContext
+  protected TiDBRowDataInputFormat getInputFormat(ScanContext context, int numMetaFields) {
+    TypeInformation<RowData> typeInformation = context
         .createTypeInformation(tableSchema.toRowDataType());
-    TiDBRowDataInputFormat tidbRowDataInputFormat = new TiDBRowDataInputFormat(properties,
-        tableSchema.getFieldNames(), tableSchema.getFieldDataTypes(), typeInformation);
-    tidbRowDataInputFormat.setLimit(limit);
-    if (projectedFields != null) {
-      tidbRowDataInputFormat.setProjectedFields(projectedFields);
+    String[] fieldNames = tableSchema.getFieldNames();
+    org.apache.flink.table.types.DataType[] fieldTypes = tableSchema.getFieldDataTypes();
+    if (numMetaFields > 0) {
+      fieldNames = Arrays.copyOf(fieldNames, fieldNames.length - numMetaFields);
+      fieldTypes = Arrays.copyOf(fieldTypes, fieldTypes.length - numMetaFields);
     }
+    TiDBRowDataInputFormat tidbRowDataInputFormat =
+        new TiDBRowDataInputFormat(properties, fieldNames, fieldTypes, typeInformation);
     if (expression != null) {
       tidbRowDataInputFormat.setExpression(expression);
     }
-    return InputFormatProvider.of(tidbRowDataInputFormat);
-  }
-
-  @Override
-  public DynamicTableSource copy() {
-    TiDBDynamicTableSource tableSource = new TiDBDynamicTableSource(tableSchema, properties,
-        lookupOptions);
-    tableSource.limit = this.limit;
-    tableSource.projectedFields = this.projectedFields;
-    tableSource.expression = this.expression;
-    return tableSource;
-  }
-
-  @Override
-  public void applyLimit(long limit) {
-    this.limit = limit;
-  }
-
-  @Override
-  public boolean supportsNestedProjection() {
-    return false;
-  }
-
-  @Override
-  public void applyProjection(int[][] projectedFields) {
-    this.projectedFields = projectedFields;
+    return tidbRowDataInputFormat;
   }
 
   @Override
@@ -214,5 +184,9 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource implement
   protected Expression alwaysTrueIfNotSupported(Expression expression) {
     return SupportedExpressionValidator.isSupportedExpression(expression, null)
         ? expression : Expressions.alwaysTrue();
+  }
+
+  protected void copyTo(TiDBDynamicTableSource other) {
+    other.expression = this.expression;
   }
 }

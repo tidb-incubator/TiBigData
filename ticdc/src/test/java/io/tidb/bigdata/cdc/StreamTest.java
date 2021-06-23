@@ -30,7 +30,7 @@ public class StreamTest {
   private byte[][] loadFiles(final String prefix, final int number) throws IOException {
     final byte[][] files = new byte[number][];
     for (int idx = 0; idx < number; ++idx) {
-      files[idx] = getFileContent(getFile(prefix + idx));
+      files[idx] = getFileContent(getFile("json", prefix + idx, true));
     }
     return files;
   }

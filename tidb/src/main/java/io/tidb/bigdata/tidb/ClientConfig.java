@@ -52,6 +52,7 @@ public final class ClientConfig {
   public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
 
   public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
+  public static final String SNAPSHOT_VERSION = "tidb.snapshot_version";
 
   private String pdAddresses;
 

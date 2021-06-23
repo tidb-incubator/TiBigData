@@ -16,6 +16,9 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.craft.CraftEventChunkDecoder;
+import io.tidb.bigdata.cdc.craft.CraftParser;
+import io.tidb.bigdata.cdc.craft.CraftParserState;
 import io.tidb.bigdata.cdc.json.JsonEventChunkDecoder;
 import io.tidb.bigdata.cdc.json.JsonParser;
 import java.util.Iterator;
@@ -24,5 +27,10 @@ public interface EventChunkDecoder extends Iterable<Event[]>, Iterator<Event[]> 
 
   static EventChunkDecoder create(final byte[] key, final byte[] value, final JsonParser parser) {
     return new JsonEventChunkDecoder(key, value, parser);
+  }
+
+  static EventChunkDecoder create(final byte[] value,
+      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+    return new CraftEventChunkDecoder(value, parserFactory.createParser());
   }
 }

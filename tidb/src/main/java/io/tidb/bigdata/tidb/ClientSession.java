@@ -350,6 +350,10 @@ public final class ClientSession implements AutoCloseable {
     dataSource.close();
   }
 
+  public TiTimestamp getSnapshotVersion() {
+    return session.getTimestamp();
+  }
+
   public static ClientSession createWithSingleConnection(ClientConfig config) {
     ClientConfig clientConfig = new ClientConfig(config);
     clientConfig.setMaximumPoolSize(1);

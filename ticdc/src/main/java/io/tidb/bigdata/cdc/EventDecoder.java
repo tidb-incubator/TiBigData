@@ -16,13 +16,23 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.craft.CraftEventDecoder;
+import io.tidb.bigdata.cdc.craft.CraftParser;
+import io.tidb.bigdata.cdc.craft.CraftParserState;
 import io.tidb.bigdata.cdc.json.JsonEventDecoder;
+import io.tidb.bigdata.cdc.json.JsonNode;
 import io.tidb.bigdata.cdc.json.JsonParser;
 import java.util.Iterator;
 
 public interface EventDecoder extends Iterable<Event>, Iterator<Event> {
 
-  static EventDecoder create(final byte[] key, final byte[] value, final JsonParser parser) {
-    return new JsonEventDecoder(key, value, parser);
+  static EventDecoder json(final byte[] key, final byte[] value,
+      final ParserFactory<JsonParser, JsonNode> parserFactory) {
+    return new JsonEventDecoder(key, value, parserFactory.createParser());
+  }
+
+  static EventDecoder craft(final byte[] value,
+      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+    return new CraftEventDecoder(value, parserFactory.createParser());
   }
 }

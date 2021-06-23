@@ -16,9 +16,11 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.craft.CraftParser;
+import io.tidb.bigdata.cdc.craft.CraftParserState;
 import io.tidb.bigdata.cdc.json.JsonNode;
 import io.tidb.bigdata.cdc.json.JsonParser;
-import io.tidb.bigdata.cdc.json.jackson.JacksonParserFactory;
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.io.Serializable;
 
 /*
@@ -26,13 +28,17 @@ import java.io.Serializable;
  */
 public interface ParserFactory<P extends Parser<T>, T> extends Serializable {
 
-  P createParser();
-
   static ParserFactory<JsonParser, JsonNode> json() {
-    return JacksonParserFactory.create();
+    return JacksonFactory.create();
   }
 
   static ParserFactory<JsonParser, JsonNode> json(final String shadePrefix) {
-    return JacksonParserFactory.create(shadePrefix);
+    return JacksonFactory.create(shadePrefix);
   }
+
+  static ParserFactory<CraftParser, CraftParserState> craft() {
+    return CraftParser::getInstance;
+  }
+
+  P createParser();
 }
