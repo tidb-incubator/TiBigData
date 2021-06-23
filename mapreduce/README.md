@@ -6,7 +6,7 @@
 git clone git@github.com:pingcap-incubator/TiBigData.git
 cd TiBigData
 mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base
-cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar ${HOME}/lib
+cp  mapreduce/mapreduce-base/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar ${HOME}/lib
 ```
 
 ## Version
@@ -16,7 +16,7 @@ cp mapreduce/mapreduce-2.0/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.j
 ## Demo
 
 ```bash
-hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.examples.TiDBMapreduceDemo  \
+hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo  \
  -du  ${DATABASE_URL} \
  -u   ${USERNAME} \
  -p   ${PASSWORD}  \
@@ -118,15 +118,14 @@ INSERT INTO test.test_table VALUES
 
 ```bash
 hadoop jar mapreduce-tidb-connector-base-0.0.3-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo \
- -du "jdbc:mysql://127.0.0.1:4005/pingcap" \
- -f  filed1 \
- -f  filed2 \
- -f  filed3  \
- -f  filed4 \ 
+ -du "jdbc:mysql://127.0.0.1:4005/test" \
+ -f c1 -f c2 -f c3 -f c4 -f c5 -f c6 -f c7 -f c8 -f c9 -f c10 -f c11 \
+ -f c12 -f c13 -f c14 -f c15 -f c16 -f c17 -f c18 -f c19 -f c20 -f c21 \
+ -f c22 -f c23 -f c24 -f c25 -f c26 -f c27 -f c28 -f c29 \
  -u  root \
  -p  "" \
- -dn pingcap \
- -t  tablename \
+ -dn test \
+ -t  test_table \
  -ts "2021-05-08T15:23:38+08:00[Asia/Shanghai]" \
  -l  3
 
@@ -137,10 +136,10 @@ Mapper output can be found in console, like:
 
 ```bash
 job attempt ID : attempt_local827968733_0001_m_000003_0
-       FIELDNAME      l_orderkey       l_partkey       l_suppkey    l_linenumber
-               0               1          155190            7706               1
-               1               1           67310            7311               2
-               2               1           63700            3701               3
+       FIELDNAME      c1              c2              c3              c4        
+               0       1          155190            7706               1
+               1       1           67310            7311               2
+               2       1           63700            3701               3
 ```
 
 ## DataTypes
