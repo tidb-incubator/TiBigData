@@ -28,6 +28,7 @@ import io.tidb.bigdata.tidb.SplitInternal;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.tikv.common.meta.TiTimestamp;
 
 public final class TiDBSplit
     implements ConnectorSplit {
@@ -36,6 +37,8 @@ public final class TiDBSplit
   private TiDBTableHandle table;
   private String startKey;
   private String endKey;
+  private long physicalTimestamp;
+  private long logicalTimestamp;
   private Optional<String> additionalPredicate;
 
   @JsonCreator
@@ -43,16 +46,20 @@ public final class TiDBSplit
       @JsonProperty("table") TiDBTableHandle table,
       @JsonProperty("startKey") String startKey,
       @JsonProperty("endKey") String endKey,
+      @JsonProperty("physicalTimestamp") long physicalTimestamp,
+      @JsonProperty("logicalTimestamp") long logicalTimestamp,
       @JsonProperty("additionalPredicate") Optional<String> additionalPredicate) {
     this.table = requireNonNull(table, "table is null");
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
+    this.physicalTimestamp = physicalTimestamp;
+    this.logicalTimestamp = logicalTimestamp;
     this.additionalPredicate = requireNonNull(additionalPredicate, "additionalPredicate is null");
   }
 
   TiDBSplit(SplitInternal from, Optional<String> additionalPredicate) {
     this(new TiDBTableHandle(from.getTable()), from.getStartKey(), from.getEndKey(),
-        additionalPredicate);
+        from.getTimestamp().getPhysical(), from.getTimestamp().getLogical(), additionalPredicate);
   }
 
   @Override
@@ -86,12 +93,23 @@ public final class TiDBSplit
   }
 
   @JsonProperty
+  public long getPhysicalTimestamp() {
+    return physicalTimestamp;
+  }
+
+  @JsonProperty
+  public long getLogicalTimestamp() {
+    return logicalTimestamp;
+  }
+
+  @JsonProperty
   public Optional<String> getAdditionalPredicate() {
     return additionalPredicate;
   }
 
   SplitInternal toInternal() {
-    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey());
+    TiTimestamp tiTimestamp = new TiTimestamp(physicalTimestamp, logicalTimestamp);
+    return new SplitInternal(getTable().getInternal(), getStartKey(), getEndKey(), tiTimestamp);
   }
 
   @Override

@@ -340,6 +340,10 @@ public final class ClientSession implements AutoCloseable {
         .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
   }
 
+  public TiTimestamp getTimestamp() {
+    return session.getTimestamp();
+  }
+
   @Override
   public synchronized void close() throws Exception {
     session.close();
