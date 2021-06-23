@@ -56,6 +56,7 @@ import org.tikv.common.meta.TiIndexColumn;
 import org.tikv.common.meta.TiIndexInfo;
 import org.tikv.common.meta.TiPartitionDef;
 import org.tikv.common.meta.TiTableInfo;
+import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.operation.iterator.CoprocessorIterator;
 import org.tikv.common.row.Row;
 import org.tikv.common.util.KeyRangeUtils;
@@ -346,6 +347,10 @@ public final class ClientSession implements AutoCloseable {
         .map(TiIndexInfo::getIndexColumns)
         .flatMap(Collection::stream).map(TiIndexColumn::getName)
         .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
+  }
+
+  public TiTimestamp getTimestamp() {
+    return session.getTimestamp();
   }
 
   @Override

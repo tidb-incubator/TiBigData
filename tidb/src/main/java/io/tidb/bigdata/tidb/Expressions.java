@@ -159,9 +159,8 @@ public final class Expressions {
 
   public static Expression in(Collection<Expression> expressions) {
     checkState(expressions.size() > 1);
-    Stream<Expression> stream = expressions.stream();
-    ColumnRef column = (ColumnRef) stream.findFirst().get();
-    return or(stream.skip(1).map(expression -> equal(column, expression)));
+    ColumnRef column = (ColumnRef) expressions.stream().findFirst().get();
+    return or(expressions.stream().skip(1).map(expression -> equal(column, expression)));
   }
 
   public static Expression xor(Expression lhs, Expression rhs) {
