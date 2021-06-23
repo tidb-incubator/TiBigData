@@ -62,7 +62,6 @@ public class JsonEventChunkDecoder implements EventChunkDecoder {
     return iterator.next();
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public Iterator<Event[]> iterator() {
     return Collections.singletonList(events).iterator();

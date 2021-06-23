@@ -54,7 +54,6 @@ public class JsonKeyDecoder implements KeyDecoder {
     return new Key(
         node.getText("scm", null),
         node.getText("tbl", null),
-        node.getInt("rid", 0),
         node.getInt("ptn", 0),
         node.mustGetInt("t"),
         node.mustGetLong("ts"));

@@ -18,12 +18,18 @@
   </properties>
 
   <dependencies>
-      <!-- TiDB commons -->
-      <dependency>
-        <groupId>${project.groupId}</groupId>
-        <artifactId>bigdata-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
+    <!-- TiDB commons -->
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bigdata-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <!-- TiCDC parser -->
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>ticdc</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <!-- jackson -->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>

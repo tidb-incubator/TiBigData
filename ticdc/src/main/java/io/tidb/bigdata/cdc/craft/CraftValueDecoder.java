@@ -14,26 +14,32 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.cdc.json.jackson;
+package io.tidb.bigdata.cdc.craft;
 
-import io.tidb.bigdata.cdc.json.JsonNode;
-import io.tidb.bigdata.cdc.json.JsonParser;
+import io.tidb.bigdata.cdc.Key;
+import io.tidb.bigdata.cdc.Value;
+import io.tidb.bigdata.cdc.ValueDecoder;
 
-public class JacksonParser implements JsonParser {
+public class CraftValueDecoder implements ValueDecoder {
 
-  private final JacksonContext context;
-  private final Object reader;
+  private final CraftEventDecoder decoder;
 
-  protected JacksonParser(final JacksonContext context, final Object reader) {
-    this.context = context;
-    this.reader = reader;
+  public CraftValueDecoder(byte[] value, CraftParser parser) {
+    decoder = new CraftEventDecoder(value, parser);
   }
 
   @Override
-  public JsonNode parse(final byte[] input) {
-    if (input.length == 0) {
-      return JacksonMissingNode.getInstance();
-    }
-    return new JacksonJsonNode(context, context.readTree(reader, input));
+  public boolean hasNext() {
+    return decoder.hasNext();
+  }
+
+  @Override
+  public Value next() {
+    return decoder.next().getValue();
+  }
+
+  @Override
+  public Value next(Key key) {
+    return next();
   }
 }

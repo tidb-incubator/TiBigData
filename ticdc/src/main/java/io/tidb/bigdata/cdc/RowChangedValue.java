@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonObjectNode;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,6 +32,115 @@ public abstract class RowChangedValue implements Value {
   protected RowChangedValue(final RowColumn[] oldValue, final RowColumn[] newValue) {
     this.oldValue = oldValue;
     this.newValue = newValue;
+  }
+
+  protected static JacksonObjectNode toJson(RowColumn[] columns, JacksonObjectNode object) {
+    for (RowColumn column : columns) {
+      JacksonObjectNode node = object.putObject(column.getName());
+      node.put("f", column.getFlags());
+      node.put("h", column.isWhereHandle());
+      node.put("t", column.getType().code());
+      switch (column.getType()) {
+        case BOOL:
+          node.put("v", column.asBoolean());
+          break;
+        case TINYINT:
+          node.put("v", column.asTinyInt());
+          break;
+        case SMALLINT:
+          node.put("v", column.asSmallInt());
+          break;
+        case INT:
+          node.put("v", column.asInt());
+          break;
+        case BIGINT:
+        case YEAR:
+          node.put("v", column.asBigInt());
+          break;
+        case MEDIUMINT:
+          node.put("v", column.asMediumInt());
+          break;
+        case FLOAT:
+          node.put("v", column.asFloat());
+          break;
+        case DOUBLE:
+          node.put("v", column.asDouble());
+          break;
+        case NULL:
+        case GEOMETRY:
+          node.putNull("v");
+          break;
+        case TIMESTAMP:
+          node.put("v", column.asText());
+          break;
+        case DATE:
+          node.put("v", column.asText());
+          break;
+        case TIME:
+          node.put("v", column.asText());
+          break;
+        case DATETIME:
+          node.put("v", column.asText());
+          break;
+        case NEWDATE:
+          node.put("v", column.asText());
+          break;
+        case BIT:
+          node.put("v", column.asBit());
+          break;
+        case DECIMAL:
+          node.put("v", column.asDecimal());
+          break;
+        case ENUM:
+          node.put("v", column.asEnum());
+          break;
+        case SET:
+          node.put("v", column.asSet());
+          break;
+        case JSON:
+          node.put("v", column.asJson());
+          break;
+        case VARCHAR:
+          node.put("v", column.asVarchar());
+          break;
+        case TINYTEXT:
+          node.put("v", column.asTinyText());
+          break;
+        case MEDIUMTEXT:
+          node.put("v", column.asMediumText());
+          break;
+        case LONGTEXT:
+          node.put("v", column.asLongText());
+          break;
+        case TEXT:
+          node.put("v", column.asText());
+          break;
+        case CHAR:
+          node.put("v", column.asChar());
+          break;
+        case TINYBLOB:
+          node.put("v", column.asTinyBlob());
+          break;
+        case MEDIUMBLOB:
+          node.put("v", column.asMediumBlob());
+          break;
+        case LONGBLOB:
+          node.put("v", column.asLongBlob());
+          break;
+        case BLOB:
+          node.put("v", column.asBlob());
+          break;
+        case VARBINARY:
+          node.put("v", column.asVarbinary());
+          break;
+        case BINARY:
+          node.put("v", column.asBinary());
+          break;
+        default:
+          throw new IllegalArgumentException("Unknown column type: " + column.getType());
+      }
+    }
+    return object;
   }
 
   public abstract Type getType();
@@ -66,7 +176,7 @@ public abstract class RowChangedValue implements Value {
 
   @Override
   public int hashCode() {
-    return Objects.hash(getType(), getNewValue(), getOldValue());
+    return Objects.hash(getType(), Arrays.hashCode(getNewValue()), Arrays.hashCode(getOldValue()));
   }
 
   @Override

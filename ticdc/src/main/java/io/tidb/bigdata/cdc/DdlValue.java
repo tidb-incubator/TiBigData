@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -69,6 +70,12 @@ public final class DdlValue implements Value {
     return Optional.of(this);
   }
 
+  @Override
+  public String toJson(JacksonFactory factory) {
+    return factory.toJson(
+        factory.createObject().put("q", query).put("t", type.code()));
+  }
+
   public enum Type {
     CREATE_SCHEMA(1),
     DROP_SCHEMA(2),
@@ -111,11 +118,11 @@ public final class DdlValue implements Value {
 
     static {
       for (final Type t : Type.values()) {
-        if (byId.containsKey(t.getCode())) {
+        if (byId.containsKey(t.code())) {
           // we use the first definition for those types sharing the same code
           continue;
         }
-        byId.put(t.getCode(), t);
+        byId.put(t.code(), t);
       }
     }
 
@@ -133,7 +140,7 @@ public final class DdlValue implements Value {
       return type;
     }
 
-    private int getCode() {
+    public int code() {
       return code;
     }
   }
