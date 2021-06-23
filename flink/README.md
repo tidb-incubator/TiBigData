@@ -90,7 +90,10 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | tidb.maximum.pool.size         | 10            | Connection pool size.                                        |
 | tidb.minimum.idle.size         | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode                | append        | TiDB sink write mode: `upsert` or `append`. |
-| tidb.replica-read              | false         | Read data from follower.                                     |
+| tidb.replica-read              | leader / follower / leader_and_follower | Read data from specified role. |
+| tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
+| tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
+| tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
 | tidb.database.name             | null          | Database name. It is required for table factory, no need for catalog. |
 | tidb.table.name                | null          | Table name. It is required for table factory, no need for catalog. |
 | timestamp-format.${columnName} | null          | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog. |
@@ -99,7 +102,7 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | sink.max-retries               | 3             | The max retry times if writing records to database failed.   |
 | tidb.filter-push-down          | false         | Support filter push down. It is only available for version 1.12. |
 | tidb.snapshot_timestamp        | null          | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
-
+| tidb.dns.search | null | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN. |
 
 TiDB Flink sink supports all sink properties of  [`flink-connector-jdbc`](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connectors/jdbc.html), because it is implemented by `JdbcDynamicTableSink`.
 
