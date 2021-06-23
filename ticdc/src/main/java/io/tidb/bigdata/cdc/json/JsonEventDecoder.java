@@ -45,7 +45,6 @@ public class JsonEventDecoder implements EventDecoder {
   }
 
   @Override
-  @SuppressWarnings("NullableProblems")
   public Iterator<Event> iterator() {
     return Arrays.stream(events).iterator();
   }

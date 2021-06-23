@@ -16,6 +16,8 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
+import io.tidb.bigdata.cdc.json.jackson.JacksonObjectNode;
 import java.util.Optional;
 
 /*
@@ -44,5 +46,12 @@ public final class RowDeletedValue extends RowChangedValue {
   @Override
   public Optional<RowInsertedValue> asInserted() {
     return Optional.empty();
+  }
+
+  @Override
+  public String toJson(JacksonFactory factory) {
+    JacksonObjectNode node = factory.createObject();
+    toJson(getOldValue(), node.putObject("d"));
+    return factory.toJson(node);
   }
 }

@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.StringUtils;
@@ -111,6 +112,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
     this.typeInformation = typeInformation;
     List<ColumnHandleInternal> columns;
     Map<String, Integer> nameAndIndex = new HashMap<>();
+    final TiTimestamp splitSnapshotVersion;
     // get split
     try (ClientSession splitSession = ClientSession
         .createWithSingleConnection(new ClientConfig(properties))) {
@@ -124,6 +126,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
       IntStream.range(0, columns.size())
           .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
+      splitSnapshotVersion = splitSession.getSnapshotVersion();
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -135,11 +138,27 @@ public abstract class TiDBBaseRowDataInputFormat extends
     columnHandleInternals = Arrays.stream(this.fieldNames)
         .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
     projectedFieldIndexes = IntStream.range(0, this.fieldNames.length).toArray();
-    timestamp = Optional
+    timestamp = getOptionalVersion()
+        .orElseGet(() -> getOptionalTimestamp().orElse(splitSnapshotVersion));
+  }
+
+  private Optional<TiTimestamp> getOptionalTimestamp() {
+    return Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNoneEmpty)
-        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0))
-        .orElse(null);
+        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
+  }
+
+  private Optional<TiTimestamp> getOptionalVersion() {
+    return Optional
+        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+        .filter(StringUtils::isNoneEmpty)
+        .map(Long::parseUnsignedLong)
+        .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
+  }
+
+  public long getSnapshotVersion() {
+    return timestamp.getVersion();
   }
 
   @Override
@@ -214,9 +233,9 @@ public abstract class TiDBBaseRowDataInputFormat extends
     return recordCount >= limit || !cursor.advanceNextPosition();
   }
 
-  @Override
-  public RowData nextRecord(RowData rowData) throws IOException {
-    GenericRowData row = new GenericRowData(projectedFieldIndexes.length);
+  public GenericRowData nextRecordWithFactory(Function<Integer, GenericRowData> rowDataFactory)
+      throws IOException {
+    GenericRowData row = rowDataFactory.apply(projectedFieldIndexes.length);
     for (int i = 0; i < projectedFieldIndexes.length; i++) {
       int projectedFieldIndex = projectedFieldIndexes[i];
       DataType fieldType = fieldTypes[projectedFieldIndex];
@@ -229,6 +248,11 @@ public abstract class TiDBBaseRowDataInputFormat extends
     }
     recordCount++;
     return row;
+  }
+
+  @Override
+  public RowData nextRecord(RowData rowData) throws IOException {
+    return nextRecordWithFactory(GenericRowData::new);
   }
 
   @Override
@@ -258,5 +282,4 @@ public abstract class TiDBBaseRowDataInputFormat extends
   public void setExpression(Expression expression) {
     this.expression = expression;
   }
-
 }

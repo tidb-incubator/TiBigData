@@ -20,46 +20,108 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.Arrays;
 import org.junit.Assert;
 
 public class FileLoader {
 
-  protected static File getFile(final String path) {
-    final URL url = FileLoader.class.getClassLoader().getResource(path);
-    Assert.assertNotNull(url);
-    return new File(url.getFile());
+  protected static FileWithFormat getFile(final String format, final String path,
+      boolean required) {
+    final URL url = FileLoader.class.getClassLoader().getResource(format + "/" + path);
+    if (required) {
+      Assert.assertNotNull(url);
+    }
+    if (url == null) {
+      return null;
+    }
+    return new FileWithFormat(format, new File(url.getFile()));
   }
 
-  protected static File[] listFiles(final String path) {
-    return getFile(path).listFiles();
+  protected static File[] listFiles(final String format, final String path) {
+    return getFile(format, path, true).listFiles();
   }
 
-  protected static byte[] getFileContent(final File file) throws IOException {
-    return Files.readAllBytes(file.toPath());
+  protected static FileWithFormat[] listFilesWithFormat(final String format, final String path) {
+    return getFile(format, path, true).listFilesWithFormat();
   }
 
-  protected static EventDecoder decode(final String fileName) throws IOException {
-    return decode(getFile("key/" + fileName), getFile("value/" + fileName));
+  protected static byte[] getFileContent(final FileWithFormat file) throws IOException {
+    return Files.readAllBytes(file.file.toPath());
   }
 
-  protected static EventDecoder decode(final File key, final File value) throws IOException {
-    return EventDecoder
-        .create(getFileContent(key), getFileContent(value), ParserFactory.json().createParser());
+  protected static EventDecoder decode(final String format, final String fileName)
+      throws IOException {
+    return decode(getFile(format, "key/" + fileName, false),
+        getFile(format, "value/" + fileName, true));
   }
 
-  protected static KeyDecoder decodeKey(final String key) throws IOException {
-    return decodeKey(getFile("key/" + key));
+  protected static EventDecoder decode(final FileWithFormat key, final FileWithFormat value)
+      throws IOException {
+    switch (value.format) {
+      case "json":
+        return EventDecoder
+            .json(getFileContent(key), getFileContent(value), ParserFactory.json());
+      case "craft":
+        return EventDecoder
+            .craft(getFileContent(value), ParserFactory.craft());
+      default:
+        throw new RuntimeException("Unknown format" + key.format);
+    }
   }
 
-  protected static KeyDecoder decodeKey(final File key) throws IOException {
-    return KeyDecoder.create(getFileContent(key), ParserFactory.json().createParser());
+  protected static EventDecoder decode(final String format, final File key, final File value)
+      throws IOException {
+    return decode(new FileWithFormat(format, key), new FileWithFormat(format, value));
   }
 
-  protected static ValueDecoder decodeValue(final String value) throws IOException {
-    return decodeValue(getFile("value/" + value));
+  protected static KeyDecoder decodeKey(final String format, final String key) throws IOException {
+    return decodeKey(getFile(format, "key/" + key, true));
   }
 
-  protected static ValueDecoder decodeValue(final File value) throws IOException {
-    return ValueDecoder.create(getFileContent(value), ParserFactory.json().createParser());
+  protected static KeyDecoder decodeKey(final FileWithFormat key) throws IOException {
+    switch (key.format) {
+      case "json":
+        return KeyDecoder.json(getFileContent(key), ParserFactory.json());
+      case "craft":
+        return KeyDecoder.craft(getFileContent(key), ParserFactory.craft());
+      default:
+        throw new RuntimeException("Not supported key decoder format: " + key.format);
+    }
+  }
+
+  protected static ValueDecoder decodeValue(final String format, final String value)
+      throws IOException {
+    return decodeValue(getFile(format, "value/" + value, true));
+  }
+
+  protected static ValueDecoder decodeValue(final FileWithFormat value) throws IOException {
+    switch (value.format) {
+      case "json":
+        return ValueDecoder.json(getFileContent(value), ParserFactory.json());
+      case "craft":
+        return ValueDecoder.craft(getFileContent(value), ParserFactory.craft());
+      default:
+        throw new RuntimeException("Not supported value decoder format: " + value.format);
+    }
+  }
+
+  private static class FileWithFormat {
+
+    private File file;
+    private String format;
+
+    private FileWithFormat(String format, File file) {
+      this.format = format;
+      this.file = file;
+    }
+
+    private FileWithFormat[] listFilesWithFormat() {
+      return Arrays.stream(listFiles()).map(f -> new FileWithFormat(format, f))
+          .toArray(FileWithFormat[]::new);
+    }
+
+    private File[] listFiles() {
+      return file.listFiles();
+    }
   }
 }

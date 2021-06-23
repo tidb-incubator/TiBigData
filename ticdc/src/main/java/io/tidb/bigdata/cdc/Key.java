@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.Objects;
 
 /*
@@ -26,37 +27,34 @@ public final class Key {
   private final long ts;
   private final String schema;
   private final String table;
-  private final long rowId;
   private final long partition;
   private final Type type;
 
-  public Key(final String schema, final String table, final long rowId, final long partition,
+  public Key(final String schema, final String table, final long partition,
       final int type, final long ts) {
     this.schema = schema;
     this.table = table;
-    this.rowId = rowId;
     this.partition = partition;
     this.ts = ts;
-    switch (type) {
-      case 1:
-        this.type = Type.ROW_CHANGED;
-        break;
-      case 2:
-        this.type = Type.DDL;
-        break;
-      case 3:
-        this.type = Type.RESOLVED;
-        break;
-      default:
-        throw new RuntimeException("Invalid event type: " + type);
-    }
+    this.type = Type.of(type);
   }
 
-  public long getTimestamp() {
+  public static long fromTimestamp(long ms) {
+    if (ms > 0) {
+      return ms << 18;
+    }
+    return -1L;
+  }
+
+  public static long toTimestamp(long ts) {
     if (ts > 0) {
       return ts >> 18;
     }
     return -1L;
+  }
+
+  public long getTimestamp() {
+    return toTimestamp(ts);
   }
 
   public long getTs() {
@@ -79,8 +77,10 @@ public final class Key {
     return partition;
   }
 
+  // RowId was deprecated in TiCDC protocol, therefore we always return -1 for this field
+  @Deprecated
   public long getRowId() {
-    return rowId;
+    return -1;
   }
 
   @Override
@@ -96,19 +96,54 @@ public final class Key {
     return Objects.equals(ts, other.ts)
         && Objects.equals(schema, other.schema)
         && Objects.equals(table, other.table)
-        && Objects.equals(rowId, other.rowId)
         && Objects.equals(partition, other.partition)
         && Objects.equals(type, other.type);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ts, schema, table, rowId, partition, type);
+    return Objects.hash(ts, schema, table, partition, type);
+  }
+
+  public String toJson() {
+    return toJson(Event.defaultJacksonFactory);
+  }
+
+  public String toJson(JacksonFactory factory) {
+    return factory.toJson(factory.createObject()
+        .put("ts", getTs())
+        .put("scm", getSchema())
+        .put("tbl", getTable())
+        .put("t", getType().code())
+    );
   }
 
   public enum Type {
-    ROW_CHANGED,
-    DDL,
-    RESOLVED
+    ROW_CHANGED(1),
+    DDL(2),
+    RESOLVED(3);
+
+    private final int code;
+
+    Type(int code) {
+      this.code = code;
+    }
+
+    public static Type of(final int code) {
+      switch (code) {
+        case 1:
+          return ROW_CHANGED;
+        case 2:
+          return DDL;
+        case 3:
+          return RESOLVED;
+        default:
+          throw new IllegalArgumentException("Invalid event type code: " + code);
+      }
+    }
+
+    public int code() {
+      return this.code;
+    }
   }
 }

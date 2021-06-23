@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.cdc;
 
+import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
 import java.util.Optional;
 
 /*
@@ -45,5 +46,10 @@ public final class ResolvedValue implements Value {
   @Override
   public Optional<DdlValue> asDdl() {
     return Optional.empty();
+  }
+
+  @Override
+  public String toJson(JacksonFactory factory) {
+    return null;
   }
 }

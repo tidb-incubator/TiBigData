@@ -28,15 +28,15 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class EventDecoderTest {
+public class JsonDecoderTest {
 
-  private static long verifyDDL(final String fileName, long lastTs, final ExpectedDDL[] expected)
+  private static long verifyDDL(final String fileName, long lastTs, final Expect.DDL[] expected)
       throws IOException {
-    final EventDecoder decoder = decode(fileName);
-    final ValueDecoder valueDecoder = decodeValue(fileName);
+    final EventDecoder decoder = decode("json", fileName);
+    final ValueDecoder valueDecoder = decodeValue("json", fileName);
     int idx = 0;
     for (Event evt : decoder) {
-      final ExpectedDDL ddl = expected[idx++];
+      final Expect.DDL ddl = expected[idx++];
       Assert.assertEquals(evt.getType(), Type.DDL);
       Assert.assertTrue(evt.getTs() >= lastTs);
       Assert.assertEquals(evt.asDdl().getType(), ddl.type);
@@ -54,8 +54,8 @@ public class EventDecoderTest {
   }
 
   private static long verifyResolved(final String fileName, long lastTs) throws IOException {
-    final EventDecoder decoder = decode(fileName);
-    final ValueDecoder valueDecoder = decodeValue(fileName);
+    final EventDecoder decoder = decode("json", fileName);
+    final ValueDecoder valueDecoder = decodeValue("json", fileName);
     int idx = 0;
     for (Event evt : decoder) {
       Assert.assertEquals(evt.getType(), Type.RESOLVED);
@@ -72,13 +72,13 @@ public class EventDecoderTest {
   }
 
   private static long verifyRowChange(final String fileName, long lastTs,
-      final ExpectedRowChange[] expected)
+      final Expect.RowChange[] expected)
       throws IOException {
-    final EventDecoder decoder = decode(fileName);
-    final ValueDecoder valueDecoder = decodeValue(fileName);
+    final EventDecoder decoder = decode("json", fileName);
+    final ValueDecoder valueDecoder = decodeValue("json", fileName);
     int idx = 0;
     for (Event evt : decoder) {
-      final ExpectedRowChange row = expected[idx++];
+      final Expect.RowChange row = expected[idx++];
       Assert.assertEquals(evt.getType(), Type.ROW_CHANGED);
       Assert.assertTrue(evt.getTs() >= lastTs);
       lastTs = evt.getTs();
@@ -93,8 +93,8 @@ public class EventDecoderTest {
 
   @Test
   public void testDecodeAll() throws IOException {
-    final File[] keyTests = listFiles("key");
-    final File[] valueTests = listFiles("value");
+    final File[] keyTests = listFiles("json", "key");
+    final File[] valueTests = listFiles("json", "value");
     Assert.assertNotNull(keyTests);
     Assert.assertNotNull(valueTests);
     Arrays.sort(keyTests);
@@ -104,7 +104,7 @@ public class EventDecoderTest {
         Arrays.stream(valueTests).map(File::getName).toArray());
 
     for (int idx = 0, length = keyTests.length; idx < length; ++idx) {
-      final EventDecoder decoder = decode(keyTests[idx], valueTests[idx]);
+      final EventDecoder decoder = decode("json", keyTests[idx], valueTests[idx]);
       for (final Event event : decoder) {
         Assert.assertNotNull(event);
       }
@@ -114,36 +114,36 @@ public class EventDecoderTest {
   @Test
   public void testDDL() throws IOException {
     long lastTs = verifyDDL("ddl_0", -1,
-        new ExpectedDDL[]{
-            new ExpectedDDL(
+        new Expect.DDL[]{
+            new Expect.DDL(
                 DdlValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;")});
     lastTs = verifyDDL("ddl_1", lastTs,
-        new ExpectedDDL[]{
-            new ExpectedDDL(
+        new Expect.DDL[]{
+            new Expect.DDL(
                 DdlValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;"),
-            new ExpectedDDL(
+            new Expect.DDL(
                 DdlValue.Type.DROP_SCHEMA,
                 "a",
                 null,
                 "drop database a;"),
-            new ExpectedDDL(
+            new Expect.DDL(
                 DdlValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;"),
-            new ExpectedDDL(
+            new Expect.DDL(
                 DdlValue.Type.CREATE_TABLE,
                 "a",
                 "c",
                 "create table c(id int primary key);"),
         });
-    verifyDDL("ddl_2", lastTs, new ExpectedDDL[0]);
+    verifyDDL("ddl_2", lastTs, new Expect.DDL[0]);
   }
 
   @Test
@@ -155,45 +155,16 @@ public class EventDecoderTest {
 
   @Test
   public void testRowChanged() throws IOException {
-    long lastTs = verifyRowChange("row_0", -1, new ExpectedRowChange[]{
-        new ExpectedRowChange(RowChangedValue.Type.INSERT, "a", "b"),
+    long lastTs = verifyRowChange("row_0", -1, new Expect.RowChange[]{
+        new Expect.RowChange(RowChangedValue.Type.INSERT, "a", "b"),
     });
-    lastTs = verifyRowChange("row_1", lastTs, new ExpectedRowChange[]{
-        new ExpectedRowChange(RowChangedValue.Type.INSERT, "a", "b"),
-        new ExpectedRowChange(RowChangedValue.Type.INSERT, "a", "b"),
-        new ExpectedRowChange(RowChangedValue.Type.INSERT, "a", "b"),
-        new ExpectedRowChange(RowChangedValue.Type.INSERT, "a", "c"),
+    lastTs = verifyRowChange("row_1", lastTs, new Expect.RowChange[]{
+        new Expect.RowChange(RowChangedValue.Type.INSERT, "a", "b"),
+        new Expect.RowChange(RowChangedValue.Type.INSERT, "a", "b"),
+        new Expect.RowChange(RowChangedValue.Type.INSERT, "a", "b"),
+        new Expect.RowChange(RowChangedValue.Type.INSERT, "a", "c"),
     });
-    verifyRowChange("row_2", lastTs, new ExpectedRowChange[]{});
+    verifyRowChange("row_2", lastTs, new Expect.RowChange[]{});
   }
 
-  private static class ExpectedDDL {
-
-    private final DdlValue.Type type;
-    private final String schema;
-    private final String table;
-    private final String query;
-
-    private ExpectedDDL(final DdlValue.Type type, final String schema, final String table,
-        final String query) {
-      this.type = type;
-      this.schema = schema;
-      this.table = table;
-      this.query = query;
-    }
-  }
-
-  private static class ExpectedRowChange {
-
-    private final RowChangedValue.Type type;
-    private final String schema;
-    private final String table;
-
-    private ExpectedRowChange(final RowChangedValue.Type type, final String schema,
-        final String table) {
-      this.type = type;
-      this.schema = schema;
-      this.table = table;
-    }
-  }
 }
