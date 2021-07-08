@@ -23,6 +23,7 @@
     <modules>
         <module>flink-1.11</module>
         <module>flink-1.12</module>
+        <module>flink-1.13</module>
         <module>flink-base</module>
     </modules>
 
