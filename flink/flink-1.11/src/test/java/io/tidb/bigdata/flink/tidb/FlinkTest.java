@@ -231,8 +231,8 @@ public class FlinkTest {
     TableEnvironment tableEnvironment = getTableEnvironment();
     Map<String, String> properties = getDefaultProperties();
     properties.put("connector", "tidb");
-    properties.put(TiDBDynamicTableFactory.DATABASE_NAME.key(), "test");
-    properties.put(TiDBDynamicTableFactory.TABLE_NAME.key(), "test_timestamp");
+    properties.put(TiDBConfigOptions.DATABASE_NAME.key(), "test");
+    properties.put(TiDBConfigOptions.TABLE_NAME.key(), "test_timestamp");
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
     // create test database and table

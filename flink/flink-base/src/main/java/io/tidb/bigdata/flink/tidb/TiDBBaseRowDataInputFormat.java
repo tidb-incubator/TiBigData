@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.tidb;
 
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
 import static java.lang.String.format;

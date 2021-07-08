@@ -16,6 +16,9 @@
 
 package io.tidb.bigdata.flink.tidb;
 
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.TABLE_NAME;
+
 import io.tidb.bigdata.cdc.Key.Type;
 import io.tidb.bigdata.flink.format.cdc.CraftFormatFactory;
 import io.tidb.bigdata.flink.format.cdc.FormatOptions;

@@ -16,8 +16,9 @@
 
 package io.tidb.bigdata.flink.tidb;
 
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
+
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.TABLE_NAME;
 
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.tidb.ClientConfig;

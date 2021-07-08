@@ -16,11 +16,11 @@
 
 package io.tidb.bigdata.flink.tidb;
 
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_URL;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.PASSWORD;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
-import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.USERNAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.DATABASE_URL;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.PASSWORD;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.TABLE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBConfigOptions.USERNAME;
 import static io.tidb.bigdata.jdbc.TiDBDriver.MYSQL_DRIVER_NAME;
 import static io.tidb.bigdata.jdbc.TiDBDriver.TIDB_PREFIX;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_DRIVER_NAME;
