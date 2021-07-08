@@ -11,7 +11,7 @@
 
 ## Version
 
-`Flink-1.11` and `Flink-1.12` are supported.
+`Flink-1.11`, `Flink-1.12` and `Flink-1.13` are supported.
 
 ## Build
 
