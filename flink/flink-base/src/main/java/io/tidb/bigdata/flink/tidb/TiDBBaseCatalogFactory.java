@@ -24,8 +24,6 @@ import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
-import static org.apache.flink.table.descriptors.CatalogDescriptorValidator.CATALOG_PROPERTY_VERSION;
-import static org.apache.flink.table.descriptors.CatalogDescriptorValidator.CATALOG_TYPE;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +34,8 @@ import org.apache.flink.table.factories.CatalogFactory;
 public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
 
   public static final String CATALOG_TYPE_VALUE_TIDB = "tidb";
+  public static final String CATALOG_PROPERTY_VERSION = "property-version";
+  public static final String CATALOG_TYPE = "type";
 
   @Override
   public Map<String, String> requiredContext() {
