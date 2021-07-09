@@ -28,7 +28,7 @@ public interface Value {
 
   Optional<ResolvedValue> asResolved();
 
-  Optional<DdlValue> asDdl();
+  Optional<DDLValue> asDDL();
 
   default String toJson() {
     return toJson(Event.defaultJacksonFactory);

@@ -59,7 +59,7 @@ public class RowColumnTest extends TestCase {
     return baos.toByteArray();
   }
 
-  private static CoercionTest createNumberCoercionTest(final String input, final Class from,
+  private static CoercionTest createNumberCoercionTest(final String input, final Class<?> from,
       final Type type) {
     return Misc.uncheckedRun(() -> {
       Method fromValueOf = from.getMethod("valueOf", String.class);
@@ -70,13 +70,13 @@ public class RowColumnTest extends TestCase {
   }
 
   private static CoercionTest[] createNumberCoercionTests() {
-    final Class[] numberJavaTypes = new Class[]{Long.class, Integer.class, Short.class, Byte.class,
+    final Class<?>[] numberJavaTypes = new Class<?>[]{Long.class, Integer.class, Short.class, Byte.class,
         Float.class, Double.class};
     final Type[] numberTypes = new Type[]{Type.TINYINT, Type.SMALLINT, Type.INT, Type.BIGINT,
         Type.FLOAT,
         Type.DOUBLE, Type.YEAR, Type.BIT};
     final ArrayList<CoercionTest> tests = new ArrayList<>();
-    for (final Class javaType : numberJavaTypes) {
+    for (final Class<?> javaType : numberJavaTypes) {
       for (final Type type : numberTypes) {
         tests.add(createNumberCoercionTest("1", javaType, type));
       }
@@ -144,7 +144,7 @@ public class RowColumnTest extends TestCase {
 
   @Override
   public void setUp() {
-    value = Misc.uncheckedRun(() -> encodeValue(getFileContent(getFile("json", "row.json", true))));
+    value = Misc.uncheckedRun(() -> encodeValue(getFileContent(getFile(Codec.json(), "row.json", true))));
   }
 
   @Override

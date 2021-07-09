@@ -16,7 +16,7 @@
 
 package io.tidb.bigdata.cdc.craft;
 
-import io.tidb.bigdata.cdc.DdlValue;
+import io.tidb.bigdata.cdc.DDLValue;
 import io.tidb.bigdata.cdc.Event;
 import io.tidb.bigdata.cdc.Key;
 import io.tidb.bigdata.cdc.ResolvedValue;
@@ -81,10 +81,10 @@ public class CraftParserState implements Iterator<Event> {
     return event;
   }
 
-  private DdlValue decodeDdl(Codec codec) {
+  private DDLValue decodeDDL(Codec codec) {
     long type = codec.decodeUvarint();
     String query = codec.decodeString();
-    return new DdlValue(query, (int) type);
+    return new DDLValue(query, (int) type);
   }
 
   private Object decodeTiDBType(long type, long flags, byte[] value) {
@@ -221,7 +221,7 @@ public class CraftParserState implements Iterator<Event> {
     Key.Type type = keys[index].getType();
     switch (keys[index].getType()) {
       case DDL:
-        return decodeDdl(codec.truncateHeading(size));
+        return decodeDDL(codec.truncateHeading(size));
       case RESOLVED:
         return ResolvedValue.getInstance();
       case ROW_CHANGED:

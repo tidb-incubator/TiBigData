@@ -24,12 +24,12 @@ public class Expect {
 
   public static class DDL {
 
-    public final DdlValue.Type type;
+    public final DDLValue.Type type;
     public final String schema;
     public final String table;
     public final String query;
 
-    public DDL(final DdlValue.Type type, final String schema, final String table,
+    public DDL(final DDLValue.Type type, final String schema, final String table,
         final String query) {
       this.type = type;
       this.schema = schema;
@@ -57,13 +57,13 @@ public class Expect {
     public final String name;
     public final Object value;
     public final Type type;
-    public final Class javaType;
+    public final Class<?> javaType;
     public final long flags;
     public final BiConsumer<RowColumn, Object>[] asTests;
 
     @SuppressWarnings("unchecked")
     public ColumnData(final String name, final Object value, final Type type,
-        final Class javaType, final long flags,
+        final Class<?> javaType, final long flags,
         final BiConsumer<RowColumn, Object>... asTests) {
       this.name = name;
       this.value = value;

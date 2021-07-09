@@ -181,7 +181,7 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
     }
   }
 
-  private void collectDdl(final Event event, final Collector<RowData> out) {
+  private void collectDDL(final Event event, final Collector<RowData> out) {
     out.collect(GenericRowData.ofKind(
         RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
   }
@@ -210,7 +210,7 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
         collectRowChanged(event, out);
         break;
       case DDL:
-        collectDdl(event, out);
+        collectDDL(event, out);
         break;
       default:
         throw new IllegalStateException("Unknown event type: " + event.getType());

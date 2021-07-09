@@ -25,12 +25,12 @@ import java.util.Optional;
 /*
  * Value type for DDL event
  */
-public final class DdlValue implements Value {
+public final class DDLValue implements Value {
 
   private final String query;
   private final Type type;
 
-  public DdlValue(final String query, final int type) {
+  public DDLValue(final String query, final int type) {
     this.query = query;
     this.type = Type.findByCode(type);
   }
@@ -48,10 +48,10 @@ public final class DdlValue implements Value {
     if (o == this) {
       return true;
     }
-    if (!(o instanceof DdlValue)) {
+    if (!(o instanceof DDLValue)) {
       return false;
     }
-    final DdlValue other = (DdlValue) o;
+    final DDLValue other = (DDLValue) o;
     return Objects.equals(query, other.query) && Objects.equals(type, other.type);
   }
 
@@ -66,7 +66,7 @@ public final class DdlValue implements Value {
   }
 
   @Override
-  public Optional<DdlValue> asDdl() {
+  public Optional<DDLValue> asDDL() {
     return Optional.of(this);
   }
 
