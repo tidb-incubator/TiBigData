@@ -11,5 +11,6 @@ mvn clean test -am -pl jdbc
 mvn clean test -am -pl ticdc
 mvn clean test -am -pl flink/flink-1.11
 mvn clean test -am -pl flink/flink-1.12
+mvn clean test -am -pl flink/flink-1.13
 mvn clean test -am -pl mapreduce/mapreduce-base
 mvn clean test -am -pl prestodb
