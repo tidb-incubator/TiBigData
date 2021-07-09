@@ -73,8 +73,8 @@ public final class Event {
     return (RowChangedValue) value;
   }
 
-  public DdlValue asDdl() {
-    return (DdlValue) value;
+  public DDLValue asDDL() {
+    return (DDLValue) value;
   }
 
   public ResolvedValue asResolved() {

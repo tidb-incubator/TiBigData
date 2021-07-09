@@ -37,12 +37,12 @@ public final class RecordSetInternal {
   public RecordSetInternal(ClientSession session, SplitInternal split,
       List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
       Optional<TiTimestamp> timestamp) {
-    this(session, split, columnHandles, expression, timestamp, Integer.MAX_VALUE);
+    this(session, split, columnHandles, expression, timestamp, Optional.empty());
   }
 
   public RecordSetInternal(ClientSession session, SplitInternal split,
       List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
-      Optional<TiTimestamp> timestamp, int limit) {
+      Optional<TiTimestamp> timestamp, Optional<Integer> limit) {
     requireNonNull(split, "split is null");
     this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
     this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType)
@@ -50,7 +50,7 @@ public final class RecordSetInternal {
     List<String> columns = columnHandles.stream().map(ColumnHandleInternal::getName)
         .collect(toImmutableList());
     TiDAGRequest.Builder request = session.request(split.getTable(), columns);
-    request.setLimit(limit);
+    limit.ifPresent(request::setLimit);
     expression.ifPresent(request::addFilter);
     request.setStartTs(split.getTimestamp());
     // snapshot read

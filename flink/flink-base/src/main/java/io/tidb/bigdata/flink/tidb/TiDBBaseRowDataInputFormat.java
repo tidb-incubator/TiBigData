@@ -216,7 +216,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
             .collect(Collectors.toList()),
         Optional.ofNullable(expression),
         Optional.ofNullable(timestamp),
-        limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
+        limit > Integer.MAX_VALUE ? Optional.empty() : Optional.of((int) limit));
     cursor = recordSetInternal.cursor();
   }
 

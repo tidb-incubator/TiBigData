@@ -196,6 +196,7 @@
                     <failsOnError>true</failsOnError>
                     <linkXRef>false</linkXRef>
                     <violationSeverity>warning</violationSeverity>
+                    <excludes>**/org/apache/flink/connector/base/source/hybrid/**/*</excludes>
                 </configuration>
                 <executions>
                     <execution>

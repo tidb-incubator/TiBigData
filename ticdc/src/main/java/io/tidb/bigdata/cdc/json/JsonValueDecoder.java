@@ -16,7 +16,7 @@
 
 package io.tidb.bigdata.cdc.json;
 
-import io.tidb.bigdata.cdc.DdlValue;
+import io.tidb.bigdata.cdc.DDLValue;
 import io.tidb.bigdata.cdc.Key;
 import io.tidb.bigdata.cdc.ResolvedValue;
 import io.tidb.bigdata.cdc.RowChangedValue;
@@ -61,8 +61,8 @@ public class JsonValueDecoder implements ValueDecoder {
     this(new DataInputStream(new ByteArrayInputStream(input)), parser);
   }
 
-  private static DdlValue parseDdlValue(final JsonNode node) {
-    return new DdlValue(node.mustGetText(DDL_QUERY_TOKEN), node.mustGetInt(TYPE_TOKEN));
+  private static DDLValue parseDDLValue(final JsonNode node) {
+    return new DDLValue(node.mustGetText(DDL_QUERY_TOKEN), node.mustGetInt(TYPE_TOKEN));
   }
 
   private static Object checkAndConvertFromString(int type, long flags, String value) {
@@ -153,7 +153,7 @@ public class JsonValueDecoder implements ValueDecoder {
     if (node.getType() == JsonNode.Type.MISSING) {
       return ResolvedValue.getInstance();
     } else if (node.has(DDL_QUERY_TOKEN)) {
-      return parseDdlValue(node);
+      return parseDDLValue(node);
     } else {
       return parseRowChangedValue(node);
     }
@@ -165,7 +165,7 @@ public class JsonValueDecoder implements ValueDecoder {
       case ROW_CHANGED:
         return parseRowChangedValue(node);
       case DDL:
-        return parseDdlValue(node);
+        return parseDDLValue(node);
       case RESOLVED:
         return ResolvedValue.getInstance();
       default:
