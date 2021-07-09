@@ -44,7 +44,7 @@ public final class ResolvedValue implements Value {
   }
 
   @Override
-  public Optional<DdlValue> asDdl() {
+  public Optional<DDLValue> asDDL() {
     return Optional.empty();
   }
 

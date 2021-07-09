@@ -55,7 +55,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public String getString(int columnIndex) {
-    if (values[columnIndex] instanceof Date || values[columnIndex] instanceof Time
+    if (null == values[columnIndex]) {
+      return null;
+    } else if (values[columnIndex] instanceof Date || values[columnIndex] instanceof Time
         || values[columnIndex] instanceof Timestamp) {
       return values[columnIndex].toString();
     }
@@ -69,7 +71,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public boolean getBoolean(int columnIndex) {
-    if (values[columnIndex] instanceof Long) {
+    if (null == values[columnIndex]) {
+      return false;
+    } else if (values[columnIndex] instanceof Long) {
       return ((Long) values[columnIndex]) > 0;
     }
     if (values[columnIndex] instanceof Integer) {
@@ -85,7 +89,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public byte getByte(int columnIndex) {
-    return (Byte) values[columnIndex];
+    return null == values[columnIndex] ? (byte) 0 : (Byte) values[columnIndex];
   }
 
   @Override
@@ -95,7 +99,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public short getShort(int columnIndex) {
-    return (Short) values[columnIndex];
+    return null == values[columnIndex] ? (short) 0 : (Short) values[columnIndex];
   }
 
   @Override
@@ -105,7 +109,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public int getInt(int columnIndex) {
-    if (values[columnIndex] instanceof Long) {
+    if (null == values[columnIndex]) {
+      return 0;
+    } else if (values[columnIndex] instanceof Long) {
       return ((Long) values[columnIndex]).intValue();
     } else if (values[columnIndex] instanceof Boolean) {
       return ((Boolean) values[columnIndex]) ? 1 : 0;
@@ -120,7 +126,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public long getLong(int columnIndex) {
-    return (Long) values[columnIndex];
+    return null == values[columnIndex] ? (long) 0 : (Long) values[columnIndex];
   }
 
   @Override
@@ -130,7 +136,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public float getFloat(int columnIndex) {
-    if (values[columnIndex] instanceof Double) {
+    if (null == values[columnIndex]) {
+      return (float) 0;
+    } else if (values[columnIndex] instanceof Double) {
       return ((Double) values[columnIndex]).floatValue();
     }
     return (Float) values[columnIndex];
@@ -143,7 +151,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public double getDouble(int columnIndex) {
-    return (Double) values[columnIndex];
+    return null == values[columnIndex] ? (double) 0 : (Double) values[columnIndex];
   }
 
   @Override
@@ -153,7 +161,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public byte[] getBytes(int columnIndex) {
-    return (byte[]) values[columnIndex];
+    return null == values[columnIndex] ? null : (byte[]) values[columnIndex];
   }
 
   @Override
@@ -163,7 +171,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public Date getDate(int columnIndex) {
-    if (values[columnIndex] instanceof Long) {
+    if (null == values[columnIndex]) {
+      return null;
+    } else if (values[columnIndex] instanceof Long) {
       return Date.valueOf(LocalDate.ofEpochDay((Long) values[columnIndex]));
     }
     return (Date) values[columnIndex];
@@ -186,7 +196,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public Time getTime(int columnIndex) {
-    if (values[columnIndex] instanceof Long) {
+    if (null == values[columnIndex]) {
+      return null;
+    } else if (values[columnIndex] instanceof Long) {
       return Time.valueOf(LocalTime.ofNanoOfDay((Long) values[columnIndex]));
     }
     return (Time) values[columnIndex];
@@ -209,7 +221,9 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public Timestamp getTimestamp(int columnIndex) {
-    if (values[columnIndex] instanceof Long) {
+    if (null == values[columnIndex]) {
+      return null;
+    } else if (values[columnIndex] instanceof Long) {
       return new Timestamp((Long) values[columnIndex] / 1000);
     }
     return (Timestamp) values[columnIndex];
@@ -232,7 +246,7 @@ public class TiDBResultSet implements ResultSet {
 
   @Override
   public BigDecimal getBigDecimal(int columnIndex) {
-    return (BigDecimal) values[columnIndex];
+    return null == values[columnIndex] ? null : (BigDecimal) values[columnIndex];
   }
 
   @Override

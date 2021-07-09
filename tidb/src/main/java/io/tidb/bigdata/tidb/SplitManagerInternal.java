@@ -34,7 +34,10 @@ public final class SplitManagerInternal {
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
-    TiTimestamp timestamp = session.getTimestamp();
+    return getSplits(tableHandle, session.getTimestamp());
+  }
+
+  public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
     List<SplitInternal> splits = session.getTableRanges(tableHandle)
         .stream()
         .map(range -> new SplitInternal(tableHandle, range, timestamp))

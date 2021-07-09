@@ -29,24 +29,25 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class JsonDecoderTest {
+  private final static Codec CODEC = Codec.json();
 
   private static long verifyDDL(final String fileName, long lastTs, final Expect.DDL[] expected)
       throws IOException {
-    final EventDecoder decoder = decode("json", fileName);
-    final ValueDecoder valueDecoder = decodeValue("json", fileName);
+    final EventDecoder decoder = decode(CODEC, fileName);
+    final ValueDecoder valueDecoder = decodeValue(CODEC, fileName);
     int idx = 0;
     for (Event evt : decoder) {
       final Expect.DDL ddl = expected[idx++];
       Assert.assertEquals(evt.getType(), Type.DDL);
       Assert.assertTrue(evt.getTs() >= lastTs);
-      Assert.assertEquals(evt.asDdl().getType(), ddl.type);
+      Assert.assertEquals(evt.asDDL().getType(), ddl.type);
       Assert.assertEquals(evt.getSchema(), ddl.schema);
       Assert.assertEquals(evt.getTable(), ddl.table);
-      Assert.assertEquals(evt.asDdl().getQuery(), ddl.query);
+      Assert.assertEquals(evt.asDDL().getQuery(), ddl.query);
       lastTs = evt.getTs();
       Value value = valueDecoder.next();
       Assert.assertNotNull(value);
-      Assert.assertTrue(value instanceof DdlValue);
+      Assert.assertTrue(value instanceof DDLValue);
       Assert.assertEquals(evt.getValue(), value);
     }
     Assert.assertEquals(idx, expected.length);
@@ -54,9 +55,8 @@ public class JsonDecoderTest {
   }
 
   private static long verifyResolved(final String fileName, long lastTs) throws IOException {
-    final EventDecoder decoder = decode("json", fileName);
-    final ValueDecoder valueDecoder = decodeValue("json", fileName);
-    int idx = 0;
+    final EventDecoder decoder = decode(CODEC, fileName);
+    final ValueDecoder valueDecoder = decodeValue(CODEC, fileName);
     for (Event evt : decoder) {
       Assert.assertEquals(evt.getType(), Type.RESOLVED);
       Assert.assertTrue(evt.getTs() >= lastTs);
@@ -74,11 +74,10 @@ public class JsonDecoderTest {
   private static long verifyRowChange(final String fileName, long lastTs,
       final Expect.RowChange[] expected)
       throws IOException {
-    final EventDecoder decoder = decode("json", fileName);
-    final ValueDecoder valueDecoder = decodeValue("json", fileName);
+    final EventDecoder decoder = decode(CODEC, fileName);
+    final ValueDecoder valueDecoder = decodeValue(CODEC, fileName);
     int idx = 0;
     for (Event evt : decoder) {
-      final Expect.RowChange row = expected[idx++];
       Assert.assertEquals(evt.getType(), Type.ROW_CHANGED);
       Assert.assertTrue(evt.getTs() >= lastTs);
       lastTs = evt.getTs();
@@ -86,6 +85,7 @@ public class JsonDecoderTest {
       Assert.assertNotNull(value);
       Assert.assertTrue(value instanceof RowChangedValue);
       Assert.assertEquals(evt.getValue(), value);
+      idx++;
     }
     Assert.assertEquals(idx, expected.length);
     return lastTs;
@@ -93,8 +93,8 @@ public class JsonDecoderTest {
 
   @Test
   public void testDecodeAll() throws IOException {
-    final File[] keyTests = listFiles("json", "key");
-    final File[] valueTests = listFiles("json", "value");
+    final File[] keyTests = listFiles(CODEC, "key");
+    final File[] valueTests = listFiles(CODEC, "value");
     Assert.assertNotNull(keyTests);
     Assert.assertNotNull(valueTests);
     Arrays.sort(keyTests);
@@ -104,7 +104,7 @@ public class JsonDecoderTest {
         Arrays.stream(valueTests).map(File::getName).toArray());
 
     for (int idx = 0, length = keyTests.length; idx < length; ++idx) {
-      final EventDecoder decoder = decode("json", keyTests[idx], valueTests[idx]);
+      final EventDecoder decoder = decode(CODEC, keyTests[idx], valueTests[idx]);
       for (final Event event : decoder) {
         Assert.assertNotNull(event);
       }
@@ -116,29 +116,29 @@ public class JsonDecoderTest {
     long lastTs = verifyDDL("ddl_0", -1,
         new Expect.DDL[]{
             new Expect.DDL(
-                DdlValue.Type.CREATE_SCHEMA,
+                DDLValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;")});
     lastTs = verifyDDL("ddl_1", lastTs,
         new Expect.DDL[]{
             new Expect.DDL(
-                DdlValue.Type.CREATE_SCHEMA,
+                DDLValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;"),
             new Expect.DDL(
-                DdlValue.Type.DROP_SCHEMA,
+                DDLValue.Type.DROP_SCHEMA,
                 "a",
                 null,
                 "drop database a;"),
             new Expect.DDL(
-                DdlValue.Type.CREATE_SCHEMA,
+                DDLValue.Type.CREATE_SCHEMA,
                 "a",
                 null,
                 "create database a;"),
             new Expect.DDL(
-                DdlValue.Type.CREATE_TABLE,
+                DDLValue.Type.CREATE_TABLE,
                 "a",
                 "c",
                 "create table c(id int primary key);"),

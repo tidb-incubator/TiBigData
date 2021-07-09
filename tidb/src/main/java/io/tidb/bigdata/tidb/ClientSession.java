@@ -19,7 +19,6 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static io.tidb.bigdata.tidb.SqlUtils.QUERY_PD_SQL;
 import static io.tidb.bigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.util.Objects.requireNonNull;
@@ -35,12 +34,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
@@ -136,8 +136,16 @@ public final class ClientSession implements AutoCloseable {
   public Map<String, List<String>> listTables(Optional<String> schemaName) {
     List<String> schemaNames = schemaName
         .map(s -> (List<String>) ImmutableList.of(s))
-        .orElseGet(() -> getSchemaNames());
-    return schemaNames.stream().collect(toImmutableMap(identity(), name -> getTableNames(name)));
+        .orElseGet(this::getSchemaNames);
+    return schemaNames.stream().collect(toImmutableMap(identity(), this::getTableNames));
+  }
+
+  private List<ColumnHandleInternal> selectColumns(
+      List<ColumnHandleInternal> allColumns, Stream<String> columns) {
+    final Map<String, ColumnHandleInternal> columnsMap =
+        allColumns.stream().collect(
+            Collectors.toMap(ColumnHandleInternal::getName, Function.identity()));
+    return columns.map(columnsMap::get).collect(Collectors.toList());
   }
 
   private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
@@ -150,12 +158,19 @@ public final class ClientSession implements AutoCloseable {
     return getTable(schema, tableName).map(ClientSession::getTableColumns);
   }
 
+  private Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
+      Stream<String> columns) {
+    return getTableColumns(schema, tableName).map(r -> selectColumns(r, columns));
+  }
+
   public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
       List<String> columns) {
-    Set<String> columnsSet = columns.stream().collect(toImmutableSet());
-    return getTableColumns(schema, tableName).map(
-        r -> r.stream().filter(column -> columnsSet.contains(column.getName()))
-            .collect(toImmutableList()));
+    return getTableColumns(schema, tableName, columns.stream());
+  }
+
+  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
+      String[] columns) {
+    return getTableColumns(schema, tableName, Arrays.stream(columns));
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle) {
@@ -187,7 +202,6 @@ public final class ClientSession implements AutoCloseable {
             .collect(Collectors.toList()) : ImmutableList.of(table.getId()))
         .orElseGet(ImmutableList::of)
         .stream()
-        .flatMap(Stream::of)
         .map(tableId -> getRangeRegionTasks(RowKey.createMin(tableId).toByteString(),
             RowKey.createBeyondMax(tableId).toByteString()))
         .flatMap(Collection::stream)

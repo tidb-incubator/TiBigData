@@ -118,7 +118,7 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
               .collect(Collectors.toList()),
           Optional.empty(),
           Optional.ofNullable(timestamp),
-          limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit);
+          Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
       cursor = recordSetInternal.cursor();
       if (!cursor.advanceNextPosition()) {
         return false;

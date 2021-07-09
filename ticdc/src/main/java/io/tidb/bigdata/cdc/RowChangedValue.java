@@ -190,7 +190,7 @@ public abstract class RowChangedValue implements Value {
   }
 
   @Override
-  public Optional<DdlValue> asDdl() {
+  public Optional<DDLValue> asDDL() {
     return Optional.empty();
   }
 
