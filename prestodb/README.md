@@ -55,9 +55,13 @@ cp ${YOUR_MYSQL_JDBC_DRIVER_PATH}/mysql-connector-java-${version}.jar ${PRESTO_H
 | tidb.maximum.pool.size  | 10            | Connection pool size.                                        |
 | tidb.minimum.idle.size  | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode         | append        | TiDB sink write mode: `upsert` or `append`. You could config it in `tidb.properties`, or set it by `SET SESSION tidb.write_mode='upsert'` within a session. TiDB primary key columns and unique key columns will be mapped as presto table properties `primary_key` and `unique_key`. |
-| tidb.replica-read       | false         | Read data from follower.                                     |
+| tidb.replica-read              | leader / follower / leader_and_follower | Read data from specified role. |
+| tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
+| tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
+| tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
 | tidb.filter-push-down   | false         | Support filter push down.                                    |
 | tidb.snapshot_timestamp | null          | It is available for TiDB connector to read snapshot. You could set it by `SET SESSION tidb.snapshot_timestamp='2021-01-01T14:00:00+08:00'` and unset it by `SET SESSION tidb.snapshot_timestamp=''` within a session. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
+| tidb.dns.search | null | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN. |
 
 ## Usage
 

@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Streams;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -75,6 +76,8 @@ public final class ClientSession implements AutoCloseable {
 
   private final HikariDataSource dataSource;
 
+  private final DnsSearchHostMapping hostMapping;
+
   private ClientSession(ClientConfig config) {
     this.config = requireNonNull(config, "config is null");
     dataSource = new HikariDataSource(new HikariConfig() {
@@ -87,9 +90,13 @@ public final class ClientSession implements AutoCloseable {
         setMinimumIdle(config.getMinimumIdleSize());
       }
     });
+    hostMapping = new DnsSearchHostMapping(config.getDnsSearch());
     loadPdAddresses();
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
-    //tiConfiguration.setReplicaRead(config.isReplicaRead());
+    ReplicaReadPolicy policy = config.getReplicaReadPolicy();
+    tiConfiguration.setReplicaRead(policy.toReplicaRead());
+    tiConfiguration.setReplicaSelector(policy);
+    tiConfiguration.setHostMapping(hostMapping);
     session = TiSession.create(tiConfiguration);
     catalog = session.getCatalog();
   }
@@ -238,7 +245,9 @@ public final class ClientSession implements AutoCloseable {
           ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
         while (resultSet.next()) {
-          pdAddressesList.add(resultSet.getString("INSTANCE"));
+          String instance = resultSet.getString("INSTANCE");
+          URI mapped = hostMapping.getMappedURI(URI.create("grpc://" + instance));
+          pdAddressesList.add(mapped.getHost() + ":" + mapped.getPort());
         }
       } catch (Exception e) {
         throw new IllegalStateException("can not get pdAddresses", e);

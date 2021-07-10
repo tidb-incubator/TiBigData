@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 TiDB Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,13 +46,28 @@ public final class ClientConfig {
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
 
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
-  public static final boolean TIDB_REPLICA_READ_DEFAULT = false;
+  public static final String TIDB_REPLICA_READ_LEADER = "leader";
+  public static final String TIDB_REPLICA_READ_FOLLOWER = "follower";
+  public static final String TIDB_REPLICA_READ_LEADER_AND_FOLLOWER = "leader_and_follower";
+  public static final String TIDB_REPLICA_READ_DEFAULT = TIDB_REPLICA_READ_LEADER;
+
+  public static final String TIDB_REPLICA_READ_LABEL = "tidb.replica-read.label";
+  public static final String TIDB_REPLICA_READ_LABEL_DEFAULT = "";
+
+  public static final String TIDB_REPLICA_READ_ADDRESS_WHITELIST =
+      "tidb.replica-read.address.whitelist";
+  public static final String TIDB_REPLICA_READ_ADDRESS_BLACKLIST =
+      "tidb.replica-read.address.blacklist";
+  public static final String TIDB_REPLICA_READ_ADDRESS_DEFAULT = "";
 
   public static final String TIDB_FILTER_PUSH_DOWN = "tidb.filter-push-down";
   public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
 
   public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
   public static final String SNAPSHOT_VERSION = "tidb.snapshot_version";
+
+  public static final String TIDB_DNS_SEARCH = "tidb.dns.search";
+  public static final String TIDB_DNS_SEARCH_DEFAULT = null;
 
   private String pdAddresses;
 
@@ -68,9 +83,11 @@ public final class ClientConfig {
 
   private String writeMode;
 
-  private boolean isReplicaRead;
+  private final ReplicaReadPolicy replicaReadPolicy;
 
   private boolean isFilterPushDown;
+
+  private String dnsSearch;
 
   public boolean isFilterPushDown() {
     return isFilterPushDown;
@@ -80,34 +97,35 @@ public final class ClientConfig {
     isFilterPushDown = filterPushDown;
   }
 
-  public boolean isReplicaRead() {
-    return isReplicaRead;
-  }
-
-  public void setReplicaRead(boolean replicaRead) {
-    isReplicaRead = replicaRead;
+  public final ReplicaReadPolicy getReplicaReadPolicy() {
+    return replicaReadPolicy;
   }
 
   public ClientConfig() {
-    this(null, null, null, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
-        TIDB_REPLICA_READ_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+    this(null, null, null, MAX_POOL_SIZE_DEFAULT,
+        MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
+        ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
     this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
-        TIDB_WRITE_MODE_DEFAULT, TIDB_REPLICA_READ_DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT);
+        TIDB_WRITE_MODE_DEFAULT, ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
-      int minimumIdleSize, String writeMode, boolean isReplicaRead, boolean isFilterPushDown) {
+      int minimumIdleSize, String writeMode, ReplicaReadPolicy replicaRead,
+      boolean isFilterPushDown, String dnsSearch) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
     this.maximumPoolSize = maximumPoolSize;
     this.minimumIdleSize = minimumIdleSize;
     this.writeMode = writeMode;
-    this.isReplicaRead = isReplicaRead;
+    this.replicaReadPolicy = replicaRead;
     this.isFilterPushDown = isFilterPushDown;
+    this.dnsSearch = dnsSearch;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -119,10 +137,10 @@ public final class ClientConfig {
         Integer.parseInt(
             properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))),
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
+        ReplicaReadPolicy.create(properties),
         Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_REPLICA_READ, Boolean.toString(TIDB_REPLICA_READ_DEFAULT))),
-        Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT)))
+            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT))),
+        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT)
     );
   }
 
@@ -133,8 +151,9 @@ public final class ClientConfig {
         config.getMaximumPoolSize(),
         config.getMinimumIdleSize(),
         config.getWriteMode(),
-        config.isReplicaRead(),
-        config.isFilterPushDown());
+        config.getReplicaReadPolicy(),
+        config.isFilterPushDown(),
+        config.getDnsSearch());
   }
 
   public String getPdAddresses() {
@@ -203,10 +222,18 @@ public final class ClientConfig {
     throw new IllegalArgumentException("can not parse driver by " + databaseUrl);
   }
 
+  public String getDnsSearch() {
+    return dnsSearch;
+  }
+
+  public void setDnsSearch(String dnsSearch) {
+    this.dnsSearch = dnsSearch;
+  }
+
   @Override
   public int hashCode() {
     return Objects.hashCode(pdAddresses, databaseUrl, username, password, maximumPoolSize,
-        minimumIdleSize, writeMode, isReplicaRead);
+        minimumIdleSize, writeMode, replicaReadPolicy);
   }
 
   @Override
@@ -220,7 +247,7 @@ public final class ClientConfig {
     ClientConfig that = (ClientConfig) object;
     return maximumPoolSize == that.maximumPoolSize
         && minimumIdleSize == that.minimumIdleSize
-        && isReplicaRead == that.isReplicaRead
+        && Objects.equal(replicaReadPolicy, that.replicaReadPolicy)
         && Objects.equal(pdAddresses, that.pdAddresses)
         && Objects.equal(databaseUrl, that.databaseUrl)
         && Objects.equal(username, that.username)
@@ -237,7 +264,7 @@ public final class ClientConfig {
         .add("maximumPoolSize", maximumPoolSize)
         .add("minimumIdleSize", minimumIdleSize)
         .add("writeMode", writeMode)
-        .add("isReplicaRead", isReplicaRead)
+        .add("replicaReadPolicy", replicaReadPolicy)
         .toString();
   }
 }
