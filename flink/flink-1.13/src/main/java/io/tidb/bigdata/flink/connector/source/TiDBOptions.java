@@ -52,6 +52,14 @@ public class TiDBOptions {
   public static final ConfigOption<String> WRITE_MODE =
       optional(ClientConfig.TIDB_WRITE_MODE, ClientConfig.TIDB_WRITE_MODE_DEFAULT);
 
+  public static final ConfigOption<String> REPLICA_READ =
+      optional(ClientConfig.TIDB_REPLICA_READ, ClientConfig.TIDB_REPLICA_READ_DEFAULT);
+
+  public static final ConfigOption<Boolean> FILTER_PUSH_DOWN =
+      ConfigOptions.key(ClientConfig.TIDB_FILTER_PUSH_DOWN)
+          .booleanType()
+          .defaultValue(ClientConfig.TIDB_FILTER_PUSH_DOWN_DEFAULT);
+
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
   public static final String STREAMING_SOURCE_KAFKA = "kafka";
