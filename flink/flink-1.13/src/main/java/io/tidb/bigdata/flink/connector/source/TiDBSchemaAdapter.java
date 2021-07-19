@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.CMPT_TIMESTAMP_FORMAT_PREFIX;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TIMESTAMP_FORMAT_PREFIX;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.tikv.common.types.MySQLType.TypeDatetime;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.DataTypes.Field;
@@ -270,15 +272,15 @@ public class TiDBSchemaAdapter implements Serializable {
   }
 
   public void open() {
-    this.dateTimeFormatters = new DateTimeFormatter[physicalFieldNames.length];
-    StringBuilder fieldTimestampFormatBuilder = new StringBuilder(TIMESTAMP_FORMAT_PREFIX);
-    int prefixLen = fieldTimestampFormatBuilder.length();
-    for (int idx = 0; idx < physicalFieldNames.length; idx++) {
-      fieldTimestampFormatBuilder.setLength(prefixLen);
-      fieldTimestampFormatBuilder.append(physicalFieldNames[idx]);
-      Optional<String> format =
-          Optional.ofNullable(properties.get(fieldTimestampFormatBuilder.toString()));
-      dateTimeFormatters[idx] = format.map(DateTimeFormatter::ofPattern).orElse(ISO_LOCAL_DATE);
+    if (ArrayUtils.isEmpty(physicalFieldNames)) {
+      this.dateTimeFormatters = new DateTimeFormatter[0];
+      return;
     }
+    this.dateTimeFormatters = Arrays.stream(physicalFieldNames)
+        .map(fieldName ->
+            Optional.ofNullable(properties.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
+                .orElse(properties.get(CMPT_TIMESTAMP_FORMAT_PREFIX + fieldName)))
+        .map(pattern -> pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern))
+        .toArray(DateTimeFormatter[]::new);
   }
 }
