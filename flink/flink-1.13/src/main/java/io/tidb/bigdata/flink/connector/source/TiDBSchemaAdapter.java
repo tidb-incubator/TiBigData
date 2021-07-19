@@ -279,7 +279,7 @@ public class TiDBSchemaAdapter implements Serializable {
     this.dateTimeFormatters = Arrays.stream(physicalFieldNames)
         .map(fieldName ->
             Optional.ofNullable(properties.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
-                .orElse(properties.get(CMPT_TIMESTAMP_FORMAT_PREFIX + fieldName)))
+                .orElseGet(() -> properties.get(CMPT_TIMESTAMP_FORMAT_PREFIX + fieldName)))
         .map(pattern -> pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern))
         .toArray(DateTimeFormatter[]::new);
   }
