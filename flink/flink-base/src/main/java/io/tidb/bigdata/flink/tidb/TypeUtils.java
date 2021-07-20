@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.tidb;
 
 import static java.lang.String.format;
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.tikv.common.types.MySQLType.TypeDatetime;
 import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
@@ -27,7 +28,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.beanutils.ConvertUtils;
@@ -42,6 +46,12 @@ import org.tikv.common.types.MySQLType;
 import org.tikv.common.types.StringType;
 
 public class TypeUtils {
+  
+  public static final String TIMESTAMP_FORMAT_PREFIX = "tidb.timestamp-format.";
+  
+  // maintain compatibility with flink-1.11, 1.12, will remove this configuration in flink-1.14
+  public static final String OLD_TIMESTAMP_FORMAT_PREFIX = "timestamp-format.";
+ 
 
   /**
    * a default mapping: TiKV DataType -> Flink DataType
@@ -231,4 +241,41 @@ public class TypeUtils {
     }
     return result;
   }
+  
+  /**
+   * extracts the DateTimeFormatter of table field name according to
+   * the configuration in properties, which will used in conversion of
+   * tikv date type to flink date type.
+   *
+   * @param fieldNames table field names
+   * @param confProps  tidb-connector configuration
+   * @param downwardCompatible whether to be compatible with old configurations
+   * @return DateTimeFormatter DateTimeFormatter Objects
+   */
+  @Nonnull
+  public static DateTimeFormatter[] extractDateTimeFormatter(
+      String[] fieldNames,
+      @Nonnull Map<String, String> confProps,
+      boolean downwardCompatible) {
+    if (fieldNames == null) {
+      return new DateTimeFormatter[0];
+    }
+    assert (confProps != null);
+    if (downwardCompatible) {
+      return Arrays.stream(fieldNames)
+          .map(fieldName -> Optional
+              .ofNullable(confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
+              .orElseGet(() -> confProps.get(OLD_TIMESTAMP_FORMAT_PREFIX + fieldName)))
+          .map(pattern -> pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern))
+          .toArray(DateTimeFormatter[]::new);
+    } else {
+      return Arrays.stream(fieldNames)
+          .map(fieldName -> {
+            String pattern = confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName);
+            return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
+          }).toArray(DateTimeFormatter[]::new);
+    }
+  }
+  
+  
 }

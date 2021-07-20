@@ -73,8 +73,6 @@ public class TiDBOptions {
   public static final Set<String> VALID_STREAMING_CODECS =
       ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
 
-  public static final String TIMESTAMP_FORMAT_PREFIX = "tidb.timestamp-format.";
-
   public static Set<ConfigOption<?>> requiredOptions() {
     return withMoreRequiredOptions();
   }

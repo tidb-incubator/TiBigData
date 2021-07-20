@@ -16,12 +16,11 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TIMESTAMP_FORMAT_PREFIX;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.tikv.common.types.MySQLType.TypeDatetime;
 import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
 import com.google.common.collect.ImmutableMap;
+import io.tidb.bigdata.flink.tidb.TypeUtils;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -270,15 +269,7 @@ public class TiDBSchemaAdapter implements Serializable {
   }
 
   public void open() {
-    this.dateTimeFormatters = new DateTimeFormatter[physicalFieldNames.length];
-    StringBuilder fieldTimestampFormatBuilder = new StringBuilder(TIMESTAMP_FORMAT_PREFIX);
-    int prefixLen = fieldTimestampFormatBuilder.length();
-    for (int idx = 0; idx < physicalFieldNames.length; idx++) {
-      fieldTimestampFormatBuilder.setLength(prefixLen);
-      fieldTimestampFormatBuilder.append(physicalFieldNames[idx]);
-      Optional<String> format =
-          Optional.ofNullable(properties.get(fieldTimestampFormatBuilder.toString()));
-      dateTimeFormatters[idx] = format.map(DateTimeFormatter::ofPattern).orElse(ISO_LOCAL_DATE);
-    }
+    this.dateTimeFormatters = TypeUtils.extractDateTimeFormatter(
+        physicalFieldNames, properties, true);
   }
 }
