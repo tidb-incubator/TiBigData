@@ -234,11 +234,11 @@ public class FlinkTest {
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
     testTableFactoryWithTimestampFormat(properties);
-    
+
     properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
     testTableFactoryWithTimestampFormat(properties);
-    
+
     properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm");
     properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
@@ -267,7 +267,7 @@ public class FlinkTest {
     row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
     row1.setField(1, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
-    
+
     tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
     createTableSql = format(
         "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
