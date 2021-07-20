@@ -51,8 +51,8 @@ public class TypeUtils {
   
   // maintain compatibility with flink-1.11, 1.12, will remove this configuration in flink-1.14
   public static final String OLD_TIMESTAMP_FORMAT_PREFIX = "timestamp-format.";
-  
-  
+ 
+
   /**
    * a default mapping: TiKV DataType -> Flink DataType
    *
@@ -116,8 +116,8 @@ public class TypeUtils {
             format("can not get flink datatype by tikv type: %s", dataType));
     }
   }
-  
-  
+
+
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
@@ -192,7 +192,7 @@ public class TypeUtils {
     }
     return Optional.of(object);
   }
-  
+
   /**
    * transform Row to GenericRowData
    */
@@ -206,7 +206,7 @@ public class TypeUtils {
     }
     return Optional.of(rowData);
   }
-  
+
   /**
    * transform Row type to GenericRowData type
    */

@@ -223,7 +223,7 @@ public class FlinkTest {
     properties.put(TIDB_WRITE_MODE, "upsert");
     return runByCatalog(properties);
   }
-  
+
   @Test
   public void testTableFactory() throws Exception {
     // only test for timestamp
@@ -238,7 +238,7 @@ public class FlinkTest {
     properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
     testTableFactoryWithTimestampFormat(properties);
-  
+    
     properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm");
     properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
@@ -278,7 +278,6 @@ public class FlinkTest {
     Assert.assertEquals(row, row1);
     tiDBCatalog.close();
   }
-  
 
   @Test
   public void testCatalog() throws Exception {
