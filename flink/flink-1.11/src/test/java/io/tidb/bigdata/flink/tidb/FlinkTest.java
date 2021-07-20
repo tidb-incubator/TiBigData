@@ -223,18 +223,32 @@ public class FlinkTest {
     properties.put(TIDB_WRITE_MODE, "upsert");
     return runByCatalog(properties);
   }
-
+  
   @Test
   public void testTableFactory() throws Exception {
     // only test for timestamp
-    // env
-    TableEnvironment tableEnvironment = getTableEnvironment();
     Map<String, String> properties = getDefaultProperties();
     properties.put("connector", "tidb");
     properties.put(TiDBDynamicTableFactory.DATABASE_NAME.key(), "test");
     properties.put(TiDBDynamicTableFactory.TABLE_NAME.key(), "test_timestamp");
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
+    testTableFactoryWithTimestampFormat(properties);
+    
+    properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
+    properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
+    testTableFactoryWithTimestampFormat(properties);
+  
+    properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
+    properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm");
+    properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
+    properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm");
+    testTableFactoryWithTimestampFormat(properties);
+  }
+  
+  private void testTableFactoryWithTimestampFormat(Map<String, String> properties){
+    // env
+    TableEnvironment tableEnvironment = getTableEnvironment();
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
@@ -253,7 +267,7 @@ public class FlinkTest {
     row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
     row1.setField(1, "2020-01-01 12:00:02");
     Assert.assertEquals(row, row1);
-
+    
     tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
     createTableSql = format(
         "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
@@ -264,6 +278,7 @@ public class FlinkTest {
     Assert.assertEquals(row, row1);
     tiDBCatalog.close();
   }
+  
 
   @Test
   public void testCatalog() throws Exception {
