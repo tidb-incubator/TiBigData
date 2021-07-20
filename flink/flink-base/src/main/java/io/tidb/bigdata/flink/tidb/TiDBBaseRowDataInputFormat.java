@@ -21,7 +21,6 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
 import static java.lang.String.format;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -187,10 +186,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
 
   @Override
   public void openInputFormat() throws IOException {
-    formatters = Arrays.stream(fieldNames).map(name -> {
-      String pattern = properties.get(TIMESTAMP_FORMAT_PREFIX + "." + name);
-      return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
-    }).toArray(DateTimeFormatter[]::new);
+    formatters = TypeUtils.extractDateTimeFormatter(fieldNames, properties, true);
     clientSession = ClientSession.createWithSingleConnection(new ClientConfig(properties));
   }
 

@@ -73,11 +73,6 @@ public class TiDBOptions {
   public static final Set<String> VALID_STREAMING_CODECS =
       ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
 
-  public static final String TIMESTAMP_FORMAT_PREFIX = "tidb.timestamp-format.";
-  @Deprecated
-  // maintain compatibility with flink-1.11, 1.12, will remove this configuration in flink-1.14
-  public static final String CMPT_TIMESTAMP_FORMAT_PREFIX = "timestamp-format.";
-
   public static Set<ConfigOption<?>> requiredOptions() {
     return withMoreRequiredOptions();
   }

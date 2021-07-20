@@ -16,13 +16,11 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.CMPT_TIMESTAMP_FORMAT_PREFIX;
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TIMESTAMP_FORMAT_PREFIX;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 import static org.tikv.common.types.MySQLType.TypeDatetime;
 import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
 import com.google.common.collect.ImmutableMap;
+import io.tidb.bigdata.flink.tidb.TypeUtils;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -40,7 +38,6 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.DataTypes.Field;
@@ -272,15 +269,7 @@ public class TiDBSchemaAdapter implements Serializable {
   }
 
   public void open() {
-    if (ArrayUtils.isEmpty(physicalFieldNames)) {
-      this.dateTimeFormatters = new DateTimeFormatter[0];
-      return;
-    }
-    this.dateTimeFormatters = Arrays.stream(physicalFieldNames)
-        .map(fieldName ->
-            Optional.ofNullable(properties.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
-                .orElseGet(() -> properties.get(CMPT_TIMESTAMP_FORMAT_PREFIX + fieldName)))
-        .map(pattern -> pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern))
-        .toArray(DateTimeFormatter[]::new);
+    this.dateTimeFormatters = TypeUtils.extractDateTimeFormatter(
+        physicalFieldNames, properties, true);
   }
 }
