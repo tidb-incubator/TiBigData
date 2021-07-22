@@ -27,6 +27,7 @@ import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
+import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
 
 public class FlinkTest {
@@ -252,8 +253,8 @@ public class FlinkTest {
     // only test for timestamp
     Map<String, String> properties = getDefaultProperties();
     properties.put("connector", "tidb");
-    properties.put(TiDBDynamicTableFactory.DATABASE_NAME.key(), "test");
-    properties.put(TiDBDynamicTableFactory.TABLE_NAME.key(), "test_timestamp");
+    properties.put(TiDBOptions.DATABASE_NAME.key(), "test");
+    properties.put(TiDBOptions.TABLE_NAME.key(), "test_timestamp");
     properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
     properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
     testTableFactoryWithTimestampFormat(properties);
