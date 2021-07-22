@@ -26,6 +26,8 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
+import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
+import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
 
 public class FlinkTest {
 
