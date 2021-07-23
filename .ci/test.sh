@@ -16,3 +16,5 @@ mvn clean test -am -pl flink/flink-1.12
 mvn clean test -am -pl flink/flink-1.13
 mvn clean test -am -pl mapreduce/mapreduce-base
 mvn clean test -am -pl prestodb
+mvn clean test -am -pl prestosql
+mvn clean test -am -pl trino
