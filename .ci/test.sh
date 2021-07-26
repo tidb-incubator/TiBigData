@@ -18,4 +18,4 @@ mvn clean test -am -pl mapreduce/mapreduce-base
 mvn clean test -am -pl prestodb
 
 export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
-mvn clean compile -am -pl prestosql
+mvn clean test -am -pl prestosql
