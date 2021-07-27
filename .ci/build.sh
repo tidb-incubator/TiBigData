@@ -15,3 +15,4 @@ mvn clean compile -am -pl jdbc
 
 export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
 mvn clean compile -am -pl prestosql
+mvn clean compile -am -pl trino
