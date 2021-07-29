@@ -3,7 +3,7 @@
 ## Build
 
 ```bash
-git clone git@github.com:pingcap-incubator/TiBigData.git
+git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 # need Java 11
 mvn clean package -DskipTests -am -pl prestosql
