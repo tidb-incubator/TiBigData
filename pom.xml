@@ -149,6 +149,7 @@
         <module>flink</module>
         <module>jdbc</module>
         <module>mapreduce</module>
+        <module>trino</module>
     </modules>
 
     <build>
