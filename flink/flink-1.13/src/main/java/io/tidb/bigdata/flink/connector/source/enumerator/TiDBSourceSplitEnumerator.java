@@ -43,6 +43,7 @@ import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceSplitEnumerator implements
     SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> {
+
   private static final Logger LOG = LoggerFactory.getLogger(TiDBSourceSplitEnumerator.class);
 
   private final Map<String, String> properties;
@@ -52,6 +53,7 @@ public class TiDBSourceSplitEnumerator implements
   private final Set<Integer> assignedReaders;
   private final Set<Integer> notifiedReaders;
   private final Set<TiDBSourceSplit> assignedSplits;
+  private final Set<TiDBSourceSplit> allSplits;
   private TiTimestamp timestamp;
 
   public TiDBSourceSplitEnumerator(
@@ -70,6 +72,7 @@ public class TiDBSourceSplitEnumerator implements
     this.pendingSplitAssignment = new HashMap<>();
     this.assignedReaders = new HashSet<>();
     this.notifiedReaders = new HashSet<>();
+    this.allSplits = getSplits();
   }
 
   private void assignPendingSplits(Set<Integer> pendingReaders) {
@@ -108,23 +111,27 @@ public class TiDBSourceSplitEnumerator implements
     }
   }
 
+  public Set<TiDBSourceSplit> getSplits() {
+    try (ClientSession splitSession = ClientSession
+        .createWithSingleConnection(new ClientConfig(properties))) {
+      // check exist
+      final String databaseName = properties.get("tidb.database.name");
+      final String tableName = properties.get("tidb.table.name");
+      splitSession.getTableMust(databaseName, tableName);
+      timestamp = splitSession.getTimestamp();
+      final TableHandleInternal tableHandleInternal = new TableHandleInternal(
+          UUID.randomUUID().toString(), databaseName, tableName);
+      List<SplitInternal> splits =
+          new SplitManagerInternal(splitSession).getSplits(tableHandleInternal, timestamp);
+      return splits.stream().map(TiDBSourceSplit::new).collect(Collectors.toSet());
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   @Override
   public void start() {
-    context.callAsync(() -> {
-      try (ClientSession splitSession = ClientSession
-          .createWithSingleConnection(new ClientConfig(properties))) {
-        // check exist
-        final String databaseName = properties.get("tidb.database.name");
-        final String tableName = properties.get("tidb.table.name");
-        splitSession.getTableMust(databaseName, tableName);
-        timestamp = splitSession.getTimestamp();
-        final TableHandleInternal tableHandleInternal = new TableHandleInternal(
-            UUID.randomUUID().toString(), databaseName, tableName);
-        List<SplitInternal> splits =
-            new SplitManagerInternal(splitSession).getSplits(tableHandleInternal, timestamp);
-        return splits.stream().map(TiDBSourceSplit::new).collect(Collectors.toSet());
-      }
-    }, this::assignSplits);
+    context.callAsync(() -> allSplits, this::assignSplits);
   }
 
   public TiTimestamp getTimestamp() {
