@@ -36,13 +36,13 @@ import org.apache.flink.api.connector.source.SourceEvent;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.connector.source.SplitsAssignment;
-import org.apache.flink.util.FlinkRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceSplitEnumerator implements
     SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> {
+
   private static final Logger LOG = LoggerFactory.getLogger(TiDBSourceSplitEnumerator.class);
 
   private final Map<String, String> properties;
@@ -70,6 +70,7 @@ public class TiDBSourceSplitEnumerator implements
     this.pendingSplitAssignment = new HashMap<>();
     this.assignedReaders = new HashSet<>();
     this.notifiedReaders = new HashSet<>();
+    initPendingSplitAssignment();
   }
 
   private void assignPendingSplits(Set<Integer> pendingReaders) {
@@ -108,48 +109,37 @@ public class TiDBSourceSplitEnumerator implements
     }
   }
 
+  public void initPendingSplitAssignment() {
+    try (ClientSession splitSession = ClientSession
+        .createWithSingleConnection(new ClientConfig(properties))) {
+      // check exist
+      final String databaseName = properties.get("tidb.database.name");
+      final String tableName = properties.get("tidb.table.name");
+      splitSession.getTableMust(databaseName, tableName);
+      timestamp = splitSession.getTimestamp();
+      final TableHandleInternal tableHandleInternal = new TableHandleInternal(
+          UUID.randomUUID().toString(), databaseName, tableName);
+      List<SplitInternal> splits =
+          new SplitManagerInternal(splitSession).getSplits(tableHandleInternal, timestamp);
+      List<TiDBSourceSplit> allSplits = splits.stream().map(TiDBSourceSplit::new)
+          .collect(Collectors.toList());
+      int parallelism = context.currentParallelism();
+      for (int i = 0; i < allSplits.size(); i++) {
+        int reader = i % parallelism;
+        pendingSplitAssignment.computeIfAbsent(reader, integer -> new HashSet<>())
+            .add(allSplits.get(i));
+      }
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   @Override
   public void start() {
-    context.callAsync(() -> {
-      try (ClientSession splitSession = ClientSession
-          .createWithSingleConnection(new ClientConfig(properties))) {
-        // check exist
-        final String databaseName = properties.get("tidb.database.name");
-        final String tableName = properties.get("tidb.table.name");
-        splitSession.getTableMust(databaseName, tableName);
-        timestamp = splitSession.getTimestamp();
-        final TableHandleInternal tableHandleInternal = new TableHandleInternal(
-            UUID.randomUUID().toString(), databaseName, tableName);
-        List<SplitInternal> splits =
-            new SplitManagerInternal(splitSession).getSplits(tableHandleInternal, timestamp);
-        return splits.stream().map(TiDBSourceSplit::new).collect(Collectors.toSet());
-      }
-    }, this::assignSplits);
   }
 
   public TiTimestamp getTimestamp() {
     return timestamp;
-  }
-
-  private void assignSplits(Set<TiDBSourceSplit> splits, Throwable ex) {
-    if (ex != null) {
-      throw new FlinkRuntimeException("Failed to handle splits due to ", ex);
-    }
-
-    int numReaders = context.currentParallelism();
-    int readerIndex = 0;
-
-    for (TiDBSourceSplit split : splits) {
-      Integer readerId = (readerIndex++) % numReaders;
-      this.pendingSplitAssignment.computeIfAbsent(readerId, key -> new HashSet<>()).add(split);
-    }
-
-    for (readerIndex = 0; readerIndex < numReaders; ++readerIndex) {
-      // if a reader doesn't have any split to read, we mark it as assigned
-      if (!this.pendingSplitAssignment.containsKey(readerIndex)) {
-        this.assignedReaders.add(readerIndex);
-      }
-    }
   }
 
   @Override

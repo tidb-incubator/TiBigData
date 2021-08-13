@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
+import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
@@ -108,26 +109,27 @@ public class TiDBSourceBuilder implements Serializable {
     }
   }
 
-  public HybridSource<RowData> build() {
+  public Source<RowData, ?, ?> build() {
     final SnapshotSource source = new SnapshotSource(databaseName, tableName, properties, schema);
+    if (streamingSource == null) {
+      return source;
+    }
     HybridSource.HybridSourceBuilder<RowData, TiDBSourceSplitEnumerator> builder =
         HybridSource.builder(source);
-    if (streamingSource != null) {
-      builder.addSource(
-          (enumerator) -> {
-            final CDCSourceBuilder cdcBuilder = createCDCBuilder(enumerator.getTimestamp());
-            switch (streamingCodec) {
-              case STREAMING_CODEC_CRAFT:
-                return cdcBuilder.craft();
-              case STREAMING_CODEC_JSON:
-                return cdcBuilder.json();
-              default:
-                throw new IllegalArgumentException("Invalid streaming codec: '"
-                    + streamingCodec + "'");
-            }
-          },
-          Boundedness.CONTINUOUS_UNBOUNDED);
-    }
+    builder.addSource(
+        (enumerator) -> {
+          final CDCSourceBuilder cdcBuilder = createCDCBuilder(enumerator.getTimestamp());
+          switch (streamingCodec) {
+            case STREAMING_CODEC_CRAFT:
+              return cdcBuilder.craft();
+            case STREAMING_CODEC_JSON:
+              return cdcBuilder.json();
+            default:
+              throw new IllegalArgumentException("Invalid streaming codec: '"
+                  + streamingCodec + "'");
+          }
+        },
+        Boundedness.CONTINUOUS_UNBOUNDED);
     return builder.build();
   }
 }

@@ -69,6 +69,7 @@ public class TiDBSourceSplitReader implements SplitReader<RowData, TiDBSourceSpl
   }
 
   @Override
-  public void close() {
+  public void close() throws Exception {
+    session.close();
   }
 }
