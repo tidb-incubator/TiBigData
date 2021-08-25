@@ -102,7 +102,7 @@ SHOW SCHEMAS;
 CREATE TABLE IF NOT EXISTS ${TABLE_NAME} (id INT, name VARCHAR(255), sex VARCHAR(255));
 -- show table schema
 SHOW CREATE TABLE ${TABLE_NAME};
--- drop table 
+-- drop table
 DROP TABLE IF EXISTS ${TABLE_NAME};
 -- query
 SELECT * FROM ${TABLE_NAME} LIMIT 100;
@@ -168,7 +168,7 @@ INSERT INTO test_tidb_type(
  c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
  c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
  c21,c22,c23,c24,c25,c26,c27,c28,c29
-) 
+)
 VALUES (
  tinyint '1',
  smallint '2',

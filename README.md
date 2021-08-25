@@ -2,7 +2,7 @@
 
 [License](https://github.com/pingcap-incubator/TiBigData/blob/master/LICENSE)
 
-Misc BigData components for TiDB, Presto & Flink connectors for example.
+Misc BigData components for TiDB, Presto, Flink and MapReduce connectors for example.
 
 ## License
 
@@ -23,7 +23,11 @@ First you need to build the corresponding version of tikv-java-client with the f
 
 [PrestoSQL-TiDB-Connector](./prestosql/README.md)
 
+[Trino-TiDB-Connector](./trino/README.md)
+
 [PrestoDB-TiDB-Connector](./prestodb/README.md)
+
+[MapReduce-TiDB-Connector](./mapreduce/README.md)
 
 ## Run Tests
 

@@ -139,7 +139,7 @@ public class TiDBCatalogDemo {
 }
 ```
 
-You could submit DDL  by TiDBCatalog, such as create table, drop table: 
+You could submit DDL  by TiDBCatalog, such as create table, drop table:
 
 ```java
 public class TestCreateTable {
@@ -160,7 +160,7 @@ public class TestCreateTable {
 
 ### FlinkTableFactory
 
-You could use `FlinkTableFactory` like: 
+You could use `FlinkTableFactory` like:
 
 ```java
 public class TestFlinkSql {
@@ -251,7 +251,7 @@ CREATE TABLE `default`.`test_tidb_type`(
 );
 ```
 
-On the one hand, you can create mapping table by yourself: 
+On the one hand, you can create mapping table by yourself:
 
 ```sql
 -- run flink sql client
