@@ -26,7 +26,7 @@ hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapr
  -f   ${FIELD2} \
  -t   ${TABLE_NAME}
  -ts  ${SNAPSHOT_TIMESTAMP} \
- -l   ${LIMIT} 
+ -l   ${LIMIT}
 ```
 
 ### create table and insert record
@@ -68,8 +68,8 @@ CREATE TABLE IF NOT EXISTS test.test_table
         PRIMARY KEY(c1),
         UNIQUE KEY(c2)
     );
-    
-INSERT INTO test.test_table VALUES                                                                                                                                                                                                                                                                                                                                                                                                              
+
+INSERT INTO test.test_table VALUES
     (
         127,32767,
         8388607,
@@ -103,15 +103,15 @@ INSERT INTO test.test_table VALUES
 
 ### params
 
-| param_name                | require |     example                                                                     |   
-| :-----------------------: | :-----: | :-----------------------------------------------------------------------------: | 
-| filed_name, -f            | false   |  -f f1 -f f2(select f1, f2 from ...), Not having this param(select * from ...)  |  
-| database_url, -du         | true    |  -du "jdbc:mysql://127.0.0.1:4005/pingcap"                                      |   
-| username, -u              | true    |  -u root                                                                        |   
-| password, -p              | true    |  -p ""                                                                          |   
-| database_name, -dn        | true    |  -dn test                                                                       |   
-| table_name, -t            | true    |  -t test_table                                                                  |   
-| snapshot_timestamp, -ts   | false   |  -ts "2021-05-08T15:23:38+08:00[Asia/Shanghai]"                                 |   
+| param_name                | require |     example                                                                     |
+| :-----------------------: | :-----: | :-----------------------------------------------------------------------------: |
+| filed_name, -f            | false   |  -f f1 -f f2(select f1, f2 from ...), Not having this param(select * from ...)  |
+| database_url, -du         | true    |  -du "jdbc:mysql://127.0.0.1:4005/pingcap"                                      |
+| username, -u              | true    |  -u root                                                                        |
+| password, -p              | true    |  -p ""                                                                          |
+| database_name, -dn        | true    |  -dn test                                                                       |
+| table_name, -t            | true    |  -t test_table                                                                  |
+| snapshot_timestamp, -ts   | false   |  -ts "2021-05-08T15:23:38+08:00[Asia/Shanghai]"                                 |
 | limit, -l                 | false   |  -l 3                                                                           |
 
 ### example
@@ -136,7 +136,7 @@ Mapper output can be found in console, like:
 
 ```bash
 job attempt ID : attempt_local827968733_0001_m_000003_0
-       FIELDNAME      c1              c2              c3              c4        
+       FIELDNAME      c1              c2              c3              c4
                0       1          155190            7706               1
                1       1           67310            7311               2
                2       1           63700            3701               3
@@ -144,34 +144,34 @@ job attempt ID : attempt_local827968733_0001_m_000003_0
 
 ## DataTypes
 
-|    TiDB    |     TiResultSet       |     getMethod[TiDBResultSet]                            |   
-| :--------: | :-------------------: | :-----------------------------------------------------: |   
-|  TINYINT   |  TINYINT              |  getInt(columnIndex)         return int                 |   
-|  SMALLINT  | SMALLINT              |  getInt(columnIndex)         return int                 |   
-| MEDIUMINT  |    INT                |  getInt(columnIndex)         return int                 |   
-|    INT     |    INT                |  getInt(columnIndex)         return int                 |   
-|   BIGINT   |  BIGINT               |  getLong(columnIndex)        return long                |   
-|    CHAR    |  STRING               |  getString(columnIndex)      return String              |   
-|  VARCHAR   |  STRING               |  getString(columnIndex)      return String              |   
-|  TINYTEXT  |  STRING               |  getString(columnIndex)      return String              |   
-| MEDIUMTEXT |  STRING               |  getString(columnIndex)      return String              |   
-|    TEXT    |  STRING               |  getString(columnIndex)      return String              |   
-|  LONGTEXT  |  STRING               |  getString(columnIndex)      return String              |   
-|   BINARY   |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-| VARBINARY  |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-|  TINYBLOB  |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-| MEDIUMBLOB |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-|    BLOB    |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-|  LONGBLOB  |   BYTES               |  getBytes(columnIndex)       return byte[]              |   
-|   FLOAT    |   FLOAT               |  getFloat(columnIndex)       return float               |   
-|   DOUBLE   |  DOUBLE               |  getDouble(columnIndex)      return double              |   
-| DECIMAL(p,s) |  DECIMAL(p,s)       |  getBigDecimal(columnIndex)  return BigDecimal          |   
-|    DATE    |   DATE                |  getDate(columnIndex)        return java.sql.Date       |   
-|    TIME    |   TIME                |  getTime(columnIndex)        return java.sql.Time       |   
-|  DATETIME  | TIMESTAMP             |  getTimestamp(columnIndex)   return java.sql.Timestamp  |   
-| TIMESTAMP  | TIMESTAMP             |  getTimestamp(columnIndex)   return java.sql.Timestamp  |   
-|    YEAR    | SMALLINT              |  getInt(columnIndex)         return int                 |   
-|    BOOL    |  BOOLEAN              |  getBoolean(columnIndex)     return boolean             |   
-|    JSON    |  STRING               |  getString(columnIndex)      return String              |   
-|    ENUM    |  STRING               |  getString(columnIndex)      return String              |   
-|    SET     |  STRING               |  getString(columnIndex)      return String              |   
+|    TiDB    |     TiResultSet       |     getMethod[TiDBResultSet]                            |
+| :--------: | :-------------------: | :-----------------------------------------------------: |
+|  TINYINT   |  TINYINT              |  getInt(columnIndex)         return int                 |
+|  SMALLINT  | SMALLINT              |  getInt(columnIndex)         return int                 |
+| MEDIUMINT  |    INT                |  getInt(columnIndex)         return int                 |
+|    INT     |    INT                |  getInt(columnIndex)         return int                 |
+|   BIGINT   |  BIGINT               |  getLong(columnIndex)        return long                |
+|    CHAR    |  STRING               |  getString(columnIndex)      return String              |
+|  VARCHAR   |  STRING               |  getString(columnIndex)      return String              |
+|  TINYTEXT  |  STRING               |  getString(columnIndex)      return String              |
+| MEDIUMTEXT |  STRING               |  getString(columnIndex)      return String              |
+|    TEXT    |  STRING               |  getString(columnIndex)      return String              |
+|  LONGTEXT  |  STRING               |  getString(columnIndex)      return String              |
+|   BINARY   |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+| VARBINARY  |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+|  TINYBLOB  |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+| MEDIUMBLOB |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+|    BLOB    |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+|  LONGBLOB  |   BYTES               |  getBytes(columnIndex)       return byte[]              |
+|   FLOAT    |   FLOAT               |  getFloat(columnIndex)       return float               |
+|   DOUBLE   |  DOUBLE               |  getDouble(columnIndex)      return double              |
+| DECIMAL(p,s) |  DECIMAL(p,s)       |  getBigDecimal(columnIndex)  return BigDecimal          |
+|    DATE    |   DATE                |  getDate(columnIndex)        return java.sql.Date       |
+|    TIME    |   TIME                |  getTime(columnIndex)        return java.sql.Time       |
+|  DATETIME  | TIMESTAMP             |  getTimestamp(columnIndex)   return java.sql.Timestamp  |
+| TIMESTAMP  | TIMESTAMP             |  getTimestamp(columnIndex)   return java.sql.Timestamp  |
+|    YEAR    | SMALLINT              |  getInt(columnIndex)         return int                 |
+|    BOOL    |  BOOLEAN              |  getBoolean(columnIndex)     return boolean             |
+|    JSON    |  STRING               |  getString(columnIndex)      return String              |
+|    ENUM    |  STRING               |  getString(columnIndex)      return String              |
+|    SET     |  STRING               |  getString(columnIndex)      return String              |
