@@ -6,14 +6,14 @@
     <parent>
         <artifactId>mapreduce-tidb-connector</artifactId>
         <groupId>io.tidb</groupId>
-        <version>0.0.4-SNAPSHOT</version>
+        <version>0.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>mapreduce-tidb-connector-base</artifactId>
 
     <properties>
         <dep.slf4j.version>1.7.21</dep.slf4j.version>
-        <hadoop.verison>2.7.1</hadoop.verison>
+        <hadoop.verison>2.10.0</hadoop.verison>
     </properties>
 
     <dependencies>
