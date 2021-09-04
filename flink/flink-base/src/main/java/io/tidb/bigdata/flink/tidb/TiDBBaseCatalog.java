@@ -18,6 +18,8 @@ package io.tidb.bigdata.flink.tidb;
 
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_CATALOG_LZY_OPEN;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_CATALOG_LZY_OPEN_DEFAULT;
 
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -67,11 +69,15 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   private final Map<String, String> properties;
 
+  private final boolean lazyOpen;
+
   private Optional<ClientSession> clientSession = Optional.empty();
 
   public TiDBBaseCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
+    this.lazyOpen = Boolean.parseBoolean(properties.getOrDefault(TIDB_CATALOG_LZY_OPEN,
+        TIDB_CATALOG_LZY_OPEN_DEFAULT));
   }
 
   public TiDBBaseCatalog(String name, Map<String, String> properties) {
@@ -82,15 +88,23 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     this(DEFAULT_NAME, DEFAULT_DATABASE, properties);
   }
 
-  @Override
-  public synchronized void open() throws CatalogException {
-    // catalog isOpened?
+  private void initClientSession() {
     if (!clientSession.isPresent()) {
       try {
+        LOG.info("init client session");
         clientSession = Optional.of(ClientSession.create(new ClientConfig(properties)));
       } catch (Exception e) {
         throw new CatalogException("can not open catalog", e);
       }
+    }
+  }
+
+  @Override
+  public synchronized void open() throws CatalogException {
+    if (!lazyOpen) {
+      initClientSession();
+    } else {
+      LOG.info("we do nothing because tidb catalog use lazy open");
     }
   }
 
@@ -372,6 +386,13 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   private ClientSession getClientSession() {
-    return clientSession.orElseThrow(IllegalStateException::new);
+    if (clientSession.isPresent()) {
+      return clientSession.get();
+    }
+    if (!lazyOpen) {
+      throw new IllegalStateException("tidb catalog is not opened or has been closed ");
+    }
+    initClientSession();
+    return clientSession.get();
   }
 }

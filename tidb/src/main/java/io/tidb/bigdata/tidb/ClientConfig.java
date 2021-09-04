@@ -38,12 +38,14 @@ public final class ClientConfig {
   public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
   public static final int MAX_POOL_SIZE_DEFAULT = 10;
 
-  // default value means that we connect to tidb server lazily
   public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
   public static final int MIN_IDLE_SIZE_DEFAULT = 10;
 
   public static final String TIDB_WRITE_MODE = "tidb.write_mode";
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
+
+  public static final String TIDB_CATALOG_LZY_OPEN = "tidb.catalog.lazy-open";
+  public static final String TIDB_CATALOG_LZY_OPEN_DEFAULT = "false";
 
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
   public static final String TIDB_REPLICA_READ_LEADER = "leader";
