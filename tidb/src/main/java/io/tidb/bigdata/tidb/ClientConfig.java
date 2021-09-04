@@ -16,12 +16,11 @@
 
 package io.tidb.bigdata.tidb;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
 import static io.tidb.bigdata.jdbc.TiDBDriver.MYSQL_PREFIX;
 import static io.tidb.bigdata.jdbc.TiDBDriver.TIDB_PREFIX;
 
-import com.google.common.base.Objects;
 import java.util.Map;
+import java.util.Objects;
 
 public final class ClientConfig {
 
@@ -48,10 +47,7 @@ public final class ClientConfig {
   public static final String TIDB_CATALOG_LZY_OPEN_DEFAULT = "false";
 
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
-  public static final String TIDB_REPLICA_READ_LEADER = "leader";
-  public static final String TIDB_REPLICA_READ_FOLLOWER = "follower";
-  public static final String TIDB_REPLICA_READ_LEADER_AND_FOLLOWER = "leader_and_follower";
-  public static final String TIDB_REPLICA_READ_DEFAULT = TIDB_REPLICA_READ_LEADER;
+  public static final String TIDB_REPLICA_READ_DEFAULT = "leader";
 
   public static final String TIDB_REPLICA_READ_LABEL = "tidb.replica-read.label";
   public static final String TIDB_REPLICA_READ_LABEL_DEFAULT = "";
@@ -71,6 +67,12 @@ public final class ClientConfig {
   public static final String TIDB_DNS_SEARCH = "tidb.dns.search";
   public static final String TIDB_DNS_SEARCH_DEFAULT = null;
 
+  public static final String TIKV_GRPC_TIMEOUT = "tikv.grpc.timeout_in_ms";
+  public static final long TIKV_GRPC_TIMEOUT_DEFAULT = 60 * 1000L;
+
+  public static final String TIKV_GRPC_SCAN_TIMEOUT = "tikv.grpc.scan_timeout_in_ms";
+  public static final long TIKV_GRPC_SCAN_TIMEOUT_DEFAULT = 60 * 1000L;
+
   private String pdAddresses;
 
   private String databaseUrl;
@@ -85,11 +87,15 @@ public final class ClientConfig {
 
   private String writeMode;
 
-  private final ReplicaReadPolicy replicaReadPolicy;
+  private ReplicaReadPolicy replicaReadPolicy;
 
   private boolean isFilterPushDown;
 
   private String dnsSearch;
+
+  private long timeout;
+
+  private long scanTimeout;
 
   public boolean isFilterPushDown() {
     return isFilterPushDown;
@@ -104,21 +110,44 @@ public final class ClientConfig {
   }
 
   public ClientConfig() {
-    this(null, null, null, MAX_POOL_SIZE_DEFAULT,
-        MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
-        ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
-        TIDB_DNS_SEARCH_DEFAULT);
+    this(null,
+        null,
+        null,
+        MAX_POOL_SIZE_DEFAULT,
+        MIN_IDLE_SIZE_DEFAULT,
+        TIDB_WRITE_MODE_DEFAULT,
+        ReplicaReadPolicy.DEFAULT,
+        TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT,
+        TIKV_GRPC_TIMEOUT_DEFAULT,
+        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
-    this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
-        TIDB_WRITE_MODE_DEFAULT, ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
-        TIDB_DNS_SEARCH_DEFAULT);
+    this(databaseUrl,
+        username,
+        password,
+        MAX_POOL_SIZE_DEFAULT,
+        MIN_IDLE_SIZE_DEFAULT,
+        TIDB_WRITE_MODE_DEFAULT,
+        ReplicaReadPolicy.DEFAULT,
+        TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        TIDB_DNS_SEARCH_DEFAULT,
+        TIKV_GRPC_TIMEOUT_DEFAULT,
+        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT);
   }
 
-  public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
-      int minimumIdleSize, String writeMode, ReplicaReadPolicy replicaRead,
-      boolean isFilterPushDown, String dnsSearch) {
+  public ClientConfig(String databaseUrl,
+      String username,
+      String password,
+      int maximumPoolSize,
+      int minimumIdleSize,
+      String writeMode,
+      ReplicaReadPolicy replicaRead,
+      boolean isFilterPushDown,
+      String dnsSearch,
+      long timeout,
+      long scanTimeout) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
@@ -128,6 +157,8 @@ public final class ClientConfig {
     this.replicaReadPolicy = replicaRead;
     this.isFilterPushDown = isFilterPushDown;
     this.dnsSearch = dnsSearch;
+    this.timeout = timeout;
+    this.scanTimeout = scanTimeout;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -142,7 +173,11 @@ public final class ClientConfig {
         ReplicaReadPolicy.create(properties),
         Boolean.parseBoolean(properties
             .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT))),
-        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT)
+        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT),
+        Long.parseLong(
+            properties.getOrDefault(TIKV_GRPC_TIMEOUT, Long.toString(TIKV_GRPC_TIMEOUT_DEFAULT))),
+        Long.parseLong(properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT,
+            Long.toString(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT)))
     );
   }
 
@@ -155,7 +190,9 @@ public final class ClientConfig {
         config.getWriteMode(),
         config.getReplicaReadPolicy(),
         config.isFilterPushDown(),
-        config.getDnsSearch());
+        config.getDnsSearch(),
+        config.getTimeout(),
+        config.getScanTimeout());
   }
 
   public String getPdAddresses() {
@@ -232,41 +269,71 @@ public final class ClientConfig {
     this.dnsSearch = dnsSearch;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(pdAddresses, databaseUrl, username, password, maximumPoolSize,
-        minimumIdleSize, writeMode, replicaReadPolicy);
+  public void setReplicaReadPolicy(ReplicaReadPolicy replicaReadPolicy) {
+    this.replicaReadPolicy = replicaReadPolicy;
+  }
+
+  public long getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(long timeout) {
+    this.timeout = timeout;
+  }
+
+  public long getScanTimeout() {
+    return scanTimeout;
+  }
+
+  public void setScanTimeout(long scanTimeout) {
+    this.scanTimeout = scanTimeout;
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ClientConfig that = (ClientConfig) object;
+    ClientConfig that = (ClientConfig) o;
     return maximumPoolSize == that.maximumPoolSize
         && minimumIdleSize == that.minimumIdleSize
-        && Objects.equal(replicaReadPolicy, that.replicaReadPolicy)
-        && Objects.equal(pdAddresses, that.pdAddresses)
-        && Objects.equal(databaseUrl, that.databaseUrl)
-        && Objects.equal(username, that.username)
-        && Objects.equal(password, that.password)
-        && Objects.equal(writeMode, that.writeMode);
+        && isFilterPushDown == that.isFilterPushDown
+        && timeout == that.timeout
+        && scanTimeout == that.scanTimeout
+        && Objects.equals(pdAddresses, that.pdAddresses)
+        && Objects.equals(databaseUrl, that.databaseUrl)
+        && Objects.equals(username, that.username)
+        && Objects.equals(password, that.password)
+        && Objects.equals(writeMode, that.writeMode)
+        && Objects.equals(replicaReadPolicy, that.replicaReadPolicy)
+        && Objects.equals(dnsSearch, that.dnsSearch);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pdAddresses, databaseUrl, username, password, maximumPoolSize,
+        minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown, dnsSearch, timeout,
+        scanTimeout);
   }
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("databaseUrl", databaseUrl)
-        .add("username", username)
-        .add("pdAddresses", pdAddresses)
-        .add("maximumPoolSize", maximumPoolSize)
-        .add("minimumIdleSize", minimumIdleSize)
-        .add("writeMode", writeMode)
-        .add("replicaReadPolicy", replicaReadPolicy)
-        .toString();
+    return "ClientConfig{"
+        + "pdAddresses='" + pdAddresses + '\''
+        + ", databaseUrl='" + databaseUrl + '\''
+        + ", username='" + username + '\''
+        + ", password='" + password + '\''
+        + ", maximumPoolSize=" + maximumPoolSize
+        + ", minimumIdleSize=" + minimumIdleSize
+        + ", writeMode='" + writeMode + '\''
+        + ", replicaReadPolicy=" + replicaReadPolicy
+        + ", isFilterPushDown=" + isFilterPushDown
+        + ", dnsSearch='" + dnsSearch + '\''
+        + ", timeout=" + timeout
+        + ", scanTimeout=" + scanTimeout
+        + '}';
   }
 }

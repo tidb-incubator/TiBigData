@@ -214,7 +214,7 @@ public class FlinkTest {
 
   public Row replicaRead() throws Exception {
     Map<String, String> properties = getDefaultProperties();
-    properties.put(TIDB_REPLICA_READ, "true");
+    properties.put(TIDB_REPLICA_READ, "follower");
     return runByCatalog(properties);
   }
 
