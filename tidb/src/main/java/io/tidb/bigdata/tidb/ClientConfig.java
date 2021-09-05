@@ -43,9 +43,6 @@ public final class ClientConfig {
   public static final String TIDB_WRITE_MODE = "tidb.write_mode";
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
 
-  public static final String TIDB_CATALOG_LZY_OPEN = "tidb.catalog.lazy-open";
-  public static final String TIDB_CATALOG_LZY_OPEN_DEFAULT = "false";
-
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
   public static final String TIDB_REPLICA_READ_DEFAULT = "leader";
 

@@ -18,8 +18,6 @@ package io.tidb.bigdata.flink.tidb;
 
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
 import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
-import static io.tidb.bigdata.tidb.ClientConfig.TIDB_CATALOG_LZY_OPEN;
-import static io.tidb.bigdata.tidb.ClientConfig.TIDB_CATALOG_LZY_OPEN_DEFAULT;
 
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -63,6 +61,9 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBBaseCatalog.class);
 
+  public static final String TIDB_CATALOG_LZY_OPEN = "tidb.catalog.lazy-open";
+  public static final boolean TIDB_CATALOG_LZY_OPEN_DEFAULT = false;
+
   public static final String DEFAULT_DATABASE = "default";
 
   public static final String DEFAULT_NAME = "tidb";
@@ -77,7 +78,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
     this.lazyOpen = Boolean.parseBoolean(properties.getOrDefault(TIDB_CATALOG_LZY_OPEN,
-        TIDB_CATALOG_LZY_OPEN_DEFAULT));
+        Boolean.toString(TIDB_CATALOG_LZY_OPEN_DEFAULT)));
   }
 
   public TiDBBaseCatalog(String name, Map<String, String> properties) {
@@ -91,10 +92,10 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   private void initClientSession() {
     if (!clientSession.isPresent()) {
       try {
-        LOG.info("init client session");
+        LOG.info("Init client session");
         clientSession = Optional.of(ClientSession.create(new ClientConfig(properties)));
       } catch (Exception e) {
-        throw new CatalogException("can not open catalog", e);
+        throw new CatalogException("Can not init client session", e);
       }
     }
   }
@@ -104,7 +105,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     if (!lazyOpen) {
       initClientSession();
     } else {
-      LOG.info("we do nothing because tidb catalog use lazy open");
+      LOG.info("We do nothing because tidb catalog use lazy open");
     }
   }
 
@@ -114,7 +115,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
       try {
         session.close();
       } catch (Exception e) {
-        LOG.warn("can not close clientSession", e);
+        LOG.warn("Can not close clientSession", e);
       }
       clientSession = Optional.empty();
     });
@@ -390,7 +391,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
       return clientSession.get();
     }
     if (!lazyOpen) {
-      throw new IllegalStateException("tidb catalog is not opened or has been closed ");
+      throw new IllegalStateException("TiDB catalog is not opened or has been closed ");
     }
     initClientSession();
     return clientSession.get();

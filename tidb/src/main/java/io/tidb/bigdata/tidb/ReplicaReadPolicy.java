@@ -9,12 +9,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tikv.common.replica.Region;
 import org.tikv.common.replica.ReplicaSelector;
 import org.tikv.common.replica.Store;
 import org.tikv.common.replica.Store.Label;
 
 public class ReplicaReadPolicy implements ReplicaSelector {
+
+  static final Logger LOG = LoggerFactory.getLogger(ReplicaReadPolicy.class);
 
   public static final ReplicaReadPolicy DEFAULT = ReplicaReadPolicy.create(ImmutableMap.of());
 
@@ -41,26 +45,30 @@ public class ReplicaReadPolicy implements ReplicaSelector {
     List<Store> learners = Arrays.stream(stores)
         .filter(store -> store.isLearner() && accept(store))
         .collect(Collectors.toList());
+    Collections.shuffle(followers);
+    Collections.shuffle(learners);
     List<Store> candidates = new ArrayList<>(stores.length);
     for (Role role : roles) {
       switch (role) {
         case LEADER:
           candidates.add(leader);
-          break;
+          continue;
         case FOLLOWER:
           candidates.addAll(followers);
-          break;
+          continue;
         case LEARNER:
           candidates.addAll(learners);
-          break;
+          continue;
         default:
-          break;
+          continue;
       }
     }
     if (candidates.size() == 0) {
-      throw new IllegalStateException("can not get enough candidates");
+      throw new IllegalStateException("Can not get enough candidates");
     }
-    Collections.shuffle(candidates);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Current candidates are: {}", candidates);
+    }
     return candidates;
   }
 
@@ -145,7 +153,7 @@ public class ReplicaReadPolicy implements ReplicaSelector {
           return value;
         }
       }
-      throw new IllegalArgumentException("available roles are: " + Arrays.toString(values()));
+      throw new IllegalArgumentException("Available roles are: " + Arrays.toString(values()));
     }
   }
 }
