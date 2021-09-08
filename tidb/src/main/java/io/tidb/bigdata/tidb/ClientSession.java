@@ -25,6 +25,7 @@ import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -40,6 +41,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -51,7 +53,6 @@ import org.tikv.common.catalog.Catalog;
 import org.tikv.common.key.RowKey;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.meta.TiDAGRequest;
-import org.tikv.common.meta.TiDBInfo;
 import org.tikv.common.meta.TiIndexColumn;
 import org.tikv.common.meta.TiIndexInfo;
 import org.tikv.common.meta.TiPartitionDef;
@@ -65,6 +66,13 @@ import org.tikv.kvproto.Coprocessor;
 import org.tikv.shade.com.google.protobuf.ByteString;
 
 public final class ClientSession implements AutoCloseable {
+
+  private static final Set<String> BUILD_IN_DATABASES = ImmutableSet.of(
+      "information_schema",
+      "metrics_schema",
+      "performance_schema",
+      "mysql"
+  );
 
   static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
 
@@ -103,16 +111,43 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public List<String> getSchemaNames() {
-    return catalog.listDatabases().stream().map(TiDBInfo::getName).collect(toImmutableList());
+    try (
+        Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()
+    ) {
+      ResultSet resultSet = statement.executeQuery("SHOW DATABASES");
+      List<String> databaseNames = new ArrayList<>();
+      while (resultSet.next()) {
+        String databaseName = resultSet.getString(1).toLowerCase();
+        if (BUILD_IN_DATABASES.contains(databaseName) && !config.isBuildInDatabaseVisible()) {
+          continue;
+        }
+        databaseNames.add(databaseName);
+      }
+      return databaseNames;
+    } catch (Exception e) {
+      LOG.error("execute sql fail", e);
+      throw new IllegalStateException(e);
+    }
   }
 
   public List<String> getTableNames(String schema) {
     requireNonNull(schema, "schema is null");
-    TiDBInfo db = catalog.getDatabase(schema);
-    if (db == null) {
-      return ImmutableList.of();
+    try (
+        Connection connection = dataSource.getConnection();
+        Statement statement = connection.createStatement()
+    ) {
+      statement.execute("USE " + schema);
+      ResultSet resultSet = statement.executeQuery("SHOW TABLES");
+      List<String> tableNames = new ArrayList<>();
+      while (resultSet.next()) {
+        tableNames.add(resultSet.getString(1).toLowerCase());
+      }
+      return tableNames;
+    } catch (Exception e) {
+      LOG.error("execute sql fail", e);
+      throw new IllegalStateException(e);
     }
-    return catalog.listTables(db).stream().map(TiTableInfo::getName).collect(toImmutableList());
   }
 
   public Optional<TiTableInfo> getTable(TableHandleInternal handle) {

@@ -70,6 +70,9 @@ public final class ClientConfig {
   public static final String TIKV_GRPC_SCAN_TIMEOUT = "tikv.grpc.scan_timeout_in_ms";
   public static final long TIKV_GRPC_SCAN_TIMEOUT_DEFAULT = 60 * 1000L;
 
+  public static final String TIDB_BUILD_IN_DATABASE_VISIBLE = "tidb.build-in.database.visible";
+  public static final boolean TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT = false;
+
   private String pdAddresses;
 
   private String databaseUrl;
@@ -94,17 +97,7 @@ public final class ClientConfig {
 
   private long scanTimeout;
 
-  public boolean isFilterPushDown() {
-    return isFilterPushDown;
-  }
-
-  public void setFilterPushDown(boolean filterPushDown) {
-    isFilterPushDown = filterPushDown;
-  }
-
-  public final ReplicaReadPolicy getReplicaReadPolicy() {
-    return replicaReadPolicy;
-  }
+  private boolean buildInDatabaseVisible;
 
   public ClientConfig() {
     this(null,
@@ -117,7 +110,8 @@ public final class ClientConfig {
         TIDB_FILTER_PUSH_DOWN_DEFAULT,
         TIDB_DNS_SEARCH_DEFAULT,
         TIKV_GRPC_TIMEOUT_DEFAULT,
-        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT);
+        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT,
+        TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
@@ -131,7 +125,8 @@ public final class ClientConfig {
         TIDB_FILTER_PUSH_DOWN_DEFAULT,
         TIDB_DNS_SEARCH_DEFAULT,
         TIKV_GRPC_TIMEOUT_DEFAULT,
-        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT);
+        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT,
+        TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT);
   }
 
   public ClientConfig(String databaseUrl,
@@ -144,7 +139,8 @@ public final class ClientConfig {
       boolean isFilterPushDown,
       String dnsSearch,
       long timeout,
-      long scanTimeout) {
+      long scanTimeout,
+      boolean buildInDatabaseVisible) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
@@ -156,6 +152,7 @@ public final class ClientConfig {
     this.dnsSearch = dnsSearch;
     this.timeout = timeout;
     this.scanTimeout = scanTimeout;
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -174,7 +171,9 @@ public final class ClientConfig {
         Long.parseLong(
             properties.getOrDefault(TIKV_GRPC_TIMEOUT, Long.toString(TIKV_GRPC_TIMEOUT_DEFAULT))),
         Long.parseLong(properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT,
-            Long.toString(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT)))
+            Long.toString(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT))),
+        Boolean.parseBoolean(properties.getOrDefault(TIDB_BUILD_IN_DATABASE_VISIBLE,
+            Boolean.toString(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT)))
     );
   }
 
@@ -189,7 +188,20 @@ public final class ClientConfig {
         config.isFilterPushDown(),
         config.getDnsSearch(),
         config.getTimeout(),
-        config.getScanTimeout());
+        config.getScanTimeout(),
+        config.isBuildInDatabaseVisible());
+  }
+
+  public boolean isFilterPushDown() {
+    return isFilterPushDown;
+  }
+
+  public void setFilterPushDown(boolean filterPushDown) {
+    isFilterPushDown = filterPushDown;
+  }
+
+  public final ReplicaReadPolicy getReplicaReadPolicy() {
+    return replicaReadPolicy;
   }
 
   public String getPdAddresses() {
@@ -286,6 +298,14 @@ public final class ClientConfig {
     this.scanTimeout = scanTimeout;
   }
 
+  public boolean isBuildInDatabaseVisible() {
+    return buildInDatabaseVisible;
+  }
+
+  public void setBuildInDatabaseVisible(boolean buildInDatabaseVisible) {
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -300,6 +320,7 @@ public final class ClientConfig {
         && isFilterPushDown == that.isFilterPushDown
         && timeout == that.timeout
         && scanTimeout == that.scanTimeout
+        && buildInDatabaseVisible == that.buildInDatabaseVisible
         && Objects.equals(pdAddresses, that.pdAddresses)
         && Objects.equals(databaseUrl, that.databaseUrl)
         && Objects.equals(username, that.username)
@@ -313,7 +334,7 @@ public final class ClientConfig {
   public int hashCode() {
     return Objects.hash(pdAddresses, databaseUrl, username, password, maximumPoolSize,
         minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown, dnsSearch, timeout,
-        scanTimeout);
+        scanTimeout, buildInDatabaseVisible);
   }
 
   @Override
@@ -331,6 +352,7 @@ public final class ClientConfig {
         + ", dnsSearch='" + dnsSearch + '\''
         + ", timeout=" + timeout
         + ", scanTimeout=" + scanTimeout
+        + ", buildInDatabaseVisible=" + buildInDatabaseVisible
         + '}';
   }
 }
