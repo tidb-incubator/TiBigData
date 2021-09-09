@@ -129,7 +129,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   @Override
   public CatalogDatabase getDatabase(String databaseName)
       throws DatabaseNotExistException, CatalogException {
-    if (databaseExists(databaseName)) {
+    if (!databaseExists(databaseName)) {
       throw new DatabaseNotExistException(getName(), databaseName);
     }
     return new CatalogDatabaseImpl(ImmutableMap.of(), "");
