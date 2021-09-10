@@ -6,7 +6,7 @@
     <parent>
         <artifactId>mapreduce-tidb-connector</artifactId>
         <groupId>io.tidb</groupId>
-        <version>0.0.4-SNAPSHOT</version>
+        <version>0.0.5-SNAPSHOT</version>
     </parent>
 
     <artifactId>mapreduce-tidb-connector-base</artifactId>
