@@ -111,11 +111,12 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public List<String> getSchemaNames() {
+    String sql = "SHOW DATABASES";
     try (
         Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement()
     ) {
-      ResultSet resultSet = statement.executeQuery("SHOW DATABASES");
+      ResultSet resultSet = statement.executeQuery(sql);
       List<String> databaseNames = new ArrayList<>();
       while (resultSet.next()) {
         String databaseName = resultSet.getString(1).toLowerCase();
@@ -126,26 +127,27 @@ public final class ClientSession implements AutoCloseable {
       }
       return databaseNames;
     } catch (Exception e) {
-      LOG.error("execute sql fail", e);
+      LOG.error("Execute sql {} fail", sql, e);
       throw new IllegalStateException(e);
     }
   }
 
   public List<String> getTableNames(String schema) {
+    String sql = "SHOW TABLES";
     requireNonNull(schema, "schema is null");
     try (
         Connection connection = dataSource.getConnection();
         Statement statement = connection.createStatement()
     ) {
       statement.execute("USE " + schema);
-      ResultSet resultSet = statement.executeQuery("SHOW TABLES");
+      ResultSet resultSet = statement.executeQuery(sql);
       List<String> tableNames = new ArrayList<>();
       while (resultSet.next()) {
         tableNames.add(resultSet.getString(1).toLowerCase());
       }
       return tableNames;
     } catch (Exception e) {
-      LOG.error("execute sql fail", e);
+      LOG.error("Execute sql {} fail", sql, e);
       throw new IllegalStateException(e);
     }
   }
@@ -298,11 +300,11 @@ public final class ClientSession implements AutoCloseable {
         Statement statement = connection.createStatement()
     ) {
       for (String sql : sqls) {
-        LOG.info("sql update: " + sql);
+        LOG.info("Sql update: " + sql);
         statement.executeUpdate(sql);
       }
     } catch (Exception e) {
-      LOG.error("execute sql fail", e);
+      LOG.error("Execute sql fail", e);
       throw new IllegalStateException(e);
     }
   }

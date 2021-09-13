@@ -35,10 +35,10 @@ public final class ClientConfig {
   public static final String PASSWORD = "tidb.password";
 
   public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
-  public static final int MAX_POOL_SIZE_DEFAULT = 10;
+  public static final String MAX_POOL_SIZE_DEFAULT = "1";
 
   public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
-  public static final int MIN_IDLE_SIZE_DEFAULT = 10;
+  public static final String MIN_IDLE_SIZE_DEFAULT = "1";
 
   public static final String TIDB_WRITE_MODE = "tidb.write_mode";
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
@@ -56,7 +56,7 @@ public final class ClientConfig {
   public static final String TIDB_REPLICA_READ_ADDRESS_DEFAULT = "";
 
   public static final String TIDB_FILTER_PUSH_DOWN = "tidb.filter-push-down";
-  public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
+  public static final String TIDB_FILTER_PUSH_DOWN_DEFAULT = "false";
 
   public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
   public static final String SNAPSHOT_VERSION = "tidb.snapshot_version";
@@ -65,13 +65,13 @@ public final class ClientConfig {
   public static final String TIDB_DNS_SEARCH_DEFAULT = null;
 
   public static final String TIKV_GRPC_TIMEOUT = "tikv.grpc.timeout_in_ms";
-  public static final long TIKV_GRPC_TIMEOUT_DEFAULT = 60 * 1000L;
+  public static final String TIKV_GRPC_TIMEOUT_DEFAULT = Long.toString(60 * 1000L);
 
   public static final String TIKV_GRPC_SCAN_TIMEOUT = "tikv.grpc.scan_timeout_in_ms";
-  public static final long TIKV_GRPC_SCAN_TIMEOUT_DEFAULT = 60 * 1000L;
+  public static final String TIKV_GRPC_SCAN_TIMEOUT_DEFAULT = Long.toString(60 * 1000L);
 
   public static final String TIDB_BUILD_IN_DATABASE_VISIBLE = "tidb.build-in.database.visible";
-  public static final boolean TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT = false;
+  public static final String TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT = "false";
 
   private String pdAddresses;
 
@@ -103,30 +103,30 @@ public final class ClientConfig {
     this(null,
         null,
         null,
-        MAX_POOL_SIZE_DEFAULT,
-        MIN_IDLE_SIZE_DEFAULT,
+        Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
+        Integer.parseInt(MIN_IDLE_SIZE_DEFAULT),
         TIDB_WRITE_MODE_DEFAULT,
         ReplicaReadPolicy.DEFAULT,
-        TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        Boolean.parseBoolean(TIDB_FILTER_PUSH_DOWN_DEFAULT),
         TIDB_DNS_SEARCH_DEFAULT,
-        TIKV_GRPC_TIMEOUT_DEFAULT,
-        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT,
-        TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT);
+        Long.parseLong(TIKV_GRPC_TIMEOUT_DEFAULT),
+        Long.parseLong(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT),
+        Boolean.parseBoolean(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT));
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
     this(databaseUrl,
         username,
         password,
-        MAX_POOL_SIZE_DEFAULT,
-        MIN_IDLE_SIZE_DEFAULT,
+        Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
+        Integer.parseInt(MIN_IDLE_SIZE_DEFAULT),
         TIDB_WRITE_MODE_DEFAULT,
         ReplicaReadPolicy.DEFAULT,
-        TIDB_FILTER_PUSH_DOWN_DEFAULT,
+        Boolean.parseBoolean(TIDB_FILTER_PUSH_DOWN_DEFAULT),
         TIDB_DNS_SEARCH_DEFAULT,
-        TIKV_GRPC_TIMEOUT_DEFAULT,
-        TIKV_GRPC_SCAN_TIMEOUT_DEFAULT,
-        TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT);
+        Long.parseLong(TIKV_GRPC_TIMEOUT_DEFAULT),
+        Long.parseLong(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT),
+        Boolean.parseBoolean(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT));
   }
 
   public ClientConfig(String databaseUrl,
@@ -159,21 +159,18 @@ public final class ClientConfig {
     this(properties.get(DATABASE_URL),
         properties.get(USERNAME),
         properties.get(PASSWORD),
-        Integer.parseInt(
-            properties.getOrDefault(MAX_POOL_SIZE, Integer.toString(MAX_POOL_SIZE_DEFAULT))),
-        Integer.parseInt(
-            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))),
+        Integer.parseInt(properties.getOrDefault(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT)),
+        Integer.parseInt(properties.getOrDefault(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT)),
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
         ReplicaReadPolicy.create(properties),
-        Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT))),
+        Boolean.parseBoolean(
+            properties.getOrDefault(TIDB_FILTER_PUSH_DOWN, TIDB_FILTER_PUSH_DOWN_DEFAULT)),
         properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT),
+        Long.parseLong(properties.getOrDefault(TIKV_GRPC_TIMEOUT, TIKV_GRPC_TIMEOUT_DEFAULT)),
         Long.parseLong(
-            properties.getOrDefault(TIKV_GRPC_TIMEOUT, Long.toString(TIKV_GRPC_TIMEOUT_DEFAULT))),
-        Long.parseLong(properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT,
-            Long.toString(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT))),
+            properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT, TIKV_GRPC_SCAN_TIMEOUT_DEFAULT)),
         Boolean.parseBoolean(properties.getOrDefault(TIDB_BUILD_IN_DATABASE_VISIBLE,
-            Boolean.toString(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT)))
+            TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT))
     );
   }
 

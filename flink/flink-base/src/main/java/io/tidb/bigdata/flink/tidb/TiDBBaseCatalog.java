@@ -22,6 +22,7 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,8 +62,8 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBBaseCatalog.class);
 
-  public static final String TIDB_CATALOG_LZY_OPEN = "tidb.catalog.lazy-open";
-  public static final boolean TIDB_CATALOG_LZY_OPEN_DEFAULT = false;
+  public static final String TIDB_CATALOG_LOAD_MODE = "tidb.catalog.load-mode";
+  public static final String TIDB_CATALOG_LOAD_MODE_DEFAULT = CatalogLoadMode.EAGER.name();
 
   public static final String DEFAULT_DATABASE = "default";
 
@@ -70,15 +71,15 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   private final Map<String, String> properties;
 
-  private final boolean lazyOpen;
+  private final CatalogLoadMode catalogLoadMode;
 
   private Optional<ClientSession> clientSession = Optional.empty();
 
   public TiDBBaseCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
-    this.lazyOpen = Boolean.parseBoolean(properties.getOrDefault(TIDB_CATALOG_LZY_OPEN,
-        Boolean.toString(TIDB_CATALOG_LZY_OPEN_DEFAULT)));
+    this.catalogLoadMode = CatalogLoadMode.fromString(
+        properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
   }
 
   public TiDBBaseCatalog(String name, Map<String, String> properties) {
@@ -102,7 +103,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   @Override
   public synchronized void open() throws CatalogException {
-    if (!lazyOpen) {
+    if (catalogLoadMode == CatalogLoadMode.EAGER) {
       initClientSession();
     } else {
       LOG.info("We do nothing because tidb catalog use lazy open");
@@ -390,10 +391,20 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     if (clientSession.isPresent()) {
       return clientSession.get();
     }
-    if (!lazyOpen) {
+    if (catalogLoadMode == CatalogLoadMode.EAGER) {
       throw new IllegalStateException("TiDB catalog is not opened or has been closed ");
     }
     initClientSession();
     return clientSession.get();
+  }
+
+  public enum CatalogLoadMode {
+    LAZY, EAGER;
+
+    public static CatalogLoadMode fromString(String s) {
+      return Arrays.stream(values()).filter(mode -> mode.name().equalsIgnoreCase(s)).findFirst()
+          .orElseThrow(() -> new IllegalArgumentException(
+              "Catalog load mode must be one of: " + Arrays.toString(values())));
+    }
   }
 }

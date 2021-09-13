@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.connector.source.enumerator;
 
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
+import io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
@@ -113,8 +114,8 @@ public class TiDBSourceSplitEnumerator implements
     try (ClientSession splitSession = ClientSession
         .createWithSingleConnection(new ClientConfig(properties))) {
       // check exist
-      final String databaseName = properties.get("tidb.database.name");
-      final String tableName = properties.get("tidb.table.name");
+      final String databaseName = properties.get(TiDBBaseDynamicTableFactory.DATABASE_NAME.key());
+      final String tableName = properties.get(TiDBBaseDynamicTableFactory.TABLE_NAME.key());
       splitSession.getTableMust(databaseName, tableName);
       timestamp = splitSession.getTimestamp();
       final TableHandleInternal tableHandleInternal = new TableHandleInternal(

@@ -67,12 +67,12 @@ public abstract class LoadBalancingDriver implements Driver {
     Collection<String> urlList = urlProvider.apply(getUrlList(urls));
     for (String url : urlList) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("try connect to " + url);
+        LOG.debug("Try connect to " + url);
       }
       try {
         return driver.connect(url, info);
       } catch (Exception e) {
-        LOG.warn("connect to " + url + " fail, retry other url", e);
+        LOG.warn("Connect to " + url + " fail, retry other url", e);
       }
     }
     throw new SQLException("can not get connection");

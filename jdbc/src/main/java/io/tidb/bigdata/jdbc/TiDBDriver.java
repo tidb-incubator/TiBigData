@@ -113,7 +113,7 @@ public class TiDBDriver extends LoadBalancingDriver {
       }
       Collection<String> urls = urlProvider.apply(list);
       if (LOG.isDebugEnabled()) {
-        LOG.debug(format("query urls: %s, real urls: %s", list, urls));
+        LOG.debug(format("Query urls: %s, real urls: %s", list, urls));
       }
       return urls;
     }

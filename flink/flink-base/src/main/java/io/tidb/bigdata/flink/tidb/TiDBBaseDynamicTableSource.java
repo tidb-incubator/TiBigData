@@ -52,7 +52,7 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, Loo
 
   @Override
   public LookupRuntimeProvider getLookupRuntimeProvider(LookupContext context) {
-    LOG.info("use jdbc lookup table source");
+    LOG.info("Use jdbc lookup table source");
     // JDBC only support non-nested look up keys
     String[] keyNames = new String[context.getKeys().length];
     for (int i = 0; i < keyNames.length; i++) {

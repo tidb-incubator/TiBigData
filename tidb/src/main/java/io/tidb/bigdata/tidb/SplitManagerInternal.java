@@ -23,9 +23,13 @@ import static java.util.stream.Collectors.toCollection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
 public final class SplitManagerInternal {
+
+  static final Logger LOG = LoggerFactory.getLogger(SplitManagerInternal.class);
 
   private final ClientSession session;
 
@@ -43,6 +47,8 @@ public final class SplitManagerInternal {
         .map(range -> new SplitInternal(tableHandle, range, timestamp))
         .collect(toCollection(ArrayList::new));
     Collections.shuffle(splits);
+    LOG.info("The number of split for table `{}`.`{}` is {}", tableHandle.getSchemaName(),
+        tableHandle.getTableName(), splits.size());
     return Collections.unmodifiableList(splits);
   }
 
