@@ -120,7 +120,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
       TableHandleInternal tableHandleInternal = new TableHandleInternal(
           UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
-      splits = splitManagerInternal.getSplits(tableHandleInternal);
+      this.splits = splitManagerInternal.getSplits(tableHandleInternal);
       columns = splitSession.getTableColumns(tableHandleInternal)
           .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
       IntStream.range(0, columns.size())

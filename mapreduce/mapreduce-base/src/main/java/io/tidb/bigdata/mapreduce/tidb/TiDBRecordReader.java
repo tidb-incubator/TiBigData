@@ -137,7 +137,7 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
       updateTiDBResultSet(cursor);
       value.readFields(tiDBResultSet);
     } catch (SQLException e) {
-      LOG.error("error when read record cursor.", e);
+      LOG.error("Error when read record cursor.", e);
       return false;
     }
     return true;
@@ -172,7 +172,7 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
         clientSession.close();
         clientSession = null;
       } catch (Exception e) {
-        LOG.warn("can not close clientSession", e);
+        LOG.warn("Can not close clientSession", e);
       }
     }
     if (cursor != null) {
