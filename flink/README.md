@@ -90,7 +90,7 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | tidb.maximum.pool.size         | 10            | Connection pool size.                                        |
 | tidb.minimum.idle.size         | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode                | append        | TiDB sink write mode: `upsert` or `append`. |
-| tidb.replica-read              | leader / follower / leader_and_follower | Read data from specified role. |
+| tidb.replica-read              | leader/follower/learner | Read data from specified role. You could specify multiple roles, and we will pick the roles you specify in order. |
 | tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
 | tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
 | tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
