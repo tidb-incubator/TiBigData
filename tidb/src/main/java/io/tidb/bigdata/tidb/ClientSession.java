@@ -101,6 +101,12 @@ public final class ClientSession implements AutoCloseable {
     hostMapping = new DnsSearchHostMapping(config.getDnsSearch());
     loadPdAddresses();
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
+
+    tiConfiguration.setTlsEnable(config.getClusterTlsEnabled());
+    tiConfiguration.setTrustCertCollectionFile(Optional.of(config.getClusterTlsCA()));
+    tiConfiguration.setKeyCertChainFile(Optional.of(config.getClusterTlsCert()));
+    tiConfiguration.setKeyFile(Optional.of(config.getClusterTlsKey()));
+
     tiConfiguration.setTimeout(config.getTimeout());
     tiConfiguration.setScanTimeout(config.getScanTimeout());
     ReplicaReadPolicy policy = config.getReplicaReadPolicy();

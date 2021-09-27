@@ -34,6 +34,11 @@ public final class ClientConfig {
 
   public static final String PASSWORD = "tidb.password";
 
+  public static final String CLUSTER_TLS_ENABLE = "tidb.cluster-tls-enable";
+  public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
+  public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
+  public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
+
   public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
   public static final String MAX_POOL_SIZE_DEFAULT = "1";
 
@@ -80,6 +85,14 @@ public final class ClientConfig {
   private String username;
 
   private String password;
+
+  private boolean clusterTlsEnabled;
+
+  private String clusterTlsCA;
+
+  private String clusterTlsKey;
+
+  private String clusterTlsCert;
 
   private int maximumPoolSize;
 
@@ -129,6 +142,8 @@ public final class ClientConfig {
         Boolean.parseBoolean(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT));
   }
 
+  /* For historical compatibility, this constructor omits cluster TLS
+   * options and implicitly disables TLS. */
   public ClientConfig(String databaseUrl,
       String username,
       String password,
@@ -144,6 +159,46 @@ public final class ClientConfig {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
+    this.clusterTlsEnabled = false;
+    this.clusterTlsCA = null;
+    this.clusterTlsKey = null;
+    this.clusterTlsCert = null;
+    this.maximumPoolSize = maximumPoolSize;
+    this.minimumIdleSize = minimumIdleSize;
+    this.writeMode = writeMode;
+    this.replicaReadPolicy = replicaRead;
+    this.isFilterPushDown = isFilterPushDown;
+    this.dnsSearch = dnsSearch;
+    this.timeout = timeout;
+    this.scanTimeout = scanTimeout;
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
+  }
+
+  /* This constructor adds support for cluster TLS options without
+   * breaking backward compatibility for existing programs. */
+  public ClientConfig(String databaseUrl,
+      String username,
+      String password,
+      boolean clusterTlsEnable,
+      String clusterTlsCA,
+      String clusterTlsKey,
+      String clusterTlsCert,
+      int maximumPoolSize,
+      int minimumIdleSize,
+      String writeMode,
+      ReplicaReadPolicy replicaRead,
+      boolean isFilterPushDown,
+      String dnsSearch,
+      long timeout,
+      long scanTimeout,
+      boolean buildInDatabaseVisible) {
+    this.databaseUrl = databaseUrl;
+    this.username = username;
+    this.password = password;
+    this.clusterTlsEnabled = clusterTlsEnable;
+    this.clusterTlsCA = clusterTlsCA;
+    this.clusterTlsKey = clusterTlsKey;
+    this.clusterTlsCert = clusterTlsCert;
     this.maximumPoolSize = maximumPoolSize;
     this.minimumIdleSize = minimumIdleSize;
     this.writeMode = writeMode;
@@ -159,6 +214,10 @@ public final class ClientConfig {
     this(properties.get(DATABASE_URL),
         properties.get(USERNAME),
         properties.get(PASSWORD),
+        Boolean.parseBoolean(properties.get(CLUSTER_TLS_ENABLE)),
+        properties.get(CLUSTER_TLS_CA),
+        properties.get(CLUSTER_TLS_KEY),
+        properties.get(CLUSTER_TLS_CERT),
         Integer.parseInt(properties.getOrDefault(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT)),
         Integer.parseInt(properties.getOrDefault(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT)),
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
@@ -178,6 +237,10 @@ public final class ClientConfig {
     this(config.getDatabaseUrl(),
         config.getUsername(),
         config.getPassword(),
+        config.getClusterTlsEnabled(),
+        config.getClusterTlsCA(),
+        config.getClusterTlsKey(),
+        config.getClusterTlsCert(),
         config.getMaximumPoolSize(),
         config.getMinimumIdleSize(),
         config.getWriteMode(),
@@ -231,6 +294,38 @@ public final class ClientConfig {
 
   public void setPassword(String password) {
     this.password = password;
+  }
+
+  public boolean getClusterTlsEnabled() {
+    return clusterTlsEnabled;
+  }
+
+  public void setClusterTlsEnabled(boolean enabled) {
+    this.clusterTlsEnabled = enabled;
+  }
+
+  public String getClusterTlsCA() {
+    return clusterTlsCA;
+  }
+
+  public void setClusterTlsCA(String ca) {
+    this.clusterTlsCA = ca;
+  }
+
+  public String getClusterTlsKey() {
+    return clusterTlsKey;
+  }
+
+  public void setClusterTlsKey(String key) {
+    this.clusterTlsKey = key;
+  }
+
+  public String getClusterTlsCert() {
+    return clusterTlsCert;
+  }
+
+  public void setClusterTlsCert(String cert) {
+    this.clusterTlsCert = cert;
   }
 
   public int getMaximumPoolSize() {
@@ -322,6 +417,10 @@ public final class ClientConfig {
         && Objects.equals(databaseUrl, that.databaseUrl)
         && Objects.equals(username, that.username)
         && Objects.equals(password, that.password)
+        && Objects.equals(clusterTlsEnabled, that.clusterTlsEnabled)
+        && Objects.equals(clusterTlsCA, that.clusterTlsCA)
+        && Objects.equals(clusterTlsKey, that.clusterTlsKey)
+        && Objects.equals(clusterTlsCert, that.clusterTlsCert)
         && Objects.equals(writeMode, that.writeMode)
         && Objects.equals(replicaReadPolicy, that.replicaReadPolicy)
         && Objects.equals(dnsSearch, that.dnsSearch);
@@ -329,7 +428,8 @@ public final class ClientConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pdAddresses, databaseUrl, username, password, maximumPoolSize,
+    return Objects.hash(pdAddresses, databaseUrl, username, password, clusterTlsEnabled,
+        clusterTlsCA, clusterTlsKey, clusterTlsCert, maximumPoolSize,
         minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown, dnsSearch, timeout,
         scanTimeout, buildInDatabaseVisible);
   }
@@ -341,6 +441,10 @@ public final class ClientConfig {
         + ", databaseUrl='" + databaseUrl + '\''
         + ", username='" + username + '\''
         + ", password='" + password + '\''
+        + ", clusterTlsEnabled='" + clusterTlsEnabled + '\''
+        + ", clusterTlsCA='" + clusterTlsCA + '\''
+        + ", clusterTlsKey='" + clusterTlsKey + '\''
+        + ", clusterTlsCert='" + clusterTlsCert + '\''
         + ", maximumPoolSize=" + maximumPoolSize
         + ", minimumIdleSize=" + minimumIdleSize
         + ", writeMode='" + writeMode + '\''
