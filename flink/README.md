@@ -90,7 +90,7 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | tidb.maximum.pool.size         | 10            | Connection pool size.                                        |
 | tidb.minimum.idle.size         | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
 | tidb.write_mode                | append        | TiDB sink write mode: `upsert` or `append`. |
-| tidb.replica-read              | leader / follower / leader_and_follower | Read data from specified role. |
+| tidb.replica-read              | leader | Read data from specified role. The optional roles are leader, follower and learner. You can also specify multiple roles, and we will pick the roles you specify in order. |
 | tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
 | tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
 | tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
@@ -104,6 +104,7 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | tidb.filter-push-down          | false         | Support filter push down. It is only available for version 1.12. |
 | tidb.snapshot_timestamp        | null          | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
 | tidb.dns.search | null | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN. |
+| tidb.catalog.load-mode | eager | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened. |
 
 TiDB Flink sink supports all sink properties of  [`flink-connector-jdbc`](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connectors/jdbc.html), because it is implemented by `JdbcDynamicTableSink`.
 
