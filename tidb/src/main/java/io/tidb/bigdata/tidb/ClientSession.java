@@ -103,9 +103,9 @@ public final class ClientSession implements AutoCloseable {
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
 
     tiConfiguration.setTlsEnable(config.getClusterTlsEnabled());
-    tiConfiguration.setTrustCertCollectionFile(Optional.of(config.getClusterTlsCA()));
-    tiConfiguration.setKeyCertChainFile(Optional.of(config.getClusterTlsCert()));
-    tiConfiguration.setKeyFile(Optional.of(config.getClusterTlsKey()));
+    tiConfiguration.setTrustCertCollectionFile(config.getClusterTlsCA());
+    tiConfiguration.setKeyCertChainFile(config.getClusterTlsCert());
+    tiConfiguration.setKeyFile(config.getClusterTlsKey());
 
     tiConfiguration.setTimeout(config.getTimeout());
     tiConfiguration.setScanTimeout(config.getScanTimeout());
