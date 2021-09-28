@@ -41,8 +41,12 @@ public class TiDBMapreduceDemo {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
-    TiDBConfiguration.configureDB(conf, cmd.databaseUrl, cmd.databaseName, cmd.username,
-        cmd.password);
+    TiDBConfiguration.configureDB(conf,
+        cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
+    if (cmd.clusterTlsEnabled) {
+      TiDBConfiguration.clusterTls(conf,
+          cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
+    }
     Job job = Job.getInstance(conf, "MRFormTiDB");
     TiDBInputFormat.setInput(job, TiDBRowData.class, cmd.tableName,
         cmd.fields.isEmpty() ? null : cmd.fields.toArray(new String[0]), cmd.limit, cmd.timestamp);
