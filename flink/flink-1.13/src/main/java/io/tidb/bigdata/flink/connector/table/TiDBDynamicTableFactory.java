@@ -18,14 +18,20 @@ package io.tidb.bigdata.flink.connector.table;
 
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_SOURCE;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.WRITE_MODE;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SinkImpl.JDBC;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SinkTransaction.GLOBAL;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SinkTransaction.LOCAL;
 
 import com.google.common.collect.ImmutableSet;
+import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
@@ -42,8 +48,10 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.utils.TableSchemaUtils;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
+
   public static final String IDENTIFIER = "tidb";
 
   /**
@@ -63,11 +71,38 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       .withDescription(
           "the flush interval mills, over this time, asynchronous threads will flush data. The "
               + "default value is 1s.");
+  public static final ConfigOption<SinkImpl> SINK_IMPL =
+      ConfigOptions.key("tidb.sink.impl")
+          .enumType(SinkImpl.class)
+          .defaultValue(JDBC);
+  public static final ConfigOption<SinkTransaction> SINK_TRANSACTION =
+      ConfigOptions.key("tidb.sink.transaction")
+          .enumType(SinkTransaction.class)
+          .defaultValue(LOCAL);
   public static final ConfigOption<Integer> SINK_MAX_RETRIES = ConfigOptions
       .key("sink.max-retries")
       .intType()
       .defaultValue(3)
       .withDescription("the max retry times if writing records to database failed.");
+  public static final ConfigOption<Integer> SINK_BUFFER_SIZE = ConfigOptions
+      .key("tidb.sink.buffer-size")
+      .intType()
+      .defaultValue(1000);
+  public static final ConfigOption<Integer> ROW_ID_ALLOCATOR_STEP = ConfigOptions
+      .key("tidb.sink.row-id-allocator.step")
+      .intType()
+      .defaultValue(30000);
+  public static final ConfigOption<Boolean> UNBOUNDED_SOURCE_USE_CHECKPOINT_SINK = ConfigOptions
+      .key("tidb.sink.unbounded-source-use-checkpoint-sink")
+      .booleanType()
+      .defaultValue(true);
+  public static final ConfigOption<Boolean> IGNORE_AUTOINCREMENT_COLUMN_VALUE = ConfigOptions
+      .key("tidb.sink.ignore-autoincrement-column-value")
+      .booleanType()
+      .defaultValue(false)
+      .withDescription("If true, "
+          + "for autoincrement column, we will generate value instead of the the actual value. "
+          + "And if false, the value of autoincrement column can not be null");
   // look up config options
   public static final ConfigOption<Long> LOOKUP_CACHE_MAX_ROWS = ConfigOptions
       .key("lookup.cache.max-rows")
@@ -121,10 +156,21 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
+    // check fields
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    TableSchema schema = context.getCatalogTable().getSchema();
+    TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
+    SinkTransaction sinkTransaction = config.get(SINK_TRANSACTION);
+    if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
+      return new TiDBDynamicTableSink(config.get(DATABASE_NAME), config.get(TABLE_NAME),
+          context.getCatalogTable(), tiDBSinkOptions);
+    }
+    if (sinkTransaction == GLOBAL) {
+      throw new IllegalArgumentException("Global transaction is not supported in JDBC sink!");
+    }
+    TableSchema schema = TableSchemaUtils.getPhysicalSchema(
+        context.getCatalogTable().getSchema());
     String databaseName = config.get(DATABASE_NAME);
     // jdbc options
     JdbcOptions jdbcOptions = JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
@@ -163,5 +209,33 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       }
     }
     return keyFields;
+  }
+
+  public enum SinkImpl {
+    JDBC, TIKV;
+
+    public static SinkImpl fromString(String s) {
+      for (SinkImpl value : values()) {
+        if (value.name().equalsIgnoreCase(s)) {
+          return value;
+        }
+      }
+      throw new IllegalArgumentException(
+          "Property sink.impl must be one of: " + Arrays.toString(values()));
+    }
+  }
+
+  public enum SinkTransaction {
+    LOCAL, GLOBAL;
+
+    public static SinkTransaction fromString(String s) {
+      for (SinkTransaction value : values()) {
+        if (value.name().equalsIgnoreCase(s)) {
+          return value;
+        }
+      }
+      throw new IllegalArgumentException(
+          "Property sink.transaction must be one of: " + Arrays.toString(values()));
+    }
   }
 }

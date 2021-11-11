@@ -1,5 +1,12 @@
 package io.tidb.bigdata.flink.tidb;
 
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.IGNORE_AUTOINCREMENT_COLUMN_VALUE;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.ROW_ID_ALLOCATOR_STEP;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SINK_IMPL;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SINK_TRANSACTION;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SinkImpl.TIKV;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SinkTransaction.GLOBAL;
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.UNBOUNDED_SOURCE_USE_CHECKPOINT_SINK;
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
@@ -13,6 +20,7 @@ import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -24,6 +32,7 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
@@ -269,7 +278,7 @@ public class FlinkTest {
     testTableFactoryWithTimestampFormat(properties);
   }
 
-  private void testTableFactoryWithTimestampFormat(Map<String, String> properties){
+  private void testTableFactoryWithTimestampFormat(Map<String, String> properties) {
     // env
     TableEnvironment tableEnvironment = getTableEnvironment();
     // create test database and table
@@ -370,4 +379,353 @@ public class FlinkTest {
       Assert.assertEquals(row, row1);
     }
   }
+
+  @Test
+  public void testTikvWrite() throws Exception {
+    // env
+    TableEnvironment tableEnvironment = getTableEnvironment();
+    tableEnvironment.getConfig().getConfiguration()
+        .setString("table.exec.resource.default-parallelism", "2");
+    // create test database and table
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), GLOBAL.name());
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tiDBCatalog.open();
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS test_write");
+    String createTableSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  tinyint,\n"
+            + "    c2  smallint,\n"
+            + "    c3  mediumint,\n"
+            + "    c4  int,\n"
+            + "    c5  bigint,\n"
+            + "    c6  char(10),\n"
+            + "    c7  varchar(20),\n"
+            + "    c8  tinytext,\n"
+            + "    c9  mediumtext,\n"
+            + "    c10 text,\n"
+            + "    c11 longtext,\n"
+            + "    c12 binary(20),\n"
+            + "    c13 varbinary(20),\n"
+            + "    c14 tinyblob,\n"
+            + "    c15 mediumblob,\n"
+            + "    c16 blob,\n"
+            + "    c17 longblob,\n"
+            + "    c18 float,\n"
+            + "    c19 double,\n"
+            + "    c20 decimal(6, 3),\n"
+            + "    c21 date,\n"
+            + "    c22 time,\n"
+            + "    c23 datetime,\n"
+            + "    c24 timestamp,\n"
+            + "    c25 year,\n"
+            + "    c26 boolean,\n"
+            + "    c27 json,\n"
+            + "    c28 enum ('1','2','3'),\n"
+            + "    c29 set ('a','b','c')\n"
+            + ")", DATABASE_NAME, "test_write");
+    tiDBCatalog.sqlUpdate(CREATE_DATABASE_SQL, createTableSql);
+    // register catalog
+    tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
+    // insert data
+    String value = "(\n"
+        + " cast(1 as tinyint),\n"
+        + " cast(1 as smallint) ,\n"
+        + " cast(1 as int) ,\n"
+        + " cast(1 as int) ,\n"
+        + " cast(1 as bigint) ,\n"
+        + " cast('chartype' as char(10)),\n"
+        + " cast('varchartype' as varchar(20)),\n"
+        + " cast('tinytexttype' as string),\n"
+        + " cast('mediumtexttype' as string),\n"
+        + " cast('texttype' as string),\n"
+        + " cast('longtexttype' as string),\n"
+        + " cast('binarytype' as bytes),\n"
+        + " cast('varbinarytype' as bytes),\n"
+        + " cast('tinyblobtype' as bytes),\n"
+        + " cast('mediumblobtype' as bytes),\n"
+        + " cast('blobtype' as bytes),\n"
+        + " cast('longblobtype' as bytes),\n"
+        + " cast(1.234 as float),\n"
+        + " cast(2.456789 as double),\n"
+        + " cast(123.456 as decimal(6,3)),\n"
+        + " cast('2020-08-10' as date),\n"
+        + " cast('15:30:29' as time),\n"
+        + " cast('2020-08-10 15:30:29' as timestamp),\n"
+        + " cast('2020-08-10 16:30:29' as timestamp),\n"
+        + " cast(2020 as smallint),\n"
+        + " cast(true as tinyint),\n"
+//        + " cast('{\"a\":1,\"b\":2}' as string),\n"
+        + " cast('1' as string)\n"
+//        + " cast('a' as string)\n"
+        + ")";
+    String insertSql = format("INSERT INTO `tidb`.`test`.`test_write`("
+        + "`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,"
+        + "`c11`,`c12`,`c13`,`c14`,`c15`,`c16`,`c17`,`c18`,`c19`,`c20`,"
+        + "`c21`,`c22`,`c23`,`c24`,`c25`,`c26`,`c28`"
+        + ") "
+        + "VALUES%s", String.join(",\n", Collections.nCopies(10, value)));
+    tableEnvironment.sqlUpdate(insertSql);
+    tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void testTikvWriteWithUniqueKey() throws Exception {
+    // env
+    TableEnvironment tableEnvironment = getTableEnvironment();
+    tableEnvironment.getConfig().getConfiguration()
+        .setString("table.exec.resource.default-parallelism", "2");
+    // create test database and table
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), GLOBAL.name());
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tiDBCatalog.open();
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS test_write");
+    String createTableSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  tinyint,\n"
+            + "    c2  smallint,\n"
+            + "    c3  mediumint,\n"
+            + "    c4  int,\n"
+            + "    c5  bigint,\n"
+            + "    c6  char(10),\n"
+            + "    c7  varchar(20),\n"
+            + "    c8  tinytext,\n"
+            + "    c9  mediumtext,\n"
+            + "    c10 text,\n"
+            + "    c11 longtext,\n"
+            + "    c12 binary(20),\n"
+            + "    c13 varbinary(20),\n"
+            + "    c14 tinyblob,\n"
+            + "    c15 mediumblob,\n"
+            + "    c16 blob,\n"
+            + "    c17 longblob,\n"
+            + "    c18 float,\n"
+            + "    c19 double,\n"
+            + "    c20 decimal(6, 3),\n"
+            + "    c21 date,\n"
+            + "    c22 time,\n"
+            + "    c23 datetime,\n"
+            + "    c24 timestamp,\n"
+            + "    c25 year,\n"
+            + "    c26 boolean,\n"
+            + "    c27 json,\n"
+            + "    c28 enum ('1','2','3'),\n"
+            + "    c29 set ('a','b','c'),\n"
+            + "    unique key(c1)"
+            + ")", DATABASE_NAME, "test_write");
+    tiDBCatalog.sqlUpdate(CREATE_DATABASE_SQL, createTableSql);
+    // register catalog
+    tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
+    // insert data
+    String value = "(\n"
+        + " cast(1 as tinyint),\n"
+        + " cast(1 as smallint) ,\n"
+        + " cast(1 as int) ,\n"
+        + " cast(1 as int) ,\n"
+        + " cast(1 as bigint) ,\n"
+        + " cast('chartype' as char(10)),\n"
+        + " cast('varchartype' as varchar(20)),\n"
+        + " cast('tinytexttype' as string),\n"
+        + " cast('mediumtexttype' as string),\n"
+        + " cast('texttype' as string),\n"
+        + " cast('longtexttype' as string),\n"
+        + " cast('binarytype' as bytes),\n"
+        + " cast('varbinarytype' as bytes),\n"
+        + " cast('tinyblobtype' as bytes),\n"
+        + " cast('mediumblobtype' as bytes),\n"
+        + " cast('blobtype' as bytes),\n"
+        + " cast('longblobtype' as bytes),\n"
+        + " cast(1.234 as float),\n"
+        + " cast(2.456789 as double),\n"
+        + " cast(123.456 as decimal(6,3)),\n"
+        + " cast('2020-08-10' as date),\n"
+        + " cast('15:30:29' as time),\n"
+        + " cast('2020-08-10 15:30:29' as timestamp),\n"
+        + " cast('2020-08-10 16:30:29' as timestamp),\n"
+        + " cast(2020 as smallint),\n"
+        + " cast(true as tinyint),\n"
+//        + " cast('{\"a\":1,\"b\":2}' as string),\n"
+        + " cast('1' as string)\n"
+//        + " cast('a' as string)\n"
+        + ")";
+    String insertSql = format("INSERT INTO `tidb`.`test`.`test_write`("
+        + "`c1`,`c2`,`c3`,`c4`,`c5`,`c6`,`c7`,`c8`,`c9`,`c10`,"
+        + "`c11`,`c12`,`c13`,`c14`,`c15`,`c16`,`c17`,`c18`,`c19`,`c20`,"
+        + "`c21`,`c22`,`c23`,`c24`,`c25`,`c26`,`c28`"
+        + ") "
+        + "VALUES%s", String.join(",\n", Collections.nCopies(10, value)));
+    tableEnvironment.sqlUpdate(insertSql);
+    tableEnvironment.execute("test");
+  }
+
+
+  @Test
+  public void testTikvWriteWithDatagen() throws Exception {
+    final int parallelism = 4;
+    final int rowCount = 100000;
+    final String tableName = "test_write";
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(parallelism);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), GLOBAL.name());
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(30000));
+    properties.put(UNBOUNDED_SOURCE_USE_CHECKPOINT_SINK.key(), "false");
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    String dropTableSql = format("DROP TABLE IF EXISTS `%S`", tableName);
+    String createTiDBSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  bigint,\n"
+            + "    c2  bigint,\n"
+            + "    c3  bigint,\n"
+            + "    c4  bigint,\n"
+            + "    c5  bigint,\n"
+            + "    c6  longtext,\n"
+            + "    c7  longtext,\n"
+            + "    c8  longtext,\n"
+            + "    c9  longtext,\n"
+            + "    c10 longtext,\n"
+            + "    c11 longtext,\n"
+            + "    c12 float,\n"
+            + "    c13 double,\n"
+            + "    c14 date,\n"
+            + "    c15 time,\n"
+            + "    c16 datetime,\n"
+            + "    c17 timestamp\n"
+            + ")", DATABASE_NAME, tableName);
+    String splitRegionSql = format("SPLIT TABLE `%s` BETWEEN (0) AND (%s) REGIONS %s", tableName,
+        20 * 500 * 10000, 20);
+    tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql, splitRegionSql);
+    CatalogBaseTable table = tiDBCatalog.getTable("test", tableName);
+    String createDatagenSql = format("CREATE TABLE datagen \n%s\n WITH (\n"
+        + " 'connector' = 'datagen',\n"
+        + " 'number-of-rows'='%s'\n"
+        + ")", table.getUnresolvedSchema().toString(), rowCount);
+    tableEnvironment.executeSql(createDatagenSql);
+
+    tableEnvironment.sqlUpdate(
+        "INSERT INTO `tidb`.`test`.`test_write` SELECT * FROM datagen");
+    tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void testTikvWriteWithUniqueIndex() throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(4);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), GLOBAL.name());
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), "300000");
+    properties.put(UNBOUNDED_SOURCE_USE_CHECKPOINT_SINK.key(), "false");
+    properties.put(IGNORE_AUTOINCREMENT_COLUMN_VALUE.key(), "true");
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS test_write");
+    String createTiDBSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  bigint PRIMARY KEY /*T![clustered_index] NONCLUSTERED */ AUTO_INCREMENT ,\n"
+            + "    c2  bigint,\n"
+            + "    c3  bigint,\n"
+            + "    c4  bigint,\n"
+            + "    c5  bigint,\n"
+            + "    c6  bigint,\n"
+            + "    UNIQUE KEY(c2),\n"
+            + "    UNIQUE KEY(c3)\n"
+            + ")", DATABASE_NAME, "test_write");
+    tiDBCatalog.sqlUpdate(createTiDBSql);
+    CatalogBaseTable table = tiDBCatalog.getTable("test", "test_write");
+    String createDatagenSql = format("CREATE TABLE datagen \n%s\n WITH (\n"
+        + " 'connector' = 'datagen',\n"
+        + " 'number-of-rows'='300000'\n"
+        + ")", table.getUnresolvedSchema().toString());
+    tableEnvironment.executeSql(createDatagenSql);
+
+    tableEnvironment.sqlUpdate(
+        "INSERT INTO `tidb`.`test`.`test_write`(c2,c3,c4,c5,c6) SELECT ABS(c2)%1000,ABS(c3)%1000,c4,c5,c6 FROM datagen");
+    tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void kafkaProducer() throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(4);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    String createDatagenSql = "CREATE TABLE datagen ("
+        + "c1 bigint,\n"
+        + "c2 bigint) WITH (\n"
+        + " 'connector' = 'datagen',\n"
+        + " 'number-of-rows'='100000'\n"
+        + ")";
+    String createKafkaSql = "CREATE TABLE kafka ("
+        + "c1 bigint,\n"
+        + "c2 bigint"
+        + ") WITH (\n"
+        + " 'connector' = 'kafka',\n"
+        + " 'properties.bootstrap.servers' = 'localhost:9092',\n"
+        + " 'topic'='test',\n"
+        + " 'format' = 'json'"
+        + ")";
+    tableEnvironment.executeSql(createDatagenSql);
+    tableEnvironment.executeSql(createKafkaSql);
+
+    tableEnvironment.sqlUpdate("INSERT INTO kafka SELECT * FROM datagen");
+    tableEnvironment.execute("test");
+
+  }
+
+  @Test
+  public void testCheckpoint() throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    // 如果不开 checkpoint，不会 commit，如果是有界流将会 abort，开了就会以固定的时间 commit
+    env.enableCheckpointing(10000L);
+    env.setParallelism(4);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), "30000");
+    properties.put(UNBOUNDED_SOURCE_USE_CHECKPOINT_SINK.key(), "true");
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    String createTiDBSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  bigint unique key,\n"
+            + "    c2  bigint\n"
+            + ")", DATABASE_NAME, "test_write");
+    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS test_write");
+    tiDBCatalog.sqlUpdate(createTiDBSql);
+    CatalogBaseTable table = tiDBCatalog.getTable("test", "test_write");
+    String createKafkaSql = format("CREATE TABLE kafka \n%s\n WITH (\n"
+        + " 'connector' = 'kafka',\n"
+        + " 'properties.bootstrap.servers' = 'localhost:9092',\n"
+        + " 'topic'='test',\n"
+        + " 'scan.startup.mode' = 'latest-offset',\n"
+        + " 'format' = 'json'"
+        + ")", table.getUnresolvedSchema().toString());
+    tableEnvironment.executeSql(createKafkaSql);
+
+    tableEnvironment.sqlUpdate(
+        "INSERT INTO `tidb`.`test`.`test_write` SELECT * FROM kafka");
+    tableEnvironment.execute("test");
+  }
+
+
 }
