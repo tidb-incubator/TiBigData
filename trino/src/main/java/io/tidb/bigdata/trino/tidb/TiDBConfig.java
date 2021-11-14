@@ -22,6 +22,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAUL
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_ADDRESS_WHITELIST;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_DEFAULT;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_LABEL;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_LABEL_DEFAULT;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 
 import io.airlift.configuration.Config;
@@ -129,7 +130,8 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   }
 
   public String getReplicaReadLabel() {
-    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ, TIDB_REPLICA_READ_DEFAULT);
+    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_LABEL,
+        TIDB_REPLICA_READ_LABEL_DEFAULT);
   }
 
   @Config(TIDB_REPLICA_READ_ADDRESS_WHITELIST)
