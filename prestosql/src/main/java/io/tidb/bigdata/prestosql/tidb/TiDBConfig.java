@@ -17,18 +17,24 @@
 package io.tidb.bigdata.prestosql.tidb;
 
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_ADDRESS_BLACKLIST;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_ADDRESS_WHITELIST;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_DEFAULT;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ_LABEL;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
-import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE_DEFAULT;
 
 import io.airlift.configuration.Config;
 import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ReplicaReadPolicy;
 import io.tidb.bigdata.tidb.Wrapper;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class TiDBConfig extends Wrapper<ClientConfig> {
 
   // for session
   public static final String SESSION_WRITE_MODE = "write_mode";
-
   public static final String SESSION_SNAPSHOT_TIMESTAMP = "snapshot_timestamp";
 
   // for table properties
@@ -37,7 +43,8 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   // for table properties
   public static final String UNIQUE_KEY = "unique_key";
 
-  private String writeMode = TIDB_WRITE_MODE_DEFAULT;
+  // for replica read
+  private final Map<String, String> replicaReadProperties = new HashMap<>();
 
   public TiDBConfig() {
     super(new ClientConfig());
@@ -94,12 +101,58 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   }
 
   public String getWriteMode() {
-    return writeMode;
+    return getInternal().getWriteMode();
   }
 
   @Config(TIDB_WRITE_MODE)
   public TiDBConfig setWriteMode(String writeMode) {
-    this.writeMode = writeMode;
+    getInternal().setWriteMode(writeMode);
     return this;
+  }
+
+  @Config(TIDB_REPLICA_READ)
+  public TiDBConfig setReplicaRead(String replicaRead) {
+    this.replicaReadProperties.put(TIDB_REPLICA_READ, replicaRead);
+    getInternal().setReplicaReadPolicy(ReplicaReadPolicy.create(replicaReadProperties));
+    return this;
+  }
+
+  public String getReplicaRead() {
+    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ, TIDB_REPLICA_READ_DEFAULT);
+  }
+
+  @Config(TIDB_REPLICA_READ_LABEL)
+  public TiDBConfig setReplicaReadLabel(String replicaReadLabel) {
+    this.replicaReadProperties.put(TIDB_REPLICA_READ_LABEL, replicaReadLabel);
+    getInternal().setReplicaReadPolicy(ReplicaReadPolicy.create(replicaReadProperties));
+    return this;
+  }
+
+  public String getReplicaReadLabel() {
+    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ, TIDB_REPLICA_READ_DEFAULT);
+  }
+
+  @Config(TIDB_REPLICA_READ_ADDRESS_WHITELIST)
+  public TiDBConfig setReplicaReadAddressWhitelist(String whitelist) {
+    this.replicaReadProperties.put(TIDB_REPLICA_READ_ADDRESS_WHITELIST, whitelist);
+    getInternal().setReplicaReadPolicy(ReplicaReadPolicy.create(replicaReadProperties));
+    return this;
+  }
+
+  public String getReplicaReadAddressWhitelist() {
+    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_ADDRESS_WHITELIST,
+        TIDB_REPLICA_READ_ADDRESS_DEFAULT);
+  }
+
+  @Config(TIDB_REPLICA_READ_ADDRESS_BLACKLIST)
+  public TiDBConfig setReplicaReadAddressBlacklist(String blacklist) {
+    this.replicaReadProperties.put(TIDB_REPLICA_READ_ADDRESS_BLACKLIST, blacklist);
+    getInternal().setReplicaReadPolicy(ReplicaReadPolicy.create(replicaReadProperties));
+    return this;
+  }
+
+  public String getReplicaReadAddressBlacklist() {
+    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_ADDRESS_BLACKLIST,
+        TIDB_REPLICA_READ_ADDRESS_DEFAULT);
   }
 }
