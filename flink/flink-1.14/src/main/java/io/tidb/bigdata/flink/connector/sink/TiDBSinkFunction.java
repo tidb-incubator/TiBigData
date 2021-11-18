@@ -115,7 +115,7 @@ public class TiDBSinkFunction extends
     makeSureInit();
     String transactionId = UUID.randomUUID().toString();
     buffers.put(transactionId, new ArrayList<>(sinkOptions.getBufferSize()));
-    TiTimestamp timestamp = session.getTimestamp();
+    TiTimestamp timestamp = session.getSnapshotVersion();
     TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(session.getTiSession(),
         timestamp.getVersion());
     TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(

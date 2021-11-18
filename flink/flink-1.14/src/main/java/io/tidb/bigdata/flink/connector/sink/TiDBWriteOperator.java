@@ -105,7 +105,7 @@ public class TiDBWriteOperator extends AbstractStreamOperator<Void> implements
       tiDBWriteHelper.preWriteSecondKeys(pairs);
     } else {
       // start a new transaction
-      TiTimestamp timestamp = session.getTimestamp();
+      TiTimestamp timestamp = session.getSnapshotVersion();
       TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(
           session,
           timestamp,

@@ -117,7 +117,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
       ClientSession clientSession) {
     final byte[] primaryKey;
     final int parallelism = dataStream.getParallelism();
-    final TiTimestamp timestamp = clientSession.getTimestamp();
+    final TiTimestamp timestamp = clientSession.getSnapshotVersion();
     final SinkTransaction sinkTransaction = sinkOptions.getSinkTransaction();
     TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
     TiDBRowConverter tiDBRowConverter = new TiDBRowConverter(tiTableInfo);

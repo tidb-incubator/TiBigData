@@ -412,7 +412,7 @@ public final class ClientSession implements AutoCloseable {
         .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
   }
 
-  public TiTimestamp getTimestamp() {
+  public TiTimestamp getSnapshotVersion() {
     return session.getTimestamp();
   }
 
