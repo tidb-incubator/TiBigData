@@ -131,7 +131,7 @@ Splits: 17 total, 17 done (100.00%)
 0.78 [1 rows, 0B] [1 rows/s, 0B/s]
 ```
 
-**Insert**
+**Simple Insert**
 
 ```
 trino:test> insert into table1 values('bbb', 222);
@@ -153,74 +153,137 @@ Splits: 17 total, 17 done (100.00%)
 0.63 [2 rows, 0B] [3 rows/s, 0B/s]
 ```
 
-You could create a tidb table which contains most tidb types by the following script.
+**Upsert**
 
-```
-trino:test> CREATE TABLE tidb.test."test_tidb_type"(
-         ->  c1     tinyint,
-         ->  c2     smallint,
-         ->  c3     int,
-         ->  c4     bigint,
-         ->  c5     char(10),
-         ->  c6     varchar(20),
-         ->  c7     varbinary,
-         ->  c8     real,
-         ->  c9     double,
-         ->  c10    decimal(6,3),
-         ->  c11    date,
-         ->  c12    time,
-         ->  c13    timestamp,
-         ->  c14    boolean,
-         ->  c15    json
-         -> );
-CREATE TABLE
+setting `tidb.properties` `tidb.write_mode=upsert`
 
-trino:test> select * from tidb.test."test_tidb_type";
- c1 | c2 | c3 | c4 | c5 | c6 | c7 | c8 | c9 | c10 | c11 | c12 | c13 | c14 | c15
-----+----+----+----+----+----+----+----+----+-----+-----+-----+-----+-----+-----
-(0 rows)
+or
 
-Query 20211123_060724_00020_nm3jm, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-1.00 [0 rows, 0B] [0 rows/s, 0B/s]
+```sql
+SET SESSION tidb.write_mode='upsert';
 ```
 
+**TiDB all variable test inserts**
+
+You could create a in tidb table which contains most tidb types by the following script.
+
+>NOTE: Execute it in TiDB
+
+```sql
+CREATE TABLE `default`.`test_tidb_type`(
+ c1     tinyint,
+ c2     smallint,
+ c3     mediumint,
+ c4     int,
+ c5     bigint,
+ c6     char(10),
+ c7     varchar(20),
+ c8     tinytext,
+ c9     mediumtext,
+ c10    text,
+ c11    longtext,
+ c12    binary(20),
+ c13    varbinary(20),
+ c14    tinyblob,
+ c15    mediumblob,
+ c16    blob,
+ c17    longblob,
+ c18    float,
+ c19    double,
+ c20    decimal(6,3),
+ c21    date,
+ c22    time,
+ c23    datetime,
+ c24    timestamp,
+ c25    year,
+ c26    boolean,
+ c27    json,
+ c28    enum('1','2','3'),
+ c29    set('a','b','c')
+);
 ```
-trino:test> INSERT INTO tidb.test.test_tidb_type(
-         ->     c1,c2,c3,c4,c5,
-         ->     c6,c7,c8,c9,c10,
-         ->     c11,c12,c13,c14,c15
-         -> )
-         -> VALUES (
-         ->     tinyint '1',
-         ->     smallint '2',
-         ->     int '3',
-         ->     bigint '4',
-         ->     'char5',
-         ->     'varchar6',
-         ->     varbinary '712',
-         ->     real '8.3e0',
-         ->     91.8,
-         ->     10.123,
-         ->     date '2020-08-11',
-         ->     time '15:30:12',
-         ->     timestamp '2020-08-10 15:30:13',
-         ->     tinyint '1',
-         ->     '{"a":15,"b":2}'
-         -> );
+
+Then insert data and query this test table in trino:
+
+>NOTE: Execute it in Trino
+
+```
+trino> INSERT INTO tidb.test.test_tidb_type (
+    ->  c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
+    ->  c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
+    ->  c21,c22,c23,c24,c25,c26,c27,c28,c29
+    -> )
+    -> VALUES (
+    ->  tinyint '1',
+    ->  smallint '2',
+    ->  int '3',
+    ->  int '4',
+    ->  bigint '5',
+    ->  'chartype',
+    ->  'varchartype',
+    ->  'tinytexttype',
+    ->  'mediumtexttype',
+    ->  'texttype',
+    ->  'longtexttype',
+    ->  varbinary 'binarytype',
+    ->  varbinary 'varbinarytype',
+    ->  varbinary 'tinyblobtype',
+    ->  varbinary 'mediumblobtype',
+    ->  varbinary 'blobtype',
+    ->  varbinary 'longblobtype',
+    ->  1.234,
+    ->  2.456789,
+    ->  123.456,
+    ->  date '2020-08-10',
+    ->  time '15:30:29',
+    ->  timestamp '2020-08-10 15:30:29',
+    ->  timestamp '2020-08-10 16:30:29',
+    ->  smallint '2020',
+    ->  tinyint '1',
+    ->  '{"a":1,"b":2}',
+    ->  '1',
+    ->  'a'
+    -> );
 INSERT: 1 row
 
-Query 20211123_062238_00048_nm3jm, FINISHED, 1 node
+Query 20211123_102946_00000_iic32, FINISHED, 1 node
 Splits: 35 total, 35 done (100.00%)
-0.25 [0 rows, 0B] [0 rows/s, 0B/s]
+1.95 [0 rows, 0B] [0 rows/s, 0B/s]
 
-trino:test> select * from tidb.test.test_tidb_type;
- c1 | c2 | c3 | c4 |  c5   |    c6    |    c7    | c8  |  c9  |  c10   |    c11     |     c12      |           c13           | c14 |      c15
-----+----+----+----+-------+----------+----------+-----+------+--------+------------+--------------+-------------------------+-----+----------------
-  1 |  2 |  3 |  4 | char5 | varchar6 | 37 31 32 | 8.3 | 91.8 | 10.123 | 2020-08-11 | 13:20:00.000 | 2020-08-10 15:30:13.000 |   1 | {"a":15,"b":2}
-(1 row)
+trino> select * from tidb.test.test_tidb_type\G;
+-[ RECORD 1 ]----------------------------------------
+c1  | 1
+c2  | 2
+c3  | 3
+c4  | 4
+c5  | 5
+c6  | chartype
+c7  | varchartype
+c8  | tinytexttype
+c9  | mediumtexttype
+c10 | texttype
+c11 | longtexttype
+c12 | 62 69 6e 61 72 79 74 79 70 65 00 00 00 00 00 00
+    | 00 00 00 00
+c13 | 76 61 72 62 69 6e 61 72 79 74 79 70 65
+c14 | 74 69 6e 79 62 6c 6f 62 74 79 70 65
+c15 | 6d 65 64 69 75 6d 62 6c 6f 62 74 79 70 65
+c16 | 62 6c 6f 62 74 79 70 65
+c17 | 6c 6f 6e 67 62 6c 6f 62 74 79 70 65
+c18 | 1.234
+c19 | 2.456789
+c20 | 123.456
+c21 | 2020-08-10
+c22 | 19:33:20
+c23 | 2020-08-10 15:30:29
+c24 | 2020-08-10 16:30:29
+c25 | 2020
+c26 | 1
+c27 | {"a":1,"b":2}
+c28 | 1
+c29 | a
 
-Query 20211123_062322_00052_nm3jm, FINISHED, 1 node
+Query 20211123_103042_00002_iic32, FINISHED, 1 node
 Splits: 17 total, 17 done (100.00%)
-1.04 [1 rows, 0B] [0 rows/s, 0B/s]
+0.84 [1 rows, 0B] [1 rows/s, 0B/s]
 ```
