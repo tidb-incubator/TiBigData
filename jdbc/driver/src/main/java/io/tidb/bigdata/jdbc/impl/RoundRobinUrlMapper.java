@@ -25,7 +25,7 @@ public class RoundRobinUrlMapper implements Function<String[], String[]> {
 
   public String[] apply(final String[] input) {
     int currentOffset = (int) (offset.getAndIncrement() % input.length);
-    if (currentOffset == 0 || currentOffset == input.length) {
+    if (currentOffset == 0) {
       return input;
     }
     String[] result = new String[input.length];

@@ -18,18 +18,16 @@ package io.tidb.bigdata.jdbc.impl;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 public class RandomShuffleUrlMapper implements Function<String[], String[]> {
-
-  private static final ThreadLocal<Random> threadLocalRandom = ThreadLocal.withInitial(Random::new);
-
   /**
    * @param input urls
    */
   @Override
   public String[] apply(final String[] input) {
-    Random random = threadLocalRandom.get();
+    Random random = ThreadLocalRandom.current();
     int size = input.length;
     String[] shuffled = Arrays.copyOf(input, size);
     for (int i = size; i > 1; i--) {
