@@ -28,7 +28,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -102,7 +101,7 @@ public class DiscovererImpl implements Discoverer {
 
   @Override
   public long getLastReloadTime() {
-    return 0;
+    return lastReloadTime.get();
   }
 
   @Override
