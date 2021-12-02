@@ -16,9 +16,7 @@
 
 package io.tidb.bigdata.tidb;
 
-import static io.tidb.bigdata.jdbc.TiDBDriver.MYSQL_PREFIX;
-import static io.tidb.bigdata.jdbc.TiDBDriver.TIDB_PREFIX;
-
+import io.tidb.bigdata.jdbc.TiDBDriver;
 import java.util.Map;
 import java.util.Objects;
 
@@ -353,13 +351,7 @@ public final class ClientConfig {
   }
 
   public String getDriverName() {
-    if (databaseUrl.startsWith(MYSQL_PREFIX)) {
-      return MYSQL_DRIVER_NAME;
-    }
-    if (databaseUrl.startsWith(TIDB_PREFIX)) {
-      return TIDB_DRIVER_NAME;
-    }
-    throw new IllegalArgumentException("can not parse driver by " + databaseUrl);
+    return TiDBDriver.driverForUrl(databaseUrl);
   }
 
   public String getDnsSearch() {
