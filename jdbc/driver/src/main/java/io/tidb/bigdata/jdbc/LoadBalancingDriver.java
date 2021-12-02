@@ -62,7 +62,7 @@ public class LoadBalancingDriver implements Driver {
   /**
    * The value is set by {@link System#setProperty(String, String)}
    */
-  private static final String TIDB_MAX_DISCOVER_INTERVAL_KEY = "tidb.jdbc.min-discovery-interval";
+  private static final String TIDB_MAX_DISCOVER_INTERVAL_KEY = "tidb.jdbc.max-discovery-interval";
   private static final long TIDB_MAX_DISCOVER_INTERVAL = 3600000;
   private static final String MYSQL_DRIVER_NAME;
   private static final String NEW_MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
