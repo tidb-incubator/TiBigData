@@ -58,7 +58,7 @@ public class LoadBalancingDriver implements Driver {
    * The value is set by {@link System#setProperty(String, String)}
    */
   private static final String TIDB_MIN_DISCOVER_INTERVAL_KEY = "tidb.jdbc.min-discovery-interval";
-  private static final long TIDB_MIN_DISCOVER_INTERVAL = 1000;
+  private static final long TIDB_MIN_DISCOVER_INTERVAL = 10000;
   /**
    * The value is set by {@link System#setProperty(String, String)}
    */
@@ -142,7 +142,7 @@ public class LoadBalancingDriver implements Driver {
   private static Function<String[], String[]> createUrlMapper() {
     final String provider = Optional.ofNullable(System.getProperty(TIDB_URL_MAPPER))
         .orElseGet(() -> Optional.ofNullable(System.getProperty(URL_PROVIDER))
-            .orElseGet(RandomShuffleUrlMapper.class::getName));
+            .orElseGet(RoundRobinUrlMapper.class::getName));
     return createUrlMapper(provider);
   }
 
@@ -257,5 +257,13 @@ public class LoadBalancingDriver implements Driver {
 
   private String getMySqlUrl(final String tidbUrl) {
     return tidbUrl.replaceFirst(wrapperUrlPrefix, MYSQL_URL_PREFIX);
+  }
+
+  public void deregister() throws SQLException {
+    try {
+      java.sql.DriverManager.deregisterDriver(this);
+    } finally {
+      executor.shutdown();
+    }
   }
 }
