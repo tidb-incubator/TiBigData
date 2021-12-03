@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 TiDB Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,12 @@
 
 package io.tidb.bigdata.jdbc;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.function.Function;
+import java.sql.Driver;
+import java.util.Properties;
+import java.util.concurrent.Executor;
 
+@FunctionalInterface
+public interface DiscovererFactory {
 
-public class DefaultUrlProvider implements Function<Collection<String>, Collection<String>> {
-
-  /**
-   * @param collection urls
-   */
-  @Override
-  public Collection<String> apply(Collection<String> collection) {
-    ArrayList<String> list = new ArrayList<>(collection);
-    Collections.shuffle(list);
-    return list;
-  }
-
+  Discoverer create(Driver driver, String bootstrapUrl, Properties info, Executor executor);
 }
