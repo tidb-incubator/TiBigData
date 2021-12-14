@@ -47,6 +47,21 @@ public class MapreduceCmd {
   @Parameter(names = {"-clusterTlsKey"}, description = "cluster TLS key")
   public String clusterTlsKey;
 
+  @Parameter(names = {"-clusteruseJks"}, description = "use java key store")
+  public boolean clusterUseJks = false;
+
+  @Parameter(names = {"-clusterJksKeyPath"}, description = "cluster Jks Key Path")
+  public String clusterJksKeyPath;
+
+  @Parameter(names = {"-clusterJksKeyPassword"}, description = "cluster Jks Key password")
+  public String clusterJksKeyPassword;
+
+  @Parameter(names = {"-clusterJksTrustPath"}, description = "cluster Jks Trust Path")
+  public String clusterJksTrustPath;
+
+  @Parameter(names = {"-clusterJksTrustPassword"}, description = "cluster Jks Trust Password")
+  public String clusterJksTrustPassword;
+
   @Parameter(names = {"-databasename", "-dn"}, description = "database name", required = true)
   public String databaseName;
 

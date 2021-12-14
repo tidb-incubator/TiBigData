@@ -44,8 +44,16 @@ public class TiDBMapreduceDemo {
     TiDBConfiguration.configureDB(conf,
         cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
     if (cmd.clusterTlsEnabled) {
-      TiDBConfiguration.clusterTls(conf,
-          cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
+      if (cmd.clusterUseJks) {
+        TiDBConfiguration.clusterTlsJks(conf,
+            cmd.clusterJksKeyPath,
+            cmd.clusterJksKeyPassword,
+            cmd.clusterJksTrustPath,
+            cmd.clusterJksTrustPassword);
+      } else {
+        TiDBConfiguration.clusterTls(conf,
+            cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
+      }
     }
     Job job = Job.getInstance(conf, "MRFormTiDB");
     TiDBInputFormat.setInput(job, TiDBRowData.class, cmd.tableName,

@@ -46,6 +46,11 @@ public class TiDBConfiguration {
   public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
   public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
   public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
+  public static final String CLUSTER_JKS_ENABLE = "tidb.cluster-jks-enable";
+  public static final String CLUSTER_JKS_KEY_PATH = "tidb.cluster-jks-key-path";
+  public static final String CLUSTER_JKS_KEY_PASSWORD = "tidb.cluster-jks-key-password";
+  public static final String CLUSTER_JKS_TRUST_PATH = "tidb.jks.trust_path";
+  public static final String CLUSTER_JKS_TRUST_PASSWORD = "tidb.jks.trust_password";
 
   /** Input table name */
   public static final String INPUT_TABLE_NAME_PROPERTY = "mapreduce.jdbc.input.table.name";
@@ -91,6 +96,16 @@ public class TiDBConfiguration {
     conf.set(CLUSTER_TLS_KEY, key);
   }
 
+  public static void clusterTlsJks(Configuration conf,
+                                   String keyPath, String keyPassword, String trustPath,
+                                   String trustPassword) {
+    conf.set(CLUSTER_TLS_ENABLE, "true");
+    conf.set(CLUSTER_JKS_ENABLE, "true");
+    conf.set(CLUSTER_JKS_KEY_PATH, keyPath);
+    conf.set(CLUSTER_JKS_KEY_PASSWORD, keyPassword);
+    conf.set(CLUSTER_JKS_TRUST_PATH, trustPath);
+    conf.set(CLUSTER_JKS_TRUST_PASSWORD, trustPassword);
+  }
   private Configuration conf;
 
   public TiDBConfiguration(Configuration conf) {
@@ -107,6 +122,11 @@ public class TiDBConfiguration {
     properties.put(ClientConfig.CLUSTER_TLS_CA, conf.get(CLUSTER_TLS_CA));
     properties.put(ClientConfig.CLUSTER_TLS_KEY, conf.get(CLUSTER_TLS_KEY));
     properties.put(ClientConfig.CLUSTER_TLS_CERT, conf.get(CLUSTER_TLS_CERT));
+    properties.put(ClientConfig.CLUSTER_JKS_ENABLE, conf.get(CLUSTER_JKS_ENABLE));
+    properties.put(ClientConfig.CLUSTER_JKS_KEY_PATH, conf.get(CLUSTER_JKS_KEY_PATH));
+    properties.put(ClientConfig.CLUSTER_JKS_KEY_PASSWORD, conf.get(CLUSTER_JKS_KEY_PASSWORD));
+    properties.put(ClientConfig.CLUSTER_JKS_TRUST_PATH, conf.get(CLUSTER_JKS_TRUST_PATH));
+    properties.put(ClientConfig.CLUSTER_JKS_TRUST_PASSWORD, conf.get(CLUSTER_JKS_TRUST_PASSWORD));
 
     return ClientSession.createWithSingleConnection(new ClientConfig(properties));
   }
