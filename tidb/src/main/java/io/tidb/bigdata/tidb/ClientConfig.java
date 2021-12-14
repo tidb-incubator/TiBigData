@@ -36,6 +36,11 @@ public final class ClientConfig {
   public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
   public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
   public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
+  public static final String CLUSTER_JKS_ENABLE = "tidb.cluster-jks-enable";
+  public static final String CLUSTER_JKS_KEY_PATH = "tidb.cluster-jks-key-path";
+  public static final String CLUSTER_JKS_KEY_PASSWORD = "tidb.cluster-jks-key-password";
+  public static final String CLUSTER_JKS_TRUST_PATH = "tidb.cluster-jks-trust-path";
+  public static final String CLUSTER_JKS_TRUST_PASSWORD = "tidb.cluster-jks-trust-password";
 
   public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
   public static final String MAX_POOL_SIZE_DEFAULT = "1";
@@ -91,6 +96,16 @@ public final class ClientConfig {
   private String clusterTlsKey;
 
   private String clusterTlsCert;
+
+  private boolean clusterUseJks;
+
+  private String clusterJksKeyPath;
+
+  private String clusterJksKeyPassword;
+
+  private String clusterJksTrustPath;
+
+  private String clusterJksTrustPassword;
 
   private int maximumPoolSize;
 
@@ -161,6 +176,11 @@ public final class ClientConfig {
     this.clusterTlsCA = null;
     this.clusterTlsKey = null;
     this.clusterTlsCert = null;
+    this.clusterUseJks = false;
+    this.clusterJksKeyPath = null;
+    this.clusterJksKeyPassword = null;
+    this.clusterJksTrustPath = null;
+    this.clusterJksTrustPassword = null;
     this.maximumPoolSize = maximumPoolSize;
     this.minimumIdleSize = minimumIdleSize;
     this.writeMode = writeMode;
@@ -181,6 +201,11 @@ public final class ClientConfig {
       String clusterTlsCA,
       String clusterTlsKey,
       String clusterTlsCert,
+      boolean clusterUseJks,
+      String clusterJksKeyPath,
+      String clusterJksKeyPassword,
+      String clusterJksTrustPath,
+      String clusterJksTrustPassword,
       int maximumPoolSize,
       int minimumIdleSize,
       String writeMode,
@@ -197,6 +222,11 @@ public final class ClientConfig {
     this.clusterTlsCA = clusterTlsCA;
     this.clusterTlsKey = clusterTlsKey;
     this.clusterTlsCert = clusterTlsCert;
+    this.clusterUseJks = clusterUseJks;
+    this.clusterJksKeyPath = clusterJksKeyPath;
+    this.clusterJksKeyPassword = clusterJksKeyPassword;
+    this.clusterJksTrustPath = clusterJksTrustPath;
+    this.clusterJksTrustPassword = clusterJksTrustPassword;
     this.maximumPoolSize = maximumPoolSize;
     this.minimumIdleSize = minimumIdleSize;
     this.writeMode = writeMode;
@@ -216,6 +246,11 @@ public final class ClientConfig {
         properties.get(CLUSTER_TLS_CA),
         properties.get(CLUSTER_TLS_KEY),
         properties.get(CLUSTER_TLS_CERT),
+        Boolean.parseBoolean(properties.get(CLUSTER_JKS_ENABLE)),
+        properties.get(CLUSTER_JKS_KEY_PATH),
+        properties.get(CLUSTER_JKS_KEY_PASSWORD),
+        properties.get(CLUSTER_JKS_TRUST_PATH),
+        properties.get(CLUSTER_JKS_TRUST_PASSWORD),
         Integer.parseInt(properties.getOrDefault(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT)),
         Integer.parseInt(properties.getOrDefault(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT)),
         properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
@@ -326,6 +361,47 @@ public final class ClientConfig {
     this.clusterTlsCert = cert;
   }
 
+  public boolean getClusterUseJks() {
+    return clusterUseJks;
+  }
+
+  public void setClusterUseJks(boolean useJks) {
+    this.clusterUseJks = useJks;
+  }
+
+  public String getClusterJksKeyPath() {
+    return clusterJksKeyPath;
+  }
+
+  public void setClusterJksKeyPath(String jksKeyPath) {
+    this.clusterJksKeyPath = jksKeyPath;
+  }
+
+  public String getClusterJksKeyPassword() {
+    return clusterJksKeyPassword;
+  }
+
+  public void setClusterJksKeyPassword(String jksKeyPassword) {
+    this.clusterJksKeyPassword = jksKeyPassword;
+  }
+
+  public String getClusterJksTrustPath() {
+    return clusterJksTrustPath;
+  }
+
+  public void setClusterJksTrustPath(String jksTrustPath) {
+    this.clusterJksTrustPath = jksTrustPath;
+  }
+
+  public String getClusterJksTrustPassword() {
+    return clusterJksTrustPassword;
+  }
+
+  public void setClusterJksTrustPassword(String jksTrustPassword) {
+    this.clusterJksTrustPassword = jksTrustPassword;
+  }
+
+
   public int getMaximumPoolSize() {
     return maximumPoolSize;
   }
@@ -413,6 +489,11 @@ public final class ClientConfig {
         && Objects.equals(clusterTlsCA, that.clusterTlsCA)
         && Objects.equals(clusterTlsKey, that.clusterTlsKey)
         && Objects.equals(clusterTlsCert, that.clusterTlsCert)
+        && Objects.equals(clusterUseJks, that.clusterUseJks)
+        && Objects.equals(clusterJksKeyPath, that.clusterJksKeyPath)
+        && Objects.equals(clusterJksKeyPassword, that.clusterJksKeyPassword)
+        && Objects.equals(clusterJksTrustPath, that.clusterJksTrustPath)
+        && Objects.equals(clusterJksTrustPassword, that.clusterJksTrustPassword)
         && Objects.equals(writeMode, that.writeMode)
         && Objects.equals(replicaReadPolicy, that.replicaReadPolicy)
         && Objects.equals(dnsSearch, that.dnsSearch);
@@ -421,7 +502,9 @@ public final class ClientConfig {
   @Override
   public int hashCode() {
     return Objects.hash(pdAddresses, databaseUrl, username, password, clusterTlsEnabled,
-        clusterTlsCA, clusterTlsKey, clusterTlsCert, maximumPoolSize,
+        clusterTlsCA, clusterTlsKey, clusterTlsCert, clusterUseJks, clusterJksKeyPath,
+        clusterJksKeyPassword, clusterJksTrustPath, clusterJksTrustPassword,
+        maximumPoolSize,
         minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown, dnsSearch, timeout,
         scanTimeout, buildInDatabaseVisible);
   }
@@ -437,6 +520,11 @@ public final class ClientConfig {
         + ", clusterTlsCA='" + clusterTlsCA + '\''
         + ", clusterTlsKey='" + clusterTlsKey + '\''
         + ", clusterTlsCert='" + clusterTlsCert + '\''
+        + ", clusterUseJks='" + clusterUseJks + '\''
+        + ", clusterJksKeyPath='" + clusterJksKeyPath + '\''
+        + ", clusterJksKeyPassword='" + clusterJksKeyPassword + '\''
+        + ", clusterJksTrustPath='" + clusterJksTrustPath + '\''
+        + ", clusterJksTrustPassword='" + clusterJksTrustPassword + '\''
         + ", maximumPoolSize=" + maximumPoolSize
         + ", minimumIdleSize=" + minimumIdleSize
         + ", writeMode='" + writeMode + '\''
