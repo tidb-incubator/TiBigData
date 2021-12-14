@@ -16,12 +16,9 @@
 
 package io.tidb.bigdata.tidb;
 
-import static com.google.common.base.MoreObjects.toStringHelper;
-import static io.tidb.bigdata.jdbc.TiDBDriver.MYSQL_PREFIX;
-import static io.tidb.bigdata.jdbc.TiDBDriver.TIDB_PREFIX;
-
-import com.google.common.base.Objects;
+import io.tidb.bigdata.jdbc.TiDBDriver;
 import java.util.Map;
+import java.util.Objects;
 
 public final class ClientConfig {
 
@@ -35,21 +32,22 @@ public final class ClientConfig {
 
   public static final String PASSWORD = "tidb.password";
 
-  public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
-  public static final int MAX_POOL_SIZE_DEFAULT = 10;
+  public static final String CLUSTER_TLS_ENABLE = "tidb.cluster-tls-enable";
+  public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
+  public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
+  public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
 
-  // default value means that we connect to tidb server lazily
+  public static final String MAX_POOL_SIZE = "tidb.maximum.pool.size";
+  public static final String MAX_POOL_SIZE_DEFAULT = "1";
+
   public static final String MIN_IDLE_SIZE = "tidb.minimum.idle.size";
-  public static final int MIN_IDLE_SIZE_DEFAULT = 10;
+  public static final String MIN_IDLE_SIZE_DEFAULT = "1";
 
   public static final String TIDB_WRITE_MODE = "tidb.write_mode";
   public static final String TIDB_WRITE_MODE_DEFAULT = "append";
 
   public static final String TIDB_REPLICA_READ = "tidb.replica-read";
-  public static final String TIDB_REPLICA_READ_LEADER = "leader";
-  public static final String TIDB_REPLICA_READ_FOLLOWER = "follower";
-  public static final String TIDB_REPLICA_READ_LEADER_AND_FOLLOWER = "leader_and_follower";
-  public static final String TIDB_REPLICA_READ_DEFAULT = TIDB_REPLICA_READ_LEADER;
+  public static final String TIDB_REPLICA_READ_DEFAULT = "leader";
 
   public static final String TIDB_REPLICA_READ_LABEL = "tidb.replica-read.label";
   public static final String TIDB_REPLICA_READ_LABEL_DEFAULT = "";
@@ -61,13 +59,22 @@ public final class ClientConfig {
   public static final String TIDB_REPLICA_READ_ADDRESS_DEFAULT = "";
 
   public static final String TIDB_FILTER_PUSH_DOWN = "tidb.filter-push-down";
-  public static final boolean TIDB_FILTER_PUSH_DOWN_DEFAULT = false;
+  public static final String TIDB_FILTER_PUSH_DOWN_DEFAULT = "false";
 
   public static final String SNAPSHOT_TIMESTAMP = "tidb.snapshot_timestamp";
   public static final String SNAPSHOT_VERSION = "tidb.snapshot_version";
 
   public static final String TIDB_DNS_SEARCH = "tidb.dns.search";
   public static final String TIDB_DNS_SEARCH_DEFAULT = null;
+
+  public static final String TIKV_GRPC_TIMEOUT = "tikv.grpc.timeout_in_ms";
+  public static final String TIKV_GRPC_TIMEOUT_DEFAULT = Long.toString(60 * 1000L);
+
+  public static final String TIKV_GRPC_SCAN_TIMEOUT = "tikv.grpc.scan_timeout_in_ms";
+  public static final String TIKV_GRPC_SCAN_TIMEOUT_DEFAULT = Long.toString(60 * 1000L);
+
+  public static final String TIDB_BUILD_IN_DATABASE_VISIBLE = "tidb.build-in.database.visible";
+  public static final String TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT = "false";
 
   private String pdAddresses;
 
@@ -77,17 +84,171 @@ public final class ClientConfig {
 
   private String password;
 
+  private boolean clusterTlsEnabled;
+
+  private String clusterTlsCA;
+
+  private String clusterTlsKey;
+
+  private String clusterTlsCert;
+
   private int maximumPoolSize;
 
   private int minimumIdleSize;
 
   private String writeMode;
 
-  private final ReplicaReadPolicy replicaReadPolicy;
+  private ReplicaReadPolicy replicaReadPolicy;
 
   private boolean isFilterPushDown;
 
   private String dnsSearch;
+
+  private long timeout;
+
+  private long scanTimeout;
+
+  private boolean buildInDatabaseVisible;
+
+  public ClientConfig() {
+    this(null,
+        null,
+        null,
+        Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
+        Integer.parseInt(MIN_IDLE_SIZE_DEFAULT),
+        TIDB_WRITE_MODE_DEFAULT,
+        ReplicaReadPolicy.DEFAULT,
+        Boolean.parseBoolean(TIDB_FILTER_PUSH_DOWN_DEFAULT),
+        TIDB_DNS_SEARCH_DEFAULT,
+        Long.parseLong(TIKV_GRPC_TIMEOUT_DEFAULT),
+        Long.parseLong(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT),
+        Boolean.parseBoolean(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT));
+  }
+
+  public ClientConfig(String databaseUrl, String username, String password) {
+    this(databaseUrl,
+        username,
+        password,
+        Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
+        Integer.parseInt(MIN_IDLE_SIZE_DEFAULT),
+        TIDB_WRITE_MODE_DEFAULT,
+        ReplicaReadPolicy.DEFAULT,
+        Boolean.parseBoolean(TIDB_FILTER_PUSH_DOWN_DEFAULT),
+        TIDB_DNS_SEARCH_DEFAULT,
+        Long.parseLong(TIKV_GRPC_TIMEOUT_DEFAULT),
+        Long.parseLong(TIKV_GRPC_SCAN_TIMEOUT_DEFAULT),
+        Boolean.parseBoolean(TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT));
+  }
+
+  /* For historical compatibility, this constructor omits cluster TLS
+   * options and implicitly disables TLS. */
+  public ClientConfig(String databaseUrl,
+      String username,
+      String password,
+      int maximumPoolSize,
+      int minimumIdleSize,
+      String writeMode,
+      ReplicaReadPolicy replicaRead,
+      boolean isFilterPushDown,
+      String dnsSearch,
+      long timeout,
+      long scanTimeout,
+      boolean buildInDatabaseVisible) {
+    this.databaseUrl = databaseUrl;
+    this.username = username;
+    this.password = password;
+    this.clusterTlsEnabled = false;
+    this.clusterTlsCA = null;
+    this.clusterTlsKey = null;
+    this.clusterTlsCert = null;
+    this.maximumPoolSize = maximumPoolSize;
+    this.minimumIdleSize = minimumIdleSize;
+    this.writeMode = writeMode;
+    this.replicaReadPolicy = replicaRead;
+    this.isFilterPushDown = isFilterPushDown;
+    this.dnsSearch = dnsSearch;
+    this.timeout = timeout;
+    this.scanTimeout = scanTimeout;
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
+  }
+
+  /* This constructor adds support for cluster TLS options without
+   * breaking backward compatibility for existing programs. */
+  public ClientConfig(String databaseUrl,
+      String username,
+      String password,
+      boolean clusterTlsEnable,
+      String clusterTlsCA,
+      String clusterTlsKey,
+      String clusterTlsCert,
+      int maximumPoolSize,
+      int minimumIdleSize,
+      String writeMode,
+      ReplicaReadPolicy replicaRead,
+      boolean isFilterPushDown,
+      String dnsSearch,
+      long timeout,
+      long scanTimeout,
+      boolean buildInDatabaseVisible) {
+    this.databaseUrl = databaseUrl;
+    this.username = username;
+    this.password = password;
+    this.clusterTlsEnabled = clusterTlsEnable;
+    this.clusterTlsCA = clusterTlsCA;
+    this.clusterTlsKey = clusterTlsKey;
+    this.clusterTlsCert = clusterTlsCert;
+    this.maximumPoolSize = maximumPoolSize;
+    this.minimumIdleSize = minimumIdleSize;
+    this.writeMode = writeMode;
+    this.replicaReadPolicy = replicaRead;
+    this.isFilterPushDown = isFilterPushDown;
+    this.dnsSearch = dnsSearch;
+    this.timeout = timeout;
+    this.scanTimeout = scanTimeout;
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
+  }
+
+  public ClientConfig(Map<String, String> properties) {
+    this(properties.get(DATABASE_URL),
+        properties.get(USERNAME),
+        properties.get(PASSWORD),
+        Boolean.parseBoolean(properties.get(CLUSTER_TLS_ENABLE)),
+        properties.get(CLUSTER_TLS_CA),
+        properties.get(CLUSTER_TLS_KEY),
+        properties.get(CLUSTER_TLS_CERT),
+        Integer.parseInt(properties.getOrDefault(MAX_POOL_SIZE, MAX_POOL_SIZE_DEFAULT)),
+        Integer.parseInt(properties.getOrDefault(MIN_IDLE_SIZE, MIN_IDLE_SIZE_DEFAULT)),
+        properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
+        ReplicaReadPolicy.create(properties),
+        Boolean.parseBoolean(
+            properties.getOrDefault(TIDB_FILTER_PUSH_DOWN, TIDB_FILTER_PUSH_DOWN_DEFAULT)),
+        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT),
+        Long.parseLong(properties.getOrDefault(TIKV_GRPC_TIMEOUT, TIKV_GRPC_TIMEOUT_DEFAULT)),
+        Long.parseLong(
+            properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT, TIKV_GRPC_SCAN_TIMEOUT_DEFAULT)),
+        Boolean.parseBoolean(properties.getOrDefault(TIDB_BUILD_IN_DATABASE_VISIBLE,
+            TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT))
+    );
+  }
+
+  public ClientConfig(ClientConfig config) {
+    this(config.getDatabaseUrl(),
+        config.getUsername(),
+        config.getPassword(),
+        config.getClusterTlsEnabled(),
+        config.getClusterTlsCA(),
+        config.getClusterTlsKey(),
+        config.getClusterTlsCert(),
+        config.getMaximumPoolSize(),
+        config.getMinimumIdleSize(),
+        config.getWriteMode(),
+        config.getReplicaReadPolicy(),
+        config.isFilterPushDown(),
+        config.getDnsSearch(),
+        config.getTimeout(),
+        config.getScanTimeout(),
+        config.isBuildInDatabaseVisible());
+  }
 
   public boolean isFilterPushDown() {
     return isFilterPushDown;
@@ -99,61 +260,6 @@ public final class ClientConfig {
 
   public final ReplicaReadPolicy getReplicaReadPolicy() {
     return replicaReadPolicy;
-  }
-
-  public ClientConfig() {
-    this(null, null, null, MAX_POOL_SIZE_DEFAULT,
-        MIN_IDLE_SIZE_DEFAULT, TIDB_WRITE_MODE_DEFAULT,
-        ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
-        TIDB_DNS_SEARCH_DEFAULT);
-  }
-
-  public ClientConfig(String databaseUrl, String username, String password) {
-    this(databaseUrl, username, password, MAX_POOL_SIZE_DEFAULT, MIN_IDLE_SIZE_DEFAULT,
-        TIDB_WRITE_MODE_DEFAULT, ReplicaReadPolicy.DEFAULT, TIDB_FILTER_PUSH_DOWN_DEFAULT,
-        TIDB_DNS_SEARCH_DEFAULT);
-  }
-
-  public ClientConfig(String databaseUrl, String username, String password, int maximumPoolSize,
-      int minimumIdleSize, String writeMode, ReplicaReadPolicy replicaRead,
-      boolean isFilterPushDown, String dnsSearch) {
-    this.databaseUrl = databaseUrl;
-    this.username = username;
-    this.password = password;
-    this.maximumPoolSize = maximumPoolSize;
-    this.minimumIdleSize = minimumIdleSize;
-    this.writeMode = writeMode;
-    this.replicaReadPolicy = replicaRead;
-    this.isFilterPushDown = isFilterPushDown;
-    this.dnsSearch = dnsSearch;
-  }
-
-  public ClientConfig(Map<String, String> properties) {
-    this(properties.get(DATABASE_URL),
-        properties.get(USERNAME),
-        properties.get(PASSWORD),
-        Integer.parseInt(
-            properties.getOrDefault(MAX_POOL_SIZE, Integer.toString(MAX_POOL_SIZE_DEFAULT))),
-        Integer.parseInt(
-            properties.getOrDefault(MIN_IDLE_SIZE, Integer.toString(MIN_IDLE_SIZE_DEFAULT))),
-        properties.getOrDefault(TIDB_WRITE_MODE, TIDB_WRITE_MODE_DEFAULT),
-        ReplicaReadPolicy.create(properties),
-        Boolean.parseBoolean(properties
-            .getOrDefault(TIDB_FILTER_PUSH_DOWN, Boolean.toString(TIDB_FILTER_PUSH_DOWN_DEFAULT))),
-        properties.getOrDefault(TIDB_DNS_SEARCH, TIDB_DNS_SEARCH_DEFAULT)
-    );
-  }
-
-  public ClientConfig(ClientConfig config) {
-    this(config.getDatabaseUrl(),
-        config.getUsername(),
-        config.getPassword(),
-        config.getMaximumPoolSize(),
-        config.getMinimumIdleSize(),
-        config.getWriteMode(),
-        config.getReplicaReadPolicy(),
-        config.isFilterPushDown(),
-        config.getDnsSearch());
   }
 
   public String getPdAddresses() {
@@ -188,6 +294,38 @@ public final class ClientConfig {
     this.password = password;
   }
 
+  public boolean getClusterTlsEnabled() {
+    return clusterTlsEnabled;
+  }
+
+  public void setClusterTlsEnabled(boolean enabled) {
+    this.clusterTlsEnabled = enabled;
+  }
+
+  public String getClusterTlsCA() {
+    return clusterTlsCA;
+  }
+
+  public void setClusterTlsCA(String ca) {
+    this.clusterTlsCA = ca;
+  }
+
+  public String getClusterTlsKey() {
+    return clusterTlsKey;
+  }
+
+  public void setClusterTlsKey(String key) {
+    this.clusterTlsKey = key;
+  }
+
+  public String getClusterTlsCert() {
+    return clusterTlsCert;
+  }
+
+  public void setClusterTlsCert(String cert) {
+    this.clusterTlsCert = cert;
+  }
+
   public int getMaximumPoolSize() {
     return maximumPoolSize;
   }
@@ -213,13 +351,7 @@ public final class ClientConfig {
   }
 
   public String getDriverName() {
-    if (databaseUrl.startsWith(MYSQL_PREFIX)) {
-      return MYSQL_DRIVER_NAME;
-    }
-    if (databaseUrl.startsWith(TIDB_PREFIX)) {
-      return TIDB_DRIVER_NAME;
-    }
-    throw new IllegalArgumentException("can not parse driver by " + databaseUrl);
+    return TiDBDriver.driverForUrl(databaseUrl);
   }
 
   public String getDnsSearch() {
@@ -230,41 +362,90 @@ public final class ClientConfig {
     this.dnsSearch = dnsSearch;
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(pdAddresses, databaseUrl, username, password, maximumPoolSize,
-        minimumIdleSize, writeMode, replicaReadPolicy);
+  public void setReplicaReadPolicy(ReplicaReadPolicy replicaReadPolicy) {
+    this.replicaReadPolicy = replicaReadPolicy;
+  }
+
+  public long getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(long timeout) {
+    this.timeout = timeout;
+  }
+
+  public long getScanTimeout() {
+    return scanTimeout;
+  }
+
+  public void setScanTimeout(long scanTimeout) {
+    this.scanTimeout = scanTimeout;
+  }
+
+  public boolean isBuildInDatabaseVisible() {
+    return buildInDatabaseVisible;
+  }
+
+  public void setBuildInDatabaseVisible(boolean buildInDatabaseVisible) {
+    this.buildInDatabaseVisible = buildInDatabaseVisible;
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (this == object) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (object == null || getClass() != object.getClass()) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ClientConfig that = (ClientConfig) object;
+    ClientConfig that = (ClientConfig) o;
     return maximumPoolSize == that.maximumPoolSize
         && minimumIdleSize == that.minimumIdleSize
-        && Objects.equal(replicaReadPolicy, that.replicaReadPolicy)
-        && Objects.equal(pdAddresses, that.pdAddresses)
-        && Objects.equal(databaseUrl, that.databaseUrl)
-        && Objects.equal(username, that.username)
-        && Objects.equal(password, that.password)
-        && Objects.equal(writeMode, that.writeMode);
+        && isFilterPushDown == that.isFilterPushDown
+        && timeout == that.timeout
+        && scanTimeout == that.scanTimeout
+        && buildInDatabaseVisible == that.buildInDatabaseVisible
+        && Objects.equals(pdAddresses, that.pdAddresses)
+        && Objects.equals(databaseUrl, that.databaseUrl)
+        && Objects.equals(username, that.username)
+        && Objects.equals(password, that.password)
+        && Objects.equals(clusterTlsEnabled, that.clusterTlsEnabled)
+        && Objects.equals(clusterTlsCA, that.clusterTlsCA)
+        && Objects.equals(clusterTlsKey, that.clusterTlsKey)
+        && Objects.equals(clusterTlsCert, that.clusterTlsCert)
+        && Objects.equals(writeMode, that.writeMode)
+        && Objects.equals(replicaReadPolicy, that.replicaReadPolicy)
+        && Objects.equals(dnsSearch, that.dnsSearch);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(pdAddresses, databaseUrl, username, password, clusterTlsEnabled,
+        clusterTlsCA, clusterTlsKey, clusterTlsCert, maximumPoolSize,
+        minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown, dnsSearch, timeout,
+        scanTimeout, buildInDatabaseVisible);
   }
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("databaseUrl", databaseUrl)
-        .add("username", username)
-        .add("pdAddresses", pdAddresses)
-        .add("maximumPoolSize", maximumPoolSize)
-        .add("minimumIdleSize", minimumIdleSize)
-        .add("writeMode", writeMode)
-        .add("replicaReadPolicy", replicaReadPolicy)
-        .toString();
+    return "ClientConfig{"
+        + "pdAddresses='" + pdAddresses + '\''
+        + ", databaseUrl='" + databaseUrl + '\''
+        + ", username='" + username + '\''
+        + ", password='" + password + '\''
+        + ", clusterTlsEnabled='" + clusterTlsEnabled + '\''
+        + ", clusterTlsCA='" + clusterTlsCA + '\''
+        + ", clusterTlsKey='" + clusterTlsKey + '\''
+        + ", clusterTlsCert='" + clusterTlsCert + '\''
+        + ", maximumPoolSize=" + maximumPoolSize
+        + ", minimumIdleSize=" + minimumIdleSize
+        + ", writeMode='" + writeMode + '\''
+        + ", replicaReadPolicy=" + replicaReadPolicy
+        + ", isFilterPushDown=" + isFilterPushDown
+        + ", dnsSearch='" + dnsSearch + '\''
+        + ", timeout=" + timeout
+        + ", scanTimeout=" + scanTimeout
+        + ", buildInDatabaseVisible=" + buildInDatabaseVisible
+        + '}';
   }
 }

@@ -134,7 +134,7 @@ public class FlinkTest {
           + " cast('2020-08-10 15:30:29' as timestamp),\n"
           + " cast('2020-08-10 16:30:29' as timestamp),\n"
           + " cast(2020 as smallint),\n"
-          + " true,\n"
+          + " cast(true as tinyint),\n"
           + " cast('{\"a\":1,\"b\":2}' as string),\n"
           + " cast('1' as string),\n"
           + " cast('a' as string)\n"
@@ -237,7 +237,7 @@ public class FlinkTest {
 
   public Row replicaRead() throws Exception {
     Map<String, String> properties = getDefaultProperties();
-    properties.put(TIDB_REPLICA_READ, "true");
+    properties.put(TIDB_REPLICA_READ, "follower,leader");
     return runByCatalog(properties);
   }
 

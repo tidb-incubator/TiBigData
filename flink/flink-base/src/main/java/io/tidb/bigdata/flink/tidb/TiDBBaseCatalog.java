@@ -22,6 +22,7 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,17 +62,24 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBBaseCatalog.class);
 
+  public static final String TIDB_CATALOG_LOAD_MODE = "tidb.catalog.load-mode";
+  public static final String TIDB_CATALOG_LOAD_MODE_DEFAULT = CatalogLoadMode.EAGER.name();
+
   public static final String DEFAULT_DATABASE = "default";
 
   public static final String DEFAULT_NAME = "tidb";
 
   private final Map<String, String> properties;
 
+  private final CatalogLoadMode catalogLoadMode;
+
   private Optional<ClientSession> clientSession = Optional.empty();
 
   public TiDBBaseCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
+    this.catalogLoadMode = CatalogLoadMode.fromString(
+        properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
   }
 
   public TiDBBaseCatalog(String name, Map<String, String> properties) {
@@ -82,15 +90,23 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     this(DEFAULT_NAME, DEFAULT_DATABASE, properties);
   }
 
-  @Override
-  public synchronized void open() throws CatalogException {
-    // catalog isOpened?
+  private void initClientSession() {
     if (!clientSession.isPresent()) {
       try {
+        LOG.info("Init client session");
         clientSession = Optional.of(ClientSession.create(new ClientConfig(properties)));
       } catch (Exception e) {
-        throw new CatalogException("can not open catalog", e);
+        throw new CatalogException("Can not init client session", e);
       }
+    }
+  }
+
+  @Override
+  public synchronized void open() throws CatalogException {
+    if (catalogLoadMode == CatalogLoadMode.EAGER) {
+      initClientSession();
+    } else {
+      LOG.info("We do nothing because tidb catalog use lazy open");
     }
   }
 
@@ -100,7 +116,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
       try {
         session.close();
       } catch (Exception e) {
-        LOG.warn("can not close clientSession", e);
+        LOG.warn("Can not close clientSession", e);
       }
       clientSession = Optional.empty();
     });
@@ -114,7 +130,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   @Override
   public CatalogDatabase getDatabase(String databaseName)
       throws DatabaseNotExistException, CatalogException {
-    if (databaseExists(databaseName)) {
+    if (!databaseExists(databaseName)) {
       throw new DatabaseNotExistException(getName(), databaseName);
     }
     return new CatalogDatabaseImpl(ImmutableMap.of(), "");
@@ -372,6 +388,23 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   private ClientSession getClientSession() {
-    return clientSession.orElseThrow(IllegalStateException::new);
+    if (clientSession.isPresent()) {
+      return clientSession.get();
+    }
+    if (catalogLoadMode == CatalogLoadMode.EAGER) {
+      throw new IllegalStateException("TiDB catalog is not opened or has been closed ");
+    }
+    initClientSession();
+    return clientSession.get();
+  }
+
+  public enum CatalogLoadMode {
+    LAZY, EAGER;
+
+    public static CatalogLoadMode fromString(String s) {
+      return Arrays.stream(values()).filter(mode -> mode.name().equalsIgnoreCase(s)).findFirst()
+          .orElseThrow(() -> new IllegalArgumentException(
+              "Catalog load mode must be one of: " + Arrays.toString(values())));
+    }
   }
 }

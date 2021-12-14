@@ -156,11 +156,11 @@ public class FilterPushDownHelper {
   }
 
   public Result applyFilters(List<ResolvedExpression> filters) {
-    LOG.debug("flink filters: " + filters);
+    LOG.debug("Flink filters: " + filters);
     if (new ClientConfig(table.getOptions()).isFilterPushDown()) {
       this.expression = createExpression(filters);
     }
-    LOG.debug("tidb expression: " + this.expression);
+    LOG.debug("TiDB expression: " + this.expression);
     return Result.of(Collections.emptyList(), filters);
   }
 }

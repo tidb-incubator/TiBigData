@@ -35,6 +35,18 @@ public class MapreduceCmd {
       "-p"}, description = "password", password = true, required = true)
   public String password;
 
+  @Parameter(names = {"-clusterTls"}, description = "enable cluster TLS")
+  public boolean clusterTlsEnabled = false;
+
+  @Parameter(names = {"-clusterTlsCA"}, description = "cluster TLS CA")
+  public String clusterTlsCA;
+
+  @Parameter(names = {"-clusterTlsCert"}, description = "cluster TLS certificate")
+  public String clusterTlsCert;
+
+  @Parameter(names = {"-clusterTlsKey"}, description = "cluster TLS key")
+  public String clusterTlsKey;
+
   @Parameter(names = {"-databasename", "-dn"}, description = "database name", required = true)
   public String databaseName;
 

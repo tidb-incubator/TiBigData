@@ -23,6 +23,7 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 
 public class TiDBOptions {
+
   private static ConfigOption<String> required(String key) {
     return ConfigOptions.key(key).stringType().noDefaultValue();
   }
@@ -58,7 +59,7 @@ public class TiDBOptions {
   public static final ConfigOption<Boolean> FILTER_PUSH_DOWN =
       ConfigOptions.key(ClientConfig.TIDB_FILTER_PUSH_DOWN)
           .booleanType()
-          .defaultValue(ClientConfig.TIDB_FILTER_PUSH_DOWN_DEFAULT);
+          .defaultValue(Boolean.parseBoolean(ClientConfig.TIDB_FILTER_PUSH_DOWN_DEFAULT));
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 

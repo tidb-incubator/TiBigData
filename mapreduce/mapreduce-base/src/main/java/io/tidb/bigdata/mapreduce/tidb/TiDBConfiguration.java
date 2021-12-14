@@ -41,6 +41,12 @@ public class TiDBConfiguration {
   /** Password to access the database */
   public static final String PASSWORD_PROPERTY = "mapreduce.jdbc.password";
 
+  /** Cluster TLS configuration */
+  public static final String CLUSTER_TLS_ENABLE = "tidb.cluster-tls-enable";
+  public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
+  public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
+  public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
+
   /** Input table name */
   public static final String INPUT_TABLE_NAME_PROPERTY = "mapreduce.jdbc.input.table.name";
 
@@ -71,11 +77,18 @@ public class TiDBConfiguration {
    */
   public static void configureDB(Configuration conf,
       String dbUrl, String databaseName, String userName, String password) {
-
     conf.set(URL_PROPERTY, dbUrl);
     conf.set(DATABASE_NAME, databaseName);
     conf.set(USERNAME_PROPERTY, userName);
     conf.set(PASSWORD_PROPERTY, password);
+  }
+
+  public static void clusterTls(Configuration conf,
+      String ca, String cert, String key) {
+    conf.set(CLUSTER_TLS_ENABLE, "true");
+    conf.set(CLUSTER_TLS_CA, ca);
+    conf.set(CLUSTER_TLS_CERT, cert);
+    conf.set(CLUSTER_TLS_KEY, key);
   }
 
   private Configuration conf;
@@ -90,6 +103,10 @@ public class TiDBConfiguration {
     properties.put(ClientConfig.DATABASE_URL, conf.get(URL_PROPERTY));
     properties.put(ClientConfig.USERNAME, conf.get(USERNAME_PROPERTY));
     properties.put(ClientConfig.PASSWORD, conf.get(PASSWORD_PROPERTY));
+    properties.put(ClientConfig.CLUSTER_TLS_ENABLE, conf.get(CLUSTER_TLS_ENABLE));
+    properties.put(ClientConfig.CLUSTER_TLS_CA, conf.get(CLUSTER_TLS_CA));
+    properties.put(ClientConfig.CLUSTER_TLS_KEY, conf.get(CLUSTER_TLS_KEY));
+    properties.put(ClientConfig.CLUSTER_TLS_CERT, conf.get(CLUSTER_TLS_CERT));
 
     return ClientSession.createWithSingleConnection(new ClientConfig(properties));
   }

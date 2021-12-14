@@ -22,9 +22,9 @@
     <developers>
         <developer>
             <name>Xiaoguang Sun</name>
-            <email>sunxiaoguang@zhihu.com</email>
-            <organization>Zhihu</organization>
-            <organizationUrl>https://www.zhihu.com/</organizationUrl>
+            <email>sunxiaoguang@pingcap.com</email>
+            <organization>PingCAP</organization>
+            <organizationUrl>https://www.pingcap.com/</organizationUrl>
         </developer>
         <developer>
             <name>Mengyu Hu</name>

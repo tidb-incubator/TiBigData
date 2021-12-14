@@ -66,9 +66,6 @@ public class TypeUtils {
       case TypeBit:
         return DataTypes.BOOLEAN();
       case TypeTiny:
-        if (length == 1) {
-          return DataTypes.BOOLEAN();
-        }
         return unsigned ? DataTypes.SMALLINT() : DataTypes.TINYINT();
       case TypeYear:
       case TypeShort:
