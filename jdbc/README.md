@@ -1,5 +1,7 @@
 # TiDB JDBC Driver
 
+![](driver/src/main/resources/design.png)
+
 ## Build
 
 ```bash
