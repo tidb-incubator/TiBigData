@@ -5,7 +5,7 @@ set -euo pipefail
 
 git clone https://github.com/tikv/client-java.git
 cd client-java
-git reset --hard 28380512f3adacc1acb54daa381c4c71b1a1fa8f
+git reset --hard 655d63fbba047334ab884224e5db6510fe16a5aa
 mvn install -DskipTests
 cd ..
 rm -Rf client-java
