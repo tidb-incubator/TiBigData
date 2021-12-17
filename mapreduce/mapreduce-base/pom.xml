@@ -13,7 +13,7 @@
 
     <properties>
         <dep.slf4j.version>1.7.21</dep.slf4j.version>
-        <hadoop.verison>2.10.0</hadoop.verison>
+        <hadoop.verison>2.7.1</hadoop.verison>
     </properties>
 
     <dependencies>
