@@ -106,7 +106,7 @@ public class TiDBConfiguration {
     conf.set(CLUSTER_JKS_TRUST_PATH, trustPath);
     conf.set(CLUSTER_JKS_TRUST_PASSWORD, trustPassword);
   }
-  
+
   private Configuration conf;
 
   public TiDBConfiguration(Configuration conf) {
