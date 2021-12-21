@@ -109,6 +109,7 @@ public class LoadBalancingDriver implements Driver {
         (runnable) -> {
           Thread newThread = new Thread(runnable);
           newThread.setName("TiDB JDBC Driver Executor Thread - " + threadId.getAndIncrement());
+          newThread.setDaemon(true);
           return newThread;
         });
     this.executor.setKeepAliveTime(minReloadInterval * 2, TimeUnit.MILLISECONDS);
