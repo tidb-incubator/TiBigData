@@ -49,8 +49,8 @@ public class TiDBConfiguration {
   public static final String CLUSTER_JKS_ENABLE = "tidb.cluster-jks-enable";
   public static final String CLUSTER_JKS_KEY_PATH = "tidb.cluster-jks-key-path";
   public static final String CLUSTER_JKS_KEY_PASSWORD = "tidb.cluster-jks-key-password";
-  public static final String CLUSTER_JKS_TRUST_PATH = "tidb.jks.trust_path";
-  public static final String CLUSTER_JKS_TRUST_PASSWORD = "tidb.jks.trust_password";
+  public static final String CLUSTER_JKS_TRUST_PATH = "tidb.jks.trust-path";
+  public static final String CLUSTER_JKS_TRUST_PASSWORD = "tidb.jks.trust-password";
 
   /** Input table name */
   public static final String INPUT_TABLE_NAME_PROPERTY = "mapreduce.jdbc.input.table.name";
