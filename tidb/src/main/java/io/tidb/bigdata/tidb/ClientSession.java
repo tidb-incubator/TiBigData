@@ -106,7 +106,11 @@ public final class ClientSession implements AutoCloseable {
     tiConfiguration.setTrustCertCollectionFile(config.getClusterTlsCA());
     tiConfiguration.setKeyCertChainFile(config.getClusterTlsCert());
     tiConfiguration.setKeyFile(config.getClusterTlsKey());
-
+    tiConfiguration.setJksEnable(config.getClusterUseJks());
+    tiConfiguration.setJksKeyPath(config.getClusterJksKeyPath());
+    tiConfiguration.setJksKeyPassword(config.getClusterJksKeyPassword());
+    tiConfiguration.setJksTrustPath(config.getClusterJksTrustPath());
+    tiConfiguration.setJksTrustPassword(config.getClusterJksTrustPassword());
     tiConfiguration.setTimeout(config.getTimeout());
     tiConfiguration.setScanTimeout(config.getScanTimeout());
     ReplicaReadPolicy policy = config.getReplicaReadPolicy();
