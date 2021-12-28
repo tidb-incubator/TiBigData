@@ -5,7 +5,7 @@ Implement fast lookup via primary key or secondary indices
 ## Problem:
 
 There are use cases within big-data scenarios where fast lookup with index are beneficial. 
-Especially in streaming processing, lookup latency have a significant impact to overall
+Especially in streaming processing, lookup latency has a significant impact to overall
 throughput. TiBigData implements full table scan only at this time, which makes it suboptimal to
 workloads that requires low latency. Therefore, flink-tidb-connector utilize JDBC lookup table 
 source instead. Since Flink, like other big-data computation frameworks, is at computing layer by
