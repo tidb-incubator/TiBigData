@@ -15,7 +15,7 @@ Lookup with TiDB server contributes to growing of latency with extra hops in acc
 ## Goals:
 
 Implement primary key and secondary index-based lookup in TiBigData. This decreases lookup latency with
-the best efforts and saves unnecessary waste of resources for load balancers and TiDB servers.
+the best efforts and saves unnecessary costs for load balancers and TiDB servers.
 
 ## Solutions:
 
