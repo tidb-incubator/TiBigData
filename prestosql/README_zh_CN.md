@@ -30,7 +30,7 @@ PrestoSQL 提供多种部署方式，本文仅提供单机版的 PrestoSQL 部�
 
 ### 3.1 下载安装包
  
-PrestoSQL 已经重命名为 Trino，历史版本可在这里下载：https://repo1.maven.org/maven2/io/prestosql/presto-server/。
+PrestoSQL 已经重命名为 Trino，历史版本可在这里下载：[PrestoSQL 历史版本](https://repo1.maven.org/maven2/io/prestosql/presto-server)。
 
 ### 3.2 安装 TiBigData
 
