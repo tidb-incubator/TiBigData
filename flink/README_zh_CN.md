@@ -191,7 +191,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tidb.replica-read.label        | null          | TiBigData 支持从指定了 k8s label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y` |
 | tidb.replica-read.whitelist    | null          | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。 |
 | tidb.replica-read.blacklist    | null          | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。 |
-| sink.buffer-flush.max-rows     | 100           | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓存区。 |
+| sink.buffer-flush.max-rows     | 100           | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。 |
 | sink.buffer-flush.interval     | 1s            | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
 | sink.max-retries               | 3             | 写入数据失败的最大重试次数。 |
 | tidb.filter-push-down          | false         | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，当前仅支持 Flink 1.12，1.13 将会很快支持。 |
