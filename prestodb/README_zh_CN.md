@@ -30,7 +30,7 @@ PrestoDB 提供多种部署方式，本文仅提供单机版的 PrestoDB 部署�
 
 ### 3.1 下载安装包
 
-请到 [PrestoDB 下载页面](https://prestodb.io/download.html) 下载对应版本的安装包，下载页面仅保留最新版本，历史版本可从这里找到 https://repo1.maven.org/maven2/com/facebook/presto/presto-server/。
+请到 [PrestoDB 下载页面](https://prestodb.io/download.html) 下载对应版本的安装包，下载页面仅保留最新版本，历史版本可从这里找到：[PrestoDB 历史版本](https://repo1.maven.org/maven2/com/facebook/presto/presto-server)。
 
 ### 3.2 安装 TiBigData
 
