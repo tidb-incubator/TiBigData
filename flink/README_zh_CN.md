@@ -87,8 +87,8 @@ mysql --host 127.0.0.1 --port 4000 -uroot --database test
 ```sql
 -- 这段 sql 跑在 TiDB 内
 CREATE TABLE `people`(
-                         `id` int,
-                         `name` varchar(16)
+  `id` int,
+  `name` varchar(16)
 );
 ```
 
