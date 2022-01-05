@@ -66,7 +66,7 @@ bin/start-cluster.sh
 进入 sql 客户端以后，就可以创建 TiDB 对应的 catalog 了，下面的连接串、用户名以及密码需要替换成自己真实 TiDB 集群的。
 
 ```sql
- CREATE CATALOG `tidb`
+CREATE CATALOG `tidb`
 WITH (
     'type' = 'tidb',
     'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
