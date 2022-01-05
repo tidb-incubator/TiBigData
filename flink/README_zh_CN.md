@@ -9,18 +9,18 @@
 | Flink | 1.11.x/1.12.x/1.13.x |
 
 ## 2 编译 Flink Connector
-请参考以下步骤，如注释所说，在编译之前你需要先编译 tikv 的 java 客户端，这是因为 TiBigData 抢先用到了一些 tikv java 客户端未发版的新功能。此外，TiBigData 的 API 基于 1.11.0/1.12.0/1.13.0 小版本构建，如果你的 Flink 版本是 1.13.x, 需要将 Flink 的版本手动从 1.13.0 替换为 1.13.x 来避免一些奇怪的问题，这是因为 Flink 在小版本改动的时候也有可能改动 API 的接口。
+请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 1.11.0/1.12.0/1.13.0 小版本构建，如果你的 Flink 版本是 1.13.x，需要将 Flink 的版本手动从 1.13.0 替换为 1.13.x 来避免一些奇怪的问题，这是因为 Flink 在小版本改动的时候也有可能改动 API 的接口。
 
 ```bash
 # 克隆项目
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# 在编译之前你需要先编译 tikv 的 java 客户端
+# 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
 # 编译 flink connector, 这里的 FLINK_VERSION 可选 1.11/1.12/1.13
 mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
 ```
-因为 Flink 的 依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
+因为 Flink 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
 
 ## 3 部署 Flink
@@ -63,7 +63,7 @@ bin/start-cluster.sh
  bin/sql-client.sh
 ```
 
-进入 sql 客户端以后，就可以创建 tidb 对应的 catalog 了，下面的连接串、用户名以及密码需要替换成自己真实 TiDB 集群的。
+进入 sql 客户端以后，就可以创建 TiDB 对应的 catalog 了，下面的连接串、用户名以及密码需要替换成自己真实 TiDB 集群的。
 
 ```sql
  CREATE CATALOG `tidb`
@@ -124,11 +124,10 @@ SELECT * FROM `tidb`.`test`.`people`;
 Flink SQL> SET sql-client.execution.result-mode=tableau;
 [INFO] Session property has been set.
 
-    Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
 [INFO] Submitting SQL update statement to the cluster...
-                          SELECT * FROM `tidb`.`test`.`people`;[INFO] SQL update statement has been successfully submitted to the cluster:
+[INFO] SQL update statement has been successfully submitted to the cluster:
 Job ID: a3944d4656785e36cf03fa419533b12c
-
 
 Flink SQL> SELECT * FROM `tidb`.`test`.`people`;
 +----+-------------+--------------------------------+
@@ -188,7 +187,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tidb.minimum.idle.size         | 10            | 最小存活连接数。 |
 | tidb.write_mode                | append        | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。 |
 | tidb.replica-read              | leader | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。 |
-| tidb.replica-read.label        | null          | TiBigData 支持从指定了 k8s label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y` |
+| tidb.replica-read.label        | null          | TiBigData 支持从指定了 label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y` |
 | tidb.replica-read.whitelist    | null          | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。 |
 | tidb.replica-read.blacklist    | null          | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。 |
 | sink.buffer-flush.max-rows     | 100           | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。 |
