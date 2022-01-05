@@ -207,8 +207,8 @@ TiBigData 也实现了 Flink TableFactory 相关的 API，不过我们并不推�
 
 ```sql
 CREATE TABLE `people`(
-                         `id` INT,
-                         `name` STRING
+  `id` INT,
+  `name` STRING
 ) WITH (
   'connector' = 'tidb',
   'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
