@@ -245,37 +245,37 @@ Splits: 17 total, 17 done (100.00%)
 
 TiDB 与 PrestoDB 的类型映射关系可参考下表：
 
-|     TiDB     |    PrestoDB     |
-| :----------: | :----------: |
-|   TINYINT    |   TINYINT    |
-|   SMALLINT   |   SMALLINT   |
-|  MEDIUMINT   |     INT      |
-|     INT      |     INT      |
-|    BIGINT    |    BIGINT    |
-|     CHAR     |   VARCHAR    |
-|   VARCHAR    |   VARCHAR    |
-|   TINYTEXT   |   VARCHAR    |
-|  MEDIUMTEXT  |   VARCHAR    |
-|     TEXT     |   VARCHAR    |
-|   LONGTEXT   |   VARCHAR    |
-|    BINARY    |  VARBINARY   |
-|  VARBINARY   |  VARBINARY   |
-|   TINYBLOB   |  VARBINARY   |
-|  MEDIUMBLOB  |  VARBINARY   |
-|     BLOB     |  VARBINARY   |
-|   LONGBLOB   |  VARBINARY   |
-|    FLOAT     |     REAL     |
-|    DOUBLE    |    DOUBLE    |
-|   DECIMAL    |   DECIMAL    |
-|     DATE     |     DATE     |
-|   TIME(p)    |   TIME(p)    |
-| DATETIME(p)  | TIMESTAMP(p) |
-| TIMESTAMP(p) | TIMESTAMP(p) |
-|     YEAR     |   SMALLINT   |
-|     BOOL     |   TINYINT    |
-|     JSON     |   VARCHAR    |
-|     ENUM     |   VARCHAR    |
-|     SET      |   VARCHAR    |
+|    TiDB    | PrestoDB  |
+| :--------: | :-------: |
+|  TINYINT   |  TINYINT  |
+|  SMALLINT  | SMALLINT  |
+| MEDIUMINT  |    INT    |
+|    INT     |    INT    |
+|   BIGINT   |  BIGINT   |
+|    CHAR    |  VARCHAR  |
+|  VARCHAR   |  VARCHAR  |
+|  TINYTEXT  |  VARCHAR  |
+| MEDIUMTEXT |  VARCHAR  |
+|    TEXT    |  VARCHAR  |
+|  LONGTEXT  |  VARCHAR  |
+|   BINARY   | VARBINARY |
+| VARBINARY  | VARBINARY |
+|  TINYBLOB  | VARBINARY |
+| MEDIUMBLOB | VARBINARY |
+|    BLOB    | VARBINARY |
+|  LONGBLOB  | VARBINARY |
+|   FLOAT    |   REAL    |
+|   DOUBLE   |  DOUBLE   |
+|  DECIMAL   |  DECIMAL  |
+|    DATE    |   DATE    |
+|    TIME    |   TIME    |
+|  DATETIME  | TIMESTAMP |
+| TIMESTAMP  | TIMESTAMP |
+|    YEAR    | SMALLINT  |
+|    BOOL    |  TINYINT  |
+|    JSON    |   JSON    |
+|    ENUM    |  VARCHAR  |
+|    SET     |  VARCHAR  |
 
 ## 6 高级配置
 
