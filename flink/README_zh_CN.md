@@ -2,11 +2,11 @@
 
 ## 1 环境准备
 
-| 组件  | 版本           |      |
-| ----- | -------------- | ---- |
-| JDK   | 8              |      |
-| Maven | 3.6+      |      |
-| Flink | 1.11.x/1.12.x/1.13.x |      |
+| 组件  | 版本           |
+| ----- | -------------- |
+| JDK   | 8              |
+| Maven | 3.6+      |
+| Flink | 1.11.x/1.12.x/1.13.x |
 
 ## 2 编译 Flink Connector
 请参考以下步骤，如注释所说，在编译之前你需要先编译 tikv 的 java 客户端，这是因为 TiBigData 抢先用到了一些 tikv java 客户端未发版的新功能。此外，TiBigData 的 API 基于 1.11.0/1.12.0/1.13.0 小版本构建，如果你的 Flink 版本是 1.13.x, 需要将 Flink 的版本手动从 1.13.0 替换为 1.13.x 来避免一些奇怪的问题，这是因为 Flink 在小版本改动的时候也有可能改动 API 的接口。
@@ -67,12 +67,12 @@ bin/start-cluster.sh
 
 ```sql
  CREATE CATALOG `tidb`
- WITH (
-  'type' = 'tidb',
-  'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
-  'tidb.username' = 'root',
-  'tidb.password' = ''
- );
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = ''
+);
 ```
 
 我们尝试在 TiDB 内创建一张表。
@@ -87,8 +87,8 @@ mysql --host 127.0.0.1 --port 4000 -uroot --database test
 ```sql
 -- 这段 sql 跑在 TiDB 内
 CREATE TABLE `people`(
- `id` int,
- `name` varchar(16)
+                         `id` int,
+                         `name` varchar(16)
 );
 ```
 
@@ -124,9 +124,9 @@ SELECT * FROM `tidb`.`test`.`people`;
 Flink SQL> SET sql-client.execution.result-mode=tableau;
 [INFO] Session property has been set.
 
-Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+    Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
 [INFO] Submitting SQL update statement to the cluster...
-SELECT * FROM `tidb`.`test`.`people`;[INFO] SQL update statement has been successfully submitted to the cluster:
+                          SELECT * FROM `tidb`.`test`.`people`;[INFO] SQL update statement has been successfully submitted to the cluster:
 Job ID: a3944d4656785e36cf03fa419533b12c
 
 
@@ -207,8 +207,8 @@ TiBigData 也实现了 Flink TableFactory 相关的 API，不过我们并不推�
 
 ```sql
 CREATE TABLE `people`(
-  `id` INT,
-  `name` STRING
+                         `id` INT,
+                         `name` STRING
 ) WITH (
   'connector' = 'tidb',
   'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
