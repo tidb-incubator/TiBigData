@@ -187,7 +187,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tidb.maximum.pool.size         | 10            | 连接池大小。                                     |
 | tidb.minimum.idle.size         | 10            | 最小存活连接数。 |
 | tidb.write_mode                | append        | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。 |
-| tidb.replica-read              | leader | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `idb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。 |
+| tidb.replica-read              | leader | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。 |
 | tidb.replica-read.label        | null          | TiBigData 支持从指定了 k8s label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y` |
 | tidb.replica-read.whitelist    | null          | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。 |
 | tidb.replica-read.blacklist    | null          | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。 |
