@@ -1,15 +1,15 @@
-# TiDB 与 Trino 集成
+# TiDB 与 PrestoDB 集成
 
 ## 1 环境准备
 
 | 组件  | 版本     |
 | ----- | ------- |
-| JDK   | 11      |
+| JDK   | 8      |
 | Maven | 3.6+    |
-| Trino | 359     |
+| PrestoDB | 0.234.2     |
 
-## 2 编译 Trino Connector
-请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 Trino-359 的小版本构建，如果与你的 Trino 版本不同，你需要手动将 TiBigData 依赖的 Trino 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 Trino。当然，你也可以按照下面的步骤重新搭建一个 350 版本的 Trino 单机版集群以做测试。
+## 2 编译 PrestoDB Connector
+请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 PrestoDB-0.234.2 的小版本构建，如果与你的 PrestoDB 版本不同，你需要手动将 TiBigData 依赖的 PrestoDB 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 PrestoDB。当然，你也可以按照下面的步骤重新搭建一个 0.234.2 版本的 PrestoDB 单机版集群以做测试。
 
 ```bash
 # 克隆项目
@@ -18,48 +18,48 @@ cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
 # 编译 presto connector
-mvn clean package -DskipTests -am -pl trino
+mvn clean package -DskipTests -am -pl prestodb
 # 解压 plugin
-tar -zxf trino/target/trino-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C trino/target
+tar -zxf prestodb/target/prestodb-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C prestodb/target
 ```
 因为 Presto 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
-## 3 部署 Trino
+## 3 部署 PrestoDB
 
-Trino 提供多种部署方式，本文仅提供单机版的 Trino 部署用于测试，如果你想在生产环境使用 Trino, 请参考 [Trino 官方文档](https://trino.io)。
+PrestoDB 提供多种部署方式，本文仅提供单机版的 PrestoDB 部署用于测试，如果你想在生产环境使用 PrestoDB, 请参考 [PrestoDB 官方文档](https://prestodb.io)。
 
 ### 3.1 下载安装包
 
-请到 [Trino 下载页面](https://trino.io/download.html) 下载对应版本的安装包，下载页面仅保留最新版本，历史版本可从这里找到 https://repo1.maven.org/maven2/io/trino/trino-server/。
+请到 [PrestoDB 下载页面](https://prestodb.io/download.html) 下载对应版本的安装包，下载页面仅保留最新版本，历史版本可从这里找到 https://repo1.maven.org/maven2/com/facebook/presto/presto-server/。
 
 ### 3.2 安装 TiBigData
 
 ```bash
-# 下载并解压 trino 的二进制安装包，我们以 trino-359 为例
-wget https://repo1.maven.org/maven2/io/trino/trino-server/359/trino-server-359.tar.gz
+# 下载并解压 prestodb 的二进制安装包，我们以 prestodb-0.234.2 为例
+wget https://repo1.maven.org/maven2/com/facebook/presto/presto-server/0.234.2/presto-server-0.234.2.tar.gz
 # 国内用户可从国内镜像下载
-# wget https://maven.aliyun.com/repository/central/io/trino/trino-server/359/trino-server-359.tar.gz
-tar -zxf trino-server-359.tar.gz
-# 进入到 trino 的 home 目录
-cd trino-server-359
-# 拷贝 plugin 到 trino 的 plugin 目录下
-cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
+# wget https://maven.aliyun.com/repository/central/com/facebook/presto/presto-server/0.234.2/presto-server-0.234.2.tar.gz
+tar -zxf presto-server-0.234.2.tar.gz
+# 进入到 prestodb 的 home 目录
+cd presto-server-0.234.2
+# 拷贝 plugin 到 prestodb 的 plugin 目录下
+cp -r ${TIBIGDATA_HOME}/prestodb/target/prestodb-connector-0.0.5-SNAPSHOT/tidb plugin
 # 从 mysql plugin 拷贝 mysql jdbc driver
-cp plugin/mysql/mysql-connector-java-8.0.22.jar plugin/tidb/
+cp plugin/mysql/mysql-connector-java-5.1.48.jar plugin/tidb/
 ```
 
-至此，TiBigData 已经安装完成，接下来需要配置 Trino 集群，并启动。
+至此，TiBigData 已经安装完成，接下来需要配置 PrestoDB 集群，并启动。
 
-### 3.3 配置单机版 Trino 集群
+### 3.3 配置单机版 PrestoDB 集群
 
-这里我们给出一份简单的配置来启动单机版的 Trino 集群。
+这里我们给出一份简单的配置来启动单机版的 PrestoDB 集群。
 
 ```bash
 cd $TRINO_HOME
 mkdir -p etc/catalog
 ```
 
-接下来是配置 Trino 集群相关的配置文件。
+接下来是配置 PrestoDB 集群相关的配置文件。
 
 #### 3.3.1 配置 config.properties
 
@@ -111,7 +111,7 @@ node.environment=test
 # 节点的唯一标识，推荐使用 uuid 生成
 node.id=1
 # 日志存放目录
-node.data-dir=/tmp/trino/logs
+node.data-dir=/tmp/prestodb/logs
 ```
 #### 3.3.4 配置 log.properties
 ```bash
@@ -121,7 +121,7 @@ vim etc/log.properties
 `log.properties` 内容如下：
 
 ```properties
-io.trino=INFO
+com.facebook.presto=INFO
 ```
 
 #### 3.3.4 配置 tidb connector
@@ -142,9 +142,9 @@ tidb.password=
 
 如果你有多个 TiDB 集群，你可以创建多个 properties 文件，比如 `tidb01.properties` 和 `tidb02.properties`，每个配置文件写不同的连接串和密码即可。
 
-### 3.4 启动 Trino
+### 3.4 启动 PrestoDB
 
-现在你可以启动 Trino 了。
+现在你可以启动 PrestoDB 了。
 
 ```bash
 # 前台启动
@@ -153,16 +153,16 @@ bin/launcher run
 bin/launcher start
 ```
 
-### 3.5 使用 Trino 客户端查询 TiDB 内的数据
+### 3.5 使用 PrestoDB 客户端查询 TiDB 内的数据
 
 ```bash
-# 下载 trino 客户端
+# 下载 prestodb 客户端
 # 国内用户可从国内镜像下载
-# curl -L https://maven.aliyun.com/repository/central/io/trino/trino-cli/359/trino-cli-359-executable.jar -o trino
-curl -L https://repo1.maven.org/maven2/io/trino/trino-cli/359/trino-cli-359-executable.jar -o trino
-chmod 777 trino
-# 连接至 trino
-./trino --server localhost:12345 --catalog tidb --schema test
+# curl -L https://maven.aliyun.com/repository/central/com/facebook/presto/presto-cli/0.234.2/presto-cli-0.234.2-executable.jar -o prestodb
+curl -L https://repo1.maven.org/maven2/com/facebook/presto/presto-cli/0.234.2/presto-cli-0.234.2-executable.jar -o prestodb
+chmod 777 prestodb
+# 连接至 prestodb
+./prestodb --server localhost:12345 --catalog tidb --schema test
 ```
 
 我们尝试在 TiDB 内创建一张表。
@@ -182,14 +182,14 @@ CREATE TABLE `people`(
 );
 ```
 
-建完 TiDB 的表以后，我们可以在 Trino 内查看刚刚建出来的 TiDB 的表结构：
+建完 TiDB 的表以后，我们可以在 PrestoDB 内查看刚刚建出来的 TiDB 的表结构：
 ```sql
 show create table people;
 ```
 你会得到以下下信息：
 
 ```sql
-trino:test> show create table people;
+presto:test> show create table people;
           Create Table
 ---------------------------------
  CREATE TABLE tidb.test.people (
@@ -202,11 +202,11 @@ trino:test> show create table people;
  )
 (1 row)
 
-Query 20220105_134831_00006_s5ptx, FINISHED, 1 node
+Query 20220105_143658_00002_a26k7, FINISHED, 1 node
 Splits: 1 total, 1 done (100.00%)
-0.27 [0 rows, 0B] [0 rows/s, 0B/s]
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
 ```
-尝试在 Trino 内向 TiDB 插入一条数据并查询：
+尝试在 PrestoDB 内向 TiDB 插入一条数据并查询：
 
 ```sql
 INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
@@ -214,31 +214,38 @@ SELECT * FROM "test"."people";
 ```
 你会得到以下信息：
 ```sql
-trino:test> INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
+presto:test> INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
 INSERT: 1 row
 
-Query 20220105_135446_00004_qjyfy, FINISHED, 1 node
-Splits: 35 total, 35 done (100.00%)
-0.35 [0 rows, 0B] [0 rows/s, 0B/s]
+Query 20220105_143723_00003_a26k7, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
 
-trino:test> SELECT * FROM "test"."people";
+presto:test> INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
+INSERT: 1 row
+
+Query 20220105_143741_00004_a26k7, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
+
+presto:test> SELECT * FROM "test"."people";
  id | name
 ----+------
   1 | zs
 (1 row)
 
-Query 20220105_135449_00005_qjyfy, FINISHED, 1 node
+Query 20220105_143748_00005_a26k7, FINISHED, 1 node
 Splits: 17 total, 17 done (100.00%)
-0.25 [1 rows, 0B] [3 rows/s, 0B/s]
+0:00 [1 rows, 0B] [2 rows/s, 0B/s]
 ```
 
-至此，你已经知道如何在 Trino 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
+至此，你已经知道如何在 PrestoDB 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
 
-## 5 TiDB 与 Trino 的类型映射
+## 5 TiDB 与 PrestoDB 的类型映射
 
-TiDB 与 Trino 的类型映射关系可参考下表：
+TiDB 与 PrestoDB 的类型映射关系可参考下表：
 
-|     TiDB     |    Trino     |
+|     TiDB     |    PrestoDB     |
 | :----------: | :----------: |
 |   TINYINT    |   TINYINT    |
 |   SMALLINT   |   SMALLINT   |
