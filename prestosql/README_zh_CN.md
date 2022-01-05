@@ -26,7 +26,7 @@ tar -zxf prestosql/target/prestosql-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C pr
 
 ## 3 部署 PrestoSQL
 
-PrestoSQL 提供多种部署方式，本文仅提供单机版的 PrestoSQL 部署用于测试，如果你想在生产环境使用 PrestoSQL, 请参考 [PrestoSQL 官方文档](https://prestosql.io)。
+PrestoSQL 提供多种部署方式，本文仅提供单机版的 PrestoSQL 部署用于测试，如果你想在生产环境使用 PrestoSQL, 请参考 [PrestoSQL 官方文档](https://trino.io)。
 
 ### 3.1 下载安装包
  
