@@ -20,7 +20,7 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 [TiDB 与 Flink 集成](./flink/README_zh_CN.md)
 
-[TiDB 与 PrestoSQL 集成](./prestosql/README_zh_CN.md)
+[TiDB 与 PrestoSQL 集成 ***- 已废弃***](./prestosql/README_zh_CN.md)
 
 [TiDB 与 Trino 集成](./trino/README_zh_CN.md)
 
