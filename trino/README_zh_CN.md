@@ -48,7 +48,7 @@ cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
 cp plugin/mysql/mysql-connector-java-8.0.22.jar plugin/tidb/
 ```
 
-至此，TiBigData 已经安装完成
+至此，TiBigData 已经安装完成，接下来需要配置 Trino 集群，并启动。
 
 ### 3.3 配置单机版 Trino 集群
 
