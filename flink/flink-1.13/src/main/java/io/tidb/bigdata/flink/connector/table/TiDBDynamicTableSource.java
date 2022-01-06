@@ -27,16 +27,19 @@ import org.apache.flink.table.connector.source.LookupTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.connector.source.SourceProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown;
+import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
 import org.apache.flink.table.expressions.ResolvedExpression;
 
 public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSource,
-    SupportsProjectionPushDown, SupportsFilterPushDown {
+    SupportsProjectionPushDown, SupportsFilterPushDown, SupportsLimitPushDown {
+
   private final ResolvedCatalogTable table;
   private final ChangelogMode changelogMode;
   private final LookupTableSourceHelper lookupTableSourceHelper;
   private FilterPushDownHelper filterPushDownHelper;
   private int[] projectedFields;
+  private Integer limit;
 
   public TiDBDynamicTableSource(ResolvedCatalogTable table,
       ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
@@ -60,8 +63,8 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext scanContext) {
     /* Disable metadata as it doesn't work with projection push down at this time */
     return SourceProvider.of(
-        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields)
-            .build());
+        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields,
+            filterPushDownHelper.getTiDBExpressions(), limit).build());
   }
 
   @Override
@@ -96,5 +99,10 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   @Override
   public Result applyFilters(List<ResolvedExpression> filters) {
     return filterPushDownHelper.applyFilters(filters);
+  }
+
+  @Override
+  public void applyLimit(long limit) {
+    this.limit = limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit;
   }
 }
