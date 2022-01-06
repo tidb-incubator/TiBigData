@@ -4,6 +4,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
@@ -269,7 +270,7 @@ public class FlinkTest {
     testTableFactoryWithTimestampFormat(properties);
   }
 
-  private void testTableFactoryWithTimestampFormat(Map<String, String> properties){
+  private void testTableFactoryWithTimestampFormat(Map<String, String> properties) {
     // env
     TableEnvironment tableEnvironment = getTableEnvironment();
     // create test database and table
@@ -318,8 +319,10 @@ public class FlinkTest {
     Assert.assertEquals(row1, upsertAndRead());
     // filter push down
     tableName = getRandomTableName();
+    Map<String, String> properties = getDefaultProperties();
+    properties.put(TIDB_FILTER_PUSH_DOWN, "true");
     Assert.assertEquals(row,
-        runByCatalog(getDefaultProperties(),
+        runByCatalog(properties,
             format("SELECT * FROM `%s`.`%s`.`%s` WHERE (c1 = 1 OR c3 = 1) AND c2 = 1",
                 CATALOG_NAME, DATABASE_NAME, tableName),
             tableName));
