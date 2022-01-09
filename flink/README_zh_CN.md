@@ -193,7 +193,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | sink.buffer-flush.max-rows     | 100           | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。 |
 | sink.buffer-flush.interval     | 1s            | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
 | sink.max-retries               | 3             | 写入数据失败的最大重试次数。 |
-| tidb.filter-push-down          | false         | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，当前仅支持 Flink 1.12，1.13 将会很快支持。 |
+| tidb.filter-push-down          | false         | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，仅对 Flink 1.12+ 支持。 |
 | tidb.snapshot_timestamp        | null          | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  比如 `2021-01-01T14:00:00+08:00` |
 | tidb.dns.search | null | TiBigData 支持在节点的域名上添加后缀来支持复杂的网络情况，比如跨数据中心的 k8s 集群。 |
 | tidb.catalog.load-mode | eager | TiDB Catalog 在调用 open 方法时，是否立即与 TiDB 建立连接。设置为 `eager` 将会立即建立连接， 设置为 `lazy` 将会在真正需要的时候再建立连接。|
