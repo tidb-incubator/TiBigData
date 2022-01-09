@@ -224,7 +224,7 @@ SELECT * FROM people;
 
 ### 8.1 TiBigData 会占用 TiDB 的资源吗？
 
-TiBigData 只会占用 Flink 资源，不会占用 TiDB 的资源，但是在读写 TiDB 数据的时候，会给 TiDB 带来一定的压力，推荐读取使用 Follower Read 的方式，这样不会影响到 leader 节点。
+TiBigData 只会占用 Flink 资源，不会占用 TiDB 的资源，但是在读写 TiDB 数据的时候，会给 TiDB 带来一定的压力，推荐读取使用 Follower Read 的方式，这样不会影响到 Leader 节点。
 
 ### 8.2 Flink 的配置应该如何设置？
 
