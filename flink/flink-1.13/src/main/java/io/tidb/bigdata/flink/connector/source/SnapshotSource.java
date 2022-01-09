@@ -39,20 +39,27 @@ import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
+import org.tikv.common.expression.Expression;
 
 public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
     ResultTypeQueryable<RowData> {
+
   private final String databaseName;
   private final String tableName;
   private final Map<String, String> properties;
   private final TiDBSchemaAdapter schema;
+  private final Expression expression;
+  private final Integer limit;
 
   public SnapshotSource(String databaseName, String tableName,
-      Map<String, String> properties, TiDBSchemaAdapter schema) {
+      Map<String, String> properties, TiDBSchemaAdapter schema,
+      Expression expression, Integer limit) {
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.properties = properties;
     this.schema = schema;
+    this.expression = expression;
+    this.limit = limit;
   }
 
   @Override
@@ -69,20 +76,20 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   }
 
   @Override
-  public SourceReader<RowData, TiDBSourceSplit>
-      createReader(SourceReaderContext context) throws Exception {
+  public SourceReader<RowData, TiDBSourceSplit> createReader(SourceReaderContext context)
+      throws Exception {
     ClientSession session = null;
     try {
       final Map<String, String> properties = this.properties;
       session = ClientSession.createWithSingleConnection(new ClientConfig(properties));
       final List<ColumnHandleInternal> columns =
           session.getTableColumns(databaseName, tableName, schema.getPhysicalFieldNames())
-          .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
-              + databaseName + "." + tableName));
+              .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
+                  + databaseName + "." + tableName));
       final ClientSession s = session;
       schema.open();
       return new TiDBSourceReader(
-          () -> new TiDBSourceSplitReader(s, columns, schema),
+          () -> new TiDBSourceSplitReader(s, columns, schema, expression, limit),
           toConfiguration(properties), context);
     } catch (Exception ex) {
       if (session != null) {

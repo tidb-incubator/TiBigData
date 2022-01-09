@@ -27,26 +27,32 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.table.data.RowData;
+import org.tikv.common.expression.Expression;
 
 public class TiDBSourceSplitReader implements SplitReader<RowData, TiDBSourceSplit> {
+
   private final ClientSession session;
   private final List<ColumnHandleInternal> columns;
   private final TiDBSchemaAdapter schema;
+  private final Expression expression;
+  private final Integer limit;
 
   private List<TiDBSourceSplit> splits;
   private static final List<TiDBSourceSplit> EMPTY_SPLITS = new ArrayList<>(0);
 
   public TiDBSourceSplitReader(ClientSession session, List<ColumnHandleInternal> columns,
-      TiDBSchemaAdapter schema) {
+      TiDBSchemaAdapter schema, Expression expression, Integer limit) {
     this.session = session;
     this.columns = columns;
     this.schema = schema;
+    this.expression = expression;
+    this.limit = limit;
   }
 
   @Override
   public RecordsWithSplitIds<RowData> fetch() {
     try {
-      return new TiDBSourceSplitRecords(session, splits, columns, schema);
+      return new TiDBSourceSplitRecords(session, splits, columns, schema, expression, limit);
     } finally {
       splits = EMPTY_SPLITS;
     }

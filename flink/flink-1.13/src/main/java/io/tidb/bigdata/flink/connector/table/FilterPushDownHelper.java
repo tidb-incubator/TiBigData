@@ -16,11 +16,20 @@
 
 package io.tidb.bigdata.flink.connector.table;
 
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.equals;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.greaterThan;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.greaterThanOrEqual;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.lessThan;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.lessThanOrEqual;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.like;
+import static io.tidb.bigdata.flink.connector.table.FilterPushDownHelper.FlinkExpression.notEquals;
+
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.Expressions;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,14 +50,15 @@ import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.types.DataType;
 
 public class FilterPushDownHelper {
-  private static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
-      "greaterThan",
-      "greaterThanOrEqual",
-      "lessThan",
-      "lessThanOrEqual",
-      "equals",
-      "notEquals",
-      "like"
+
+  private static final Set<FlinkExpression> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
+      greaterThan,
+      greaterThanOrEqual,
+      lessThan,
+      lessThanOrEqual,
+      equals,
+      notEquals,
+      like
   );
   static final Logger LOG = LoggerFactory.getLogger(FilterPushDownHelper.class);
 
@@ -98,40 +108,42 @@ public class FilterPushDownHelper {
       String functionName = callExpression.getFunctionName();
       Expression left = null;
       Expression right = null;
-      if (COMPARISON_BINARY_FILTERS.contains(functionName)) {
+      FlinkExpression flinkExpression = FlinkExpression.fromString(functionName);
+      if (COMPARISON_BINARY_FILTERS.contains(flinkExpression)) {
         left = getExpression(resolvedChildren.get(0));
         right = getExpression(resolvedChildren.get(1));
         if (left == Expressions.alwaysTrue() || right == Expressions.alwaysTrue()) {
           return Expressions.alwaysTrue();
         }
       }
-      switch (functionName) {
-        case "cast":
+      switch (flinkExpression) {
+        case cast:
           // we only need column name
           return getExpression(resolvedChildren.get(0));
-        case "or":
+        case or:
           // ignore always true expression
           return Expressions.or(resolvedChildren.stream().map(this::getExpression)
               .filter(exp -> exp != Expressions.alwaysTrue()));
-        case "not":
+        case not:
           if (left == Expressions.alwaysTrue()) {
             return Expressions.alwaysTrue();
           }
           return alwaysTrueIfNotSupported(Expressions.not(left));
-        case "greaterThan":
+        case greaterThan:
           return alwaysTrueIfNotSupported(Expressions.greaterThan(left, right));
-        case "greaterThanOrEqual":
+        case greaterThanOrEqual:
           return alwaysTrueIfNotSupported(Expressions.greaterEqual(left, right));
-        case "lessThan":
+        case lessThan:
           return alwaysTrueIfNotSupported(Expressions.lessThan(left, right));
-        case "lessThanOrEqual":
+        case lessThanOrEqual:
           return alwaysTrueIfNotSupported(Expressions.lessEqual(left, right));
-        case "equals":
+        case equals:
           return alwaysTrueIfNotSupported(Expressions.equal(left, right));
-        case "notEquals":
+        case notEquals:
           return alwaysTrueIfNotSupported(Expressions.notEqual(left, right));
-        case "like":
+        case like:
           return alwaysTrueIfNotSupported(Expressions.like(left, right));
+        case unresolved:
         default:
           return Expressions.alwaysTrue();
       }
@@ -162,5 +174,37 @@ public class FilterPushDownHelper {
     }
     LOG.debug("TiDB expression: " + this.expression);
     return Result.of(Collections.emptyList(), filters);
+  }
+
+  public Expression getTiDBExpressions() {
+    return expression;
+  }
+
+  public enum FlinkExpression {
+    cast("cast"),
+    or("or"),
+    not("not"),
+    greaterThan("greaterThan"),
+    greaterThanOrEqual("greaterThanOrEqual"),
+    lessThan("lessThan"),
+    lessThanOrEqual("lessThanOrEqual"),
+    equals("equals"),
+    notEquals("notEquals"),
+    like("like"),
+    unresolved("_unresolved");
+
+    private final String name;
+
+    FlinkExpression(String name) {
+      this.name = name;
+    }
+
+    public static FlinkExpression fromString(String s) {
+      return Arrays.stream(values())
+          .filter(flinkExpression -> flinkExpression != unresolved)
+          .filter(flinkExpression -> flinkExpression.name.equals(s))
+          .findFirst()
+          .orElse(unresolved);
+    }
   }
 }
