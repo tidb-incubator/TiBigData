@@ -238,4 +238,4 @@ TiBigData 读取一个 Region 的时间大约在 6 到 15 秒，我们用变量 
 job_time = max(time_per_region, (region_count x time_per_region) / parallelism)
 ```
 
-以上公式仅限读取数据的任务计算，写入任务跟 TiDB 的负载以及表的索引相关，这里不做预估。
+请注意，**并行度不要超过表的 Region 数，否则会造成资源浪费**。以上公式仅限读取数据的任务计算，写入任务跟 TiDB 的负载以及表的索引相关，这里不做预估。
