@@ -6,36 +6,31 @@
 [![CN doc](https://img.shields.io/badge/文档-中文版-blue.svg)](README_zh_CN.md)
 ---
 
-Misc BigData components for TiDB, Presto, Flink and MapReduce connectors for example.
+TiBigData 是为了整合 TiDB 与大数据而诞生的项目，它借助 Flink/Presto/MapReduce 等分布式计算框架，充分发挥 TiDB 分布式集群的优势，为 TiDB 在大数据场景下的使用带来良好的用户体验。
 
 ## License
 
 TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
 
-## Code style
+## 代码风格
 
 [Google Code Style](https://github.com/google/styleguide).
 
-## Getting Started
+## 快速开始
 
-First you need to build the corresponding version of tikv-java-client with the following command:
-```bash
-./.ci/build-client-java.sh
-```
+[TiDB 与 Flink 集成](./flink/README_zh_CN.md)
 
-[Flink-TiDB-Connector](./flink/README.md)
+[TiDB 与 PrestoSQL 集成 ***- 已废弃***](./prestosql/README_zh_CN.md)
 
-[PrestoSQL-TiDB-Connector](./prestosql/README.md)
+[TiDB 与 Trino 集成](./trino/README_zh_CN.md)
 
-[Trino-TiDB-Connector](./trino/README.md)
+[TiDB 与 PrestoDB 集成](./prestodb/README_zh_CN.md)
 
-[PrestoDB-TiDB-Connector](./prestodb/README.md)
-
-[MapReduce-TiDB-Connector](./mapreduce/README.md)
+[TiDB 与 MapReduce 集成](./mapreduce/README_zh_CN.md)
 
 ## Run Tests
 
-Use the following command to run all the tests.
+你可以使用下面的命令来运行集成测试，注意将地址、用户名、密码等参数换成自己真实的。
 
 ```
 export TIDB_HOST="127.0.0.1"
