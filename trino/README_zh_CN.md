@@ -17,12 +17,12 @@ git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
-# 编译 presto connector
+# 编译 Trino connector
 mvn clean package -DskipTests -am -pl trino
 # 解压 plugin
 tar -zxf trino/target/trino-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C trino/target
 ```
-因为 Presto 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
+因为 Trino 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
 ## 3 部署 Trino
 
