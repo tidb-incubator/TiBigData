@@ -17,8 +17,8 @@ git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
-# 编译 flink connector, 这里的 FLINK_VERSION 可选 1.11/1.12/1.13
-mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
+# 编译 flink connector, 我们以 1.13.5 为例，你需要先设置 TiBigData 编译的模块为 flink-1.13 并且设置 Flink 的版本为 1.13.5
+mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5
 ```
 因为 Flink 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
