@@ -219,3 +219,23 @@ CREATE TABLE `people`(
 
 SELECT * FROM people;
 ```
+
+## 8 常见问题
+
+### 8.1 TiBigData 会占用 TiDB 的资源吗？
+
+TiBigData 只会占用 Flink 资源，不会占用 TiDB 的资源，但是在读写 TiDB 数据的时候，会给 TiDB 带来一定的压力，推荐读取使用 Follower Read 的方式，这样不会影响到 leader 节点。
+
+### 8.2 Flink 的配置应该如何设置？
+
+生产环境我们推荐一个 Flink 的 Slot 占用 4G 1Core 的资源。
+
+### 8.3 我该如何设置并发度来控制任务运行的时长？
+
+TiBigData 读取一个 Region 的时间大约在 6 到 15 秒，我们用变量 `time_per_region` 表示，表的 Region 总数我们用 `region_count` 表示，Flink 任务的并行度我们用 `parallelism` 表示，则任务运行时间的计算公式如下：
+
+```
+job_time = max(time_per_region, (region_count x time_per_region) / parallelism)
+```
+
+以上公式仅限读取数据的任务计算，写入任务跟 TiDB 的负载以及表的索引相关，这里不做预估。
