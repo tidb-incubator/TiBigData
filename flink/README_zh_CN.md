@@ -17,8 +17,8 @@ git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
-# 编译 flink connector, 这里的 FLINK_VERSION 可选 1.11/1.12/1.13
-mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
+# 编译 flink connector, 我们以 1.13.5 为例，你需要先设置 TiBigData 编译的模块为 flink-1.13 并且设置 Flink 的版本为 1.13.5
+mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5
 ```
 因为 Flink 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
@@ -238,4 +238,4 @@ TiBigData 读取一个 Region 的时间大约在 6 到 15 秒，我们用变量 
 job_time = max(time_per_region, (region_count x time_per_region) / parallelism)
 ```
 
-以上公式仅限读取数据的任务计算，写入任务跟 TiDB 的负载以及表的索引相关，这里不做预估。
+请注意，**并行度不要超过表的 Region 数，否则会造成资源浪费**。一般来说，1T 大小的 TiDB 表，在 20 并发的情况下，读取全量数据需要花费 1 小时左右（时间根据服务器配置的不同可能会上下波动）。以上公式仅限读取数据的任务计算，写入任务跟 TiDB 的负载以及表的索引相关，这里不做预估。
