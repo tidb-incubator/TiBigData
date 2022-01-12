@@ -99,7 +99,7 @@ public abstract class TiDBDynamicTableSource
   protected void queryNameType() {
     String databaseName = getRequiredProperties(DATABASE_NAME.key());
     String tableName = getRequiredProperties(TABLE_NAME.key());
-    try (ClientSession clientSession = ClientSession.createWithSingleConnection(config)) {
+    try (ClientSession clientSession = ClientSession.create(config)) {
       this.nameTypeMap = clientSession.getTableMust(databaseName, tableName).getColumns()
           .stream().collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     } catch (Exception e) {

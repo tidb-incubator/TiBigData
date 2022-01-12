@@ -57,7 +57,7 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
   private static long getSnapshotTimestamp(Map<String, String> properties) {
     ClientSession clientSession = null;
     try {
-      clientSession = ClientSession.createWithSingleConnection(new ClientConfig(properties));
+      clientSession = ClientSession.create(new ClientConfig(properties));
       return clientSession.getSnapshotVersion().getVersion();
     } finally {
       if (clientSession != null) {

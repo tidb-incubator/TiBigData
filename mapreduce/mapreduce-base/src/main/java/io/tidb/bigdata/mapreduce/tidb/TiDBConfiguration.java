@@ -16,14 +16,11 @@
 
 package io.tidb.bigdata.mapreduce.tidb;
 
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
-
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -113,7 +110,7 @@ public class TiDBConfiguration {
     this.conf = conf;
   }
 
-  public ClientSession getSingleConnection() {
+  public ClientSession getTiDBConnection() {
 
     Map<String, String> properties = new HashMap<>(3);
     properties.put(ClientConfig.DATABASE_URL, conf.get(URL_PROPERTY));
@@ -129,7 +126,7 @@ public class TiDBConfiguration {
     properties.put(ClientConfig.CLUSTER_JKS_TRUST_PATH, conf.get(CLUSTER_JKS_TRUST_PATH));
     properties.put(ClientConfig.CLUSTER_JKS_TRUST_PASSWORD, conf.get(CLUSTER_JKS_TRUST_PASSWORD));
 
-    return ClientSession.createWithSingleConnection(new ClientConfig(properties));
+    return ClientSession.create(new ClientConfig(properties));
   }
 
   public Connection getJdbcConnection() throws SQLException {
