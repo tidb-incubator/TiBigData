@@ -150,6 +150,7 @@
         <module>jdbc</module>
         <module>mapreduce</module>
         <module>trino</module>
+        <module>hive</module>
     </modules>
 
     <build>
