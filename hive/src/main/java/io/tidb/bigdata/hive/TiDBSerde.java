@@ -40,8 +40,7 @@ public class TiDBSerde extends AbstractSerDe {
     Map<String, String> map = new HashMap<>((Map) properties);
     try (ClientSession clientSession = ClientSession.create(
         new ClientConfig(map))) {
-      columns = clientSession.getTableColumns(databaseName,
-          tableName).orElseThrow(() -> new IllegalStateException("Can not get columns"));
+      columns = clientSession.getTableColumnsMust(databaseName, tableName);
     } catch (Exception e) {
       throw new SerDeException(e);
     }

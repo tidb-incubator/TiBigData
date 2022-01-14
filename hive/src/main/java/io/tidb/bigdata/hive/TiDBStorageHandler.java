@@ -32,12 +32,12 @@ public class TiDBStorageHandler implements HiveStorageHandler {
       @Override
       public RecordWriter getRecordWriter(FileSystem fileSystem, JobConf jobConf, String s,
           Progressable progressable) throws IOException {
-        throw new UnsupportedOperationException("Unsupported now");
+        throw new UnsupportedOperationException("Writing to TiDB is unsupported now");
       }
 
       @Override
       public void checkOutputSpecs(FileSystem fileSystem, JobConf jobConf) throws IOException {
-        throw new UnsupportedOperationException("Unsupported now");
+        throw new UnsupportedOperationException("Writing to TiDB is unsupported now");
       }
     }.getClass();
   }

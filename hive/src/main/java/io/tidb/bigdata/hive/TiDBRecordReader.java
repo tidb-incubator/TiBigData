@@ -53,9 +53,7 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
       return;
     }
     TiDBInputSplit split = (TiDBInputSplit) this.split;
-    columns = clientSession.getTableColumns(
-            split.getDatabaseName(), split.getTableName())
-        .orElseThrow(() -> new IllegalStateException("Can not get columns"));
+    columns = clientSession.getTableColumnsMust(split.getDatabaseName(), split.getTableName());
     RecordSetInternal recordSetInternal = new RecordSetInternal(
         clientSession,
         split.toInternal(),

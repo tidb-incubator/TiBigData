@@ -178,7 +178,8 @@ public final class ClientSession implements AutoCloseable {
 
   public TiTableInfo getTableMust(String schema, String tableName) {
     return getTable(schema, tableName).orElseThrow(
-        () -> new IllegalStateException("Table " + schema + "." + tableName + " no longer exists"));
+        () -> new IllegalStateException(
+            String.format("Table `%s`.`%s` no longer exists in TiDB", schema, tableName)));
   }
 
   public Map<String, List<String>> listTables(Optional<String> schemaName) {
@@ -228,6 +229,10 @@ public final class ClientSession implements AutoCloseable {
   public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle,
       List<String> columns) {
     return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
+  }
+
+  public List<ColumnHandleInternal> getTableColumnsMust(String schema, String tableName) {
+    return getTableColumns(getTableMust(schema, tableName));
   }
 
   private List<RangeSplitter.RegionTask> getRangeRegionTasks(ByteString startKey,
