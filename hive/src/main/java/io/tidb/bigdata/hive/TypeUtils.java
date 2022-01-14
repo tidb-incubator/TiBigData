@@ -137,7 +137,6 @@ public class TypeUtils {
         return new DateWritable(
             Date.valueOf(LocalDate.ofEpochDay(Long.parseLong(object.toString()))));
       case TypeDuration:
-        // todo
         return new Text(LocalTime.ofNanoOfDay(Long.parseLong(object.toString())).toString());
       case TypeTinyBlob:
       case TypeMediumBlob:
@@ -160,7 +159,7 @@ public class TypeUtils {
       case TypeGeometry:
       default:
         throw new IllegalArgumentException(
-            format("Can not covert tikv type to writeable type, object = %s, type = %s", object,
+            format("Can not covert tikv type to writable type, object = %s, type = %s", object,
                 dataType));
     }
   }
