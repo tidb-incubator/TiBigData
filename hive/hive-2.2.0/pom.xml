@@ -65,6 +65,10 @@
                   <pattern>com.google.common</pattern>
                   <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.apache.commons.lang3</pattern>
+                  <shadedPattern>shade.bigdata.org.apache.commons.lang3</shadedPattern>
+                </relocation>
               </relocations>
               <finalName>${project.artifactId}-${project.version}</finalName>
               <transformers>
