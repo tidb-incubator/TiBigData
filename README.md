@@ -45,6 +45,10 @@ export TIDB_PASSWORD=""
 mvn test
 ```
 
+## Supported by
+
+### YourKit
+
 ![YourKit Logo](https://www.yourkit.com/images/yklogo.png)
 
 YourKit supports open source projects with innovative and intelligent tools
@@ -52,3 +56,11 @@ for monitoring and profiling Java and .NET applications.
 YourKit is the creator of <a href="https://www.yourkit.com/java/profiler/">YourKit Java Profiler</a>,
 <a href="https://www.yourkit.com/.net/profiler/">YourKit .NET Profiler</a>,
 and <a href="https://www.yourkit.com/youmonitor/">YourKit YouMonitor</a>.
+
+### IntelliJ IDEA
+
+<img src="https://resources.jetbrains.com/storage/products/company/brand/logos/IntelliJ_IDEA_icon.png" width="50">
+
+[IntelliJ IDEA](https://www.jetbrains.com/?from=TiBigData) is a Java integrated development environment (IDE) for developing computer software.  
+It is developed by JetBrains (formerly known as IntelliJ), and is available as an Apache 2 Licensed community edition,  
+and in a proprietary commercial edition. Both can be used for commercial development.
