@@ -12,7 +12,7 @@
   <artifactId>hive-tidb-storage-handler-2.2.0</artifactId>
   <packaging>jar</packaging>
   <name>Hive Storage Handler 2.2.0</name>
-  <url>https://github.com/pingcap-incubator/TiBigData</url>
+  <url>https://github.com/tidb-incubator/TiBigData</url>
 
   <properties>
     <maven.compiler.source>8</maven.compiler.source>
@@ -22,11 +22,6 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>io.tidb</groupId>
-      <artifactId>bigdata-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
@@ -38,12 +33,6 @@
       <artifactId>hadoop-client</artifactId>
       <version>${dep.hadoop.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 
