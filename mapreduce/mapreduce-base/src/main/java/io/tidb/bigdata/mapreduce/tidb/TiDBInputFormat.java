@@ -198,7 +198,7 @@ public class TiDBInputFormat<T extends TiDBWritable>
 
   private ClientSession getClientSession() {
     if (null == this.clientSession) {
-      this.clientSession = dbConf.getSingleConnection();
+      this.clientSession = dbConf.getTiDBConnection();
     }
 
     return clientSession;

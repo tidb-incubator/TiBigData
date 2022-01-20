@@ -111,8 +111,7 @@ public class TiDBSourceSplitEnumerator implements
   }
 
   public void initPendingSplitAssignment() {
-    try (ClientSession splitSession = ClientSession
-        .createWithSingleConnection(new ClientConfig(properties))) {
+    try (ClientSession splitSession = ClientSession.create(new ClientConfig(properties))) {
       // check exist
       final String databaseName = properties.get(TiDBBaseDynamicTableFactory.DATABASE_NAME.key());
       final String tableName = properties.get(TiDBBaseDynamicTableFactory.TABLE_NAME.key());

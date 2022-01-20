@@ -173,7 +173,7 @@ public abstract class TiDBBaseDynamicTableFactory implements DynamicTableSourceF
     TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     String[] keyFields = null;
     if (writeMode == TiDBWriteMode.UPSERT) {
-      try (ClientSession clientSession = ClientSession.createWithSingleConnection(
+      try (ClientSession clientSession = ClientSession.create(
           new ClientConfig(context.getCatalogTable().toProperties()))) {
         Set<String> set = ImmutableSet.<String>builder()
             .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))

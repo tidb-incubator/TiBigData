@@ -78,7 +78,7 @@ public class FilterPushDownHelper {
     String databaseName = getRequiredProperties(TiDBOptions.DATABASE_NAME.key());
     String tableName = getRequiredProperties(TiDBOptions.TABLE_NAME.key());
     try (ClientSession clientSession =
-        ClientSession.createWithSingleConnection(new ClientConfig(table.getOptions()))) {
+        ClientSession.create(new ClientConfig(table.getOptions()))) {
       this.nameTypeMap = clientSession.getTableMust(databaseName, tableName).getColumns()
           .stream().collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     } catch (Exception e) {

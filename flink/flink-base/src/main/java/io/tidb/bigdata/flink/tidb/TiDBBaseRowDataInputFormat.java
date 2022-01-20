@@ -114,7 +114,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
     final TiTimestamp splitSnapshotVersion;
     // get split
     try (ClientSession splitSession = ClientSession
-        .createWithSingleConnection(new ClientConfig(properties))) {
+        .create(new ClientConfig(properties))) {
       // check exist
       splitSession.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal = new TableHandleInternal(
@@ -187,7 +187,7 @@ public abstract class TiDBBaseRowDataInputFormat extends
   @Override
   public void openInputFormat() throws IOException {
     formatters = TypeUtils.extractDateTimeFormatter(fieldNames, properties, true);
-    clientSession = ClientSession.createWithSingleConnection(new ClientConfig(properties));
+    clientSession = ClientSession.create(new ClientConfig(properties));
   }
 
   @Override
