@@ -119,14 +119,14 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   private Optional<TiTimestamp> getOptionalTimestamp() {
     return Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
-        .filter(StringUtils::isNoneEmpty)
+        .filter(StringUtils::isNotEmpty)
         .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
   }
 
   private Optional<TiTimestamp> getOptionalVersion() {
     return Optional
         .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
-        .filter(StringUtils::isNoneEmpty)
+        .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }
