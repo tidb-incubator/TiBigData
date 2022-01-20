@@ -115,8 +115,8 @@ public class TypeUtils {
       case TypeTiny:
       case TypeYear:
       case TypeShort:
-        return new IntWritable(Integer.parseInt(object.toString()));
       case TypeInt24:
+        return new IntWritable(Integer.parseInt(object.toString()));
       case TypeLong:
         return unsigned ? new LongWritable((long) object)
             : new IntWritable(Integer.parseInt(object.toString()));
