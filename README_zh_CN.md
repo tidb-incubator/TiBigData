@@ -28,6 +28,8 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 [TiDB 与 MapReduce 集成](./mapreduce/README_zh_CN.md)
 
+[TiDB 与 Hive 集成](./hive/README_zh_CN.md)
+
 ## 运行测试
 
 你可以使用下面的命令来运行集成测试，注意将地址、用户名、密码等参数换成自己真实的。
