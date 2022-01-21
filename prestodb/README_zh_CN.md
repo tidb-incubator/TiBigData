@@ -281,9 +281,10 @@ TiDB 与 PrestoDB 的类型映射关系可参考下表：
 
 | Configration            | Default Value | Description                                                  |
 | :---------------------- | :------------ | :----------------------------------------------------------- |
-| tidb.database.url              |  -             | TiBigData 内置了一个连接池，参考 [HikariCP](https://github.com/brettwooldridge/HikariCP). 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。 |
+| tidb.database.url              |  -             | 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。 |
 | tidb.username                  | -             | 用户名。                                           |
 | tidb.password                  |null          | 密码。                                              |
+| tidb.jdbc.connection-provider-impl                  | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC 连接提供方式: 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData 将会使用连接池 [HikariCP](https://github.com/brettwooldridge/HikariCP) 提供连接; 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', 将会直接新建连接，而不会用到连接池。                                         |
 | tidb.maximum.pool.size         | 10            | 连接池大小。                                     |
 | tidb.minimum.idle.size         | 10            | 最小存活连接数。 |
 | tidb.write_mode                | append        | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。 |

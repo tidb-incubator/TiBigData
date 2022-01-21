@@ -27,8 +27,8 @@ import static java.util.function.Function.identity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider;
+import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -82,22 +82,14 @@ public final class ClientSession implements AutoCloseable {
 
   private final Catalog catalog;
 
-  private final HikariDataSource dataSource;
+  private final JdbcConnectionProvider jdbcConnectionProvider;
 
   private final DnsSearchHostMapping hostMapping;
 
   private ClientSession(ClientConfig config) {
     this.config = requireNonNull(config, "config is null");
-    dataSource = new HikariDataSource(new HikariConfig() {
-      {
-        setJdbcUrl(requireNonNull(config.getDatabaseUrl(), "database url can not be null"));
-        setUsername(requireNonNull(config.getUsername(), "username can not be null"));
-        setPassword(config.getPassword());
-        setDriverClassName(config.getDriverName());
-        setMaximumPoolSize(config.getMaximumPoolSize());
-        setMinimumIdle(config.getMinimumIdleSize());
-      }
-    });
+    this.jdbcConnectionProvider = JdbcConnectionProviderFactory.createJdbcConnectionProvider(
+        config);
     hostMapping = new DnsSearchHostMapping(config.getDnsSearch());
     loadPdAddresses();
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
@@ -123,7 +115,7 @@ public final class ClientSession implements AutoCloseable {
   public List<String> getSchemaNames() {
     String sql = "SHOW DATABASES";
     try (
-        Connection connection = dataSource.getConnection();
+        Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement()
     ) {
       ResultSet resultSet = statement.executeQuery(sql);
@@ -146,7 +138,7 @@ public final class ClientSession implements AutoCloseable {
     String sql = "SHOW TABLES";
     requireNonNull(schema, "schema is null");
     try (
-        Connection connection = dataSource.getConnection();
+        Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement()
     ) {
       statement.execute("USE " + schema);
@@ -293,7 +285,7 @@ public final class ClientSession implements AutoCloseable {
     if (config.getPdAddresses() == null) {
       List<String> pdAddressesList = new ArrayList<>();
       try (
-          Connection connection = dataSource.getConnection();
+          Connection connection = jdbcConnectionProvider.getConnection();
           Statement statement = connection.createStatement();
           ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
@@ -311,7 +303,7 @@ public final class ClientSession implements AutoCloseable {
 
   public void sqlUpdate(String... sqls) {
     try (
-        Connection connection = dataSource.getConnection();
+        Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement()
     ) {
       for (String sql : sqls) {
@@ -392,7 +384,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public Connection getJdbcConnection() throws SQLException {
-    return dataSource.getConnection();
+    return jdbcConnectionProvider.getConnection();
   }
 
   @Override
@@ -423,18 +415,11 @@ public final class ClientSession implements AutoCloseable {
   @Override
   public synchronized void close() throws Exception {
     session.close();
-    dataSource.close();
+    jdbcConnectionProvider.close();
   }
 
   public TiTimestamp getSnapshotVersion() {
     return session.getTimestamp();
-  }
-
-  public static ClientSession createWithSingleConnection(ClientConfig config) {
-    ClientConfig clientConfig = new ClientConfig(config);
-    clientConfig.setMaximumPoolSize(1);
-    clientConfig.setMinimumIdleSize(1);
-    return new ClientSession(clientConfig);
   }
 
   public static ClientSession create(ClientConfig config) {

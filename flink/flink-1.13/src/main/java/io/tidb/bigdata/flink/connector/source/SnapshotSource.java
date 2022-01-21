@@ -81,7 +81,7 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     ClientSession session = null;
     try {
       final Map<String, String> properties = this.properties;
-      session = ClientSession.createWithSingleConnection(new ClientConfig(properties));
+      session = ClientSession.create(new ClientConfig(properties));
       final List<ColumnHandleInternal> columns =
           session.getTableColumns(databaseName, tableName, schema.getPhysicalFieldNames())
               .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
