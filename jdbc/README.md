@@ -16,11 +16,11 @@ mvn clean package -DskipTests -am -pl jdbc/driver,jdbc/mariadb-compat
 
 ## Configuration
 
-| Configration                       | Default Value | Description                                                  |
-| :--------------------------------- | :------------ | :----------------------------------------------------------- |
-| tidb.jdbc.url-mapper               | -             | mapper implementation to customize load balancing strategy. There are two builtin implementations `random` and `roundrobin` and the default implementation is `random`. Users can use their own implementation to replace as long as it implements Function<String[], String[]> |
-| tidb.jdbc.min-discovery-interval   | 1000          | Minimal interval for discovery, concurrent connect requests will only trigger discovery once and reuse the same servers list unless last discovery was performed later then `tidb.jdbc.min-discovery-interval` milliseconds ago. |
-| tidb.jdbc.max-discovery-interval   | 3600000       | Maximal interval for discovery, driver triggers discovery once every `tidb.jdbc.max-discovery-interval` milliseconds when there was no `connect` to trigger discovery at all. |
+| Configuration                    | Default Value | Description                                                                                                                                                                                                                                                                     |
+|:---------------------------------|:--------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.jdbc.url-mapper             | -             | mapper implementation to customize load balancing strategy. There are two builtin implementations `random` and `roundrobin` and the default implementation is `random`. Users can use their own implementation to replace as long as it implements Function<String[], String[]> |
+| tidb.jdbc.min-discovery-interval | 1000          | Minimal interval for discovery, concurrent connect requests will only trigger discovery once and reuse the same servers list unless last discovery was performed later then `tidb.jdbc.min-discovery-interval` milliseconds ago.                                                |
+| tidb.jdbc.max-discovery-interval | 3600000       | Maximal interval for discovery, driver triggers discovery once every `tidb.jdbc.max-discovery-interval` milliseconds when there was no `connect` to trigger discovery at all.                                                                                                   |
 
 ## Usage
 

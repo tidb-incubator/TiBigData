@@ -2,11 +2,11 @@
 
 ## 1 环境准备
 
-| 组件  | 版本     |
-| ----- | ------- |
-| JDK   | 11      |
-| Maven | 3.6+    |
-| PrestoSQL | 350     |
+| 组件        | 版本   |
+|-----------|------|
+| JDK       | 11   |
+| Maven     | 3.6+ |
+| PrestoSQL | 350  |
 
 ## 2 编译 PrestoSQL Connector
 请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 PrestoSQL-350 的小版本构建，如果与你的 PrestoSQL 版本不同，你需要手动将 TiBigData 依赖的 PrestoSQL 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 PrestoSQL。当然，你也可以按照下面的步骤重新搭建一个 350 版本的 PrestoSQL 单机版集群以做测试。
@@ -245,8 +245,8 @@ Splits: 17 total, 17 done (100.00%)
 
 TiDB 与 PrestoSQL 的类型映射关系可参考下表：
 
-|     TiDB     |    PrestoSQL     |
-| :----------: | :----------: |
+|     TiDB     |  PrestoSQL   |
+|:------------:|:------------:|
 |   TINYINT    |   TINYINT    |
 |   SMALLINT   |   SMALLINT   |
 |  MEDIUMINT   |     INT      |
@@ -279,18 +279,18 @@ TiDB 与 PrestoSQL 的类型映射关系可参考下表：
 
 ## 6 高级配置
 
-| Configration            | Default Value | Description                                                  |
-| :---------------------- | :------------ | :----------------------------------------------------------- |
-| tidb.database.url              |  -             | 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。 |
-| tidb.username                  | -             | 用户名。                                           |
-| tidb.password                  |null          | 密码。                                              |
-| tidb.jdbc.connection-provider-impl                  | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC 连接提供方式: 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData 将会使用连接池 [HikariCP](https://github.com/brettwooldridge/HikariCP) 提供连接; 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', 将会直接新建连接，而不会用到连接池。                                         |
-| tidb.maximum.pool.size         | 10            | 连接池大小。                                     |
-| tidb.minimum.idle.size         | 10            | 最小存活连接数。 |
-| tidb.write_mode                | append        | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。 |
-| tidb.replica-read              | leader | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。 |
-| tidb.replica-read.label        | null          | TiBigData 支持从指定了 label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y` |
-| tidb.replica-read.whitelist    | null          | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。 |
-| tidb.replica-read.blacklist    | null          | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。 |
-| tidb.snapshot_timestamp | null          | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  你可以设置 session 变量来读取快照： `SET SESSION tidb.snapshot_timestamp='2021-01-01T14:00:00+08:00'` ，或者取消 session 变量来禁用： `SET SESSION tidb.snapshot_timestamp=''` . |
-| tidb.dns.search | null | TiBigData 支持在节点的域名上添加后缀来支持复杂的网络情况，比如跨数据中心的 k8s 集群。 |
+| Configuration                      | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                          |
+|:-----------------------------------|:-------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.database.url                  | -                                                                              | 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。                                        |
+| tidb.username                      | -                                                                              | 用户名。                                                                                                                                                                                                                                                                                                 |
+| tidb.password                      | null                                                                           | 密码。                                                                                                                                                                                                                                                                                                  |
+| tidb.jdbc.connection-provider-impl | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC 连接提供方式: 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData 将会使用连接池 [HikariCP](https://github.com/brettwooldridge/HikariCP) 提供连接; 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', 将会直接新建连接，而不会用到连接池。 |
+| tidb.maximum.pool.size             | 10                                                                             | 连接池大小。                                                                                                                                                                                                                                                                                               |
+| tidb.minimum.idle.size             | 10                                                                             | 最小存活连接数。                                                                                                                                                                                                                                                                                             |
+| tidb.write_mode                    | append                                                                         | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。                                                                                                                                                                             |
+| tidb.replica-read                  | leader                                                                         | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。                                                                                                                                                                                                     |
+| tidb.replica-read.label            | null                                                                           | TiBigData 支持从指定了 label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y`                                                                                                                                                                                                                    |
+| tidb.replica-read.whitelist        | null                                                                           | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。                                                                                                                                                                                                                                                  |
+| tidb.replica-read.blacklist        | null                                                                           | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。                                                                                                                                                                                                                                                  |
+| tidb.snapshot_timestamp            | null                                                                           | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  你可以设置 session 变量来读取快照： `SET SESSION tidb.snapshot_timestamp='2021-01-01T14:00:00+08:00'` ，或者取消 session 变量来禁用： `SET SESSION tidb.snapshot_timestamp=''` .                                               |
+| tidb.dns.search                    | null                                                                           | TiBigData 支持在节点的域名上添加后缀来支持复杂的网络情况，比如跨数据中心的 k8s 集群。                                                                                                                                                                                                                                                   |
