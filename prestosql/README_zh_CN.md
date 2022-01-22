@@ -2,11 +2,11 @@
 
 ## 1 环境准备
 
-| 组件  | 版本     |
-| ----- | ------- |
-| JDK   | 11      |
-| Maven | 3.6+    |
-| PrestoSQL | 350     |
+| 组件        | 版本   |
+|-----------|------|
+| JDK       | 11   |
+| Maven     | 3.6+ |
+| PrestoSQL | 350  |
 
 ## 2 编译 PrestoSQL Connector
 请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 PrestoSQL-350 的小版本构建，如果与你的 PrestoSQL 版本不同，你需要手动将 TiBigData 依赖的 PrestoSQL 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 PrestoSQL。当然，你也可以按照下面的步骤重新搭建一个 350 版本的 PrestoSQL 单机版集群以做测试。

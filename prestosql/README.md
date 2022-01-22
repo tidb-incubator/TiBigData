@@ -15,7 +15,7 @@ cp ${YOUR_MYSQL_JDBC_DRIVER_PATH}/mysql-connector-java-${version}.jar ${PRESTO_H
 ## DataTypes
 
 |     TiDB     |  PrestoSQL   |
-| :----------: | :----------: |
+|:------------:|:------------:|
 |   TINYINT    |   TINYINT    |
 |   SMALLINT   |   SMALLINT   |
 |  MEDIUMINT   |     INT      |

@@ -2,12 +2,12 @@
 
 ## Component
 
-| Name                     | Supported | Description                                                  |
-| ------------------------ | --------- | ------------------------------------------------------------ |
-| `DynamicTableSource` | true      | Implemented by `tikv-java-client`                            |
+| Name                 | Supported | Description                                                                                                |
+|----------------------|-----------|------------------------------------------------------------------------------------------------------------|
+| `DynamicTableSource` | true      | Implemented by `tikv-java-client`                                                                          |
 | `DynamicTableSink`   | true      | Implemented by `JdbcDynamicTableSink` now, and it will be implemented by `tikv-java-client` in the future. |
-| `TableFactory`       | true      |                                                              |
-| `CatalogFactory`     | true      |                                                              |
+| `TableFactory`       | true      |                                                                                                            |
+| `CatalogFactory`     | true      |                                                                                                            |
 
 ## Version
 

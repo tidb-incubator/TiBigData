@@ -2,10 +2,10 @@
 
 ## 1 环境准备
 
-| 组件  | 版本           |
-| ----- | -------------- |
-| JDK   | 8              |
-| Maven | 3.6+      |
+| 组件    | 版本                   |
+|-------|----------------------|
+| JDK   | 8                    |
+| Maven | 3.6+                 |
 | Flink | 1.11.x/1.12.x/1.13.x |
 
 ## 2 编译 Flink Connector
@@ -144,37 +144,37 @@ Received a total of 1 row
 
 TiDB 与 Flink 的类型映射关系可参考下表：
 
-|    TiDB    |     Flink     |
-| :--------: | :-------------------: |
-|  TINYINT   |  TINYINT  |
-|  SMALLINT  | SMALLINT  |
-| MEDIUMINT  |    INT    |
-|    INT     |    INT    |
-|   BIGINT   |  BIGINT   |
-|    CHAR    |  STRING   |
-|  VARCHAR   |  STRING   |
-|  TINYTEXT  |  STRING   |
-| MEDIUMTEXT |  STRING   |
-|    TEXT    |  STRING   |
-|  LONGTEXT  |  STRING   |
-|   BINARY   |   BYTES   |
-| VARBINARY  |   BYTES   |
-|  TINYBLOB  |   BYTES   |
-| MEDIUMBLOB |   BYTES   |
-|    BLOB    |   BYTES   |
-|  LONGBLOB  |   BYTES   |
-|   FLOAT    |   FLOAT   |
-|   DOUBLE   |  DOUBLE   |
-| DECIMAL(p,s) |  DECIMAL(p,s)  |
-|    DATE    |   DATE    |
-|    TIME    |   TIME    |
-|  DATETIME  | TIMESTAMP |
-| TIMESTAMP  | TIMESTAMP |
-|    YEAR    | SMALLINT  |
-|    BOOL    |  BOOLEAN  |
-|    JSON    |  STRING   |
-|    ENUM    |  STRING   |
-|    SET     |  STRING   |
+|     TiDB     |    Flink     |
+|:------------:|:------------:|
+|   TINYINT    |   TINYINT    |
+|   SMALLINT   |   SMALLINT   |
+|  MEDIUMINT   |     INT      |
+|     INT      |     INT      |
+|    BIGINT    |    BIGINT    |
+|     CHAR     |    STRING    |
+|   VARCHAR    |    STRING    |
+|   TINYTEXT   |    STRING    |
+|  MEDIUMTEXT  |    STRING    |
+|     TEXT     |    STRING    |
+|   LONGTEXT   |    STRING    |
+|    BINARY    |    BYTES     |
+|  VARBINARY   |    BYTES     |
+|   TINYBLOB   |    BYTES     |
+|  MEDIUMBLOB  |    BYTES     |
+|     BLOB     |    BYTES     |
+|   LONGBLOB   |    BYTES     |
+|    FLOAT     |    FLOAT     |
+|    DOUBLE    |    DOUBLE    |
+| DECIMAL(p,s) | DECIMAL(p,s) |
+|     DATE     |     DATE     |
+|     TIME     |     TIME     |
+|   DATETIME   |  TIMESTAMP   |
+|  TIMESTAMP   |  TIMESTAMP   |
+|     YEAR     |   SMALLINT   |
+|     BOOL     |   BOOLEAN    |
+|     JSON     |    STRING    |
+|     ENUM     |    STRING    |
+|     SET      |    STRING    |
 
 ## 6 高级配置
 
