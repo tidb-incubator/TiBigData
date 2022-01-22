@@ -149,9 +149,9 @@ hive (default)>
 
 至此，你已经知道如何在 Hive 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
 
-## 5 Flink 与 TiDB 的类型映射
+## 5 Hive 与 TiDB 的类型映射
 
-TiDB 与 Flink 的类型映射关系可参考下表：
+TiDB 与 Hive 的类型映射关系可参考下表：
 
 |     TiDB     |     Hive     |
 |:------------:|:------------:|

@@ -46,66 +46,66 @@ Job has been submitted with JobID 3a64ea7affe969eef77790048923b5b6
 
 ## DataTypes
 
-|    TiDB    |     Flink(Catalog)     |
-| :--------: | :-------------------: |
-|  TINYINT   |  TINYINT  |
-|  SMALLINT  | SMALLINT  |
-| MEDIUMINT  |    INT    |
-|    INT     |    INT    |
-|   BIGINT   |  BIGINT   |
-|    CHAR    |  STRING   |
-|  VARCHAR   |  STRING   |
-|  TINYTEXT  |  STRING   |
-| MEDIUMTEXT |  STRING   |
-|    TEXT    |  STRING   |
-|  LONGTEXT  |  STRING   |
-|   BINARY   |   BYTES   |
-| VARBINARY  |   BYTES   |
-|  TINYBLOB  |   BYTES   |
-| MEDIUMBLOB |   BYTES   |
-|    BLOB    |   BYTES   |
-|  LONGBLOB  |   BYTES   |
-|   FLOAT    |   FLOAT   |
-|   DOUBLE   |  DOUBLE   |
+|     TiDB     | Flink(Catalog) |
+|:------------:|:--------------:|
+|   TINYINT    |    TINYINT     |
+|   SMALLINT   |    SMALLINT    |
+|  MEDIUMINT   |      INT       |
+|     INT      |      INT       |
+|    BIGINT    |     BIGINT     |
+|     CHAR     |     STRING     |
+|   VARCHAR    |     STRING     |
+|   TINYTEXT   |     STRING     |
+|  MEDIUMTEXT  |     STRING     |
+|     TEXT     |     STRING     |
+|   LONGTEXT   |     STRING     |
+|    BINARY    |     BYTES      |
+|  VARBINARY   |     BYTES      |
+|   TINYBLOB   |     BYTES      |
+|  MEDIUMBLOB  |     BYTES      |
+|     BLOB     |     BYTES      |
+|   LONGBLOB   |     BYTES      |
+|    FLOAT     |     FLOAT      |
+|    DOUBLE    |     DOUBLE     |
 | DECIMAL(p,s) |  DECIMAL(p,s)  |
-|    DATE    |   DATE    |
-|    TIME    |   TIME    |
-|  DATETIME  | TIMESTAMP |
-| TIMESTAMP  | TIMESTAMP |
-|    YEAR    | SMALLINT  |
-|    BOOL    |  BOOLEAN  |
-|    JSON    |  STRING   |
-|    ENUM    |  STRING   |
-|    SET     |  STRING   |
+|     DATE     |      DATE      |
+|     TIME     |      TIME      |
+|   DATETIME   |   TIMESTAMP    |
+|  TIMESTAMP   |   TIMESTAMP    |
+|     YEAR     |    SMALLINT    |
+|     BOOL     |    BOOLEAN     |
+|     JSON     |     STRING     |
+|     ENUM     |     STRING     |
+|     SET      |     STRING     |
 
 If you want to specify the type by yourself, please use `Flink SQL`. It supports most type conversions, such as INT to BIGINT, STRING to LONG.
 
 ## Configuration
 
-| Configration                   |  Default Value | Description                                                  |
-| :----------------------------- |  :------------ | :----------------------------------------------------------- |
-| tidb.database.url              |  -             | You should provide your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and pick one  randomly when establishing connections. |
-| tidb.username                  | -             | JDBC username.                                               |
-| tidb.password                  |null          | JDBC password.                                               |
-| tidb.jdbc.connection-provider-impl                  | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC connection provider implements: set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData will use JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP) to provider connection; set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', connection pool will not be used.  |
-| tidb.maximum.pool.size         | 10            | Connection pool size.                                        |
-| tidb.minimum.idle.size         | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
-| tidb.write_mode                | append        | TiDB sink write mode: `upsert` or `append`. |
-| tidb.replica-read              | leader | Read data from specified role. The optional roles are leader, follower and learner. You can also specify multiple roles, and we will pick the roles you specify in order. |
-| tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
-| tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
-| tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
-| tidb.database.name             | null          | Database name. It is required for table factory, no need for catalog. |
-| tidb.table.name                | null          | Table name. It is required for table factory, no need for catalog. |
-| tidb.timestamp-format.${columnName} | null          | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog. |
-| timestamp-format.${columnName}   ***- deprecated*** | null | It is equivalent to the `tidb.timestamp-format.${columnName}` configuration. This is a deprecated configuration for downward compatibility only, and is in effect for `flink-1.11`, `flink-1.12`, `flink-1.13`. This configuration will no longer be supported in future `flink-1.14` releases. |
-| sink.buffer-flush.max-rows     | 100           | The max size of buffered records before flush. Can be set to zero to disable it. |
-| sink.buffer-flush.interval     | 1s            | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
-| sink.max-retries               | 3             | The max retry times if writing records to database failed.   |
-| tidb.filter-push-down          | false         | Support filter push down. It is only available for version 1.12. |
-| tidb.snapshot_timestamp        | null          | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
-| tidb.dns.search | null | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN. |
-| tidb.catalog.load-mode | eager | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened. |
+| Configuration                                       | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|:----------------------------------------------------|:-------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.database.url                                   | -                                                                              | You should provide your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and pick one  randomly when establishing connections. |
+| tidb.username                                       | -                                                                              | JDBC username.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| tidb.password                                       | null                                                                           | JDBC password.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| tidb.jdbc.connection-provider-impl                  | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC connection provider implements: set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData will use JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP) to provider connection; set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', connection pool will not be used.                                                      |
+| tidb.maximum.pool.size                              | 10                                                                             | Connection pool size.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| tidb.minimum.idle.size                              | 10                                                                             | The minimum number of idle connections that HikariCP tries to maintain in the pool.                                                                                                                                                                                                                                                                                                                                                                       |
+| tidb.write_mode                                     | append                                                                         | TiDB sink write mode: `upsert` or `append`.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| tidb.replica-read                                   | leader                                                                         | Read data from specified role. The optional roles are leader, follower and learner. You can also specify multiple roles, and we will pick the roles you specify in order.                                                                                                                                                                                                                                                                                 |
+| tidb.replica-read.label                             | null                                                                           | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y                                                                                                                                                                                                                                                                                                                                                                    |
+| tidb.replica-read.whitelist                         | null                                                                           | Only select TiKV store with given ip addresses.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| tidb.replica-read.blacklist                         | null                                                                           | Do not select TiKV store with given ip addresses.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| tidb.database.name                                  | null                                                                           | Database name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                     |
+| tidb.table.name                                     | null                                                                           | Table name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                        |
+| tidb.timestamp-format.${columnName}                 | null                                                                           | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog.                                                                                                                        |
+| timestamp-format.${columnName}   ***- deprecated*** | null                                                                           | It is equivalent to the `tidb.timestamp-format.${columnName}` configuration. This is a deprecated configuration for downward compatibility only, and is in effect for `flink-1.11`, `flink-1.12`, `flink-1.13`. This configuration will no longer be supported in future `flink-1.14` releases.                                                                                                                                                           |
+| sink.buffer-flush.max-rows                          | 100                                                                            | The max size of buffered records before flush. Can be set to zero to disable it.                                                                                                                                                                                                                                                                                                                                                                          |
+| sink.buffer-flush.interval                          | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                                                                                                                                                                       |
+| sink.max-retries                                    | 3                                                                              | The max retry times if writing records to database failed.                                                                                                                                                                                                                                                                                                                                                                                                |
+| tidb.filter-push-down                               | false                                                                          | Support filter push down. It is only available for version 1.12.                                                                                                                                                                                                                                                                                                                                                                                          |
+| tidb.snapshot_timestamp                             | null                                                                           | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.                                                                                                                                                                                                                                                           |
+| tidb.dns.search                                     | null                                                                           | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN.                                                                                                                                                                                                                                                                                                                                                  |
+| tidb.catalog.load-mode                              | eager                                                                          | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened.                                                                                                                                                                                                                                                      |
 
 TiDB Flink sink supports all sink properties of  [`flink-connector-jdbc`](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connectors/jdbc.html), because it is implemented by `JdbcDynamicTableSink`.
 
