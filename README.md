@@ -33,6 +33,8 @@ First you need to build the corresponding version of tikv-java-client with the f
 
 [MapReduce-TiDB-Connector](./mapreduce/README.md)
 
+[Hive-TiDB-Storage-Handler](./hive/README_zh_CN.md)
+
 ## Run Tests
 
 Use the following command to run all the tests.
