@@ -44,13 +44,6 @@
         </dependency>
 
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <version>${dep.mysql.jdbc.version}</version>
-            <scope>${mapreduce.scope}</scope>
-        </dependency>
-
-        <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.78</version>
@@ -59,12 +52,6 @@
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <version>RELEASE</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>${dep.junit.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

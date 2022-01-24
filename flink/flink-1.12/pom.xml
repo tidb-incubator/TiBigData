@@ -83,18 +83,7 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${dep.mysql.jdbc.version}</version>
-      <scope>${flink.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
+      <scope>${flink.jdbc.connector.scope}</scope>
     </dependency>
   </dependencies>
 

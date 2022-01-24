@@ -19,28 +19,14 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
-    <dep.junit.version>4.13.1</dep.junit.version>
     <dep.slf4j.version>1.7.21</dep.slf4j.version>
-    <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${dep.mysql.jdbc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.tidb</groupId>
       <artifactId>tidb-jdbc-driver</artifactId>
       <version>${project.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 

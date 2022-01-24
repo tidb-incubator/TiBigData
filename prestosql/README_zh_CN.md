@@ -18,11 +18,17 @@ cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
 # 编译 presto connector
-mvn clean package -DskipTests -am -pl prestosql
+mvn clean package -DskipTests -am -pl prestosql -Dmysql.driver.scope=compile
 # 解压 plugin
 tar -zxf prestosql/target/prestosql-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C prestosql/target
 ```
 因为 Presto 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
+
+以下是可选的编译参数：
+
+| 参数                            | 默认值    | 描述                                                        |
+|-------------------------------|--------|-----------------------------------------------------------|
+| -Dmysql.driver.scope          | test   | 是否包含 mysql jdbc driver 依赖编译，可设置为 compile 以包含此依赖，默认不包含     |
 
 ## 3 部署 PrestoSQL
 

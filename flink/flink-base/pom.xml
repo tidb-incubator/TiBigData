@@ -15,6 +15,7 @@
 
   <properties>
     <dep.flink-base.version>1.11.0</dep.flink-base.version>
+    <flink-base.scope>provided</flink-base.scope>
   </properties>
 
   <dependencies>
@@ -41,49 +42,43 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-api-java-bridge_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner-blink_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink-base.version}</version>
-      <scope>${flink.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
+      <scope>${flink-base.scope}</scope>
     </dependency>
   </dependencies>
 
