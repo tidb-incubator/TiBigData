@@ -39,12 +39,6 @@
   </build>
 
   <dependencies>
-    <dependency>
-      <artifactId>junit</artifactId>
-      <groupId>junit</groupId>
-      <scope>test</scope>
-      <version>${dep.junit.version}</version>
-    </dependency>
     <!-- jackson -->
     <dependency>
       <artifactId>jackson-databind</artifactId>

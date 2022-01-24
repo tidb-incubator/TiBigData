@@ -5,7 +5,7 @@
 ```bash
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base
+mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base -Dmysql.driver.scope=compile
 cp  mapreduce/mapreduce-base/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar ${HOME}/lib
 ```
 

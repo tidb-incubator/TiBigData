@@ -18,10 +18,18 @@ cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
 # 编译 flink connector, 我们以 1.13.5 为例，你需要先设置 TiBigData 编译的模块为 flink-1.13 并且设置 Flink 的版本为 1.13.5
-mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5
+mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```
 因为 Flink 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
 
+以下是可选的编译参数：
+
+| 参数                            | 默认值    | 描述                                                        |
+|-------------------------------|--------|-----------------------------------------------------------|
+| -Ddep.flink.version           | 1.13.0 | flink 的版本，注意大版本需要与 TiBigData 模块对齐                         |
+| -Dmysql.driver.scope          | test   | 是否包含 mysql jdbc driver 依赖编译，可设置为 compile 以包含此依赖，默认不包含     |
+| -Dflink.jdbc.connector.scope  | test   | 是否包含 flink jdbc connector 依赖编译，可设置为 compile 以包含此依赖，默认不包含  |
+| -Dflink.kafka.connector.scope | test   | 是否包含 flink kafka connector 依赖编译，可设置为 compile 以包含此依赖，默认不包含 |
 
 ## 3 部署 Flink
 
@@ -44,10 +52,6 @@ tar -zxf flink-1.13.5-bin-scala_2.11.tgz
 cd flink-1.13.5
 # 拷贝编译出来的 tibigdata 组件到 flink 的 lib 目录
 cp ${TIBIGDATA_HOME}/flink/flink-1.13/target/flink-tidb-connector-1.13-0.0.5-SNAPSHOT.jar lib
-# 到 maven 仓库下载一个 mysql 的 jdbc driver 依赖
-# 国内用户可以尝试从国内源下载 
-# curl -L https://maven.aliyun.com/repository/central/mysql/mysql-connector-java/8.0.27/mysql-connector-java-8.0.27.jar -o lib/mysql-connector-java-8.0.27.jar
-curl -L https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.27/mysql-connector-java-8.0.27.jar -o lib/mysql-connector-java-8.0.27.jar
 # 启动 flink 集群
 bin/start-cluster.sh
 ```

@@ -18,11 +18,17 @@ cd TiBigData
 # 在编译之前你需要先编译 TiKV 的 java 客户端
 ./.ci/build-client-java.sh
 # 编译 Trino connector
-mvn clean package -DskipTests -am -pl trino
+mvn clean package -DskipTests -am -pl trino -Dmysql.driver.scope=compile
 # 解压 plugin
 tar -zxf trino/target/trino-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C trino/target
 ```
 因为 Trino 的依赖较多，根据网络状况与电脑配置，整个过程可能需要花费 10 到 30 分钟，国内用户推荐使用国内 maven 仓库来加速。
+
+以下是可选的编译参数：
+
+| 参数                            | 默认值    | 描述                                                        |
+|-------------------------------|--------|-----------------------------------------------------------|
+| -Dmysql.driver.scope          | test   | 是否包含 mysql jdbc driver 依赖编译，可设置为 compile 以包含此依赖，默认不包含     |
 
 ## 3 部署 Trino
 
@@ -44,8 +50,6 @@ tar -zxf trino-server-359.tar.gz
 cd trino-server-359
 # 拷贝 plugin 到 trino 的 plugin 目录下
 cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
-# 从 mysql plugin 拷贝 mysql jdbc driver
-cp plugin/mysql/mysql-connector-java-8.0.22.jar plugin/tidb/
 ```
 
 至此，TiBigData 已经安装完成，接下来需要配置 Trino 集群，并启动。

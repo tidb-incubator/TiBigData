@@ -47,18 +47,6 @@
       <version>${dep.airlift.version}</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${dep.mysql.jdbc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.trino</groupId>
       <artifactId>trino-main</artifactId>
       <version>${dep.trino.version}</version>
