@@ -50,8 +50,6 @@ tar -zxf trino-server-359.tar.gz
 cd trino-server-359
 # 拷贝 plugin 到 trino 的 plugin 目录下
 cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
-# 从 mysql plugin 拷贝 mysql jdbc driver
-cp plugin/mysql/mysql-connector-java-8.0.22.jar plugin/tidb/
 ```
 
 至此，TiBigData 已经安装完成，接下来需要配置 Trino 集群，并启动。

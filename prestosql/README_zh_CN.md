@@ -50,8 +50,6 @@ tar -zxf presto-server-350.tar.gz
 cd presto-server-350
 # 拷贝 plugin 到 prestosql 的 plugin 目录下
 cp -r ${TIBIGDATA_HOME}/prestosql/target/prestosql-connector-0.0.5-SNAPSHOT/tidb plugin
-# 从 mysql plugin 拷贝 mysql jdbc driver
-cp plugin/mysql/mysql-connector-java-5.1.48.jar plugin/tidb/
 ```
 
 至此，TiBigData 已经安装完成，接下来需要配置 PrestoSQL 集群，并启动。
