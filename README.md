@@ -18,11 +18,6 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 ## Getting Started
 
-First you need to build the corresponding version of tikv-java-client with the following command:
-```bash
-./.ci/build-client-java.sh
-```
-
 [Flink-TiDB-Connector](./flink/README.md)
 
 [PrestoSQL-TiDB-Connector](./prestosql/README.md)
