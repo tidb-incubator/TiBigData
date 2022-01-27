@@ -56,7 +56,7 @@ ADD JAR hdfs:///tmp/hive-tidb-storage-handler-2.2.0-0.0.5-SNAPSHOT.jar;
 cp $TIBIGDATA_HOME/hive/hive-2.2.0/target/hive-tidb-storage-handler-2.2.0-0.0.5-SNAPSHOT.jar $HIVE_HOME/lib/
 ```
 
-## 4 Reading TiDB by Hive
+## 4 Reading from TiDB by Hive
 
 Using mysql client to create a table in TiDB:
 

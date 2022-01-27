@@ -144,7 +144,7 @@ bin/launcher run
 bin/launcher start
 ```
 
-### 3.5 Reading or Writing TiDB by Trino
+### 3.5 Reading and Writing from TiDB by Trino
 
 ```bash
 # download trino client
