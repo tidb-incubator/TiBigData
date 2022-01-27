@@ -1,84 +1,171 @@
 # Flink-TiDB-Connector
 
-## Component
+## 1 Environment
 
-| Name                 | Supported | Description                                                                                                |
-|----------------------|-----------|------------------------------------------------------------------------------------------------------------|
-| `DynamicTableSource` | true      | Implemented by `tikv-java-client`                                                                          |
-| `DynamicTableSink`   | true      | Implemented by `JdbcDynamicTableSink` now, and it will be implemented by `tikv-java-client` in the future. |
-| `TableFactory`       | true      |                                                                                                            |
-| `CatalogFactory`     | true      |                                                                                                            |
+| Component | Version                  |
+|-----------|--------------------------|
+| JDK       | 8                        |
+| Maven     | 3.6+                     |
+| Flink     | 1.11.x / 1.12.x / 1.13.x |
 
-## Version
+## 2 Compile Flink Connector
 
-`Flink-1.11` and `Flink-1.12` are supported.
-
-## Build
+Please refer to the following steps, as the comments say, you need to compile the TiKV java client before you compile TiBigData, because TiBigData preempts some new features that are not released in the TiKV java client.
 
 ```bash
-git clone git@github.com:pingcap-incubator/TiBigData.git
+# clone
+git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
-cp flink/flink-${FLINK_VERSION}/target/flink-tidb-connector-${FLINK_VERSION}-0.0.4-SNAPSHOT.jar ${FLINK_HOME}/lib
+# compile TiKV java client
+./.ci/build-client-java.sh
+# compile flink connector, using Flink-1.13.5 as an example
+mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```
 
-Then restart your Flink cluster.
+The following parameters are available for compiling:
 
-## Demo
+| parameter                     | default | description                                                |
+|-------------------------------|---------|------------------------------------------------------------|
+| -Ddep.flink.version           | 1.13.0  | The version of Flink                                       |
+| -Dmysql.driver.scope          | test    | Whether the dependency `mysql-jdbc-driver` is included     |
+| -Dflink.jdbc.connector.scope  | test    | Whether the dependency `flink-jdbc-connector` is included  |
+| -Dflink.kafka.connector.scope | test    | Whether the dependency `flink-kafka-connector` is included |
+
+
+## 3 Deploy Flink
+
+We only present the standalone cluster for testing. If you want to use Flink in production environment, please refer to the [Flink official documentation](https://flink.apache.org/).
+
+We recommend using Flink 1.13, the following steps are based on Flink 1.13 for example, other versions of Flink installation steps are more or less the same.
+
+### 3.1 Download
+
+Please go to [Flink Download Page](https://flink.apache.org/downloads.html) to download the corresponding version of the installation package. Only the latest version of Flink is kept on this page, the historical version can be downloaded here: [Flink Historical Versions](http://archive.apache.org/dist/flink).
+
+### 3.2 Install TiBigData and start Flink cluster
 
 ```bash
-bin/flink run -c io.tidb.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-${FLINK_VERSION}-0.0.4-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+tar -zxf flink-1.13.5-bin-scala_2.11.tgz
+cd flink-1.13.5
+cp ${TIBIGDATA_HOME}/flink/flink-1.13/target/flink-tidb-connector-1.13-0.0.5-SNAPSHOT.jar lib
+bin/start-cluster.sh
+```
+
+You should be able to navigate to the web UI at http://localhost:8081 to view the Flink dashboard and see that the cluster is up and running.
+
+## 4 Reading or Writing TiDB by Flink
+
+After the Flink cluster is deployed, you could use Flink sql-client to read and write data from TiDB.
+
+```bash
+ # start flink sql client
+ bin/sql-client.sh
+```
+
+Create a catalog in flink sql client:
+
+```sql
+CREATE CATALOG `tidb`
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = ''
+);
+```
+Using mysql client to create a table in TiDB:
+
+```bash
+# connect to TiDB
+mysql --host 127.0.0.1 --port 4000 -uroot --database test
+```
+
+```sql
+CREATE TABLE `people`(
+  `id` int,
+  `name` varchar(16)
+);
+```
+
+Using flink sql client to query TiDB schema:
+
+```sql
+DESC `tidb`.`test`.`people`;
 ```
 
 The output can be found in console, like:
-
-```bash
-Job has been submitted with JobID 3a64ea7affe969eef77790048923b5b6
-+----------------------+--------------------------------+--------------------------------+
-|                   id |                           name |                            sex |
-+----------------------+--------------------------------+--------------------------------+
-|                    1 |                           java |                              1 |
-|                    2 |                          scala |                              2 |
-|                    3 |                         python |                              1 |
-+----------------------+--------------------------------+--------------------------------+
-3 rows in set
+```sql
+Flink SQL> DESC `tidb`.`test`.`people`;
++------+--------+------+-----+--------+-----------+
+| name |   type | null | key | extras | watermark |
++------+--------+------+-----+--------+-----------+
+|   id |    INT | true |     |        |           |
+| name | STRING | true |     |        |           |
++------+--------+------+-----+--------+-----------+
+2 rows in set
 ```
 
-## DataTypes
+Using flink sql client to insert and select data from TiDB：
 
-|     TiDB     | Flink(Catalog) |
-|:------------:|:--------------:|
-|   TINYINT    |    TINYINT     |
-|   SMALLINT   |    SMALLINT    |
-|  MEDIUMINT   |      INT       |
-|     INT      |      INT       |
-|    BIGINT    |     BIGINT     |
-|     CHAR     |     STRING     |
-|   VARCHAR    |     STRING     |
-|   TINYTEXT   |     STRING     |
-|  MEDIUMTEXT  |     STRING     |
-|     TEXT     |     STRING     |
-|   LONGTEXT   |     STRING     |
-|    BINARY    |     BYTES      |
-|  VARBINARY   |     BYTES      |
-|   TINYBLOB   |     BYTES      |
-|  MEDIUMBLOB  |     BYTES      |
-|     BLOB     |     BYTES      |
-|   LONGBLOB   |     BYTES      |
-|    FLOAT     |     FLOAT      |
-|    DOUBLE    |     DOUBLE     |
-| DECIMAL(p,s) |  DECIMAL(p,s)  |
-|     DATE     |      DATE      |
-|     TIME     |      TIME      |
-|   DATETIME   |   TIMESTAMP    |
-|  TIMESTAMP   |   TIMESTAMP    |
-|     YEAR     |    SMALLINT    |
-|     BOOL     |    BOOLEAN     |
-|     JSON     |     STRING     |
-|     ENUM     |     STRING     |
-|     SET      |     STRING     |
+```sql
+SET sql-client.execution.result-mode=tableau;
+INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+SELECT * FROM `tidb`.`test`.`people`;
+```
 
-If you want to specify the type by yourself, please use `Flink SQL`. It supports most type conversions, such as INT to BIGINT, STRING to LONG.
+output：
+
+```sql
+Flink SQL> SET sql-client.execution.result-mode=tableau;
+[INFO] Session property has been set.
+
+Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+[INFO] Submitting SQL update statement to the cluster...
+[INFO] SQL update statement has been successfully submitted to the cluster:
+Job ID: a3944d4656785e36cf03fa419533b12c
+
+Flink SQL> SELECT * FROM `tidb`.`test`.`people`;
++----+-------------+--------------------------------+
+| op |          id |                           name |
++----+-------------+--------------------------------+
+| +I |           1 |                             zs |
++----+-------------+--------------------------------+
+Received a total of 1 row
+```
+
+## 5 DataTypes
+
+|     TiDB     |    Flink     |
+|:------------:|:------------:|
+|   TINYINT    |   TINYINT    |
+|   SMALLINT   |   SMALLINT   |
+|  MEDIUMINT   |     INT      |
+|     INT      |     INT      |
+|    BIGINT    |    BIGINT    |
+|     CHAR     |    STRING    |
+|   VARCHAR    |    STRING    |
+|   TINYTEXT   |    STRING    |
+|  MEDIUMTEXT  |    STRING    |
+|     TEXT     |    STRING    |
+|   LONGTEXT   |    STRING    |
+|    BINARY    |    BYTES     |
+|  VARBINARY   |    BYTES     |
+|   TINYBLOB   |    BYTES     |
+|  MEDIUMBLOB  |    BYTES     |
+|     BLOB     |    BYTES     |
+|   LONGBLOB   |    BYTES     |
+|    FLOAT     |    FLOAT     |
+|    DOUBLE    |    DOUBLE    |
+| DECIMAL(p,s) | DECIMAL(p,s) |
+|     DATE     |     DATE     |
+|     TIME     |     TIME     |
+|   DATETIME   |  TIMESTAMP   |
+|  TIMESTAMP   |  TIMESTAMP   |
+|     YEAR     |   SMALLINT   |
+|     BOOL     |   BOOLEAN    |
+|     JSON     |    STRING    |
+|     ENUM     |    STRING    |
+|     SET      |    STRING    |
 
 ## Configuration
 
@@ -107,261 +194,24 @@ If you want to specify the type by yourself, please use `Flink SQL`. It supports
 | tidb.dns.search                                     | null                                                                           | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN.                                                                                                                                                                                                                                                                                                                                                  |
 | tidb.catalog.load-mode                              | eager                                                                          | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened.                                                                                                                                                                                                                                                      |
 
-TiDB Flink sink supports all sink properties of  [`flink-connector-jdbc`](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connectors/jdbc.html), because it is implemented by `JdbcDynamicTableSink`.
+## 7 TableFactory
 
-## Usage
+TiBigData also implements the Flink TableFactory API, but we don't recommend you to use it, it will introduce difficulties related to data type conversion and column alignment, which will increase the cost of using it. We will stop supporting it in Flink-1.14, so this section is only a brief introduction.
 
-### TiDBCatalog
-The above demo is implemented by TiDBCatalog.
-
-```java
-public class TiDBCatalogDemo {
-
-  public static void main(String[] args) {
-    // properties
-    ParameterTool parameterTool = ParameterTool.fromArgs(args);
-    final Map<String, String> properties = parameterTool.toMap();
-    final String databaseName = parameterTool.getRequired("tidb.database.name");
-    final String tableName = parameterTool.getRequired("tidb.table.name");
-    // env
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inBatchMode().build();
-    TableEnvironment tableEnvironment = TableEnvironment.create(settings);
-    // register TiDBCatalog
-    TiDBCatalog catalog = new TiDBCatalog(properties);
-    catalog.open();
-    tableEnvironment.registerCatalog("tidb", catalog);
-    // query and print
-    String sql = String.format("SELECT * FROM `tidb`.`%s`.`%s` LIMIT 100", databaseName, tableName);
-    System.out.println("Flink SQL: " + sql);
-    TableResult tableResult = tableEnvironment.executeSql(sql);
-    System.out.println("TableSchema: \n" + tableResult.getTableSchema());
-    tableResult.print();
-  }
-}
-```
-
-You could submit DDL  by TiDBCatalog, such as create table, drop table:
-
-```java
-public class TestCreateTable {
-
-  public static void main(String[] args) throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put("tidb.database.url", "jdbc:mysql://host:port/database");
-    properties.put("tidb.username", "root");
-    properties.put("tidb.password", "123456");
-    TiDBCatalog catalog = new TiDBCatalog(properties);
-    catalog.open();
-    String sql = "CREATE TABLE IF NOT EXISTS people(id INT, name VARCHAR(255), sex ENUM('1','2'))";
-    catalog.sqlUpdate(sql);
-    catalog.close();
-  }
-}
-```
-
-### FlinkTableFactory
-
-You could use `FlinkTableFactory` like:
-
-```java
-public class TestFlinkSql {
-
-  public static void main(String[] args) {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inStreamingMode().build();
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    tableEnvironment.executeSql("CREATE TABLE tidb(\n"
-        + " c1     tinyint,\n"
-        + " c2     smallint,\n"
-        + " c3     int,\n"
-        + " c4     int,\n"
-        + " c5     bigint,\n"
-        + " c6     char(10),\n"
-        + " c7     varchar(20),\n"
-        + " c8     string,\n"
-        + " c9     string,\n"
-        + " c10    string,\n"
-        + " c11    string,\n"
-        + " c12    string,\n"
-        + " c13    string,\n"
-        + " c14    string,\n"
-        + " c15    string,\n"
-        + " c16    string,\n"
-        + " c17    string,\n"
-        + " c18    float,\n"
-        + " c19    double,\n"
-        + " c20    decimal(6,3),\n"
-        + " c21    date,\n"
-        + " c22    time,\n"
-        + " c23    timestamp,\n"
-        + " c24    timestamp,\n"
-        + " c25    smallint,\n"
-        + " c26    boolean,\n"
-        + " c27    string,\n"
-        + " c28    string,\n"
-        + " c29    string\n"
-        + ") WITH (\n"
-        + "  'connector' = 'tidb',\n"
-        + "  'tidb.database.url' = 'jdbc:mysql://host:port/database',\n"
-        + "  'tidb.username' = 'root',\n"
-        + "  'tidb.password' = '123456',\n"
-        + "  'tidb.database.name' = 'database',\n"
-        + "  'tidb.table.name' = 'test_tidb_type'\n"
-        + ")"
-    );
-    tableEnvironment.executeSql("SELECT * FROM tidb LIMIT 100").print();
-  }
-```
-
-### Flink SQL Client
-
-You could create a sample tidb table which contains most tidb types by the following script.
+You can use the following SQL to create a TiDB mapping table in Flink and query it.
 
 ```sql
-CREATE TABLE `default`.`test_tidb_type`(
- c1     tinyint,
- c2     smallint,
- c3     mediumint,
- c4     int,
- c5     bigint,
- c6     char(10),
- c7     varchar(20),
- c8     tinytext,
- c9     mediumtext,
- c10    text,
- c11    longtext,
- c12    binary(20),
- c13    varbinary(20),
- c14    tinyblob,
- c15    mediumblob,
- c16    blob,
- c17    longblob,
- c18    float,
- c19    double,
- c20    decimal(6,3),
- c21    date,
- c22    time,
- c23    datetime,
- c24    timestamp,
- c25    year,
- c26    boolean,
- c27    json,
- c28    enum('1','2','3'),
- c29    set('a','b','c')
-);
-```
-
-On the one hand, you can create mapping table by yourself:
-
-```sql
--- run flink sql client
-bin/sql-client.sh embedded
--- create a flink table mapping to tidb table
-CREATE TABLE tidb(
- c1     tinyint,
- c2     smallint,
- c3     int,
- c4     int,
- c5     bigint,
- c6     char(10),
- c7     varchar(20),
- c8     string,
- c9     string,
- c10    string,
- c11    string,
- c12    string,
- c13    string,
- c14    string,
- c15    string,
- c16    string,
- c17    string,
- c18    float,
- c19    double,
- c20    decimal(6,3),
- c21    date,
- c22    time,
- c23    timestamp,
- c24    timestamp,
- c25    smallint,
- c26    boolean,
- c27    string,
- c28    string,
- c29    string
+CREATE TABLE `people`(
+  `id` INT,
+  `name` STRING
 ) WITH (
   'connector' = 'tidb',
-  'tidb.database.url' = 'jdbc:mysql://host:port/database',
+  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
   'tidb.username' = 'root',
-  'tidb.password' = '123456',
-  'tidb.database.name' = 'database',
-  'tidb.maximum.pool.size' = '1',
-  'tidb.minimum.idle.size' = '1',
-  'tidb.table.name' = 'test_tidb_type',
-  'tidb.write_mode' = 'upsert',
-  'sink.buffer-flush.max-rows' = '0'
+  'tidb.password' = '',
+  'tidb.database.name' = 'test',
+  'tidb.table.name' = 'people'
 );
--- insert data
-INSERT INTO tidb
-VALUES (
- cast(1 as tinyint) ,
- cast(1 as smallint) ,
- cast(1 as int) ,
- cast(1 as int) ,
- cast(1 as bigint) ,
- cast('chartype' as char(10)),
- cast('varchartype' as varchar(20)),
- cast('tinytexttype' as string),
- cast('mediumtexttype' as string),
- cast('texttype' as string),
- cast('longtexttype' as string),
- cast('binarytype' as string),
- cast('varbinarytype' as string),
- cast('tinyblobtype' as string),
- cast('mediumblobtype' as string),
- cast('blobtype' as string),
- cast('longblobtype' as string),
- cast(1.234 as float),
- cast(2.456789 as double),
- cast(123.456 as decimal(6,3)),
- cast('2020-08-10' as date),
- cast('15:30:29' as time),
- cast('2020-08-10 15:30:29' as timestamp),
- cast('2020-08-10 16:30:29' as timestamp),
- cast(2020 as smallint),
- true,
- cast('{"a":1,"b":2}' as string),
- cast('1' as string),
- cast('a' as string)
-);
--- set result format
-SET execution.result-mode=tableau;
--- query
-SELECT * FROM tidb LIMIT 100;
-```
 
-On the other hand, you can also use TiDBCatalog in flink sql client by environment file:  `env.yaml`.
-
-```yaml
-catalogs:
-   - name: tidb
-     type: tidb
-     tidb.database.url: jdbc:mysql://host:port/database
-     tidb.username: root
-     tidb.password: 123456
-
-execution:
-        planner: blink
-        type: batch
-        parallelism: 1
-```
-
-then run sql-client and query tidb table:
-
-```sql
-bin/sql-client.sh embedded -e env.yaml
--- set result format
-SET execution.result-mode=tableau;
--- query
-SELECT * FROM `tidb`.`default`.`test_tidb_type` LIMIT 100;
+SELECT * FROM people;
 ```

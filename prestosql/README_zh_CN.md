@@ -41,7 +41,7 @@ PrestoSQL 已经重命名为 Trino，历史版本可在这里下载：[PrestoSQL
 ### 3.2 安装 TiBigData
 
 ```bash
-# 下载并解压 prestosql 的二进制安装包，我们以 prestosql-0.234.2 为例
+# 下载并解压 prestosql 的二进制安装包，我们以 prestosql-350 为例
 wget https://repo1.maven.org/maven2/io/prestosql/presto-server/350/presto-server-350.tar.gz
 # 国内用户可从国内镜像下载
 # wget https://maven.aliyun.com/repository/central/io/prestosql/presto-server/350/presto-server-350.tar.gz
@@ -59,7 +59,7 @@ cp -r ${TIBIGDATA_HOME}/prestosql/target/prestosql-connector-0.0.5-SNAPSHOT/tidb
 这里我们给出一份简单的配置来启动单机版的 PrestoSQL 集群。
 
 ```bash
-cd $TRINO_HOME
+cd $PRESTO_HOME
 mkdir -p etc/catalog
 ```
 
