@@ -36,7 +36,7 @@ We only present the standalone cluster for testing. If you want to use Trino in 
 
 ### 3.1 Download
 
-Please go to [trinoDB Download Page](https://trino.io/download.html) to download the corresponding version of the installation package. Only the latest version of trinoDB is kept on this page, the historical version can be downloaded here: [trinoDB Historical Versions](https://repo1.maven.org/maven2/com/facebook/trino/trino-server).
+Please go to [Trino Download Page](https://trino.io/download.html) to download the corresponding version of the installation package. Only the latest version of Trino is kept on this page, the historical version can be downloaded here: [Trino Historical Versions](https://repo1.maven.org/maven2/com/facebook/trino/trino-server).
 
 ### 3.2 Install TiBigData
 
