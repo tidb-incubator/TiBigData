@@ -53,7 +53,7 @@ bin/start-cluster.sh
 
 You should be able to navigate to the web UI at http://localhost:8081 to view the Flink dashboard and see that the cluster is up and running.
 
-## 4 Reading and Writing from TiDB by Flink
+## 4 Read & Write
 
 After the Flink cluster is deployed, you could use Flink sql-client to read and write data from TiDB.
 

@@ -144,7 +144,7 @@ bin/launcher run
 bin/launcher start
 ```
 
-### 3.5 Reading and Writing from TiDB by PrestoDB
+### 3.5 Read & Write
 
 ```bash
 # download prestodb client
