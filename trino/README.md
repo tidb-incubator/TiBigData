@@ -6,7 +6,7 @@
 |-----------|---------|
 | JDK       | 8       |
 | Maven     | 3.6+    |
-| Trino | 0.234.2 |
+| Trino     | 359     |
 
 ## 2 Compile Trino Connector
 
@@ -41,9 +41,9 @@ Please go to [Trino Download Page](https://trino.io/download.html) to download t
 ### 3.2 Install TiBigData
 
 ```bash
-wget https://repo1.maven.org/maven2/io/trino/trino-server/350/trino-server-350.tar.gz
-tar -zxf trino-server-0.234.2.tar.gz
-cd trino-server-0.234.2
+wget https://repo1.maven.org/maven2/io/trino/trino-server/359/trino-server-359.tar.gz
+tar -zxf trino-server-359.tar.gz
+cd trino-server-359
 cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
 ```
 

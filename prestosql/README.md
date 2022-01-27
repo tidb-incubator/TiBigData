@@ -6,7 +6,7 @@
 |-----------|---------|
 | JDK       | 8       |
 | Maven     | 3.6+    |
-| PrestoSQL | 0.234.2 |
+| PrestoSQL | 350     |
 
 ## 2 Compile PrestoSQL Connector
 
@@ -43,7 +43,7 @@ Please go to [PrestoSQL Download Page](https://repo1.maven.org/maven2/io/prestos
 ```bash
 wget https://repo1.maven.org/maven2/io/prestosql/presto-server/350/presto-server-350.tar.gz
 tar -zxf presto-server-0.234.2.tar.gz
-cd presto-server-0.234.2
+cd presto-server-350
 cp -r ${TIBIGDATA_HOME}/prestosql/target/prestosql-connector-0.0.5-SNAPSHOT/tidb plugin
 ```
 
