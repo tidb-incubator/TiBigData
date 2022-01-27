@@ -41,7 +41,7 @@ The following parameters are available for compiling:
 
 Both of the following are available.
 
-### 3.1 Using ADD JAR syntax
+### 3.1 Using `ADD JAR` syntax
 
 ```bash
 # upload TiBigData jar to HDFS
@@ -50,7 +50,7 @@ hadoop fs -put $TIBIGDATA_HOME/hive/hive-2.2.0/target/hive-tidb-storage-handler-
 ADD JAR hdfs:///tmp/hive-tidb-storage-handler-2.2.0-0.0.5-SNAPSHOT.jar;
 ```
 
-### 3.2 Copy lib to hive
+### 3.2 Copying lib to Hive
 
 ```bash
 cp $TIBIGDATA_HOME/hive/hive-2.2.0/target/hive-tidb-storage-handler-2.2.0-0.0.5-SNAPSHOT.jar $HIVE_HOME/lib/
