@@ -42,12 +42,6 @@ export TIDB_PASSWORD=""
 mvn test
 ```
 
-## 社区
-
-Lark / Feishu Group:
-
-<img src="docs/assets/lark_group.png" width="300">
-
 ## 致谢
 
 ### YourKit
