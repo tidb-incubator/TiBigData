@@ -103,11 +103,8 @@ vim etc/node.properties
 The content of `node.properties`：
 
 ```properties
-# 同一个集群内的所有节点的 environment 应该相同，否则无法进行通信
 node.environment=test
-# 节点的唯一标识，推荐使用 uuid 生成
 node.id=1
-# 日志存放目录
 node.data-dir=/tmp/prestodb/logs
 ```
 #### 3.3.4 Config log.properties
