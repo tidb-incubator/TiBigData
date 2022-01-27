@@ -3,10 +3,11 @@
 ## Build
 
 ```bash
+./.ci/build-client-java.sh
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base -Dmysql.driver.scope=compile
-cp  mapreduce/mapreduce-base/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar ${HOME}/lib
+cp  mapreduce/mapreduce-base/target/mapreduce-tidb-connector-base-0.0.5-SNAPSHOT.jar ${HOME}/lib
 ```
 
 ## Version
@@ -16,7 +17,7 @@ cp  mapreduce/mapreduce-base/target/mapreduce-tidb-connector-base-0.0.4-SNAPSHOT
 ## Demo
 
 ```bash
-hadoop jar mapreduce-tidb-connector-base-0.0.4-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo  \
+hadoop jar mapreduce-tidb-connector-base-0.0.5-SNAPSHOT.jar io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo  \
  -du  ${DATABASE_URL} \
  -u   ${USERNAME} \
  -p   ${PASSWORD}  \
