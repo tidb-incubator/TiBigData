@@ -4,7 +4,7 @@
 
 | Component | Version |
 |-----------|---------|
-| JDK       | 8       |
+| JDK       | 11      |
 | Maven     | 3.6+    |
 | PrestoSQL | 350     |
 
