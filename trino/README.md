@@ -20,7 +20,7 @@ cd TiBigData
 ./.ci/build-client-java.sh
 # compile trino connector
 mvn clean package -DskipTests -am -pl trino -Dmysql.driver.scope=compile
-# 解压 plugin
+# unzip plugin
 tar -zxf trino/target/trino-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C trino/target
 ```
 

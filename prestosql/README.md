@@ -20,7 +20,7 @@ cd TiBigData
 ./.ci/build-client-java.sh
 # compile presto connector
 mvn clean package -DskipTests -am -pl prestosql -Dmysql.driver.scope=compile
-# 解压 plugin
+# unzip plugin
 tar -zxf prestosql/target/prestosql-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C prestosql/target
 ```
 
