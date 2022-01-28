@@ -59,7 +59,7 @@ cp -r ${TIBIGDATA_HOME}/prestodb/target/prestodb-connector-0.0.5-SNAPSHOT/tidb p
 这里我们给出一份简单的配置来启动单机版的 PrestoDB 集群。
 
 ```bash
-cd $TRINO_HOME
+cd $PRESTO_HOME
 mkdir -p etc/catalog
 ```
 

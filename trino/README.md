@@ -1,27 +1,235 @@
 # Trino-TiDB-Connector
 
-## Build
+## 1 Environment
+
+| Component | Version |
+|-----------|---------|
+| JDK       | 11      |
+| Maven     | 3.6+    |
+| Trino     | 359     |
+
+## 2 Compile Trino Connector
+
+Please refer to the following steps, as the comments say, you need to compile the TiKV java client before you compile TiBigData, because TiBigData preempts some new features that are not released in the TiKV java client.
 
 ```bash
-# get project
+# clone project
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-
-# compile and package, must be Java 11
-mvn clean package -DskipTests -am -pl trino
-
-# unpack it and copy it into trino plugin folder
+# compile TiKV java client
+./.ci/build-client-java.sh
+# compile trino connector
+mvn clean package -DskipTests -am -pl trino -Dmysql.driver.scope=compile
+# unzip plugin
 tar -zxf trino/target/trino-connector-0.0.5-SNAPSHOT-plugin.tar.gz -C trino/target
-cp -r trino/target/trino-connector-0.0.5-SNAPSHOT/tidb ${TRINO_HOME}/plugin
-
-# need a jdbc driver
-cp ${YOUR_MYSQL_JDBC_DRIVER_PATH}/mysql-connector-java-${version}.jar ${TRINO_HOME}/plugin/tidb
-
-# or, you can find it in the plugin folder of mysql
-cp -rf plugin/mysql/mysql-connector-java-${version}.jar plugin/tidb/
 ```
 
-## DataTypes
+The following parameters are available for compiling:
+
+| parameter            | default | description                                            |
+|----------------------|---------|--------------------------------------------------------|
+| -Dmysql.driver.scope | test    | Whether the dependency `mysql-jdbc-driver` is included |
+
+## 3 Deploy Trino
+
+We only present the standalone cluster for testing. If you want to use Trino in production environment, please refer to the [Trino official documentation](https://trino.io).
+
+### 3.1 Download
+
+Please go to [Trino Download Page](https://trino.io/download.html) to download the corresponding version of the installation package. Only the latest version of Trino is kept on this page, the historical version can be downloaded here: [Trino Historical Versions](https://repo1.maven.org/maven2/com/facebook/trino/trino-server).
+
+### 3.2 Install TiBigData
+
+```bash
+wget https://repo1.maven.org/maven2/io/trino/trino-server/359/trino-server-359.tar.gz
+tar -zxf trino-server-359.tar.gz
+cd trino-server-359
+cp -r ${TIBIGDATA_HOME}/trino/target/trino-connector-0.0.5-SNAPSHOT/tidb plugin
+```
+
+### 3.3 Config Trino standalone cluster
+
+Here we give a simple configuration to start a standalone Trino cluster.
+
+```bash
+cd $TRINO_HOME
+mkdir -p etc/catalog
+```
+
+The next step is to configure the Trino configuration files.
+
+#### 3.3.1 Config config.properties
+
+```bash
+vim etc/config.properties
+```
+
+The content of `config.properties`：
+
+```properties
+coordinator=true
+node-scheduler.include-coordinator=true
+http-server.http.port=12345
+query.max-memory=2GB
+query.max-memory-per-node=2GB
+query.max-total-memory-per-node=2GB
+discovery-server.enabled=true
+discovery.uri=http://localhost:12345
+```
+
+#### 3.3.2 Config jvm.properties
+```bash
+vim etc/jvm.config
+```
+
+The content of `jvm.config`：
+
+```properties
+-server
+-Xmx4G
+-XX:+UseConcMarkSweepGC
+-XX:+ExplicitGCInvokesConcurrent
+-XX:+CMSClassUnloadingEnabled
+-XX:+AggressiveOpts
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:OnOutOfMemoryError=kill -9 %p
+-XX:ReservedCodeCacheSize=150M
+```
+#### 3.3.3 Config node.properties
+```bash
+vim etc/node.properties
+```
+
+The content of `node.properties`：
+
+```properties
+node.environment=test
+node.id=1
+node.data-dir=/tmp/trino/logs
+```
+#### 3.3.4 Config log.properties
+```bash
+vim etc/log.properties
+```
+
+The content of `log.properties`：
+
+```properties
+io.trino=INFO
+```
+
+#### 3.3.4 Config tidb connector
+```bash
+vim etc/catalog/tidb.properties
+```
+
+The content of `tidb.properties`：
+
+```properties
+# must be tidb
+connector.name=tidb
+tidb.database.url=jdbc:mysql://localhost:4000/test
+tidb.username=root
+tidb.password=
+```
+
+If you have multiple TiDB clusters, you can create multiple properties files, such as `tidb01.properties` and `tidb02.properties`, and just write a different connection string and password for each configuration file.
+
+### 3.4 Start Trino cluster
+
+```bash
+# foreground
+bin/launcher run
+# background
+bin/launcher start
+```
+
+### 3.5 Read & Write
+
+```bash
+# download trino client
+curl -L https://repo1.maven.org/maven2/io/trino/trino-cli/359/trino-cli-359-executable.jar -o trino
+chmod 777 trino
+# connect to trino
+./trino --server localhost:12345 --catalog tidb --schema test
+```
+
+Using mysql client to create a table in TiDB:
+
+```bash
+# connect to tidb
+mysql --host 127.0.0.1 --port 4000 -uroot --database test
+```
+
+```sql
+CREATE TABLE `people`(
+  `id` int,
+  `name` varchar(16)
+);
+```
+
+Using trino client to query TiDB schema:
+
+```sql
+show create table people;
+```
+
+output:
+
+```sql
+trino:test> show create table people;
+          Create Table
+---------------------------------
+ CREATE TABLE tidb.test.people (
+    id integer,
+    name varchar(16)
+ )
+ WITH (
+    primary_key = '',
+    unique_key = ''
+ )
+(1 row)
+
+Query 20220105_143658_00002_a26k7, FINISHED, 1 node
+Splits: 1 total, 1 done (100.00%)
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
+```
+Using trino client to insert and select data from TiDB：
+
+```sql
+INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
+SELECT * FROM "test"."people";
+```
+
+output:
+
+```sql
+trino:test> INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
+INSERT: 1 row
+
+Query 20220105_143723_00003_a26k7, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
+
+trino:test> INSERT INTO "test"."people"("id","name") VALUES(1,'zs');
+INSERT: 1 row
+
+Query 20220105_143741_00004_a26k7, FINISHED, 1 node
+Splits: 19 total, 19 done (100.00%)
+0:00 [0 rows, 0B] [0 rows/s, 0B/s]
+
+trino:test> SELECT * FROM "test"."people";
+ id | name
+----+------
+  1 | zs
+(1 row)
+
+Query 20220105_143748_00005_a26k7, FINISHED, 1 node
+Splits: 17 total, 17 done (100.00%)
+0:00 [1 rows, 0B] [2 rows/s, 0B/s]
+```
+
+## 5 DataTypes
 
 |     TiDB     |    Trino     |
 |:------------:|:------------:|
@@ -55,7 +263,7 @@ cp -rf plugin/mysql/mysql-connector-java-${version}.jar plugin/tidb/
 |     ENUM     |   VARCHAR    |
 |     SET      |   VARCHAR    |
 
-## Configuration
+## 6 Configuration
 
 | Configuration                      | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 |:-----------------------------------|:-------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -72,219 +280,3 @@ cp -rf plugin/mysql/mysql-connector-java-${version}.jar plugin/tidb/
 | tidb.replica-read.blacklist        | null                                                                           | Do not select TiKV store with given ip addresses.                                                                                                                                                                                                                                                                                                                                                                                                         |
 | tidb.snapshot_timestamp            | null                                                                           | It is available for TiDB connector to read snapshot. You could set it by `SET SESSION tidb.snapshot_timestamp='2021-01-01T14:00:00+08:00'` and unset it by `SET SESSION tidb.snapshot_timestamp=''` within a session. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.                                                                                                                                      |
 | tidb.dns.search                    | null                                                                           | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN.                                                                                                                                                                                                                                                                                                                                                  |
-
-## Usage
-
-### Properties
-
-```bash
-vim ${TRINO_HOME}/etc/catalog/tidb.properties
-```
-
-The file `tidb.properties` like :
-
-```properties
-# connector name, must be tidb
-connector.name=tidb
-tidb.database.url=jdbc:mysql://host:port/database
-tidb.username=root
-tidb.password=123456
-tidb.maximum.pool.size=1
-tidb.minimum.idle.size=1
-tidb.write_mode=upsert
-```
-
-Then restart your trino cluster and use trino-cli to connect trino coordinator:
-
-```bash
-./trino-cli-${version}-executable.jar --server ${COORDINATOR_HOST}:${PORT} --catalog tidb --schema ${TIDB_DATABASE} --user ${USERNAME}
-```
-
-### Example
-
-**Connection**
-
-```
-$ ./trino-cli-359-executable.jar --server localhost:8080 --catalog tidb --schema test --user test
-```
-
-**Query**
-
-```
-trino:test> show tables;
- Table  
---------
- table1 
-(1 row)
-
-Query 20211122_160258_00008_u6h64, FINISHED, 1 node
-Splits: 19 total, 19 done (100.00%)
-0.23 [1 rows, 20B] [4 rows/s, 86B/s]
-
-trino:test> select * from table1;
- data1 | data2 
--------+-------
- aaa   |   111 
-(1 row)
-
-Query 20211122_160305_00010_u6h64, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.78 [1 rows, 0B] [1 rows/s, 0B/s]
-```
-
-**Simple Insert**
-
-```
-trino:test> insert into table1 values('bbb', 222);
-INSERT: 1 row
-
-Query 20211122_161035_00014_u6h64, FINISHED, 1 node
-Splits: 35 total, 35 done (100.00%)
-0.23 [0 rows, 0B] [0 rows/s, 0B/s]
-
-trino:test> select * from table1;
- data1 | data2 
--------+-------
- aaa   |   111 
- bbb   |   222 
-(2 rows)
-
-Query 20211122_161041_00015_u6h64, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.63 [2 rows, 0B] [3 rows/s, 0B/s]
-```
-
-**Upsert**
-
-setting `tidb.properties` `tidb.write_mode=upsert`
-
-or
-
-```sql
-SET SESSION tidb.write_mode='upsert';
-```
-
-**TiDB all variable test inserts**
-
-You could create a in tidb table which contains most tidb types by the following script.
-
->NOTE: Execute it in TiDB
-
-```sql
-CREATE TABLE `default`.`test_tidb_type`(
- c1     tinyint,
- c2     smallint,
- c3     mediumint,
- c4     int,
- c5     bigint,
- c6     char(10),
- c7     varchar(20),
- c8     tinytext,
- c9     mediumtext,
- c10    text,
- c11    longtext,
- c12    binary(20),
- c13    varbinary(20),
- c14    tinyblob,
- c15    mediumblob,
- c16    blob,
- c17    longblob,
- c18    float,
- c19    double,
- c20    decimal(6,3),
- c21    date,
- c22    time,
- c23    datetime,
- c24    timestamp,
- c25    year,
- c26    boolean,
- c27    json,
- c28    enum('1','2','3'),
- c29    set('a','b','c')
-);
-```
-
-Then insert data and query this test table in trino:
-
->NOTE: Execute it in Trino
-
-```
-trino> INSERT INTO tidb.test.test_tidb_type (
-    ->  c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,
-    ->  c11,c12,c13,c14,c15,c16,c17,c18,c19,c20,
-    ->  c21,c22,c23,c24,c25,c26,c27,c28,c29
-    -> )
-    -> VALUES (
-    ->  tinyint '1',
-    ->  smallint '2',
-    ->  int '3',
-    ->  int '4',
-    ->  bigint '5',
-    ->  'chartype',
-    ->  'varchartype',
-    ->  'tinytexttype',
-    ->  'mediumtexttype',
-    ->  'texttype',
-    ->  'longtexttype',
-    ->  varbinary 'binarytype',
-    ->  varbinary 'varbinarytype',
-    ->  varbinary 'tinyblobtype',
-    ->  varbinary 'mediumblobtype',
-    ->  varbinary 'blobtype',
-    ->  varbinary 'longblobtype',
-    ->  1.234,
-    ->  2.456789,
-    ->  123.456,
-    ->  date '2020-08-10',
-    ->  time '15:30:29',
-    ->  timestamp '2020-08-10 15:30:29',
-    ->  timestamp '2020-08-10 16:30:29',
-    ->  smallint '2020',
-    ->  tinyint '1',
-    ->  '{"a":1,"b":2}',
-    ->  '1',
-    ->  'a'
-    -> );
-INSERT: 1 row
-
-Query 20211123_102946_00000_iic32, FINISHED, 1 node
-Splits: 35 total, 35 done (100.00%)
-1.95 [0 rows, 0B] [0 rows/s, 0B/s]
-
-trino> select * from tidb.test.test_tidb_type\G;
--[ RECORD 1 ]----------------------------------------
-c1  | 1
-c2  | 2
-c3  | 3
-c4  | 4
-c5  | 5
-c6  | chartype
-c7  | varchartype
-c8  | tinytexttype
-c9  | mediumtexttype
-c10 | texttype
-c11 | longtexttype
-c12 | 62 69 6e 61 72 79 74 79 70 65 00 00 00 00 00 00
-    | 00 00 00 00
-c13 | 76 61 72 62 69 6e 61 72 79 74 79 70 65
-c14 | 74 69 6e 79 62 6c 6f 62 74 79 70 65
-c15 | 6d 65 64 69 75 6d 62 6c 6f 62 74 79 70 65
-c16 | 62 6c 6f 62 74 79 70 65
-c17 | 6c 6f 6e 67 62 6c 6f 62 74 79 70 65
-c18 | 1.234
-c19 | 2.456789
-c20 | 123.456
-c21 | 2020-08-10
-c22 | 19:33:20
-c23 | 2020-08-10 15:30:29
-c24 | 2020-08-10 16:30:29
-c25 | 2020
-c26 | 1
-c27 | {"a":1,"b":2}
-c28 | 1
-c29 | a
-
-Query 20211123_103042_00002_iic32, FINISHED, 1 node
-Splits: 17 total, 17 done (100.00%)
-0.84 [1 rows, 0B] [1 rows/s, 0B/s]
-```
