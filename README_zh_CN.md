@@ -6,7 +6,7 @@
 [![CN doc](https://img.shields.io/badge/文档-中文版-blue.svg)](README_zh_CN.md)
 ---
 
-TiBigData 是为了整合 TiDB 与大数据而诞生的项目，它借助 Flink/Presto/MapReduce 等分布式计算框架，充分发挥 TiDB 分布式集群的优势，为 TiDB 在大数据场景下的使用带来良好的用户体验。
+TiBigData 是为了整合 TiDB 与大数据而诞生的项目，它借助 Flink/Presto/MapReduce 等分布式计算框架，充分发挥 TiDB 分布式集群的优势，为 TiDB 在大数据场景下的使用带来良好的用户体验。 
 
 ## License
 
