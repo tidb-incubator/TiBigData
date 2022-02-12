@@ -32,14 +32,43 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 ## Run Tests
 
-Use the following command to run all the tests.
+Use the following command to run the integration test.
 
-```
+```bash
 export TIDB_HOST="127.0.0.1"
 export TIDB_PORT="4000"
 export TIDB_USER="root"
 export TIDB_PASSWORD=""
-mvn test
+mvn clean test-compile failsafe:integration-test -am -pl ${MODULE_NAME}
+```
+
+Use the following command to run the unit test.
+
+```
+mvn clean test -am -pl ${MODULE_NAME}
+```
+
+## Write integration test
+
+First, make sure the module add dependency:
+
+```xml
+ <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+</dependency>
+```
+
+Second, use Junit Category to clarify integration-test:
+
+```java
+import io.tidb.bigdata.test.IntegrationTest;
+
+@Category(IntegrationTest.class)
+public class ConnectorsPluginTest {
+}
 ```
 
 ## Community
