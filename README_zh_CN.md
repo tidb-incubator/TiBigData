@@ -65,7 +65,7 @@ mvn clean test-compile failsafe:integration-test -am -pl ${MODULE_NAME}
 </dependency>
 ```
 
-然后，我们使用 Junit 的 Category 来区分集成测试，用法如下:
+然后，我们使用 JUnit 的 Category 来区分集成测试，用法如下:
 
 ```java
 import io.tidb.bigdata.test.IntegrationTest;

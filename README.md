@@ -61,7 +61,7 @@ First, make sure the module add dependency:
 </dependency>
 ```
 
-Second, use Junit Category to clarify integration-test:
+Second, use JUnit Category to clarify integration-test:
 
 ```java
 import io.tidb.bigdata.test.IntegrationTest;
