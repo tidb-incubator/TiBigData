@@ -16,8 +16,10 @@
 
 package io.tidb.bigdata.hive;
 
+import com.google.common.collect.Maps;
 import java.io.IOException;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
@@ -91,7 +93,11 @@ public class TiDBStorageHandler implements HiveStorageHandler {
 
   @Override
   public void configureJobConf(TableDesc tableDesc, JobConf jobConf) {
-
+    Maps.fromProperties(tableDesc.getProperties()).forEach((key, value) -> {
+      if (TiDBConstant.IMMUTABLE_CONFIG.contains(key) || StringUtils.isEmpty(jobConf.get(key))) {
+        jobConf.set(key, value);
+      }
+    });
   }
 
   @Override
