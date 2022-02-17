@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector.catalog;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
@@ -52,7 +53,8 @@ public class TiDBCatalogFactory implements CatalogFactory {
         TiDBOptions.MIN_IDLE_SIZE,
         TiDBOptions.WRITE_MODE,
         TiDBOptions.REPLICA_READ,
-        TiDBOptions.FILTER_PUSH_DOWN
+        TiDBOptions.FILTER_PUSH_DOWN,
+        TiDBOptions.DNS_SEARCH
     );
   }
   
