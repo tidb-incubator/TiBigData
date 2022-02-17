@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 TiDB Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.jdbc;
+package io.tidb.bigdata.flink.connector.source.split;
 
-/**
- * jdbc:tidb://host:port/database
- */
-public class TiDBDriver extends LoadBalancingDriver {
+public class TiDBSourceSplitState {
+  private final TiDBSourceSplit split;
 
-  public static final String TIDB_URL_PREFIX = "jdbc:tidb://";
-
-  static {
-    ExceptionHelper.uncheckedRun(() -> java.sql.DriverManager.registerDriver(new TiDBDriver()));
+  public TiDBSourceSplitState(TiDBSourceSplit split) {
+    this.split = split;
   }
 
-  public TiDBDriver() {
-    super(TIDB_URL_PREFIX);
-  }
-
-  public static String driverForUrl(final String url) {
-    return url.startsWith(TIDB_URL_PREFIX) ? TiDBDriver.class.getName() : getMySqlDriverName();
+  public TiDBSourceSplit toSplit() {
+    return split;
   }
 }

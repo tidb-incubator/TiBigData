@@ -41,6 +41,18 @@
       <artifactId>HikariCP</artifactId>
       <version>${dep.HikariCP.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>${dep.mysql.jdbc.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

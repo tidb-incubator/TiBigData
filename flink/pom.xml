@@ -23,12 +23,13 @@
     <flink.scope>provided</flink.scope>
   </properties>
 
-  <modules>
-    <module>flink-base</module>
-    <module>flink-1.11</module>
-    <module>flink-1.12</module>
-    <module>flink-1.13</module>
-  </modules>
+    <modules>
+        <module>flink-base</module>
+        <module>flink-1.11</module>
+        <module>flink-1.12</module>
+        <module>flink-1.13</module>
+        <module>flink-1.14</module>
+    </modules>
 
   <profiles>
     <profile>

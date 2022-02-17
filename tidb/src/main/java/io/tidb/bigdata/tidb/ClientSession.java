@@ -27,7 +27,6 @@ import static java.util.function.Function.identity;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
-import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
 import java.net.URI;
 import java.sql.Connection;
@@ -190,9 +189,10 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
-    return Streams.mapWithIndex(table.getColumns().stream(),
-        (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i))
-        .collect(toImmutableList());
+    return Streams.mapWithIndex(
+        table.getColumns().stream(),
+        (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i)
+    ).collect(toImmutableList());
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName) {
@@ -408,7 +408,7 @@ public final class ClientSession implements AutoCloseable {
         .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
   }
 
-  public TiTimestamp getTimestamp() {
+  public TiTimestamp getSnapshotVersion() {
     return session.getTimestamp();
   }
 
@@ -416,10 +416,6 @@ public final class ClientSession implements AutoCloseable {
   public synchronized void close() throws Exception {
     session.close();
     jdbcConnectionProvider.close();
-  }
-
-  public TiTimestamp getSnapshotVersion() {
-    return session.getTimestamp();
   }
 
   public static ClientSession create(ClientConfig config) {

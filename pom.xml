@@ -165,6 +165,7 @@
     <module>mapreduce</module>
     <module>trino</module>
     <module>hive</module>
+    <module>bigdata-test</module>
   </modules>
 
   <build>
