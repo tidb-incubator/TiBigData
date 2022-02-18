@@ -57,6 +57,8 @@
     <gpg.skip>true</gpg.skip>
     <javadoc.skip>true</javadoc.skip>
     <mysql.driver.scope>test</mysql.driver.scope>
+    <failsafe.version>3.0.0-M3</failsafe.version>
+    <skipIntegrationTests>false</skipIntegrationTests>
   </properties>
 
   <repositories>
@@ -166,6 +168,7 @@
     <module>trino</module>
     <module>hive</module>
     <module>bigdata-test</module>
+    <module>test</module>
   </modules>
 
   <build>
@@ -174,12 +177,56 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>${failsafe.version}</version>
+            </dependency>
+          </dependencies>
           <configuration>
             <parallel>suites</parallel>
             <useUnlimitedThreads>true</useUnlimitedThreads>
             <forkMode>always</forkMode>
+            <!-- Skip the Integration tests as part of surefire run -->
+            <excludedGroups>io.tidb.bigdata.test.IntegrationTest</excludedGroups>
           </configuration>
           <version>3.0.0-M3</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>${failsafe.version}</version>
+          <dependencies>
+            <dependency>
+              <groupId>org.apache.maven.surefire</groupId>
+              <artifactId>surefire-junit47</artifactId>
+              <version>${failsafe.version}</version>
+            </dependency>
+          </dependencies>
+          <configuration>
+            <skip>${skipIntegrationTests}</skip>
+            <groups>io.tidb.bigdata.test.IntegrationTest</groups>
+            <includes>
+              <include>**/*.java</include>
+            </includes>
+          </configuration>
+          <executions>
+            <execution>
+              <id>integration</id>
+              <phase>integration-test</phase>
+              <goals>
+                <goal>integration-test</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>verify</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>verify</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
       </plugins>
     </pluginManagement>
