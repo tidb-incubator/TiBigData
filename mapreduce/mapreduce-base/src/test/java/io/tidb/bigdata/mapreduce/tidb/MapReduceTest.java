@@ -18,6 +18,7 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ColumnHandleInternal;
@@ -44,7 +45,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class MapReduceTest {
   public static final String TIDB_HOST = "TIDB_HOST";
 
@@ -180,18 +183,18 @@ public class MapReduceTest {
   public ClientSession getSingleConnection() {
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(ClientConfig.DATABASE_URL, String.format("jdbc:mysql://%s:%s/test", tidbHost, tidbPort));
+    properties.put(ClientConfig.DATABASE_URL, String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort));
     properties.put(ClientConfig.USERNAME, tidbUser);
     properties.put(ClientConfig.PASSWORD, tidbPassword);
 
-    return ClientSession.createWithSingleConnection(new ClientConfig(properties));
+    return ClientSession.create(new ClientConfig(properties));
   }
 
   @Test
   public void testReadRecords() throws Exception {
 
     try (Connection connection = DriverManager.getConnection(
-        String.format("jdbc:mysql://%s:%s/test", tidbHost, tidbPort), tidbUser, tidbPassword)) {
+        String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort), tidbUser, tidbPassword)) {
       doUpdateSql(connection, getCreateDatabaseSql(DATABASE_NAME));
       doUpdateSql(connection, getDropTableSql(TABLE_NAME));
       doUpdateSql(connection, getCreateTableSql(TABLE_NAME));
@@ -212,7 +215,7 @@ public class MapReduceTest {
               .collect(Collectors.toList()),
           Optional.empty(),
           Optional.empty(),
-          Integer.MAX_VALUE);
+          Optional.of(Integer.MAX_VALUE));
       RecordCursorInternal cursor = recordSetInternal.cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);

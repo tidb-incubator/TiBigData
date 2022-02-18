@@ -61,7 +61,7 @@ public class ConfigUtils {
     Map<String, String> properties = new HashMap<>();
     properties.put(DATABASE_URL,
         String.format(
-            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false",
+            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
             tidbHost, tidbPort));
     properties.put(USERNAME, tidbUser);
     properties.put(PASSWORD, tidbPassword);
