@@ -4,9 +4,12 @@ import static com.facebook.presto.testing.MaterializedResult.DEFAULT_PRECISION;
 
 import com.facebook.presto.testing.MaterializedRow;
 import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.test.IntegrationTest;
 import java.util.List;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class PrestoTest {
 
   private final TiDBQueryRunner tiDBQueryRunner = new TiDBQueryRunner();

@@ -19,6 +19,7 @@ package io.tidb.bigdata.jdbc;
 import io.tidb.bigdata.jdbc.impl.DiscovererImpl;
 import io.tidb.bigdata.jdbc.impl.RandomShuffleUrlMapper;
 import io.tidb.bigdata.jdbc.impl.RoundRobinUrlMapper;
+import io.tidb.bigdata.test.IntegrationTest;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -28,7 +29,9 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class TiDBDriverTest {
 
   public static final String JDBC_DRIVER = "io.tidb.bigdata.jdbc.TiDBDriver";

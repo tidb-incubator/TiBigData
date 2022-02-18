@@ -45,7 +45,14 @@
       <groupId>com.fasterxml.jackson.core</groupId>
       <version>${dep.jackson.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
   <modelVersion>4.0.0</modelVersion>
   <name>TiBigData Project CDC Decoder</name>
   <packaging>jar</packaging>

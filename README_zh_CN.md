@@ -39,7 +39,40 @@ export TIDB_HOST="127.0.0.1"
 export TIDB_PORT="4000"
 export TIDB_USER="root"
 export TIDB_PASSWORD=""
-mvn test
+mvn clean test-compile failsafe:integration-test -am -pl ${MODULE_NAME}
+```
+
+使用下面的命令来运行单元测试
+
+```
+export TIDB_HOST="127.0.0.1"
+export TIDB_PORT="4000"
+export TIDB_USER="root"
+export TIDB_PASSWORD=""
+mvn clean test-compile failsafe:integration-test -am -pl ${MODULE_NAME}
+```
+
+## 编写集成测试 
+
+首先，需要确保模块含有以下依赖:
+
+```xml
+ <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+</dependency>
+```
+
+然后，我们使用 JUnit 的 Category 来区分集成测试，用法如下:
+
+```java
+import io.tidb.bigdata.test.IntegrationTest;
+
+@Category(IntegrationTest.class)
+public class ConnectorsPluginTest {
+}
 ```
 
 ## 社区

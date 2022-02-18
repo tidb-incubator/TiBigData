@@ -6,9 +6,11 @@ import io.prestosql.spi.Plugin;
 import io.prestosql.spi.connector.ConnectorFactory;
 import io.prestosql.testing.TestingConnectorContext;
 import io.tidb.bigdata.prestosql.ConnectorsPlugin;
+import io.tidb.bigdata.test.IntegrationTest;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
-
+@Category(IntegrationTest.class)
 public class ConnectorsPluginTest {
 
   @Test

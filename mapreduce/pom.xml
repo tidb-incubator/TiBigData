@@ -30,4 +30,13 @@
     </profile>
   </profiles>
 
+  <dependencies>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
 </project>
