@@ -54,15 +54,14 @@ public class TiDBCatalogFactory implements CatalogFactory {
         TiDBOptions.WRITE_MODE,
         TiDBOptions.REPLICA_READ,
         TiDBOptions.FILTER_PUSH_DOWN,
-        TiDBOptions.DNS_SEARCH
+        TiDBOptions.DNS_SEARCH,
+        TiDBOptions.SNAPSHOT_TIMESTAMP,
+        TiDBOptions.SNAPSHOT_VERSION
     );
   }
   
   @Override
   public Catalog createCatalog(Context context) {
-    final FactoryUtil.CatalogFactoryHelper helper =
-        FactoryUtil.createCatalogFactoryHelper(this, context);
-    helper.validate();
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
   

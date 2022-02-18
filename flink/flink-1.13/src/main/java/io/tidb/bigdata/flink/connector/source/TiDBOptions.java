@@ -63,6 +63,12 @@ public class TiDBOptions {
 
   public static final ConfigOption<String> DNS_SEARCH = optional(ClientConfig.TIDB_DNS_SEARCH);
 
+  public static final ConfigOption<String> SNAPSHOT_TIMESTAMP = optional(
+      ClientConfig.SNAPSHOT_TIMESTAMP);
+
+  public static final ConfigOption<String> SNAPSHOT_VERSION = optional(
+      ClientConfig.SNAPSHOT_VERSION);
+
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
   public static final String STREAMING_SOURCE_KAFKA = "kafka";
