@@ -3,10 +3,13 @@ package io.tibigdata.trino;
 import static io.trino.testing.MaterializedResult.DEFAULT_PRECISION;
 
 import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.trino.testing.MaterializedRow;
 import java.util.List;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class PrestoTest {
 
   private final TiDBQueryRunner tiDBQueryRunner = new TiDBQueryRunner();

@@ -16,12 +16,15 @@
 
 package io.tidb.bigdata.tidb;
 
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class JdbcConnectionProviderFactoryTest {
 
   @Test
