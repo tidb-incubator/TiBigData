@@ -123,7 +123,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 stage('Test') {
                     dir("/home/jenkins/agent/git/tibigdata") {
                         try {
-                            timeout(30) {
+                            timeout(120) {
                                 sh ".ci/test.sh"
                             }
                         } catch (err) {
