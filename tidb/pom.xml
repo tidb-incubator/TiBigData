@@ -53,6 +53,8 @@
       <version>${dep.mysql.jdbc.version}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
       <artifactId>test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>

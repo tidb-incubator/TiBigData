@@ -15,6 +15,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static java.lang.String.format;
 
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import java.util.Arrays;
 import java.util.Map;
@@ -31,7 +32,9 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class FlinkTest {
 
   public static final String CATALOG_NAME = "tidb";
