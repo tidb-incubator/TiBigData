@@ -23,11 +23,11 @@ public class ConfigUtils {
 
   private static String getEnvOrDefault(String key, String default0) {
     String tmp = System.getenv(key);
-    if (tmp != null && !tmp.equals("")) {
+    if (!tmp.isEmpty()) {
       return tmp;
     }
     tmp = System.getProperty(key);
-    if (tmp != null && !tmp.equals("")) {
+    if (!tmp.isEmpty()) {
       return tmp;
     }
     return default0;

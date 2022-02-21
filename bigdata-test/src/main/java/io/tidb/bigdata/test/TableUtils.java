@@ -37,7 +37,6 @@ public class TableUtils {
         + "    PRIMARY KEY(c1),\n"
         + "    UNIQUE KEY(c2)\n"
         + ")", databaseName, tableName);
-
   }
 
 }

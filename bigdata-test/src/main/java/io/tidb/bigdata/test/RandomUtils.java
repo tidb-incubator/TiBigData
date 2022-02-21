@@ -7,7 +7,6 @@ public class RandomUtils {
 
   private static final Random random = new Random();
 
-
   public static String randomString() {
     return UUID.randomUUID().toString().replace("-", "");
   }
