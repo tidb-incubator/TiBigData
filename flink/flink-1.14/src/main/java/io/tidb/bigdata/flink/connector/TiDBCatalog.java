@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.AbstractCatalog;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogDatabase;
@@ -94,7 +93,7 @@ public class TiDBCatalog extends AbstractCatalog {
     this(DEFAULT_NAME, DEFAULT_DATABASE, properties);
   }
 
-  private void initClientSession() {
+  private synchronized void initClientSession() {
     if (!clientSession.isPresent()) {
       try {
         LOG.info("Init client session");
@@ -106,7 +105,7 @@ public class TiDBCatalog extends AbstractCatalog {
   }
 
   @Override
-  public synchronized void open() throws CatalogException {
+  public void open() throws CatalogException {
     if (catalogLoadMode == CatalogLoadMode.EAGER) {
       initClientSession();
     } else {
@@ -148,6 +147,7 @@ public class TiDBCatalog extends AbstractCatalog {
   @Override
   public void createDatabase(String name, CatalogDatabase database, boolean ignoreIfExists)
       throws DatabaseAlreadyExistException, CatalogException {
+    // TiDB can't recognize flink's database properties
     throw new UnsupportedOperationException();
   }
 

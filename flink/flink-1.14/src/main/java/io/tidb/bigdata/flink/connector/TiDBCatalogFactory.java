@@ -20,7 +20,6 @@ import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.factories.CatalogFactory;
-import org.apache.flink.table.factories.FactoryUtil;
 
 /**
  * Factory for {@link TiDBCatalog}
@@ -41,14 +40,11 @@ public class TiDBCatalogFactory implements CatalogFactory {
 
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
-    return TiDBOptions.requiredOptions();
+    return TiDBOptions.optionalOptions();
   }
 
   @Override
   public Catalog createCatalog(Context context) {
-    final FactoryUtil.CatalogFactoryHelper helper =
-        FactoryUtil.createCatalogFactoryHelper(this, context);
-    helper.validate();
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
 

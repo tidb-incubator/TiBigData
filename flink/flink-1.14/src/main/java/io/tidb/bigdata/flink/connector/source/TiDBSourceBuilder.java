@@ -38,7 +38,6 @@ import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
 import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
-import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceSwitchContext;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
@@ -119,22 +118,18 @@ public class TiDBSourceBuilder implements Serializable {
     HybridSource.HybridSourceBuilder<RowData, TiDBSourceSplitEnumerator> builder =
         HybridSource.builder(source);
     builder.addSource(
-        new SourceFactory<RowData, Source<RowData, ?, ?>, TiDBSourceSplitEnumerator>() {
-          @Override
-          public Source<RowData, ?, ?> create(
-              SourceSwitchContext<TiDBSourceSplitEnumerator> context) {
-            {
-              final CDCSourceBuilder cdcBuilder = createCDCBuilder(
-                  context.getPreviousEnumerator().getTimestamp());
-              switch (streamingCodec) {
-                case STREAMING_CODEC_CRAFT:
-                  return cdcBuilder.craft();
-                case STREAMING_CODEC_JSON:
-                  return cdcBuilder.json();
-                default:
-                  throw new IllegalArgumentException("Invalid streaming codec: '"
-                      + streamingCodec + "'");
-              }
+        (SourceFactory<RowData, Source<RowData, ?, ?>, TiDBSourceSplitEnumerator>) context -> {
+          {
+            final CDCSourceBuilder cdcBuilder = createCDCBuilder(
+                context.getPreviousEnumerator().getTimestamp());
+            switch (streamingCodec) {
+              case STREAMING_CODEC_CRAFT:
+                return cdcBuilder.craft();
+              case STREAMING_CODEC_JSON:
+                return cdcBuilder.json();
+              default:
+                throw new IllegalArgumentException("Invalid streaming codec: '"
+                    + streamingCodec + "'");
             }
           }
         },
