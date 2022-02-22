@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -93,6 +94,9 @@ public class TiDBSerde extends AbstractSerDe {
     for (int i = 0; i < columns.size(); i++) {
       ColumnHandleInternal column = columns.get(i);
       Writable value = mapWritable.get(new Text(column.getName()));
+      if (value instanceof NullWritable) {
+        value = null;
+      }
       objects[i] = value;
     }
     return objects;
