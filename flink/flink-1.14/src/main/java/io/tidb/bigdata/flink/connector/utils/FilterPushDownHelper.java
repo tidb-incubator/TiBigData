@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown.Result;
 import org.apache.flink.table.expressions.CallExpression;
@@ -123,14 +122,9 @@ public class FilterPushDownHelper {
           // we only need column name
           return getExpression(resolvedChildren.get(0));
         case or:
-          // always ignore false expression. If any expression is true, return ture
-          Stream<Expression> noneFalseStream = resolvedChildren.stream().map(this::getExpression)
-              .filter(exp -> exp != Expressions.alwaysFalse());
-          if (noneFalseStream.anyMatch(exp -> exp == Expressions.alwaysTrue())) {
-            return Expressions.alwaysTrue();
-          } else {
-            return Expressions.or(noneFalseStream);
-          }
+          // always ignore false expression
+          return Expressions.or(resolvedChildren.stream().map(this::getExpression)
+              .filter(exp -> exp != Expressions.alwaysTrue()));
         case not:
           if (left == Expressions.alwaysTrue()) {
             return left;
