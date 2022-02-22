@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.MapWritable;
+import org.apache.hadoop.mapred.FileInputFormat;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -48,11 +50,12 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
           DATABASE_NAME + " can not be null");
       TableHandleInternal tableHandle = new TableHandleInternal(EMPTY_STRING, databaseName,
           tableName);
+      Path path = FileInputFormat.getInputPaths(jobConf)[0];
       return new SplitManagerInternal(clientSession)
           .getSplits(tableHandle)
           .stream()
-          .map(TiDBInputSplit::new)
-          .toArray(InputSplit[]::new);
+          .map(splitInternal -> new TiDBInputSplit(path, splitInternal))
+          .toArray(TiDBInputSplit[]::new);
     } catch (Exception e) {
       throw new IOException(e);
     }

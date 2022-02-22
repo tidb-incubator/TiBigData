@@ -16,11 +16,19 @@
 
 package io.tidb.bigdata.hive;
 
+import com.google.common.collect.ImmutableSet;
+import io.tidb.bigdata.tidb.ClientConfig;
+import java.util.Set;
+
 public class TiDBConstant {
 
   public static final String EMPTY_STRING = "";
   public static final String TABLE_NAME = "tidb.table.name";
   public static final String DATABASE_NAME = "tidb.database.name";
 
-
+  // configurations that do not take effect within session
+  public static final Set<String> IMMUTABLE_CONFIG = ImmutableSet.of(
+      ClientConfig.DATABASE_URL,
+      ClientConfig.USERNAME,
+      ClientConfig.PASSWORD);
 }
