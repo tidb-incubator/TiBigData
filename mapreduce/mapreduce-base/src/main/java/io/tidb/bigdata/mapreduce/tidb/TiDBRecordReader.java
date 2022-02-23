@@ -88,7 +88,7 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
     this.splitInternal = new SplitInternal(
         new TableHandleInternal(split.getConnectorId(), split.getSchemaName(),
             split.getTableName()), split.getStartKey(), split.getEndKey(),
-        clientSession.getTimestamp());
+        clientSession.getSnapshotVersion());
     this.clientSession = clientSession;
     this.projectedFieldIndexes = IntStream.range(0, dfConf.getInputFieldNames().length).toArray();
     this.timestamp = Optional

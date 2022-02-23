@@ -14,6 +14,7 @@ mvn clean test-compile failsafe:integration-test -am -pl ticdc
 mvn clean test-compile failsafe:integration-test -am -pl flink/flink-1.11
 mvn clean test-compile failsafe:integration-test -am -pl flink/flink-1.12
 mvn clean test-compile failsafe:integration-test -am -pl flink/flink-1.13
+mvn clean test-compile failsafe:integration-test -am -pl flink/flink-1.14
 mvn clean test-compile failsafe:integration-test -am -pl mapreduce/mapreduce-base
 mvn clean test-compile failsafe:integration-test -am -pl prestodb
 

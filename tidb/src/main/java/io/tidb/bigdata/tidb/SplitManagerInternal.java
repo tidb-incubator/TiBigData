@@ -38,7 +38,7 @@ public final class SplitManagerInternal {
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
-    return getSplits(tableHandle, session.getTimestamp());
+    return getSplits(tableHandle, session.getSnapshotVersion());
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
