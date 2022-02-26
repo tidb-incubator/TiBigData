@@ -13,6 +13,7 @@ import static java.lang.String.format;
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.test.IntegrationTest;
+import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.time.LocalDateTime;
@@ -381,12 +382,6 @@ public class FlinkTest {
     }
   }
 
-  public String toSqlProperties(Map<String, String> properties) {
-    return properties.entrySet().stream()
-        .map(e -> String.format("'%s' = '%s'", e.getKey(), e.getValue()))
-        .collect(Collectors.joining(","));
-  }
-
   @Test
   public void testSnapshotRead() throws Exception {
     for (int i = 1; i <= 3; i++) {
@@ -423,7 +418,7 @@ public class FlinkTest {
       TableEnvironment tableEnvironment = getTableEnvironment();
       properties.put("type", "tidb");
       String createCatalogSql = format("CREATE CATALOG `tidb` WITH ( %s )",
-          toSqlProperties(properties));
+          TableUtils.toSqlProperties(properties));
       tableEnvironment.executeSql(createCatalogSql);
       String queryTableSql = format("SELECT * FROM `%s`.`%s`.`%s`", "tidb", DATABASE_NAME,
           tableName);

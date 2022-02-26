@@ -30,9 +30,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.flink.connector.base.source.reader.RecordsWithSplitIds;
 import org.apache.flink.table.data.RowData;
+import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceSplitRecords implements RecordsWithSplitIds<RowData> {
+
   private final Set<String> finishedSplits;
   private final TiDBSourceSplit[] splits;
   private int nextSplit;
@@ -41,15 +43,21 @@ public class TiDBSourceSplitRecords implements RecordsWithSplitIds<RowData> {
   private final List<ColumnHandleInternal> columns;
   private final TiDBSchemaAdapter schema;
   private final TiTimestamp timestamp;
+  private final Expression expression;
+  private final Integer limit;
 
   public TiDBSourceSplitRecords(ClientSession session, List<TiDBSourceSplit> splits,
-      List<ColumnHandleInternal> columns, TiDBSchemaAdapter schema) {
+      List<ColumnHandleInternal> columns, TiDBSchemaAdapter schema, Expression expression,
+      Integer limit, TiTimestamp timestamp) {
     this.session = session;
     this.splits = splits.toArray(new TiDBSourceSplit[0]);
     this.finishedSplits = splits.stream().map(TiDBSourceSplit::splitId).collect(Collectors.toSet());
     this.schema = schema;
     this.columns = columns;
-    this.timestamp = this.splits[0].getSplit().getTimestamp();
+    this.timestamp = Optional.ofNullable(timestamp)
+        .orElseGet(() -> this.splits[0].getSplit().getTimestamp());
+    this.expression = expression;
+    this.limit = limit;
   }
 
   @Nullable
@@ -63,7 +71,8 @@ public class TiDBSourceSplitRecords implements RecordsWithSplitIds<RowData> {
     TiDBSourceSplit split = splits[currentSplit];
     SplitInternal splitInternal = split.getSplit();
     RecordSetInternal recordSetInternal = new RecordSetInternal(session,
-        splitInternal, columns, Optional.empty(), Optional.empty());
+        splitInternal, columns, Optional.ofNullable(expression), Optional.of(timestamp),
+        Optional.ofNullable(limit));
     cursor = recordSetInternal.cursor();
     return splits[currentSplit].splitId();
   }
