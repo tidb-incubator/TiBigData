@@ -47,6 +47,8 @@ public class TiDBCatalogFactory implements CatalogFactory {
   
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
+    // The options may less than real properties which tidb supported,
+    // just use it by create catalog sql, we will not verify properties by flink api.
     return ImmutableSet.of(
         TiDBOptions.PASSWORD,
         TiDBOptions.MAX_POOL_SIZE,
