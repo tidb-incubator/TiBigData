@@ -116,7 +116,7 @@ public class TiDBSourceSplitEnumerator implements
       final String databaseName = properties.get(TiDBBaseDynamicTableFactory.DATABASE_NAME.key());
       final String tableName = properties.get(TiDBBaseDynamicTableFactory.TABLE_NAME.key());
       splitSession.getTableMust(databaseName, tableName);
-      timestamp = splitSession.getTimestamp();
+      timestamp = splitSession.getSnapshotVersion();
       final TableHandleInternal tableHandleInternal = new TableHandleInternal(
           UUID.randomUUID().toString(), databaseName, tableName);
       List<SplitInternal> splits =

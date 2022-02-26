@@ -22,11 +22,13 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.UUID;
-import org.apache.hadoop.mapred.InputSplit;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileSplit;
 import org.tikv.common.meta.TiTimestamp;
 
-public class TiDBInputSplit implements InputSplit {
+public class TiDBInputSplit extends FileSplit {
 
+  private Path path;
   private String databaseName;
   private String tableName;
   private String startKey;
@@ -38,8 +40,9 @@ public class TiDBInputSplit implements InputSplit {
   public TiDBInputSplit() {
   }
 
-  public TiDBInputSplit(SplitInternal splitInternal) {
-    this(splitInternal.getTable().getSchemaName(),
+  public TiDBInputSplit(Path path, SplitInternal splitInternal) {
+    this(path,
+        splitInternal.getTable().getSchemaName(),
         splitInternal.getTable().getTableName(),
         splitInternal.getStartKey(),
         splitInternal.getEndKey(),
@@ -47,8 +50,9 @@ public class TiDBInputSplit implements InputSplit {
         splitInternal.getTimestamp().getLogical());
   }
 
-  public TiDBInputSplit(String databaseName, String tableName, String startKey,
+  public TiDBInputSplit(Path path, String databaseName, String tableName, String startKey,
       String endKey, long physicalTimestamp, long logicalTimestamp) {
+    this.path = path;
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.startKey = startKey;
@@ -65,9 +69,13 @@ public class TiDBInputSplit implements InputSplit {
         new TiTimestamp(physicalTimestamp, logicalTimestamp));
   }
 
+  @Override
+  public Path getPath() {
+    return path;
+  }
 
   @Override
-  public long getLength() throws IOException {
+  public long getLength() {
     return 0;
   }
 
@@ -78,6 +86,7 @@ public class TiDBInputSplit implements InputSplit {
 
   @Override
   public void write(DataOutput dataOutput) throws IOException {
+    dataOutput.writeUTF(path.toString());
     dataOutput.writeUTF(databaseName);
     dataOutput.writeUTF(tableName);
     dataOutput.writeUTF(startKey);
@@ -88,6 +97,7 @@ public class TiDBInputSplit implements InputSplit {
 
   @Override
   public void readFields(DataInput dataInput) throws IOException {
+    this.path = new Path(dataInput.readUTF());
     this.databaseName = dataInput.readUTF();
     this.tableName = dataInput.readUTF();
     this.startKey = dataInput.readUTF();
