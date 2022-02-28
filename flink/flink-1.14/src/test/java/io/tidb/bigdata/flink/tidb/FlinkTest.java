@@ -280,7 +280,7 @@ public class FlinkTest {
     Map<String, String> properties = defaultProperties();
     properties.put(SINK_IMPL.key(), TIKV.name());
     properties.put(SINK_TRANSACTION.key(), MINIBATCH.name());
-    properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(12345));
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(10000));
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
     String dropTableSql = format("DROP TABLE IF EXISTS `%S`", tableName);
@@ -309,8 +309,11 @@ public class FlinkTest {
     CatalogBaseTable table = tiDBCatalog.getTable("test", tableName);
     String createDatagenSql = format("CREATE TABLE datagen \n%s\n WITH (\n"
         + " 'connector' = 'datagen',\n"
-        + " 'number-of-rows'='%s'\n"
-        + ")", table.getUnresolvedSchema().toString(), rowCount);
+        + " 'number-of-rows'='%s',\n"
+        + " 'fields.c1.kind'='sequence',\n"
+        + " 'fields.c1.start'='1',\n"
+        + " 'fields.c1.end'='%s'\n"
+        + ")", table.getUnresolvedSchema().toString(), rowCount, rowCount);
     tableEnvironment.executeSql(createDatagenSql);
     String sql = format("INSERT INTO `tidb`.`test`.`%s` SELECT * FROM datagen", tableName);
     System.out.println(sql);
@@ -550,14 +553,16 @@ public class FlinkTest {
             + "    unique key(c1)\n"
             + ")", DATABASE_NAME, dstTable);
     tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
-    String sql = format("INSERT INTO `tidb`.`test`.`%s` /*+ OPTIONS('tidb.sink.transaction'='global') */"
-        + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
-        + "FROM `tidb`.`test`.`%s`", dstTable, srcTable);
+    String sql = format(
+        "INSERT INTO `tidb`.`test`.`%s` /*+ OPTIONS('tidb.sink.transaction'='global') */"
+            + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
+            + "FROM `tidb`.`test`.`%s`", dstTable, srcTable);
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
   }
 
+  @Test
   public void testCheckpoint() throws Exception {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

@@ -2,6 +2,7 @@ package io.tidb.bigdata.test;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 
 public class ConfigUtils {
 
@@ -23,11 +24,11 @@ public class ConfigUtils {
 
   private static String getEnvOrDefault(String key, String default0) {
     String tmp = System.getenv(key);
-    if (!tmp.isEmpty()) {
+    if (StringUtils.isNotEmpty(tmp)) {
       return tmp;
     }
     tmp = System.getProperty(key);
-    if (!tmp.isEmpty()) {
+    if (StringUtils.isNotEmpty(tmp)) {
       return tmp;
     }
     return default0;
