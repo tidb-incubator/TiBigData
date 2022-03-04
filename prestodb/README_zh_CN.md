@@ -9,14 +9,13 @@
 | PrestoDB | 0.234.2 |
 
 ## 2 编译 PrestoDB Connector
-请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 PrestoDB-0.234.2 的小版本构建，如果与你的 PrestoDB 版本不同，你需要手动将 TiBigData 依赖的 PrestoDB 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 PrestoDB。当然，你也可以按照下面的步骤重新搭建一个 0.234.2 版本的 PrestoDB 单机版集群以做测试。
+请参考以下步骤。TiBigData 的 API 基于 PrestoDB-0.234.2 的小版本构建，如果与你的 PrestoDB 版本不同，你需要手动将 TiBigData 依赖的 PrestoDB 版本修改为你需要的版本，此外，你可能需要将 TiBigData 的代码进行一些小改动以兼容不同版本的 PrestoDB。当然，你也可以按照下面的步骤重新搭建一个 0.234.2 版本的 PrestoDB 单机版集群以做测试。
 
 ```bash
 # 克隆项目
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# 在编译之前你需要先编译 TiKV 的 java 客户端
-./.ci/build-client-java.sh
+
 # 编译 presto connector
 mvn clean package -DskipTests -am -pl prestodb -Dmysql.driver.scope=compile
 # 解压 plugin

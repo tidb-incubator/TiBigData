@@ -9,14 +9,13 @@
 | Flink | 1.11.x / 1.12.x / 1.13.x |
 
 ## 2 编译 Flink Connector
-请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。此外，TiBigData 的 API 基于 1.11.0/1.12.0/1.13.0 小版本构建，如果你的 Flink 版本是 1.13.x，需要将 Flink 的版本手动从 1.13.0 替换为 1.13.x 来避免一些奇怪的问题，这是因为 Flink 在小版本改动的时候也有可能改动 API 的接口。
+请参考以下步骤。TiBigData 的 API 基于 1.11.0/1.12.0/1.13.0 小版本构建，如果你的 Flink 版本是 1.13.x，需要将 Flink 的版本手动从 1.13.0 替换为 1.13.x 来避免一些奇怪的问题，这是因为 Flink 在小版本改动的时候也有可能改动 API 的接口。
 
 ```bash
 # 克隆项目
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# 在编译之前你需要先编译 TiKV 的 java 客户端
-./.ci/build-client-java.sh
+
 # 编译 flink connector, 我们以 1.13.5 为例，你需要先设置 TiBigData 编译的模块为 flink-1.13 并且设置 Flink 的版本为 1.13.5
 mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```

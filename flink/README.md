@@ -10,14 +10,12 @@
 
 ## 2 Compile Flink Connector
 
-Please refer to the following steps, as the comments say, you need to compile the TiKV java client before you compile TiBigData, because TiBigData preempts some new features that are not released in the TiKV java client.
 
 ```bash
 # clone
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# compile TiKV java client
-./.ci/build-client-java.sh
+
 # compile flink connector, using Flink-1.13.5 as an example
 mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```
