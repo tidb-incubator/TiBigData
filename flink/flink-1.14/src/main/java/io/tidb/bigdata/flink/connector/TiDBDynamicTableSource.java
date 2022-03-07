@@ -19,7 +19,10 @@ package io.tidb.bigdata.flink.connector;
 import io.tidb.bigdata.flink.connector.source.TiDBSourceBuilder;
 import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
 import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
+import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ClientSession;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
@@ -29,16 +32,27 @@ import org.apache.flink.table.connector.source.LookupTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.connector.source.SourceProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown;
+import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
 import org.apache.flink.table.expressions.ResolvedExpression;
+import org.apache.flink.util.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tikv.common.expression.Expression;
+import org.tikv.common.meta.TiTableInfo;
 
 public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSource,
-    SupportsProjectionPushDown, SupportsFilterPushDown {
+    SupportsProjectionPushDown, SupportsFilterPushDown, SupportsLimitPushDown {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
+
   private final ResolvedCatalogTable table;
   private final ChangelogMode changelogMode;
   private final LookupTableSourceHelper lookupTableSourceHelper;
   private FilterPushDownHelper filterPushDownHelper;
   private int[] projectedFields;
+  private Integer limit;
+  private Expression expression;
 
   public TiDBDynamicTableSource(ResolvedCatalogTable table,
       ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
@@ -50,7 +64,6 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
     this.table = table;
     this.changelogMode = changelogMode;
     this.lookupTableSourceHelper = lookupTableSourceHelper;
-    this.filterPushDownHelper = new FilterPushDownHelper(table);
   }
 
   @Override
@@ -62,8 +75,8 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext scanContext) {
     /* Disable metadata as it doesn't work with projection push down at this time */
     return SourceProvider.of(
-        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields)
-            .build());
+        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields,
+            expression, limit).build());
   }
 
   @Override
@@ -97,6 +110,30 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
 
   @Override
   public Result applyFilters(List<ResolvedExpression> filters) {
-    return filterPushDownHelper.applyFilters(filters);
+    ClientConfig clientConfig = new ClientConfig(table.getOptions());
+    if (clientConfig.isFilterPushDown() && filterPushDownHelper == null) {
+      String databaseName = getRequiredProperties(TiDBOptions.DATABASE_NAME.key());
+      String tableName = getRequiredProperties(TiDBOptions.TABLE_NAME.key());
+      TiTableInfo tiTableInfo;
+      try (ClientSession clientSession = ClientSession.create(clientConfig)) {
+        tiTableInfo = clientSession.getTableMust(databaseName, tableName);
+        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+      } catch (Exception e) {
+        throw new IllegalStateException("can not get table", e);
+      }
+      LOG.info("Flink filters: " + filters);
+      this.expression = filterPushDownHelper.toTiDBExpression(filters).orElse(null);
+      LOG.info("TiDB filters: " + expression);
+    }
+    return Result.of(Collections.emptyList(), filters);
+  }
+
+  private String getRequiredProperties(String key) {
+    return Preconditions.checkNotNull(table.getOptions().get(key), key + " can not be null");
+  }
+
+  @Override
+  public void applyLimit(long limit) {
+    this.limit = limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit;
   }
 }

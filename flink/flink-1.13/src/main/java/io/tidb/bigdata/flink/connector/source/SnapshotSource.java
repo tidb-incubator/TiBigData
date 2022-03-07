@@ -26,8 +26,12 @@ import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplitSerializer;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
@@ -40,6 +44,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.expression.Expression;
+import org.tikv.common.meta.TiTimestamp;
 
 public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
     ResultTypeQueryable<RowData> {
@@ -50,6 +55,7 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   private final TiDBSchemaAdapter schema;
   private final Expression expression;
   private final Integer limit;
+  private final TiTimestamp timestamp;
 
   public SnapshotSource(String databaseName, String tableName,
       Map<String, String> properties, TiDBSchemaAdapter schema,
@@ -60,6 +66,7 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     this.schema = schema;
     this.expression = expression;
     this.limit = limit;
+    this.timestamp = getOptionalVersion().orElseGet(() -> getOptionalTimestamp().orElse(null));
   }
 
   @Override
@@ -89,7 +96,7 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
       final ClientSession s = session;
       schema.open();
       return new TiDBSourceReader(
-          () -> new TiDBSourceSplitReader(s, columns, schema, expression, limit),
+          () -> new TiDBSourceSplitReader(s, columns, schema, expression, limit, timestamp),
           toConfiguration(properties), context);
     } catch (Exception ex) {
       if (session != null) {
@@ -125,5 +132,20 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   @Override
   public TypeInformation<RowData> getProducedType() {
     return schema.getProducedType();
+  }
+
+  private Optional<TiTimestamp> getOptionalTimestamp() {
+    return Optional
+        .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
+        .filter(StringUtils::isNoneEmpty)
+        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
+  }
+
+  private Optional<TiTimestamp> getOptionalVersion() {
+    return Optional
+        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+        .filter(StringUtils::isNoneEmpty)
+        .map(Long::parseUnsignedLong)
+        .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }
 }
