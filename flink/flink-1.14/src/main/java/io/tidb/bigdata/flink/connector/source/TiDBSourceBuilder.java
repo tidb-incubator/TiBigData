@@ -28,6 +28,7 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.VALID_STREAMING_SOURCE
 import static io.tidb.bigdata.flink.format.cdc.CDCOptions.IGNORE_PARSE_ERRORS;
 
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
+import io.tidb.bigdata.tidb.ClientConfig;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +43,7 @@ import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
+import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceBuilder implements Serializable {
@@ -53,12 +55,16 @@ public class TiDBSourceBuilder implements Serializable {
   private Map<String, String> properties;
   private boolean ignoreParseErrors;
   private final TiDBSchemaAdapter schema;
+  private final Expression expression;
+  private final Integer limit;
 
   public TiDBSourceBuilder(ResolvedCatalogTable table,
       Function<DataType, TypeInformation<RowData>> typeInfoFactory,
-      TiDBMetadata[] metadata, int[] projectedFields) {
+      TiDBMetadata[] metadata, int[] projectedFields, Expression expression, Integer limit) {
     this.schema = new TiDBSchemaAdapter(table, typeInfoFactory, metadata, projectedFields);
     setProperties(table.getOptions());
+    this.expression = expression;
+    this.limit = limit;
   }
 
   private static String validateRequired(String key, String value) {
@@ -111,9 +117,16 @@ public class TiDBSourceBuilder implements Serializable {
   }
 
   public Source<RowData, ?, ?> build() {
-    final SnapshotSource source = new SnapshotSource(databaseName, tableName, properties, schema);
+    final SnapshotSource source = new SnapshotSource(databaseName, tableName, properties, schema,
+        expression, limit);
     if (streamingSource == null) {
       return source;
+    }
+    if (limit != null) {
+      throw new IllegalStateException("Limit push down is not supported for streaming source");
+    }
+    if (new ClientConfig(properties).isFilterPushDown()) {
+      throw new IllegalStateException("Filter push down is not supported for streaming source");
     }
     HybridSource.HybridSourceBuilder<RowData, TiDBSourceSplitEnumerator> builder =
         HybridSource.builder(source);

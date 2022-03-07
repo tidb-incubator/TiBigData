@@ -20,6 +20,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_DNS_SEARCH;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
@@ -55,7 +56,8 @@ public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
         MIN_IDLE_SIZE,
         TIDB_WRITE_MODE,
         TIDB_REPLICA_READ,
-        TIDB_FILTER_PUSH_DOWN
+        TIDB_FILTER_PUSH_DOWN,
+        TIDB_DNS_SEARCH
     );
   }
 }

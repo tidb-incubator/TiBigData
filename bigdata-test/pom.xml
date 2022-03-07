@@ -15,6 +15,7 @@
     <maven.compiler.source>8</maven.compiler.source>
     <maven.compiler.target>8</maven.compiler.target>
     <log4j.version>1.7.21</log4j.version>
+    <dep.tikv-client.version>3.2.0</dep.tikv-client.version>
   </properties>
 
   <dependencies>
@@ -22,6 +23,11 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
       <version>1.7.21</version>
+    </dependency>
+    <dependency>
+      <groupId>org.tikv</groupId>
+      <artifactId>tikv-client-java</artifactId>
+      <version>${dep.tikv-client.version}</version>
     </dependency>
   </dependencies>
 

@@ -51,8 +51,6 @@ import org.tikv.common.types.DataType;
 
 public class FilterPushDownHelper {
 
-  private static final Logger LOG = LoggerFactory.getLogger(FilterPushDownHelper.class);
-
   private static final Set<FlinkExpression> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
       greaterThan,
       greaterThanOrEqual,
@@ -62,6 +60,7 @@ public class FilterPushDownHelper {
       notEquals,
       like
   );
+  static final Logger LOG = LoggerFactory.getLogger(FilterPushDownHelper.class);
 
   private Expression expression;
   private Map<String, DataType> nameTypeMap;
@@ -107,9 +106,9 @@ public class FilterPushDownHelper {
       CallExpression callExpression = (CallExpression) resolvedExpression;
       List<ResolvedExpression> resolvedChildren = callExpression.getResolvedChildren();
       String functionName = callExpression.getFunctionName();
-      FlinkExpression flinkExpression = FlinkExpression.fromString(functionName);
       Expression left = null;
       Expression right = null;
+      FlinkExpression flinkExpression = FlinkExpression.fromString(functionName);
       if (COMPARISON_BINARY_FILTERS.contains(flinkExpression)) {
         left = getExpression(resolvedChildren.get(0));
         right = getExpression(resolvedChildren.get(1));
@@ -122,12 +121,12 @@ public class FilterPushDownHelper {
           // we only need column name
           return getExpression(resolvedChildren.get(0));
         case or:
-          // always ignore false expression
+          // ignore always true expression
           return Expressions.or(resolvedChildren.stream().map(this::getExpression)
               .filter(exp -> exp != Expressions.alwaysTrue()));
         case not:
           if (left == Expressions.alwaysTrue()) {
-            return left;
+            return Expressions.alwaysTrue();
           }
           return alwaysTrueIfNotSupported(Expressions.not(left));
         case greaterThan:
@@ -144,6 +143,7 @@ public class FilterPushDownHelper {
           return alwaysTrueIfNotSupported(Expressions.notEqual(left, right));
         case like:
           return alwaysTrueIfNotSupported(Expressions.like(left, right));
+        case unresolved:
         default:
           return Expressions.alwaysTrue();
       }
@@ -176,7 +176,14 @@ public class FilterPushDownHelper {
     return Result.of(Collections.emptyList(), filters);
   }
 
+  public Expression getTiDBExpressions() {
+    return expression;
+  }
+
   public enum FlinkExpression {
+    cast("cast"),
+    or("or"),
+    not("not"),
     greaterThan("greaterThan"),
     greaterThanOrEqual("greaterThanOrEqual"),
     lessThan("lessThan"),
@@ -184,9 +191,7 @@ public class FilterPushDownHelper {
     equals("equals"),
     notEquals("notEquals"),
     like("like"),
-    cast("cast"),
-    or("or"),
-    not("not");
+    unresolved("_unresolved");
 
     private final String name;
 
@@ -196,10 +201,10 @@ public class FilterPushDownHelper {
 
     public static FlinkExpression fromString(String s) {
       return Arrays.stream(values())
+          .filter(flinkExpression -> flinkExpression != unresolved)
           .filter(flinkExpression -> flinkExpression.name.equals(s))
           .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException(
-              "Expression must be one of: " + Arrays.toString(values())));
+          .orElse(unresolved);
     }
   }
 }
