@@ -79,7 +79,7 @@ public class TiDBInputSplit extends FileSplit {
   public void readFields(DataInput dataInput) throws IOException {
     this.path = new Path(dataInput.readUTF());
     Integer size = dataInput.readInt();
-    List<SplitInternal> splitInternalList = new ArrayList<>();
+    List<SplitInternal> splitInternalList = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       String databaseName = dataInput.readUTF();
       String tableName = dataInput.readUTF();
