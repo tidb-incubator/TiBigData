@@ -58,11 +58,11 @@ All types are supported.
 
 ## 'AND'
 
-`c1 = 1 AND c2 = 1` is supported, when `c1 = 1` is not supported，whole filter will be simplified to `c2 = 1`.
+`${OPERATOR1} AND ${OPERATOR2}` is supported, when `${OPERATOR1}` is not supported，whole filter will be simplified to `${OPERATOR2}`.
 
 ## 'OR'
 
-`c1 = 1 OR c2 = 1`  is supported, when `c1 = 1` is not supported，we will scan the whole table.
+`${OPERATOR1} OR ${OPERATOR2}`  is supported, when `${OPERATOR1}` or `${OPERATOR2}` is not supported，we will scan the whole table.
 
 
 

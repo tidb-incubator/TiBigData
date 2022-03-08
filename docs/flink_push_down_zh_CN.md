@@ -58,11 +58,11 @@
 
 ## 'AND'
 
-语法为 `c1 = 1 AND c2 = 1`，当 `c1 = 1` 不支持时，将会被简化为 `c2 = 1`。
+语法为 `${OPERATOR1} AND ${OPERATOR2}`，当 `${OPERATOR1}` 不支持时，将会被简化为 `${OPERATOR2}`。
 
 ## 'OR'
 
-语法为 `c1 = 1 OR c2 = 1`，当 `c1 = 1` 不支持时，将会被简化为全表扫描。
+语法为 `${OPERATOR1} OR ${OPERATOR2}`，当 `${OPERATOR1}` 或者 `${OPERATOR2}` 不支持时，将会被简化为全表扫描。
 
 
 
