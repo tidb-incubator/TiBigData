@@ -4,7 +4,7 @@ Starting from Flink 1.13, we have provided the push down support from Flink to t
 
 When encountering unsupported operators, you will not read the wrong data, but will read more data. Flink will help you conduct secondary filtering to ensure that the data you read is what you want.
 
-## 二元运算符
+## Binary operator
 
 ###  '=' '>' '<' '>=' '<=' '<>'
 
