@@ -29,16 +29,6 @@
       <artifactId>tikv-client-java</artifactId>
       <version>${dep.tikv-client.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.tikv</groupId>
-      <artifactId>tikv-client-java</artifactId>
-      <version>${dep.tikv-client.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.tikv</groupId>
-      <artifactId>tikv-client-java</artifactId>
-      <version>${dep.tikv-client.version}</version>
-    </dependency>
   </dependencies>
 
 </project>
