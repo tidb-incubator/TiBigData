@@ -48,7 +48,7 @@
 |     ENUM     |    STRING    |   TRUE    |
 |     SET      |    STRING    |   FALSE   |
 
-### like
+### 'LIKE'
 
 只有 `c1 LIKE 'xxx'` 和 `c1 LIKE CAST(xxx AS STRING)` 此类语法支持，列 `c1` 必须为字符串类型。
 

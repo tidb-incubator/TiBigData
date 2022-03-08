@@ -48,7 +48,7 @@ The supported data types are as follows：
 |     ENUM     |    STRING    |   TRUE    |
 |     SET      |    STRING    |   FALSE   |
 
-### like
+### 'LIKE'
 
 Only `c1 LIKE 'xxx'` and `c1 LIKE CAST(xxx AS STRING)` are supported，column `c1` must be string.
 
