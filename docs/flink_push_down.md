@@ -12,6 +12,8 @@ Taking '=' as an example:
 
 `c1 = xxx` and `c1 = CAST(xxx AS INT)` are supported, and `CAST(c1 AS INT) = xxx` will be simplified to `c1 = xxx`.
 
+`c1 = c2` is not supported.
+
 The supported data types are as follows：
 
 |     TiDB     |    Flink     | Supported |
