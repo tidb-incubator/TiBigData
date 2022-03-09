@@ -1,4 +1,4 @@
-def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId, ghprbCommentBody) {
+def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
 
     def TIDB_BRANCH = "release-4.0"
     def TIKV_BRANCH = "release-4.0"
