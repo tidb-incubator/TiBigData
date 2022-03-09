@@ -40,6 +40,11 @@ import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.row.Row;
 
+/**
+ * A sink function that sinks unbounded stream with exactly-once semantic.
+ * <p><b>NOTE:</b> There is still a potential of data loss. {@link TwoPhaseCommitSinkFunction#recoverAndCommit(Object)}
+ */
+ 
 public class TiDBSinkFunction extends
     TwoPhaseCommitSinkFunction<Row, TiDBTransactionState, TiDBTransactionContext> {
 
