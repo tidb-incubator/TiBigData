@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.tidb;
+package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.FilterPushDownValidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.FilterPushDownValidator.getColumnType;
-import static io.tidb.bigdata.flink.tidb.FilterPushDownValidator.rows;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
 
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.IntegrationTest;

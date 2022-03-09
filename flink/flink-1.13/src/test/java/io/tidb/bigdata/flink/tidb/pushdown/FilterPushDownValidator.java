@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.tidb;
+package io.tidb.bigdata.flink.tidb.pushdown;
 
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
