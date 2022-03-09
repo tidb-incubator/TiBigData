@@ -19,13 +19,11 @@ Hive 版本与 TiBigData 模块对应关系：
 
 ## 2 编译 Hive Storage Handler
 
-请参考以下步骤，如注释所说，在编译之前你需要先编译 TiKV 的 java 客户端，这是因为 TiBigData 抢先用到了一些 TiKV java 客户端未发版的新功能。
 ```bash
 # 克隆项目
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# 在编译之前你需要先编译 TiKV 的 java 客户端
-./.ci/build-client-java.sh
+
 # 编译 Hive Storage Handler，以 hive-2.2.0 为例
 mvn clean package -DskipTests -am -pl hive/hive-2.2.0
 ```

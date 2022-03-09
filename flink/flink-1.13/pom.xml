@@ -92,6 +92,12 @@
       <version>${dep.flink.version}</version>
       <scope>${flink.kafka.connector.scope}</scope>
     </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

@@ -10,14 +10,12 @@
 
 ## 2 Compile PrestoDB Connector
 
-Please refer to the following steps, as the comments say, you need to compile the TiKV java client before you compile TiBigData, because TiBigData preempts some new features that are not released in the TiKV java client.
 
 ```bash
 # clone project
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-# compile TiKV java client
-./.ci/build-client-java.sh
+
 # compile presto connector
 mvn clean package -DskipTests -am -pl prestodb -Dmysql.driver.scope=compile
 # unzip plugin

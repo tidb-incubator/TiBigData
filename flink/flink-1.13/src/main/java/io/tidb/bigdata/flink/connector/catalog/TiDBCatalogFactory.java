@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector.catalog;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
@@ -46,21 +47,23 @@ public class TiDBCatalogFactory implements CatalogFactory {
   
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
+    // The options may less than real properties which tidb supported,
+    // just use it by create catalog sql, we will not verify properties by flink api.
     return ImmutableSet.of(
         TiDBOptions.PASSWORD,
         TiDBOptions.MAX_POOL_SIZE,
         TiDBOptions.MIN_IDLE_SIZE,
         TiDBOptions.WRITE_MODE,
         TiDBOptions.REPLICA_READ,
-        TiDBOptions.FILTER_PUSH_DOWN
+        TiDBOptions.FILTER_PUSH_DOWN,
+        TiDBOptions.DNS_SEARCH,
+        TiDBOptions.SNAPSHOT_TIMESTAMP,
+        TiDBOptions.SNAPSHOT_VERSION
     );
   }
   
   @Override
   public Catalog createCatalog(Context context) {
-    final FactoryUtil.CatalogFactoryHelper helper =
-        FactoryUtil.createCatalogFactoryHelper(this, context);
-    helper.validate();
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
   
