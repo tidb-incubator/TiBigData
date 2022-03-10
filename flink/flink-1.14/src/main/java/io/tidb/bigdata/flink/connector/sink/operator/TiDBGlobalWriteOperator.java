@@ -8,13 +8,10 @@ import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
-  private static final Logger LOG = LoggerFactory.getLogger(TiDBGlobalWriteOperator.class);
 
   public TiDBGlobalWriteOperator(String databaseName, String tableName,
       Map<String, String> properties, TiTimestamp tiTimestamp,

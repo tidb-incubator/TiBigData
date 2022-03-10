@@ -36,7 +36,6 @@ public class TiDBKeyedProcessFunctionFactory {
         throw new IllegalStateException("Can not create KeyedProcessFunction by transaction: "
             + sinkOptions.getSinkTransaction());
     }
-
   }
 
 }

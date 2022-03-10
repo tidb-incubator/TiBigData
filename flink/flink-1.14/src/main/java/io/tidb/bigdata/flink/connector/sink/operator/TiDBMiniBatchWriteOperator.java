@@ -10,15 +10,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.ByteWrapper;
 import org.tikv.common.meta.TiTimestamp;
 
+/**
+ * The operator for flushing rows to TiDB on mode MiniBatch.
+ * During each flush, the rows are committed to TiDB in a transaction.
+ */
 public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
-
-  private static final Logger LOG = LoggerFactory.getLogger(TiDBMiniBatchWriteOperator.class);
 
   public TiDBMiniBatchWriteOperator(String databaseName, String tableName,
       Map<String, String> properties, TiTimestamp tiTimestamp,

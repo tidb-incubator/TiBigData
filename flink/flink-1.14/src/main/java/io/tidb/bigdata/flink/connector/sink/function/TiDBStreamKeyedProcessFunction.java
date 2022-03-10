@@ -35,9 +35,8 @@ import org.tikv.common.row.Row;
 /**
  * A keyed function that deduplicates elements of an unbounded stream.
  * CheckpointEntry stored in ValueState is used for marking if the same element has been 
- *  processed during the same checkpoint.
+ * processed during the same checkpoint.
  */
- 
 public class TiDBStreamKeyedProcessFunction extends
     KeyedProcessFunction<List<Object>, Row, Row> implements
     CheckpointListener {

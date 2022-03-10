@@ -32,7 +32,6 @@ import org.tikv.common.row.Row;
  * A keyed function that deduplicates elements of a bounded stream.
  * Boolean stored in ValueState is used for marking if the same element has been processed.
  */
- 
 public class TiDBBatchKeyedProcessFunction extends KeyedProcessFunction<List<Object>, Row, Row> {
 
   private final TiDBSinkOptions sinkOptions;

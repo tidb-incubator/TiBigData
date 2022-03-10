@@ -38,14 +38,10 @@ public class ConfigUtils {
 
   public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
 
-  private static String getEnvOrDefault(String key, String default0) {
-    String tmp = System.getenv(key);
-    if (StringUtils.isNotEmpty(tmp)) {
-      return tmp;
-    }
-    tmp = System.getProperty(key);
-    if (StringUtils.isNotEmpty(tmp)) {
-      return tmp;
+  private static String getEnvOrDefault(String key, String defaultValue) {
+    String env = System.getenv(key);
+    if (StringUtils.isNotEmpty(env)) {
+      return env;
     }
     return System.getProperty(key, defaultValue);
   }

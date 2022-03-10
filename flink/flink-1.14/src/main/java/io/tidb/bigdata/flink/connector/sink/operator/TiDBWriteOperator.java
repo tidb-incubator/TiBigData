@@ -30,16 +30,16 @@ import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
 import org.apache.flink.streaming.api.operators.BoundedOneInput;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.row.Row;
 
+/**
+ * Base operator for flushing rows to TiDB.
+ * When the row size is larger than the threshold, it will flush the rows to TiDB.
+ */
 public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void> implements
     OneInputStreamOperator<Row, Void>, BoundedOneInput {
-
-  private static final Logger LOG = LoggerFactory.getLogger(TiDBWriteOperator.class);
 
   protected final String databaseName;
   protected final String tableName;
