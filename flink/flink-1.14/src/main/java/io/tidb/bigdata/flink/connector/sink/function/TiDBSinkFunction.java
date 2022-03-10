@@ -21,10 +21,10 @@ import io.tidb.bigdata.flink.connector.sink.function.TiDBSinkFunction.TiDBTransa
 import io.tidb.bigdata.flink.connector.sink.function.TiDBSinkFunction.TiDBTransactionState;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import io.tidb.bigdata.tidb.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
