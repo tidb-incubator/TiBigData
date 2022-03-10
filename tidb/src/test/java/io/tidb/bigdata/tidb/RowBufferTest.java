@@ -2,13 +2,16 @@ package io.tidb.bigdata.tidb;
 
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.ConfigUtils;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.row.ObjectRowImpl;
 import org.tikv.common.row.Row;
 
+@Category(IntegrationTest.class)
 public class RowBufferTest {
 
   ClientSession clientSession = ClientSession.create(
