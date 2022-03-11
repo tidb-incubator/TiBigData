@@ -5,16 +5,16 @@
 * [1 环境准备](#1-环境准备)
 * [2 编译 Flink Connector](#2-编译-flink-connector)
 * [3 部署 Flink](#3-部署-flink)
-  * [3.1 下载安装包](#3.1-下载安装包)
-  * [3.2 安装 TiBigData 并启动 Flink 集群](#3.2-安装-tibigdata-并启动-flink-集群)
+  * [3.1 下载安装包](#31-下载安装包)
+  * [3.2 安装 TiBigData 并启动 Flink 集群](#32-安装-tibigdata-并启动-flink-集群)
 * [利用 Flink 读写 TiDB](#利用-flink-读写-tidb)
-* [Flink 与 TiDB 的类型映射](#flink-与-tidb-的-类型映射)
+* [Flink 与 TiDB 的类型映射](#flink-与-tidb-的类型映射)
 * [高级配置](#高级配置)
 * [TableFactory(Deprecated)](#tablefactorydeprecated)
 * [常见问题](#常见问题)
-  * [TiBigData 会占用 TiDB 的资源吗？](#tibigdata-会占用-tidb-的资源吗？)
-  * [Flink 的配置应该如何设置？](#flink-的配置应该如何设置？)
-  * [我该如何设置并发度来控制任务运行的时长？](#我该如何设置并发度来控制任务运行的时长？)
+  * [TiBigData 会占用 TiDB 的资源吗](#tibigdata-会占用-tidb-的资源吗)
+  * [Flink 的配置应该如何设置](#flink-的配置应该如何设置)
+  * [我该如何设置并发度来控制任务运行的时长](#我该如何设置并发度来控制任务运行的时长)
 
 ## 1 环境准备
 
@@ -248,15 +248,15 @@ SELECT * FROM people;
 
 ## 常见问题
 
-### TiBigData 会占用 TiDB 的资源吗？
+### TiBigData 会占用 TiDB 的资源吗
 
 TiBigData 只会占用 Flink 资源，不会占用 TiDB 的资源，但是在读写 TiDB 数据的时候，会给 TiDB 带来一定的压力，推荐读取使用 Follower Read 的方式，这样不会影响到 Leader 节点。
 
-### Flink 的配置应该如何设置？
+### Flink 的配置应该如何设置
 
 生产环境我们推荐一个 Flink 的 Slot 占用 4G 1Core 的资源。
 
-### 我该如何设置并发度来控制任务运行的时长？
+### 我该如何设置并发度来控制任务运行的时长
 
 TiBigData 读取一个 Region 的时间大约在 6 到 15 秒，我们用变量 `time_per_region` 表示，表的 Region 总数我们用 `region_count` 表示，Flink 任务的并行度我们用 `parallelism` 表示，则任务运行时间的计算公式如下：
 
