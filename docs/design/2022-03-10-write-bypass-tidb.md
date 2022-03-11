@@ -24,7 +24,7 @@ This article introduces an optimized solution for writing Flink connector to TiD
 
 ## Motivation or Background
 
-Currently, Fink connector uses JdbcDynamicTableSink to write data through TiDB server.
+Currently, Fink connector uses JdbcDynamicTableSink to write data, which doesn't provide transaction semantics.
 
 However, this approach leads to the following problems.
 - Lack of atomicity, if the Flink task fails and exists during the writing process, some data will be written successfully while the others not.
@@ -47,7 +47,7 @@ In the factory method of TiDBDynamicTableFactory, we will add TiDBDynamicTableSi
 
 ### Implement different dimensional transaction levels
 
-TiKV implements Google's Percolator transaction mode, which is a variation of 2pc. See [tidb-transaction-model](https://pingcap.com/zh/blog/tidb-transaction-model). 
+TiKV implements Google's Percolator transaction mode, which is a variation of 2pc. See [tikv-transaction-model](https://tikv.org/deep-dive/distributed-transaction/introduction). 
 
 For each transaction commit, we select a row as the primary key and perform a two-stage commit, while the transaction satisfies the ACID principle.
 
@@ -79,7 +79,7 @@ ProcessElement is executed once when it iterates over each element. As you can s
 
 ![image alt text](imgs/mini-batch.png)
 
-###Global
+### Global
 
 Global prewrites the primary key when the stream is generated, then the ProcessElement only prewrites the Secondary Keys and commits the primary key once all the data has been written.
 
@@ -87,13 +87,13 @@ Global prewrites the primary key when the stream is generated, then the ProcessE
 
 ### Checkpoint
 
-Unlike the previous two implementations, TIDBSinkFunction inherits TwoPhaseCommitSinkFunction, which provides excatly-once semantics. calls to the commit function occur at the checkpoint node, as described in [TwoPhaseCommitSinkFunction](https://nightlies.apache.org/flink/flink-docs-master/api/java/org/apache/flink/streaming/api/functions/sink/TwoPhaseCommitSinkFunction.html).
+Unlike the previous two implementations, TIDBSinkFunction inherits TwoPhaseCommitSinkFunction, which provides exactly-once semantics. calls to the commit function occur at the checkpoint node, as described in [TwoPhaseCommitSinkFunction](https://nightlies.apache.org/flink/flink-docs-master/api/java/org/apache/flink/streaming/api/functions/sink/TwoPhaseCommitSinkFunction.html).
 
 ![image alt text](imgs/checkpoint.png)
 
 ## Compatibility
 
-Flink Connector is forward compatible, the previous JDBC sink method still exists, and users can choose write-mode which they want.
+Flink Connector is backward compatible, the previous JDBC sink method still exists, and users can choose write-mode which they want.
 
 ## Test Design
 
