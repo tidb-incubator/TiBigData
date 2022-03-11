@@ -560,7 +560,7 @@ public class FlinkTest {
             + ")", DATABASE_NAME, dstTable);
     tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
     String sql = format(
-        "INSERT INTO `tidb`.`test`.`%s` /*+ OPTIONS('tidb.sink.transaction'='global') */"
+        "INSERT INTO `tidb`.`test`.`%s` /*+ OPTIONS('tikv.sink.transaction'='global') */"
             + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
             + "FROM `tidb`.`test`.`%s`", dstTable, srcTable);
     System.out.println(sql);

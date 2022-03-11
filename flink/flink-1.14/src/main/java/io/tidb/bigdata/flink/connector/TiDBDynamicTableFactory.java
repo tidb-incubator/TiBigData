@@ -88,31 +88,37 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
     TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
+
     if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
       return new TiDBDynamicTableSink(config.get(DATABASE_NAME), config.get(TABLE_NAME),
           context.getCatalogTable(), tiDBSinkOptions);
-    }
-    TableSchema schema = TableSchemaUtils.getPhysicalSchema(
-        context.getCatalogTable().getSchema());
-    String databaseName = config.get(DATABASE_NAME);
-    // jdbc options
-    JdbcConnectorOptions jdbcOptions = JdbcUtils.getJdbcOptions(
-        context.getCatalogTable().toProperties());
-    // execution options
-    JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
-        .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
-        .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
-        .withMaxRetries(config.get(SINK_MAX_RETRIES))
-        .build();
-    // dml options
-    JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
-        .withTableName(jdbcOptions.getTableName())
-        .withDialect(jdbcOptions.getDialect())
-        .withFieldNames(schema.getFieldNames())
-        .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
-        .build();
 
-    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+    } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
+      TableSchema schema = TableSchemaUtils.getPhysicalSchema(
+          context.getCatalogTable().getSchema());
+      String databaseName = config.get(DATABASE_NAME);
+      // jdbc options
+      JdbcConnectorOptions jdbcOptions = JdbcUtils.getJdbcOptions(
+          context.getCatalogTable().toProperties());
+      // execution options
+      JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
+          .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+          .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+          .withMaxRetries(config.get(SINK_MAX_RETRIES))
+          .build();
+      // dml options
+      JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
+          .withTableName(jdbcOptions.getTableName())
+          .withDialect(jdbcOptions.getDialect())
+          .withFieldNames(schema.getFieldNames())
+          .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+          .build();
+
+      return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+
+    } else {
+      throw new UnsupportedOperationException("Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
+    }
   }
 
 

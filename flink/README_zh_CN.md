@@ -1,5 +1,21 @@
 # TiDB 与 Flink 集成
 
+## Table of Contents
+
+* [1 环境准备](#1-环境准备)
+* [2 编译 Flink Connector](#2-编译-flink-connector)
+* [3 部署 Flink](#3-部署-flink)
+  * [3.1 下载安装包](#3.1-下载安装包)
+  * [3.2 安装 TiBigData 并启动 Flink 集群](#3.2-安装-tibigdata-并启动-flink-集群)
+* [利用 Flink 读写 TiDB](#利用-flink-读写-tidb)
+* [Flink 与 TiDB 的类型映射](#flink-与-tidb-的-类型映射)
+* [高级配置](#高级配置)
+* [TableFactory(Deprecated)](#tablefactorydeprecated)
+* [常见问题](#常见问题)
+  * [TiBigData 会占用 TiDB 的资源吗？](#tibigdata-会占用-tidb-的资源吗？)
+  * [Flink 的配置应该如何设置？](#flink-的配置应该如何设置？)
+  * [我该如何设置并发度来控制任务运行的时长？](#我该如何设置并发度来控制任务运行的时长？)
+
 ## 1 环境准备
 
 | 组件    | 版本                       |
@@ -57,7 +73,7 @@ bin/start-cluster.sh
 
 此时你可以访问 http://localhost:8081 来查看 Flink 的 web 页面。
 
-## 4 利用 Flink 读写 TiDB
+## 利用 Flink 读写 TiDB
 
 在 Flink 集群部署完成后，你可以尝试使用 Flink 的 sql-client 来读写 TiDB 内表的数据。
 
@@ -143,7 +159,7 @@ Received a total of 1 row
 
 至此，你已经知道如何在 Flink 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
 
-## 5 Flink 与 TiDB 的类型映射
+## Flink 与 TiDB 的类型映射
 
 TiDB 与 Flink 的类型映射关系可参考下表：
 
@@ -179,30 +195,36 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 |     ENUM     |    STRING    |
 |     SET      |    STRING    |
 
-## 6 高级配置
+## 高级配置
 
-| Configuration                      | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                          |
-|:-----------------------------------|:-------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.database.url                  | -                                                                              | 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。                                        |
-| tidb.username                      | -                                                                              | 用户名。                                                                                                                                                                                                                                                                                                 |
-| tidb.password                      | null                                                                           | 密码。                                                                                                                                                                                                                                                                                                  |
-| tidb.jdbc.connection-provider-impl | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC 连接提供方式: 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData 将会使用连接池 [HikariCP](https://github.com/brettwooldridge/HikariCP) 提供连接; 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', 将会直接新建连接，而不会用到连接池。 |
-| tidb.maximum.pool.size             | 10                                                                             | 连接池大小。                                                                                                                                                                                                                                                                                               |
-| tidb.minimum.idle.size             | 10                                                                             | 最小存活连接数。                                                                                                                                                                                                                                                                                             |
-| tidb.write_mode                    | append                                                                         | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。                                                                                                                                                                             |
-| tidb.replica-read                  | leader                                                                         | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。                                                                                                                                                                                                     |
-| tidb.replica-read.label            | null                                                                           | TiBigData 支持从指定了 label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y`                                                                                                                                                                                                                    |
-| tidb.replica-read.whitelist        | null                                                                           | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。                                                                                                                                                                                                                                                  |
-| tidb.replica-read.blacklist        | null                                                                           | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。                                                                                                                                                                                                                                                  |
-| sink.buffer-flush.max-rows         | 100                                                                            | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。                                                                                                                                                                                                                                                                          |
-| sink.buffer-flush.interval         | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                  |
-| sink.max-retries                   | 3                                                                              | 写入数据失败的最大重试次数。                                                                                                                                                                                                                                                                                       |
-| tidb.filter-push-down              | false                                                                          | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，仅对 Flink 1.12+ 支持。                                                                                                                                                                                                                                       |
-| tidb.snapshot_timestamp            | null                                                                           | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  比如 `2021-01-01T14:00:00+08:00`                                                                                                                                                                         |
-| tidb.dns.search                    | null                                                                           | TiBigData 支持在节点的域名上添加后缀来支持复杂的网络情况，比如跨数据中心的 k8s 集群。                                                                                                                                                                                                                                                   |
-| tidb.catalog.load-mode             | eager                                                                          | TiDB Catalog 在调用 open 方法时，是否立即与 TiDB 建立连接。设置为 `eager` 将会立即建立连接， 设置为 `lazy` 将会在真正需要的时候再建立连接。                                                                                                                                                                                                          |
+| Configuration                               | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                            |
+|:--------------------------------------------|:-------------------------------------------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.database.url                           | -                                                                              | 你需要用 jdbc url 的格式来填写你的 TiDB server 的地址：`jdbc:mysql://host:port/database` 或者 `jdbc:tidb://host:port/database`. 如果你有多个 TiDB server，我们推荐填写后一种格式以使用 TiDB jdbc driver, TiDB jdbc driver 是 MySQL jdbc driver 的一个轻量级的包装，它会自动发现所有 TiDB server 的地址，并做负载均衡，负载均衡策略默认为随机。                                          |
+| tidb.username                               | -                                                                              | 用户名。                                                                                                                                                                                                                                                                                                   |
+| tidb.password                               | null                                                                           | 密码。                                                                                                                                                                                                                                                                                                    |
+| tidb.jdbc.connection-provider-impl          | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC 连接提供方式: 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData 将会使用连接池 [HikariCP](https://github.com/brettwooldridge/HikariCP) 提供连接; 设置 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', 将会直接新建连接，而不会用到连接池。   |
+| tidb.maximum.pool.size                      | 10                                                                             | 连接池大小。                                                                                                                                                                                                                                                                                                 |
+| tidb.minimum.idle.size                      | 10                                                                             | 最小存活连接数。                                                                                                                                                                                                                                                                                               |
+| tidb.write_mode                             | append                                                                         | 在向 TiDB 写入数据时指定，可指定 `upsert` 或者 `append`. 如果指定为 `append`，在写入 TiDB 时遇到唯一键约束会报错；如果指定为 `upsert` ，在写入 TiDB 时遇到唯一键约束会替换原来的数据。                                                                                                                                                                               |
+| tidb.replica-read                           | leader                                                                         | TiBigData 支持从指定的角色读取数据，你配置多个角色，比如 `tidb.replica-read=leader,follower`，这代表从 leader 和 follower 读取。                                                                                                                                                                                                       |
+| tidb.replica-read.label                     | null                                                                           | TiBigData 支持从指定了 label 的 TiKV store 读取数据你可以这样配置：`label_x=value_x,label_y=value_y`                                                                                                                                                                                                                      |
+| tidb.replica-read.whitelist                 | null                                                                           | TiKV store 的 ip 白名单列表，如果配置了，TiBigData 将会只从这些节点读取数据。                                                                                                                                                                                                                                                    |
+| tidb.replica-read.blacklist                 | null                                                                           | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。                                                                                                                                                                                                                                                    |
+| sink.buffer-flush.max-rows                  | 100                                                                            | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。                                                                                                                                                                                                                                                                            |
+| sink.buffer-flush.interval                  | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                    |
+| sink.max-retries                            | 3                                                                              | 写入数据失败的最大重试次数。                                                                                                                                                                                                                                                                                         |
+| tidb.filter-push-down                       | false                                                                          | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，仅对 Flink 1.12+ 支持。                                                                                                                                                                                                                                         |
+| tidb.snapshot_timestamp                     | null                                                                           | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  比如 `2021-01-01T14:00:00+08:00`                                                                                                                                                                           |
+| tidb.dns.search                             | null                                                                           | TiBigData 支持在节点的域名上添加后缀来支持复杂的网络情况，比如跨数据中心的 k8s 集群。                                                                                                                                                                                                                                                     |
+| tidb.catalog.load-mode                      | eager                                                                          | TiDB Catalog 在调用 open 方法时，是否立即与 TiDB 建立连接。设置为 `eager` 将会立即建立连接， 设置为 `lazy` 将会在真正需要的时候再建立连接。                                                                                                                                                                                                            |
+| tidb.sink.impl                              | JDBC                                                                           | 可指定 `JDBC` 或者 `TIKV`. 如果设置为 `TIKV`， flink connector 写数据时会 bypass TiDB server，直接写入 TiKV。                                                                                                                                                                                                                |
+| tikv.sink.transaction                       | MINIBATCH                                                                      | 只有在 sink 选项设置为 `TIKV` 时才生效。可指定为 `CHECKPOINT` 或者 `MINIBATCH` 或者 `GLOBAL`. `CHECKPOINT` 针对开启 checkpoint 的数据流提供 exactly-once 语义，`GLOBAL` 针对有界数据流 exactly-once 语义. 如果写冲突发生十分频繁，可以设置为 `MINIBATCH`，数据会被拆分为多个事务提交。                                                                                            |
+| tikv.sink.buffer-size                       | 1000                                                                           | 只有在 sink 选项设置为 `TIKV` 时才生效。刷新缓存数据的阈值行数。注意，当 transaction 设置为 `MINIBATCH` 时，每一次 flush 都是一次事务提交。                                                                                                                                                                                                          |
+| tikv.sink.row-id-allocator.step             | 30000                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。每次 allocator 申请的 row-id 范围长度。                                                                                                                                                                                                                                               |
+| tikv.sink.ignore-autoincrement-column-value | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，对于 autoincrement 列，会自动生成以替换原有的值。如果设置为 `false`，autoincrement 列的值不能为 null。                                                                                                                                                                                       |
+| tikv.sink.deduplicate                       | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，重复的行数据将会进行去重。如果设置为 `false`，需要确保没有重复的行数据，不然程序会抛出异常。                                                                                                                                                                                                             |
 
-## 7 TableFactory
+## TableFactory(Deprecated)
 
 TiBigData 也实现了 Flink TableFactory 相关的 API，不过我们并不推荐你使用它，会引入数据类型转换和列对齐的相关难题，会增加使用成本。我们将会在 Flink 1.14 **不再支持**，所以本小节只做简单介绍。
 
@@ -224,17 +246,17 @@ CREATE TABLE `people`(
 SELECT * FROM people;
 ```
 
-## 8 常见问题
+## 常见问题
 
-### 8.1 TiBigData 会占用 TiDB 的资源吗？
+### TiBigData 会占用 TiDB 的资源吗？
 
 TiBigData 只会占用 Flink 资源，不会占用 TiDB 的资源，但是在读写 TiDB 数据的时候，会给 TiDB 带来一定的压力，推荐读取使用 Follower Read 的方式，这样不会影响到 Leader 节点。
 
-### 8.2 Flink 的配置应该如何设置？
+### Flink 的配置应该如何设置？
 
 生产环境我们推荐一个 Flink 的 Slot 占用 4G 1Core 的资源。
 
-### 8.3 我该如何设置并发度来控制任务运行的时长？
+### 我该如何设置并发度来控制任务运行的时长？
 
 TiBigData 读取一个 Region 的时间大约在 6 到 15 秒，我们用变量 `time_per_region` 表示，表的 Region 总数我们用 `region_count` 表示，Flink 任务的并行度我们用 `parallelism` 表示，则任务运行时间的计算公式如下：
 
