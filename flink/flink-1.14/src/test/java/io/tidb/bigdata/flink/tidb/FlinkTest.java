@@ -37,6 +37,7 @@ import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -329,6 +330,7 @@ public class FlinkTest {
     String splitRegionSql = format("SPLIT TABLE `%s` BETWEEN (0) AND (%s) REGIONS %s", tableName,
         rowCount * 8, 100);
     tiDBCatalog.sqlUpdate(splitRegionSql);
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, tableName));
   }
 
   @Test
@@ -373,6 +375,7 @@ public class FlinkTest {
         + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
         + "FROM `tidb`.`test`.`%s`", dstTable, srcTable));
     tableEnvironment.execute("test");
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
   @Test
@@ -423,6 +426,7 @@ public class FlinkTest {
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
 
@@ -470,6 +474,7 @@ public class FlinkTest {
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
   @Test
@@ -519,6 +524,7 @@ public class FlinkTest {
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
   @Test
@@ -566,9 +572,13 @@ public class FlinkTest {
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
-  @Test
+  /**
+   * This test will never end, we need find another way to test checkpoint.
+   */
+  @Ignore
   public void testCheckpoint() throws Exception {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();

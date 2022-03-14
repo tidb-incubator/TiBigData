@@ -23,6 +23,7 @@ import static io.tidb.bigdata.tidb.SqlUtils.QUERY_CLUSTERED_INDEX_SQL_FORMAT;
 import static io.tidb.bigdata.tidb.SqlUtils.QUERY_PD_SQL;
 import static io.tidb.bigdata.tidb.SqlUtils.TIDB_ROW_FORMAT_VERSION_SQL;
 import static io.tidb.bigdata.tidb.SqlUtils.getCreateTableSql;
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -317,6 +318,19 @@ public final class ClientSession implements AutoCloseable {
       }
     } catch (Exception e) {
       LOG.error("Execute sql fail", e);
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public int queryTableCount(String databaseName,
+      String tableName) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(
+            format("SELECT COUNT(*) as c FROM `%s`.`%s`", databaseName, tableName))) {
+      resultSet.next();
+      return resultSet.getInt("c");
+    } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
   }
