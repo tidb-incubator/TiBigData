@@ -142,7 +142,7 @@ public final class RowIDAllocator implements Serializable {
         new TwoPhaseCommitter(session, timestamp.getVersion());
     BytePairWrapper primaryPair = pairs.get(0);
     twoPhaseCommitter.prewritePrimaryKey(
-        ConcreteBackOffer.newCustomBackOff(20000),
+        ConcreteBackOffer.newCustomBackOff(2000),
         primaryPair.getKey(),
         primaryPair.getValue());
 
@@ -151,7 +151,7 @@ public final class RowIDAllocator implements Serializable {
     }
 
     twoPhaseCommitter.commitPrimaryKey(
-        ConcreteBackOffer.newCustomBackOff(10000),
+        ConcreteBackOffer.newCustomBackOff(5000),
         primaryPair.getKey(),
         session.getTimestamp().getVersion());
 

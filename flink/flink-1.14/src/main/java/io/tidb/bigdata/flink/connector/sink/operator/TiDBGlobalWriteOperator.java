@@ -15,8 +15,8 @@ public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
 
   public TiDBGlobalWriteOperator(String databaseName, String tableName,
       Map<String, String> properties, TiTimestamp tiTimestamp,
-      TiDBSinkOptions sinkOption, byte[] primaryKey,  List<Long> rowIdStarts) {
-    super(databaseName, tableName, properties, tiTimestamp, sinkOption, primaryKey, rowIdStarts);
+      TiDBSinkOptions sinkOption, byte[] primaryKey) {
+    super(databaseName, tableName, properties, tiTimestamp, sinkOption, primaryKey);
   }
 
   @Override

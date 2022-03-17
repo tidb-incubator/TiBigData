@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -122,19 +121,6 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
     return tiRowDataStream;
   }
 
-  private List<Long> createRowIdStarts(ClientSession session, int parallelism) {
-    // create row id start list
-    int step = sinkOptions.getRowIdAllocatorStep();
-    long start = session.createRowIdAllocator(databaseName, tableName, step * parallelism,
-        3).getStart();
-    final List<Long> rowIdStarts = LongStream.range(0, parallelism)
-        .boxed()
-        .map(i -> start + i * step)
-        .collect(Collectors.toList());
-    LOG.info("Create row id starts success, rowIdStarts = " + rowIdStarts);
-    return rowIdStarts;
-  }
-
   private DataStreamSink<?> consumeDataStream(DataStream<RowData> dataStream,
       ClientSession clientSession) {
     final byte[] primaryKey;
@@ -161,7 +147,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
       // mini batch use row buffer deduplicate
       TiDBWriteOperator tiDBWriteOperator = new TiDBMiniBatchWriteOperator(databaseName, tableName, properties,
-          timestamp, sinkOptions, createRowIdStarts(clientSession, parallelism));
+          timestamp, sinkOptions);
       SingleOutputStreamOperator<Void> transform = tiRowDataStream.transform("PRE_WRITE",
           Types.VOID,
           tiDBWriteOperator);
@@ -216,7 +202,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
       // add operator which preWrite secondary keys.
       TiDBWriteOperator tiDBWriteOperator = new TiDBGlobalWriteOperator(databaseName, tableName, properties,
-          timestamp, sinkOptions, primaryKey, createRowIdStarts(clientSession, parallelism));
+          timestamp, sinkOptions, primaryKey);
       SingleOutputStreamOperator<Void> transform = tiRowDataStream.transform("PRE_WRITE",
           Types.VOID,
           tiDBWriteOperator);

@@ -104,5 +104,4 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     Optional.ofNullable(threadPool).ifPresent(ThreadPoolExecutor::shutdownNow);
   }
 
-
 }

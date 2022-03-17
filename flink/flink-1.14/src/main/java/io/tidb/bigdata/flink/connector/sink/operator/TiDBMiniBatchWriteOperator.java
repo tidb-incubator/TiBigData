@@ -23,8 +23,8 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
 
   public TiDBMiniBatchWriteOperator(String databaseName, String tableName,
       Map<String, String> properties, TiTimestamp tiTimestamp,
-      TiDBSinkOptions sinkOption, List<Long> rowIdStarts) {
-    super(databaseName, tableName, properties, tiTimestamp, sinkOption, null, rowIdStarts);
+      TiDBSinkOptions sinkOption) {
+    super(databaseName, tableName, properties, tiTimestamp, sinkOption, null);
   }
 
   @Override
