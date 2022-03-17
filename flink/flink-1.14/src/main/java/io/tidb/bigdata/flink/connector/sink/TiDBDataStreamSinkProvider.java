@@ -22,13 +22,10 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction.MINIBA
 
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.connector.sink.function.TiDBKeyedProcessFunctionFactory;
-import io.tidb.bigdata.flink.connector.sink.function.TiDBSinkFunction;
 import io.tidb.bigdata.flink.connector.sink.operator.TiDBCommitOperator;
 import io.tidb.bigdata.flink.connector.sink.operator.TiDBGlobalWriteOperator;
 import io.tidb.bigdata.flink.connector.sink.operator.TiDBMiniBatchWriteOperator;
 import io.tidb.bigdata.flink.connector.sink.operator.TiDBWriteOperator;
-import io.tidb.bigdata.flink.connector.sink.serializer.TiDBTransactionContextSerializer;
-import io.tidb.bigdata.flink.connector.sink.serializer.TiDBTransactionStateSerializer;
 import io.tidb.bigdata.flink.connector.utils.TiDBRowConverter;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -46,7 +43,6 @@ import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
-import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
@@ -177,27 +173,30 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
           .name(DiscardingSink.class.getSimpleName());
 
     } else if (sinkTransaction == CHECKPOINT) {
-      LOG.info("Flink sinkTransaction is working on mode checkpoint");
 
-      // validate if CheckpointingEnabled.
-      CheckpointConfig checkpointConfig = dataStream.getExecutionEnvironment()
-          .getCheckpointConfig();
-      if (!checkpointConfig.isCheckpointingEnabled()) {
-        throw new IllegalStateException(
-            "Checkpoint transaction is invalid for stream without checkpoint");
-      }
+      throw new IllegalStateException("CHECKPOINT is not supported yet, please use MINIBATCH");
 
-      tiRowDataStream = deduplicate(tiRowDataStream, tiTableInfo);
-
-      TiDBSinkFunction sinkFunction = new TiDBSinkFunction(
-          new TiDBTransactionStateSerializer(),
-          new TiDBTransactionContextSerializer(),
-          databaseName,
-          tableName,
-          properties,
-          sinkOptions);
-      return tiRowDataStream.addSink(sinkFunction);
-
+//      LOG.info("Flink sinkTransaction is working on mode checkpoint");
+//
+//      // validate if CheckpointingEnabled.
+//      CheckpointConfig checkpointConfig = dataStream.getExecutionEnvironment()
+//          .getCheckpointConfig();
+//      if (!checkpointConfig.isCheckpointingEnabled()) {
+//        throw new IllegalStateException(
+//            "Checkpoint transaction is invalid for stream without checkpoint");
+//      }
+//
+//      tiRowDataStream = deduplicate(tiRowDataStream, tiTableInfo);
+//
+//      TiDBSinkFunction sinkFunction = new TiDBSinkFunction(
+//          new TiDBTransactionStateSerializer(),
+//          new TiDBTransactionContextSerializer(),
+//          databaseName,
+//          tableName,
+//          properties,
+//          sinkOptions);
+//      return tiRowDataStream.addSink(sinkFunction);
+//
     } else if (sinkTransaction == GLOBAL) {
       LOG.info("Flink sinkTransaction is working on mode global");
 

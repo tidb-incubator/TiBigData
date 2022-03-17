@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.flink.runtime.state.StateSnapshotContext;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.ByteWrapper;
 import org.tikv.common.meta.TiTimestamp;
@@ -65,5 +66,13 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
     tiDBEncodeHelper.close();
 
     buffer.clear();
+  }
+
+  /**
+   * We need to flush the buffer before checkpointing in case of data loss.
+   */
+  @Override
+  public void snapshotState(StateSnapshotContext context) {
+    flushRows();
   }
 }

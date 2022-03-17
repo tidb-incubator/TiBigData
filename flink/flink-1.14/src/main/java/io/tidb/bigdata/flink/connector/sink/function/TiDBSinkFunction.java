@@ -36,15 +36,17 @@ import org.apache.flink.streaming.api.functions.sink.TwoPhaseCommitSinkFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.row.Row;
 
 /**
+ * ATTENTIONS: Right now, this class has not provided exactly-once semantic.
+ *
  * A sink function that sinks unbounded stream with exactly-once semantic.
  * <p><b>NOTE:</b> There is still a potential of data loss. Please See
  * {@link TwoPhaseCommitSinkFunction#recoverAndCommit(Object)}
  */
+@Deprecated
 public class TiDBSinkFunction extends
     TwoPhaseCommitSinkFunction<Row, TiDBTransactionState, TiDBTransactionContext> {
 
@@ -61,7 +63,6 @@ public class TiDBSinkFunction extends
   private boolean init;
 
   private transient ClientSession session;
-  private transient TiTableInfo tiTableInfo;
 
   private transient DynamicRowIDAllocator rowIDAllocator;
 
@@ -87,7 +88,6 @@ public class TiDBSinkFunction extends
       return;
     }
     this.session = ClientSession.create(new ClientConfig(properties));
-    this.tiTableInfo = session.getTiSession().getCatalog().getTable(databaseName, tableName);
     this.init = true;
     this.rowIDAllocator = new DynamicRowIDAllocator(session, databaseName, tableName,
         sinkOptions.getRowIdAllocatorStep(), null);

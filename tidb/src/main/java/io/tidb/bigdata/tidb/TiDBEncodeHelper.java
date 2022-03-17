@@ -21,7 +21,9 @@ import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import io.tidb.bigdata.tidb.handle.IntHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -207,7 +209,26 @@ public class TiDBEncodeHelper implements AutoCloseable {
         }).collect(Collectors.toList());
   }
 
-  private List<BytePairWrapper> generateDataToBeRemoved(Row tiRow, long handle) {
+  class Result {
+    private final List<BytePairWrapper> indexKeyValues;
+    private final List<BytePairWrapper> recordKeyValue;
+
+    Result(List<BytePairWrapper> indexKeyValues,
+        List<BytePairWrapper> recordKeyValue) {
+      this.indexKeyValues = indexKeyValues;
+      this.recordKeyValue = recordKeyValue;
+    }
+
+    public List<BytePairWrapper> getIndexKeyValues() {
+      return indexKeyValues;
+    }
+
+    public List<BytePairWrapper> getRecordKeyValue() {
+      return recordKeyValue;
+    }
+  }
+
+  private Result generateDataToBeRemoved(Row tiRow, long handle) {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Long>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
@@ -234,11 +255,13 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
     List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
+    List<BytePairWrapper> recordKeyValue = new ArrayList<>();
+
     for (Pair<Row, Long> pair : deletion) {
-      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
+      recordKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
       deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
     }
-    return deletionKeyValue;
+    return new Result(deletionKeyValue, recordKeyValue);
   }
 
   public List<BytePairWrapper> generateKeyValuesByRow(Row row) {
@@ -259,6 +282,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       throw new TiBatchWriteException("Clustered index does not supported now");
     }
     long handle;
+    Result dataToBeRemoved = new Result(new ArrayList<>(), new ArrayList<>());
     boolean constraintCheckIsNeeded = isCommonHandle
         || handleCol != null
         || uniqueIndices.size() > 0;
@@ -269,17 +293,50 @@ public class TiDBEncodeHelper implements AutoCloseable {
         handle = rowIdAllocator.getSharedRowId();
       }
       // get deletion row
-      List<BytePairWrapper> dataToBeRemoved = generateDataToBeRemoved(row, handle);
-      if (dataToBeRemoved.size() > 0 && !replace) {
+      dataToBeRemoved = generateDataToBeRemoved(row, handle);
+      if ((dataToBeRemoved.indexKeyValues.size() > 0 || dataToBeRemoved.recordKeyValue.size() > 0) && !replace) {
         throw new IllegalStateException(
             "Unique index conflicts, please use upsert mode, row = " + row);
       }
-      keyValues.addAll(dataToBeRemoved);
     } else {
       handle = rowIdAllocator.getSharedRowId();
     }
-    keyValues.add(generateRecordKeyValue(row, handle, false));
-    keyValues.addAll(generateIndexKeyValues(row, handle, false));
+
+    List<BytePairWrapper> recordKeyValue = new ArrayList<>();
+    recordKeyValue.add(generateRecordKeyValue(row, handle, false));
+    recordKeyValue.addAll(dataToBeRemoved.recordKeyValue);
+
+    Map<String,BytePairWrapper> map = new HashMap<>();
+    for (BytePairWrapper keyValue : recordKeyValue) {
+      String key = Arrays.toString(keyValue.getKey());
+      if (map.containsKey(key)) {
+        if (map.get(key).getValue().length == 0) {
+          map.put(key, keyValue);
+        }
+      } else {
+        map.put(key, keyValue);
+      }
+    }
+
+    List<BytePairWrapper> indexKeyValue = new ArrayList<>();
+    indexKeyValue.addAll(generateIndexKeyValues(row, handle, false));
+    indexKeyValue.addAll(dataToBeRemoved.indexKeyValues);
+
+    Map<String,BytePairWrapper> map1 = new HashMap<>();
+    for (BytePairWrapper keyValue : indexKeyValue) {
+      String key = Arrays.toString(keyValue.getKey());
+      if (map1.containsKey(key)) {
+        if (map1.get(key).getValue().length == 0) {
+          map1.put(key, keyValue);
+        }
+      } else {
+        map1.put(key, keyValue);
+      }
+    }
+
+    keyValues.addAll(map1.values());
+    keyValues.addAll(map.values());
+
     return keyValues;
   }
 

@@ -76,7 +76,7 @@ public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void> imp
     this.session = ClientSession.create(new ClientConfig(properties));
     this.tiTableInfo = session.getTableMust(databaseName, tableName);
     this.rowIDAllocator = new DynamicRowIDAllocator(session, databaseName, tableName,
-        sinkOptions.getRowIdAllocatorStep(), start);
+        sinkOptions.getRowIdAllocatorStep());
 
     openInternal();
   }

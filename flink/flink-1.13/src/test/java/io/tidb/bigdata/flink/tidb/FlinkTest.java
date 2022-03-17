@@ -24,8 +24,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.api.common.time.Time;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
@@ -348,6 +351,58 @@ public class FlinkTest {
   }
 
   @Test
+  public void testJDBCWrite() throws Exception {
+    final String srcTable = "source_table";
+    final String dstTable = "table";
+    System.setProperty("tidb.write_mode", "upsert");
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(1);
+    env.enableCheckpointing(100L);
+    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
+        Integer.MAX_VALUE, Time.of(1, TimeUnit.SECONDS)));
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    String s = String.format("CREATE TABLE `%s`(\n"
+        + "    c1  bigint,\n"
+        + "    c2  bigint, PRIMARY KEY(`c1`) NOT ENFORCED\n"
+        + ") WITH (\n"
+        + "  'connector' = 'tidb',\n"
+        + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/test?enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2',\n"
+        + "  'tidb.username' = 'root',\n"
+        + "  'tidb.password' = '',\n"
+        + "  'tidb.database.name' = '%s',\n"
+        + "  'tidb.table.name' = '%s',\n"
+        + "  'tidb.write_mode' = 'upsert'\n"
+        + ")", dstTable + "_1", DATABASE_NAME, dstTable);
+    String s2 = String.format("CREATE TABLE `%s`(\n"
+            + "    c1  bigint,\n"
+            + "    c3  bigint, PRIMARY KEY(`c1`) NOT ENFORCED\n"
+            + ") WITH (\n"
+            + "  'connector' = 'tidb',\n"
+            + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/test?enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2',\n"
+            + "  'tidb.username' = 'root',\n"
+            + "  'tidb.password' = '',\n"
+            + "  'tidb.database.name' = '%s',\n"
+            + "  'tidb.write_mode' = 'upsert',\n"
+            + "  'tidb.table.name' = '%s'\n"
+            + ")"
+        , dstTable + "_2", DATABASE_NAME, dstTable);
+    tableEnvironment.sqlUpdate(
+        s);
+    tableEnvironment.sqlUpdate(
+        s2);
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO default_catalog.default_database.`%s` (c1, c2) VALUES (2, 100)",
+            dstTable + "_1", srcTable));
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO default_catalog.default_database.`%s` (c1, c3) VALUES (2, 1000)",
+            dstTable + "_2", srcTable));
+    tableEnvironment.execute("test");
+  }
+
+    @Test
   public void testLookupTableSource() throws Exception {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
         .inStreamingMode().build();

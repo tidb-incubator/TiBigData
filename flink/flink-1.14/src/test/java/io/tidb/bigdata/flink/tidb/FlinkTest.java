@@ -2,6 +2,7 @@ package io.tidb.bigdata.flink.tidb;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DEDUPLICATE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
@@ -21,25 +22,49 @@ import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.TiDBWriteHelper;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.LongStream;
+import org.apache.flink.api.common.eventtime.WatermarkStrategy;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.restartstrategy.RestartStrategies;
+import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.connector.source.lib.NumberSequenceSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
+import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.catalog.CatalogBaseTable;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.runtime.connector.source.ScanRuntimeProviderContext;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.tikv.common.BytePairWrapper;
+import org.tikv.common.meta.TiTimestamp;
+import org.tikv.common.row.ObjectRowImpl;
 
 @Category(IntegrationTest.class)
 public class FlinkTest {
@@ -333,6 +358,115 @@ public class FlinkTest {
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, tableName));
   }
 
+  public static class CheckpointMapFunction implements MapFunction<Long, RowData> {
+
+    private static final Random RANDOM = new Random();
+    private static final Set<Long> randomLong = new HashSet<>();
+
+    static {
+      while (randomLong.size() < 3) {
+        randomLong.add((long) RANDOM.nextInt(100));
+      }
+    }
+
+    public CheckpointMapFunction() {
+      System.out.println("----------------------------");
+      System.out.println(randomLong);
+      System.out.println("----------------------------");
+    }
+
+    @Override
+    public RowData map(Long value) throws Exception {
+      GenericRowData rowData = new GenericRowData(1);
+      rowData.setField(0, value);
+      // Waiting for checkpoint
+      Thread.sleep(50L);
+      if (randomLong.remove(value)) {
+        System.out.println("----------------------------" + value);
+        throw new IllegalStateException();
+      }
+      return rowData;
+    }
+  }
+
+  @Test
+  public void testWrite() {
+    ClientSession clientSession = ClientSession.create(
+        new ClientConfig(ConfigUtils.defaultProperties()));
+    String tableName = RandomUtils.randomString();
+    String databaseName = "test";
+    clientSession.sqlUpdate(String.format("CREATE TABLE IF NOT EXISTS `%s`\n"
+        + "(\n"
+        + "    c1  bigint,\n"
+        + "    UNIQUE KEY(c1)"
+        + ")", tableName));
+    writeData(clientSession, tableName, databaseName);
+    writeData(clientSession, tableName, databaseName);
+  }
+
+  private void writeData(ClientSession clientSession, String tableName, String databaseName) {
+    TiTimestamp timestamp = clientSession.getSnapshotVersion();
+    DynamicRowIDAllocator rowIDAllocator = new DynamicRowIDAllocator(clientSession,
+        databaseName, tableName, 100);
+    TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(clientSession, timestamp, databaseName,
+        tableName, false, true, rowIDAllocator);
+    TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(clientSession.getTiSession(),
+        timestamp.getVersion());
+    List<BytePairWrapper> pairs = LongStream.range(0, 1000)
+        .mapToObj(i -> ObjectRowImpl.create(new Long[]{i}))
+        .map(tiDBEncodeHelper::generateKeyValuesByRow)
+        .flatMap(Collection::stream)
+        .collect(Collectors.toList());
+    tiDBWriteHelper.preWriteFirst(pairs);
+    tiDBWriteHelper.commitPrimaryKey();
+    tiDBWriteHelper.close();
+  }
+
+  @Test
+  public void testMiniBatchInCheckpoint() throws Exception {
+    final String srcTable = "source_table";
+    final String dstTable = RandomUtils.randomString();
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(1);
+    env.enableCheckpointing(100L);
+    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(
+        Integer.MAX_VALUE, Time.of(1, TimeUnit.SECONDS)));
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = defaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), MINIBATCH.name());
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), "12345");
+    properties.put(DEDUPLICATE.key(), "true");
+    properties.put(WRITE_MODE.key(), "upsert");
+    properties.put(SINK_BUFFER_SIZE.key(), "1");
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    String createTiDBSql = String.format(
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+            + "(\n"
+            + "    c1  bigint,\n"
+            + "    unique key(c1)\n"
+            + ")", DATABASE_NAME, dstTable);
+    tiDBCatalog.sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`", dstTable));
+    tiDBCatalog.sqlUpdate(createTiDBSql);
+    NumberSequenceSource numberSequenceSource = new NumberSequenceSource(1, 1000);
+    TableSchema tableSchema = TableSchema.builder().field("c1", DataTypes.BIGINT()).build();
+    TypeInformation<RowData> typeInformation = (TypeInformation<RowData>) ScanRuntimeProviderContext
+        .INSTANCE.createTypeInformation(tableSchema.toRowDataType());
+    SingleOutputStreamOperator<RowData> dataStream = env.fromSource(numberSequenceSource,
+            WatermarkStrategy.noWatermarks(), "number-source")
+        .map(new CheckpointMapFunction())
+        .returns(typeInformation);
+    tableEnvironment.createTemporaryView(srcTable, dataStream);
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO `tidb`.`test`.`%s` SELECT c1 FROM %s WHERE c1 <= 100",
+            dstTable, srcTable));
+    tableEnvironment.execute("test");
+    Assert.assertEquals(100, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+  }
+
   @Test
   public void testMiniBatchTransaction() throws Exception {
     final int rowCount = 100000;
@@ -524,7 +658,7 @@ public class FlinkTest {
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
-    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+    Assert.assertEquals(2000, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
   @Test
