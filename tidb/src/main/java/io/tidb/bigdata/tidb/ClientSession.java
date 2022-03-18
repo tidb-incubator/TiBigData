@@ -80,6 +80,9 @@ public final class ClientSession implements AutoCloseable {
   );
 
   static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
+  private static final int ROW_ID_STEP = 30000;
+  private static final int MAX_RETRY = 0;
+  private static final long RANDOM_SLEEP_UPPER_BOUND = 0L;
 
   private final ClientConfig config;
 
@@ -463,20 +466,20 @@ public final class ClientSession implements AutoCloseable {
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
       int maxRetry, long randomSleepUpperBound) {
-    return createRowIdAllocator(databaseName, tableName, step, 0, maxRetry, randomSleepUpperBound);
+    return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, maxRetry, randomSleepUpperBound);
   }
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step) {
-    return createRowIdAllocator(databaseName, tableName, step, 0, 0L);
+    return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
   }
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
       int maxRetry) {
-    return createRowIdAllocator(databaseName, tableName, step, maxRetry, 0L);
+    return createRowIdAllocator(databaseName, tableName, step, maxRetry, RANDOM_SLEEP_UPPER_BOUND);
   }
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName) {
-    return createRowIdAllocator(databaseName, tableName, 30000, 0, 0L);
+    return createRowIdAllocator(databaseName, tableName, ROW_ID_STEP, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
   }
 
   public boolean isClusteredIndex(String databaseName, String tableName) {

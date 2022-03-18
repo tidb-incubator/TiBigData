@@ -10,7 +10,6 @@
 * [Read & Write](#read--write)
 * [DataTypes supported](#datatypes-supported)
 * [Configuration](#configuration)
-* [TableFactory(Deprecated)](#tablefactorydeprecated)
 
 ## 1 Environment
 
@@ -27,15 +26,15 @@
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 
-# compile flink connector, using Flink-1.13.5 as an example
-mvn clean package -DskipTests -am -pl flink/flink-1.13 -Ddep.flink.version=1.13.5 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
+# compile flink connector, using Flink-1.14.3 as an example
+mvn clean package -DskipTests -am -pl flink/flink-1.14 -Ddep.flink.version=1.14.3 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```
 
 The following parameters are available for compiling:
 
 | parameter                     | default | description                                                |
 |-------------------------------|---------|------------------------------------------------------------|
-| -Ddep.flink.version           | 1.13.0  | The version of Flink                                       |
+| -Ddep.flink.version           | 1.14.0  | The version of Flink                                       |
 | -Dmysql.driver.scope          | test    | Whether the dependency `mysql-jdbc-driver` is included     |
 | -Dflink.jdbc.connector.scope  | test    | Whether the dependency `flink-jdbc-connector` is included  |
 | -Dflink.kafka.connector.scope | test    | Whether the dependency `flink-kafka-connector` is included |
@@ -45,7 +44,7 @@ The following parameters are available for compiling:
 
 We only present the standalone cluster for testing. If you want to use Flink in production environment, please refer to the [Flink official documentation](https://flink.apache.org/).
 
-We recommend using Flink 1.13, the following steps are based on Flink 1.13 for example, other versions of Flink installation steps are more or less the same.
+We recommend using Flink 1.14, the following steps are based on Flink 1.14 for example, other versions of Flink installation steps are more or less the same.
 
 ### Download Flink
 
@@ -54,9 +53,9 @@ Please go to [Flink Download Page](https://flink.apache.org/downloads.html) to d
 ### Install TiBigData and start Flink cluster
 
 ```bash
-tar -zxf flink-1.13.5-bin-scala_2.11.tgz
-cd flink-1.13.5
-cp ${TIBIGDATA_HOME}/flink/flink-1.13/target/flink-tidb-connector-1.13-0.0.5-SNAPSHOT.jar lib
+tar -zxf flink-1.14.3-bin-scala_2.11.tgz
+cd flink-1.14.3
+cp ${TIBIGDATA_HOME}/flink/flink-1.14/target/flink-tidb-connector-1.14-${TIBIGDATA_VERSION}.jar lib
 bin/start-cluster.sh
 ```
 
@@ -194,7 +193,6 @@ Received a total of 1 row
 | tidb.database.name                                  | null                                                                           | Database name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                     |
 | tidb.table.name                                     | null                                                                           | Table name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                        |
 | tidb.timestamp-format.${columnName}                 | null                                                                           | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog.                                                                                                                        |
-| timestamp-format.${columnName}   ***- deprecated*** | null                                                                           | It is equivalent to the `tidb.timestamp-format.${columnName}` configuration. This is a deprecated configuration for downward compatibility only, and is in effect for `flink-1.11`, `flink-1.12`, `flink-1.13`. This configuration will no longer be supported in future `flink-1.14` releases.                                                                                                                                                           |
 | sink.buffer-flush.max-rows                          | 100                                                                            | The max size of buffered records before flush. Can be set to zero to disable it.                                                                                                                                                                                                                                                                                                                                                                          |
 | sink.buffer-flush.interval                          | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                                                                                                                                                                       |
 | sink.max-retries                                    | 3                                                                              | The max retry times if writing records to database failed.                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -202,31 +200,11 @@ Received a total of 1 row
 | tidb.snapshot_timestamp                             | null                                                                           | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.                                                                                                                                                                                                                                                           |
 | tidb.dns.search                                     | null                                                                           | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN.                                                                                                                                                                                                                                                                                                                                                  |
 | tidb.catalog.load-mode                              | eager                                                                          | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened.                                                                                                                                                                                                                                                      |
-| tidb.sink.impl                                      | JDBC                                                                           | The value can be `JDBC` or `TIKV`. If you set this configuration to `TIKV`, flink will write data bypass TiDB. It is only available for version 1.14+.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| tidb.sink.impl                                      | JDBC                                                                           | The value can be `JDBC` or `TIKV`. If you set this configuration to `TIKV`, flink will write data bypass TiDB. It is only available for version 1.14+.                                                                                                                                                                                                                                                                                                    |
 | tikv.sink.transaction                               | MINIBATCH                                                                      | Only work when sink option is `TIKV`. The value can be `CHECKPOINT` or `MINIBATCH` or `GLOBAL`. `CHECKPOINT` provides exactly-once semantic on stream with checkpoint while `GLOBAL` provides exactly-once semantic on bounded stream. When writing conflicts happen frequently, you can `MINIBATCH`, it will split data to many transactions.                                                                                                            |
 | tikv.sink.buffer-size                               | 1000                                                                           | Only work when sink option is `TIKV`. The max size of buffered records before flush. Notice: On mode `MINIBATCH`, each flush will be executed in one transaction.                                                                                                                                                                                                                                                                                         |
 | tikv.sink.row-id-allocator.step                     | 30000                                                                          | Only work when sink option is `TIKV`. The size of row-ids each time allocator query for.                                                                                                                                                                                                                                                                                                                                                                  |
 | tikv.sink.ignore-autoincrement-column-value         | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, for autoincrement column, we will generate value instead of the the actual value. And if `false`, the value of autoincrement column can not be null.                                                                                                                                                                                                                                            |
 | tikv.sink.deduplicate                               | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, duplicate row will be de-duplicated. If `false`, you should make sure each row is unique otherwise exception will be thrown.                                                                                                                                                                                                                                                                    |
 
-## TableFactory(Deprecated)
 
-TiBigData also implements the Flink TableFactory API, but we don't recommend you to use it, it will introduce difficulties related to data type conversion and column alignment, which will increase the cost of using it. We will stop supporting it in Flink-1.14, so this section is only a brief introduction.
-
-You can use the following SQL to create a TiDB mapping table in Flink and query it.
-
-```sql
-CREATE TABLE `people`(
-  `id` INT,
-  `name` STRING
-) WITH (
-  'connector' = 'tidb',
-  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
-  'tidb.username' = 'root',
-  'tidb.password' = '',
-  'tidb.database.name' = 'test',
-  'tidb.table.name' = 'people'
-);
-
-SELECT * FROM people;
-```

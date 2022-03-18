@@ -41,7 +41,7 @@ public class TiDBWriteHelper implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBWriteHelper.class);
 
-  private static final int PREWRITE_BACKOFFER_MS = 240000;
+  private static final int REWRITE_BACKOFF_MS = 240000;
   private static final int MIN_DELAY_CLEAN_TABLE_LOCK = 60000;
   private static final int DELAY_CLEAN_TABLE_LOCK_AND_COMMIT_BACKOFF_DELTA = 30000;
   private static final int PRIMARY_KEY_COMMIT_BACKOFF =
@@ -92,7 +92,7 @@ public class TiDBWriteHelper implements AutoCloseable {
     BytePairWrapper primaryPair = iterator.next();
     this.primaryKey = primaryPair.getKey();
     byte[] primaryValue = primaryPair.getValue();
-    BackOffer prewritePrimaryBackoff = ConcreteBackOffer.newCustomBackOff(PREWRITE_BACKOFFER_MS);
+    BackOffer prewritePrimaryBackoff = ConcreteBackOffer.newCustomBackOff(REWRITE_BACKOFF_MS);
     LOG.info("start to pre-write primaryKey");
     // pre-write primary keys
     twoPhaseCommitter.prewritePrimaryKey(prewritePrimaryBackoff, primaryKey, primaryValue);
@@ -123,7 +123,7 @@ public class TiDBWriteHelper implements AutoCloseable {
 
     LOG.info("Start to pre-write secondary keys");
     // pre-write secondary keys
-    twoPhaseCommitter.prewriteSecondaryKeys(primaryKey, iterator, PREWRITE_BACKOFFER_MS);
+    twoPhaseCommitter.prewriteSecondaryKeys(primaryKey, iterator, REWRITE_BACKOFF_MS);
     LOG.info("Pre-write secondary keys success");
   }
 
@@ -158,7 +158,7 @@ public class TiDBWriteHelper implements AutoCloseable {
     }
     LOG.info("Start to commit secondary keys");
 
-    twoPhaseCommitter.commitSecondaryKeys(iterator, commitTs, PREWRITE_BACKOFFER_MS);
+    twoPhaseCommitter.commitSecondaryKeys(iterator, commitTs, REWRITE_BACKOFF_MS);
   }
 
   public Optional<byte[]> getPrimaryKey() {
