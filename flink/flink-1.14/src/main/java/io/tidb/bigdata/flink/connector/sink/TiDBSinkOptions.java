@@ -42,7 +42,7 @@ public class TiDBSinkOptions implements Serializable {
   private final TiDBWriteMode writeMode;
   private final long taskStartInterval;// set interval in order to avoid allocate rowId conflict.
 
-  public TiDBSinkOptions(ReadableConfig config, long taskStartInterval) {
+  public TiDBSinkOptions(ReadableConfig config) {
     this.sinkImpl = config.get(SINK_IMPL);
     this.sinkTransaction = config.get(SINK_TRANSACTION);
     this.bufferSize = config.get(SINK_BUFFER_SIZE);
