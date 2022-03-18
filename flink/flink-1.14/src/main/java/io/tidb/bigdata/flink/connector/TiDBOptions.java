@@ -110,6 +110,12 @@ public class TiDBOptions {
       .booleanType()
       .defaultValue(false)
       .withDescription("Whether deduplicate row by unique key");
+  public static final ConfigOption<Long> TASK_START_INTERVAL = ConfigOptions
+      .key("tikv.sink.task-start-interval")
+      .longType()
+      .defaultValue(1000L)
+      .withDescription(
+          "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 

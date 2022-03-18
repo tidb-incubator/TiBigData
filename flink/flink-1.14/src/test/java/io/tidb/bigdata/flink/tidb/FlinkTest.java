@@ -563,7 +563,6 @@ public class FlinkTest {
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
-
   @Test
   public void testGlobalTransaction() throws Exception {
     final int rowCount = 100000;

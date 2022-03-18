@@ -22,6 +22,7 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.TASK_START_INTERVAL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
@@ -39,8 +40,9 @@ public class TiDBSinkOptions implements Serializable {
   private final boolean ignoreAutoincrementColumn;
   private final boolean deduplicate;
   private final TiDBWriteMode writeMode;
+  private final long taskStartInterval;// set interval in order to avoid allocate rowId conflict.
 
-  public TiDBSinkOptions(ReadableConfig config) {
+  public TiDBSinkOptions(ReadableConfig config, long taskStartInterval) {
     this.sinkImpl = config.get(SINK_IMPL);
     this.sinkTransaction = config.get(SINK_TRANSACTION);
     this.bufferSize = config.get(SINK_BUFFER_SIZE);
@@ -48,6 +50,11 @@ public class TiDBSinkOptions implements Serializable {
     this.ignoreAutoincrementColumn = config.get(IGNORE_AUTOINCREMENT_COLUMN_VALUE);
     this.deduplicate = config.get(DEDUPLICATE);
     this.writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
+    this.taskStartInterval = config.get(TASK_START_INTERVAL);
+  }
+
+  public long getTaskStartInterval() {
+    return taskStartInterval;
   }
 
   public SinkImpl getSinkImpl() {

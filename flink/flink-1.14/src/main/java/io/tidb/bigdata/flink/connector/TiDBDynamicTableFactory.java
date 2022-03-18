@@ -87,7 +87,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
+    TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config, taskStartInterval);
 
     if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
       return new TiDBDynamicTableSink(config.get(DATABASE_NAME), config.get(TABLE_NAME),

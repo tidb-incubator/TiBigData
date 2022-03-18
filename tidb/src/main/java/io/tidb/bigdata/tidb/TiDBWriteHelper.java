@@ -136,14 +136,17 @@ public class TiDBWriteHelper implements AutoCloseable {
     }
     BackOffer commitPrimaryBackoff = ConcreteBackOffer.newCustomBackOff(PRIMARY_KEY_COMMIT_BACKOFF);
     LOG.info("Start to commit primaryKey");
-    // commit primary keys
-    twoPhaseCommitter.commitPrimaryKey(commitPrimaryBackoff, getPrimaryKeyMust(), commitTs);
 
-    if (isTtlUpdate && ttlManager != null) {
-      try {
-        ttlManager.close();
-      } catch (Exception e) {
-        LOG.warn("Close ttlManager failed", e);
+    // commit primary keys
+    try {
+      twoPhaseCommitter.commitPrimaryKey(commitPrimaryBackoff, getPrimaryKeyMust(), commitTs);
+    } finally {
+      if (isTtlUpdate && ttlManager != null) {
+        try {
+          ttlManager.close();
+        } catch (Exception e) {
+          LOG.warn("Close ttlManager failed", e);
+        }
       }
     }
 
