@@ -125,7 +125,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
     return tiRowDataStream;
   }
 
-  private DataStreamSink<?> consumeDataStream(DataStream<RowData> dataStream,
+  private DataStreamSink<?> doConsumeDataStream(DataStream<RowData> dataStream,
       ClientSession clientSession) {
     final byte[] primaryKey;
     final int parallelism = dataStream.getParallelism();
@@ -242,7 +242,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
   public DataStreamSink<?> consumeDataStream(DataStream<RowData> dataStream) {
     try (ClientSession clientSession = ClientSession.create(
         new ClientConfig(properties))) {
-      return consumeDataStream(dataStream, clientSession);
+      return doConsumeDataStream(dataStream, clientSession);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
