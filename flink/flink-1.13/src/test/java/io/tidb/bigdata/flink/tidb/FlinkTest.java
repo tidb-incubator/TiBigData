@@ -16,37 +16,40 @@
 
 package io.tidb.bigdata.flink.tidb;
 
-import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
-import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
-import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
-import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
-import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
 import static java.lang.String.format;
 
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
+import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.UUID;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.data.RowData;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
@@ -55,36 +58,6 @@ import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
 public class FlinkTest {
-
-  public static final String TIDB_HOST = "TIDB_HOST";
-
-  public static final String TIDB_PORT = "TIDB_PORT";
-
-  public static final String TIDB_USER = "TIDB_USER";
-
-  public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
-
-  public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
-
-  public static final String tidbPort = getEnvOrDefault(TIDB_PORT, "4000");
-
-  public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
-
-  public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
-
-  private static String getEnvOrDefault(String key, String default0) {
-    String tmp = System.getenv(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    tmp = System.getProperty(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    return default0;
-  }
 
   public static final String CATALOG_NAME = "tidb";
 
@@ -189,23 +162,6 @@ public class FlinkTest {
     return String.format(DROP_TABLE_SQL_FORMAT, DATABASE_NAME, tableName);
   }
 
-  public static String getRandomTableName() {
-    return UUID.randomUUID().toString().replace("-", "_");
-  }
-
-  public Map<String, String> getDefaultProperties() {
-    Map<String, String> properties = new HashMap<>();
-    properties.put(DATABASE_URL,
-        String.format(
-            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
-            tidbHost, tidbPort));
-    properties.put(USERNAME, tidbUser);
-    properties.put(PASSWORD, tidbPassword);
-    properties.put(MAX_POOL_SIZE, "1");
-    properties.put(MIN_IDLE_SIZE, "1");
-    return properties;
-  }
-
   public TableEnvironment getTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
         .inBatchMode().build();
@@ -224,7 +180,7 @@ public class FlinkTest {
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
     if (tableName == null) {
-      tableName = getRandomTableName();
+      tableName = RandomUtils.randomString();
     }
     String dropTableSql = getDropTableSql(tableName);
     String createTableSql = getCreateTableSql(tableName);
@@ -261,13 +217,13 @@ public class FlinkTest {
   }
 
   public Row replicaRead() throws Exception {
-    Map<String, String> properties = getDefaultProperties();
+    Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put(TIDB_REPLICA_READ, "follower,leader");
     return runByCatalog(properties);
   }
 
   public Row upsertAndRead() throws Exception {
-    Map<String, String> properties = getDefaultProperties();
+    Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put(TIDB_WRITE_MODE, "upsert");
     return runByCatalog(properties);
   }
@@ -275,7 +231,7 @@ public class FlinkTest {
   @Test
   public void testTableFactory() throws Exception {
     // only test for timestamp
-    Map<String, String> properties = getDefaultProperties();
+    Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put("connector", "tidb");
     properties.put(TiDBOptions.DATABASE_NAME.key(), "test");
     properties.put(TiDBOptions.TABLE_NAME.key(), "test_timestamp");
@@ -330,8 +286,8 @@ public class FlinkTest {
   @Test
   public void testCatalog() throws Exception {
     // read by limit
-    String tableName = getRandomTableName();
-    Row row = runByCatalog(getDefaultProperties(),
+    String tableName = RandomUtils.randomString();
+    Row row = runByCatalog(ConfigUtils.defaultProperties(),
         format("SELECT * FROM `%s`.`%s`.`%s` LIMIT 1", CATALOG_NAME, DATABASE_NAME, tableName),
         tableName);
     // replica read
@@ -342,8 +298,8 @@ public class FlinkTest {
     row1.setField(1, (short) 2);
     Assert.assertEquals(row1, upsertAndRead());
     // filter push down
-    tableName = getRandomTableName();
-    Map<String, String> properties = getDefaultProperties();
+    tableName = RandomUtils.randomString();
+    Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put(TIDB_FILTER_PUSH_DOWN, "true");
     Assert.assertEquals(row,
         runByCatalog(properties,
@@ -351,11 +307,11 @@ public class FlinkTest {
                 CATALOG_NAME, DATABASE_NAME, tableName),
             tableName));
     // column pruner
-    tableName = getRandomTableName();
+    tableName = RandomUtils.randomString();
     // select 10 column randomly
     Random random = new Random();
     int[] ints = IntStream.range(0, 10).map(i -> random.nextInt(29)).toArray();
-    row1 = runByCatalog(getDefaultProperties(),
+    row1 = runByCatalog(ConfigUtils.defaultProperties(),
         format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
             Arrays.stream(ints).mapToObj(i -> "c" + (i + 1)).collect(Collectors.joining(",")),
             CATALOG_NAME, DATABASE_NAME, tableName),
@@ -369,10 +325,10 @@ public class FlinkTest {
         .inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    Map<String, String> properties = getDefaultProperties();
+    Map<String, String> properties = ConfigUtils.defaultProperties();
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
-    String tableName = getRandomTableName();
+    String tableName = RandomUtils.randomString();
     String createTableSql1 = String
         .format("CREATE TABLE `%s`.`%s` (c1 int, c2 varchar(255), PRIMARY KEY(`c1`))",
             DATABASE_NAME, tableName);
@@ -402,9 +358,9 @@ public class FlinkTest {
   public void testSnapshotRead() throws Exception {
     for (int i = 1; i <= 3; i++) {
       // insert
-      Map<String, String> properties = getDefaultProperties();
+      Map<String, String> properties = ConfigUtils.defaultProperties();
       ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
-      String tableName = getRandomTableName();
+      String tableName = RandomUtils.randomString();
       clientSession.sqlUpdate(String.format("CREATE TABLE `%s` (`c1` int,`c2` int)", tableName),
           String.format("INSERT INTO `%s` VALUES(1,1)", tableName));
 
@@ -445,5 +401,96 @@ public class FlinkTest {
       }
       iterator.close();
     }
+  }
+
+
+  @Test
+  public void testReadAtLeastOnce() throws Exception {
+    Map<String, String> properties = ConfigUtils.defaultProperties();
+    ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
+    String tableName = RandomUtils.randomString();
+    String values = IntStream.range(0, 2000).mapToObj(i -> "(" + i + ")")
+        .collect(Collectors.joining(","));
+    clientSession.sqlUpdate(
+        String.format("CREATE TABLE `%s` (`c1` int unique key)", tableName),
+        String.format("SPLIT TABLE `%s` BETWEEN (0) AND (2000) REGIONS %s", tableName, 2),
+        String.format("INSERT INTO `%s` VALUES %s", tableName, values));
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.enableCheckpointing(100L);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    env.setParallelism(1);
+    properties.put("type", "tidb");
+    String createCatalogSql = format("CREATE CATALOG `tidb` WITH ( %s )",
+        TableUtils.toSqlProperties(properties));
+    tableEnvironment.executeSql(createCatalogSql);
+    String queryTableSql = format("SELECT * FROM `%s`.`%s`.`%s`", "tidb", DATABASE_NAME,
+        tableName);
+    Table table = tableEnvironment.sqlQuery(queryTableSql);
+    SingleOutputStreamOperator<RowData> dataStream = tableEnvironment.toAppendStream(
+        table, RowData.class).map(row -> {
+      if (RandomUtils.randomInt(1000) == 0) {
+        throw new IllegalStateException("Random test exception");
+      }
+      Thread.sleep(10L);
+      return row;
+    });
+    tableEnvironment.createTemporaryView("test_view", dataStream);
+    CloseableIterator<Row> iterator = tableEnvironment.executeSql("SELECT * FROM `test_view`")
+        .collect();
+    Set<Integer> results = new HashSet<>();
+    while (iterator.hasNext()) {
+      Row row = iterator.next();
+      results.add(((RowData) row.getFieldAs(0)).getInt(0));
+    }
+    Assert.assertEquals(2000, results.size());
+    Assert.assertEquals(IntStream.range(0, 2000).boxed().collect(Collectors.toSet()), results);
+  }
+
+  @Test
+  public void testReadExactlyOnce() throws Exception {
+    Map<String, String> properties = ConfigUtils.defaultProperties();
+    ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
+    String tableName = RandomUtils.randomString();
+    String values = IntStream.range(0, 2000).mapToObj(i -> "(" + i + ")")
+        .collect(Collectors.joining(","));
+    clientSession.sqlUpdate(
+        String.format("CREATE TABLE `%s` (`c1` int unique key)", tableName),
+        String.format("SPLIT TABLE `%s` BETWEEN (0) AND (2000) REGIONS %s", tableName, 2),
+        String.format("INSERT INTO `%s` VALUES %s", tableName, values));
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.enableCheckpointing(100L);
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    env.setParallelism(1);
+    properties.put("type", "tidb");
+    properties.put(TiDBOptions.SOURCE_FAILOVER.key(), "offset");
+    String createCatalogSql = format("CREATE CATALOG `tidb` WITH ( %s )",
+        TableUtils.toSqlProperties(properties));
+    tableEnvironment.executeSql(createCatalogSql);
+    String queryTableSql = format("SELECT * FROM `%s`.`%s`.`%s`", "tidb", DATABASE_NAME,
+        tableName);
+    Table table = tableEnvironment.sqlQuery(queryTableSql);
+    SingleOutputStreamOperator<RowData> dataStream = tableEnvironment.toAppendStream(
+        table, RowData.class).map(row -> {
+      if (RandomUtils.randomInt(1000) == 0) {
+        throw new IllegalStateException("Random test exception");
+      }
+      Thread.sleep(10L);
+      return row;
+    });
+    tableEnvironment.createTemporaryView("test_view", dataStream);
+    CloseableIterator<Row> iterator = tableEnvironment.executeSql("SELECT * FROM `test_view`")
+        .collect();
+    List<Integer> results = new ArrayList<>();
+    while (iterator.hasNext()) {
+      Row row = iterator.next();
+      results.add(((RowData) row.getFieldAs(0)).getInt(0));
+    }
+    results.sort(Comparator.naturalOrder());
+    Assert.assertEquals(2000, results.size());
+    Assert.assertEquals(IntStream.range(0, 2000).boxed().collect(Collectors.toList()), results);
   }
 }

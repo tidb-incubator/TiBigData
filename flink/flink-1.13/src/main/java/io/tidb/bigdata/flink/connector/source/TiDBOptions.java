@@ -69,6 +69,10 @@ public class TiDBOptions {
   public static final ConfigOption<String> SNAPSHOT_VERSION = optional(
       ClientConfig.SNAPSHOT_VERSION);
 
+  // split or offset
+  public static final ConfigOption<String> SOURCE_FAILOVER = optional("tidb.source.failover",
+      "split");
+
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
   public static final String STREAMING_SOURCE_KAFKA = "kafka";
@@ -99,11 +103,12 @@ public class TiDBOptions {
 
   public static Set<ConfigOption<?>> withMoreOptionalOptions(ConfigOption<?>... options) {
     return ImmutableSet.<ConfigOption<?>>builder().add(
-        PASSWORD,
-        MAX_POOL_SIZE,
-        MIN_IDLE_SIZE,
-        STREAMING_SOURCE,
-        WRITE_MODE)
+            PASSWORD,
+            MAX_POOL_SIZE,
+            MIN_IDLE_SIZE,
+            STREAMING_SOURCE,
+            WRITE_MODE,
+            SOURCE_FAILOVER)
         .add(options)
         .build();
   }
