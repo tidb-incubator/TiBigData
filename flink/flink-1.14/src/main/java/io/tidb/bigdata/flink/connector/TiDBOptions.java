@@ -86,30 +86,36 @@ public class TiDBOptions {
           .enumType(SinkImpl.class)
           .defaultValue(JDBC);
   public static final ConfigOption<SinkTransaction> SINK_TRANSACTION =
-      ConfigOptions.key("tidb.sink.transaction")
+      ConfigOptions.key("tikv.sink.transaction")
           .enumType(SinkTransaction.class)
           .defaultValue(MINIBATCH);
 
   public static final ConfigOption<Integer> SINK_BUFFER_SIZE = ConfigOptions
-      .key("tidb.sink.buffer-size")
+      .key("tikv.sink.buffer-size")
       .intType()
       .defaultValue(1000);
   public static final ConfigOption<Integer> ROW_ID_ALLOCATOR_STEP = ConfigOptions
-      .key("tidb.sink.row-id-allocator.step")
+      .key("tikv.sink.row-id-allocator.step")
       .intType()
       .defaultValue(30000);
   public static final ConfigOption<Boolean> IGNORE_AUTOINCREMENT_COLUMN_VALUE = ConfigOptions
-      .key("tidb.sink.ignore-autoincrement-column-value")
+      .key("tikv.sink.ignore-autoincrement-column-value")
       .booleanType()
       .defaultValue(false)
       .withDescription("If true, "
           + "for autoincrement column, we will generate value instead of the the actual value. "
           + "And if false, the value of autoincrement column can not be null");
   public static final ConfigOption<Boolean> DEDUPLICATE = ConfigOptions
-      .key("tidb.sink.deduplicate")
+      .key("tikv.sink.deduplicate")
       .booleanType()
       .defaultValue(false)
       .withDescription("Whether deduplicate row by unique key");
+  public static final ConfigOption<Long> TASK_START_INTERVAL = ConfigOptions
+      .key("tikv.sink.task-start-interval")
+      .longType()
+      .defaultValue(1000L)
+      .withDescription(
+          "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 

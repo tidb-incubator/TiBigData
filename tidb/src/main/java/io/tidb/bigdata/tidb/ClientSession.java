@@ -19,8 +19,11 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static io.tidb.bigdata.tidb.SqlUtils.QUERY_CLUSTERED_INDEX_SQL_FORMAT;
 import static io.tidb.bigdata.tidb.SqlUtils.QUERY_PD_SQL;
+import static io.tidb.bigdata.tidb.SqlUtils.TIDB_ROW_FORMAT_VERSION_SQL;
 import static io.tidb.bigdata.tidb.SqlUtils.getCreateTableSql;
+import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
 
@@ -28,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
+import io.tidb.bigdata.tidb.allocator.RowIDAllocator;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -37,9 +41,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -74,6 +80,9 @@ public final class ClientSession implements AutoCloseable {
   );
 
   static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
+  private static final int ROW_ID_STEP = 30000;
+  private static final int MAX_RETRY = 0;
+  private static final long RANDOM_SLEEP_UPPER_BOUND = 0L;
 
   private final ClientConfig config;
 
@@ -316,6 +325,19 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
+  public int queryTableCount(String databaseName,
+      String tableName) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(
+            format("SELECT COUNT(*) as c FROM `%s`.`%s`", databaseName, tableName))) {
+      resultSet.next();
+      return resultSet.getInt("c");
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public void createTable(String databaseName, String tableName, List<String> columnNames,
       List<String> columnTypes, List<String> primaryKeyColumns, List<String> uniqueKeyColumns,
       boolean ignoreIfExists) {
@@ -410,6 +432,91 @@ public final class ClientSession implements AutoCloseable {
 
   public TiTimestamp getSnapshotVersion() {
     return session.getTimestamp();
+  }
+
+  public TiSession getTiSession() {
+    return session;
+  }
+
+  private RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
+      int retry, int maxRetry, long randomSleepUpperBound) {
+    long dbId = catalog.getDatabase(databaseName).getId();
+    TiTableInfo table = getTableMust(databaseName, tableName);
+    try {
+      LOG.info("Start create row id allocator");
+      if (randomSleepUpperBound > 0) {
+        long time = Math.abs(new Random().nextLong()) % randomSleepUpperBound + 1;
+        LOG.warn("Random sleep: {}ms to avoid tikv lock conflicts", time);
+      }
+      RowIDAllocator rowIDAllocator = RowIDAllocator.create(dbId, table, session,
+          table.isAutoIncColUnsigned(), step);
+      LOG.info("Create row id allocator success: start = {}, end = {}", rowIDAllocator.getStart(),
+          rowIDAllocator.getEnd());
+      return rowIDAllocator;
+    } catch (Exception e) {
+      if (retry >= maxRetry) {
+        throw new IllegalStateException("Maximum number of retries exceeded.", e);
+      } else {
+        LOG.warn("Create RowIdAllocator failed, retry, current retry count is " + retry, e);
+        return createRowIdAllocator(databaseName, tableName, step, ++retry, maxRetry,
+            randomSleepUpperBound);
+      }
+    }
+  }
+
+  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
+      int maxRetry, long randomSleepUpperBound) {
+    return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, maxRetry, randomSleepUpperBound);
+  }
+
+  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step) {
+    return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
+  }
+
+  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
+      int maxRetry) {
+    return createRowIdAllocator(databaseName, tableName, step, maxRetry, RANDOM_SLEEP_UPPER_BOUND);
+  }
+
+  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName) {
+    return createRowIdAllocator(databaseName, tableName, ROW_ID_STEP, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
+  }
+
+  public boolean isClusteredIndex(String databaseName, String tableName) {
+    try (Connection connection = getJdbcConnection();
+        Statement statement = connection.createStatement()) {
+      try (ResultSet resultSet = statement.executeQuery("DESC `INFORMATION_SCHEMA`.`TABLES`")) {
+        Set<String> fields = new HashSet<>();
+        while (resultSet.next()) {
+          fields.add(resultSet.getString("Field"));
+        }
+        if (!fields.contains("TIDB_PK_TYPE")) {
+          return false;
+        }
+      }
+      try (ResultSet resultSet = statement.executeQuery(
+          String.format(QUERY_CLUSTERED_INDEX_SQL_FORMAT, databaseName, tableName))) {
+        if (!resultSet.next()) {
+          return false;
+        }
+        return resultSet.getString(1).equals("CLUSTERED");
+      }
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public int getRowFormatVersion() {
+    try (Connection connection = getJdbcConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(TIDB_ROW_FORMAT_VERSION_SQL)) {
+      if (!resultSet.next()) {
+        return 1;
+      }
+      return resultSet.getInt(1);
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
