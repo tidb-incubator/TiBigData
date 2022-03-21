@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_SOURCE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.LOOKUP_CACHE_MAX_ROWS;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.LOOKUP_CACHE_TTL;
@@ -27,6 +28,8 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BU
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_MAX_RETRIES;
 
 import com.google.common.collect.ImmutableSet;
+import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
+import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -46,6 +49,7 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.utils.TableSchemaUtils;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
 
@@ -79,29 +83,44 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
+    // check fields
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    TableSchema schema = context.getCatalogTable().getSchema();
-    String databaseName = config.get(DATABASE_NAME);
-    // jdbc options
-    JdbcConnectorOptions jdbcOptions = JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
-    // execution options
-    JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
-        .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
-        .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
-        .withMaxRetries(config.get(SINK_MAX_RETRIES))
-        .build();
-    // dml options
-    JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
-        .withTableName(jdbcOptions.getTableName())
-        .withDialect(jdbcOptions.getDialect())
-        .withFieldNames(schema.getFieldNames())
-        .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
-        .build();
+    TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
 
-    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+    if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
+      return new TiDBDynamicTableSink(config.get(DATABASE_NAME), config.get(TABLE_NAME),
+          context.getCatalogTable(), tiDBSinkOptions);
+
+    } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
+      TableSchema schema = TableSchemaUtils.getPhysicalSchema(
+          context.getCatalogTable().getSchema());
+      String databaseName = config.get(DATABASE_NAME);
+      // jdbc options
+      JdbcConnectorOptions jdbcOptions = JdbcUtils.getJdbcOptions(
+          context.getCatalogTable().toProperties());
+      // execution options
+      JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
+          .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+          .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+          .withMaxRetries(config.get(SINK_MAX_RETRIES))
+          .build();
+      // dml options
+      JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
+          .withTableName(jdbcOptions.getTableName())
+          .withDialect(jdbcOptions.getDialect())
+          .withFieldNames(schema.getFieldNames())
+          .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+          .build();
+
+      return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+
+    } else {
+      throw new UnsupportedOperationException("Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
+    }
   }
+
 
   private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
       String tableName) {
