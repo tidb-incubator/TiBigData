@@ -18,6 +18,9 @@
 
 package org.apache.flink.connector.base.source.hybrid;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -30,26 +33,54 @@ import org.apache.flink.api.java.ClosureCleaner;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.util.Preconditions;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Hybrid source that switches underlying sources based on configured source chain.
  *
+ * <p>A simple example with FileSource and KafkaSource with fixed Kafka start position:
+ *
  * <pre>{@code
- * FileSource<String> fileSource = null;
+ * FileSource<String> fileSource =
+ *   FileSource.forRecordStreamFormat(new TextLineInputFormat(), Path.fromLocalFile(testDir)).build();
+ * KafkaSource<String> kafkaSource =
+ *           KafkaSource.<String>builder()
+ *                   .setBootstrapServers("localhost:9092")
+ *                   .setGroupId("MyGroup")
+ *                   .setTopics(Arrays.asList("quickstart-events"))
+ *                   .setDeserializer(
+ *                           KafkaRecordDeserializer.valueOnly(StringDeserializer.class))
+ *                   .setStartingOffsets(OffsetsInitializer.earliest())
+ *                   .build();
  * HybridSource<String> hybridSource =
- *     new HybridSourceBuilder<String, ContinuousFileSplitEnumerator>()
- *         .addSource(fileSource) // fixed start position
+ *           HybridSource.builder(fileSource)
+ *                   .addSource(kafkaSource)
+ *                   .build();
+ * }</pre>
+ *
+ * <p>A more complex example with Kafka start position derived from previous source:
+ *
+ * <pre>{@code
+ * HybridSource<String> hybridSource =
+ *     HybridSource.<String, StaticFileSplitEnumerator>builder(fileSource)
  *         .addSource(
- *             (enumerator) -> {
- *               // instantiate Kafka source based on enumerator
- *               KafkaSource<String> kafkaSource = createKafkaSource(enumerator);
+ *             switchContext -> {
+ *               StaticFileSplitEnumerator previousEnumerator =
+ *                   switchContext.getPreviousEnumerator();
+ *               // how to get timestamp depends on specific enumerator
+ *               long timestamp = previousEnumerator.getEndTimestamp();
+ *               OffsetsInitializer offsets =
+ *                   OffsetsInitializer.timestamp(timestamp);
+ *               KafkaSource<String> kafkaSource =
+ *                   KafkaSource.<String>builder()
+ *                       .setBootstrapServers("localhost:9092")
+ *                       .setGroupId("MyGroup")
+ *                       .setTopics(Arrays.asList("quickstart-events"))
+ *                       .setDeserializer(
+ *                           KafkaRecordDeserializer.valueOnly(StringDeserializer.class))
+ *                       .setStartingOffsets(offsets)
+ *                       .build();
  *               return kafkaSource;
- *             }, Boundedness.CONTINUOUS_UNBOUNDED)
+ *             },
+ *             Boundedness.CONTINUOUS_UNBOUNDED)
  *         .build();
  * }</pre>
  */
@@ -57,19 +88,11 @@ import java.util.Map;
 public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourceEnumeratorState> {
 
     private final List<SourceListEntry> sources;
-    // sources are populated per subtask at switch time
-    private final Map<Integer, Source> switchedSources;
 
     /** Protected for subclass, use {@link #builder(Source)} to construct source. */
     protected HybridSource(List<SourceListEntry> sources) {
         Preconditions.checkArgument(!sources.isEmpty());
-        for (int i = 0; i < sources.size() - 1; i++) {
-            Preconditions.checkArgument(
-                    Boundedness.BOUNDED.equals(sources.get(i).boundedness),
-                    "All sources except the final source need to be bounded.");
-        }
         this.sources = sources;
-        this.switchedSources = new HashMap<>(sources.size());
     }
 
     /** Builder for {@link HybridSource}. */
@@ -87,13 +110,13 @@ public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourc
     @Override
     public SourceReader<T, HybridSourceSplit> createReader(SourceReaderContext readerContext)
             throws Exception {
-        return new HybridSourceReader(readerContext, switchedSources);
+        return new HybridSourceReader(readerContext);
     }
 
     @Override
     public SplitEnumerator<HybridSourceSplit, HybridSourceEnumeratorState> createEnumerator(
             SplitEnumeratorContext<HybridSourceSplit> enumContext) {
-        return new HybridSourceSplitEnumerator(enumContext, sources, 0, switchedSources);
+        return new HybridSourceSplitEnumerator(enumContext, sources, 0, null);
     }
 
     @Override
@@ -101,20 +124,34 @@ public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourc
             SplitEnumeratorContext<HybridSourceSplit> enumContext,
             HybridSourceEnumeratorState checkpoint)
             throws Exception {
-        // TODO: restore underlying enumerator
         return new HybridSourceSplitEnumerator(
-                enumContext, sources, checkpoint.getCurrentSourceIndex(), switchedSources);
+                enumContext, sources, checkpoint.getCurrentSourceIndex(), checkpoint);
     }
 
     @Override
     public SimpleVersionedSerializer<HybridSourceSplit> getSplitSerializer() {
-        return new HybridSourceSplitSerializer(switchedSources);
+        return new HybridSourceSplitSerializer();
     }
 
     @Override
     public SimpleVersionedSerializer<HybridSourceEnumeratorState>
             getEnumeratorCheckpointSerializer() {
-        return new HybridSourceEnumeratorStateSerializer(switchedSources);
+        return new HybridSourceEnumeratorStateSerializer();
+    }
+
+    /**
+     * Context provided to source factory.
+     *
+     * <p>To derive a start position at switch time, the source can be initialized from context of
+     * the previous enumerator. A specific enumerator implementation may carry state such as an end
+     * timestamp, that can be used to derive the start position of the next source.
+     *
+     * <p>Currently only the previous enumerator is exposed. The context interface allows for
+     * backward compatible extension, i.e. additional information about the previous source can be
+     * supplied in the future.
+     */
+    public interface SourceSwitchContext<EnumT> {
+        EnumT getPreviousEnumerator();
     }
 
     /**
@@ -125,17 +162,19 @@ public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourc
      * Future convenience could be built on top of it, for example a default implementation that
      * recognizes optional interfaces to transfer position in a universal format.
      *
-     * <p>Called when the current enumerator has finished and before the next enumerator is created.
-     * The enumerator end state can thus be used to set the next source's start start position. Only
-     * required for dynamic position transfer at time of switching.
+     * <p>Called when the current enumerator has finished. The previous source's final state can
+     * thus be used to construct the next source, as required for dynamic position transfer at time
+     * of switching.
      *
      * <p>If start position is known at job submission time, the source can be constructed in the
      * entry point and simply wrapped into the factory, providing the benefit of validation during
      * submission.
      */
-    public interface SourceFactory<T, SourceT extends Source, FromEnumT extends SplitEnumerator>
+    @FunctionalInterface
+    public interface SourceFactory<
+                    T, SourceT extends Source<T, ?, ?>, FromEnumT extends SplitEnumerator>
             extends Serializable {
-        SourceT create(FromEnumT enumerator);
+        SourceT create(SourceSwitchContext<FromEnumT> context);
     }
 
     private static class PassthroughSourceFactory<
@@ -149,22 +188,22 @@ public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourc
         }
 
         @Override
-        public SourceT create(FromEnumT enumerator) {
+        public SourceT create(SourceSwitchContext<FromEnumT> context) {
             return source;
         }
     }
 
     /** Entry for list of underlying sources. */
-    protected static class SourceListEntry implements Serializable {
-        protected final SourceFactory configurer;
+    static class SourceListEntry implements Serializable {
+        protected final SourceFactory factory;
         protected final Boundedness boundedness;
 
-        private SourceListEntry(SourceFactory configurer, Boundedness boundedness) {
-            this.configurer = Preconditions.checkNotNull(configurer);
+        private SourceListEntry(SourceFactory factory, Boundedness boundedness) {
+            this.factory = Preconditions.checkNotNull(factory);
             this.boundedness = Preconditions.checkNotNull(boundedness);
         }
 
-        public static SourceListEntry of(SourceFactory configurer, Boundedness boundedness) {
+        static SourceListEntry of(SourceFactory configurer, Boundedness boundedness) {
             return new SourceListEntry(configurer, boundedness);
         }
     }
@@ -187,8 +226,13 @@ public class HybridSource<T> implements Source<T, HybridSourceSplit, HybridSourc
         /** Add source with deferred instantiation based on previous enumerator. */
         public <ToEnumT extends SplitEnumerator, NextSourceT extends Source<T, ?, ?>>
                 HybridSourceBuilder<T, ToEnumT> addSource(
-                        SourceFactory<T, NextSourceT, EnumT> sourceFactory,
+                        SourceFactory<T, NextSourceT, ? super EnumT> sourceFactory,
                         Boundedness boundedness) {
+            if (!sources.isEmpty()) {
+                Preconditions.checkArgument(
+                        Boundedness.BOUNDED.equals(sources.get(sources.size() - 1).boundedness),
+                        "All sources except the final source need to be bounded.");
+            }
             ClosureCleaner.clean(
                     sourceFactory, ExecutionConfig.ClosureCleanerLevel.RECURSIVE, true);
             sources.add(SourceListEntry.of(sourceFactory, boundedness));
