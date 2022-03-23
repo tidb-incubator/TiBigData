@@ -121,6 +121,10 @@ public class RecordCursorInternal {
     return row.getBytes(field);
   }
 
+  public Row getRow() {
+    return row;
+  }
+
   public int fieldCount() {
     return row.fieldCount();
   }
