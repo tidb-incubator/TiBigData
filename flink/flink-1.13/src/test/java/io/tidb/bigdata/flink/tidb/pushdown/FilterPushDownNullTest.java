@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidatorvalidator.doTestFilter;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.validator.getColumnType;
 import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
 
 import com.google.common.collect.ImmutableList;
@@ -42,13 +42,13 @@ public class FilterPushDownNullTest {
 
     // IS NULL
     String column = "c1";
-    DataType type = getColumnType(column);
+    DataType type = validator.getColumnType(column);
     Expression expression = Expressions.isNull(Expressions.column(column, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
 
     // NOT NULL
     expression = Expressions.not(Expressions.isNull(Expressions.column(column, type)));
-    doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
+   validator.doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
 
   }
 

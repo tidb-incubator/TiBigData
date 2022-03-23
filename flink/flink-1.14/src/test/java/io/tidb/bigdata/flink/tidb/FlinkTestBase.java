@@ -32,14 +32,19 @@ import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.junit.Assert;
+import org.junit.ClassRule;
 
 public abstract class FlinkTestBase {
 
+  @ClassRule
+  public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
+
   public static final String CATALOG_NAME = "tidb";
 
-  public static final String DATABASE_NAME = "test";
+  public static final String DATABASE_NAME = "tiflink_test";
 
-  public static final String CREATE_DATABASE_SQL = "CREATE DATABASE IF NOT EXISTS `test`";
+  public static final String CREATE_DATABASE_SQL = String.format(
+      "CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME);
 
   protected static final String TABLE_WITHOUT_INDEX =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    c2  bigint,\n"
@@ -73,7 +78,7 @@ public abstract class FlinkTestBase {
       TableEnvironment tableEnvironment, Map<String, String> properties) {
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
-    String dropTableSql = format("DROP TABLE IF EXISTS `%S`", dstTable);
+    String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable);
     String createTiDBSql = String.format(createTableSql, DATABASE_NAME, dstTable);
     tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
     return tiDBCatalog;
@@ -89,7 +94,7 @@ public abstract class FlinkTestBase {
     properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(10000));
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
-    String dropTableSql = format("DROP TABLE IF EXISTS `%S`", tableName);
+    String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, tableName);
     String createTiDBSql = String.format(
         "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    c2  bigint,\n"
             + "    c3  bigint,\n" + "    c4  bigint,\n" + "    c5  bigint,\n"
@@ -98,19 +103,21 @@ public abstract class FlinkTestBase {
             + "    c12 float,\n" + "    c13 double,\n" + "    c14 date,\n" + "    c15 time,\n"
             + "    c16 datetime,\n" + "    c17 timestamp\n" + ")", DATABASE_NAME, tableName);
     tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
-    CatalogBaseTable table = tiDBCatalog.getTable("test", tableName);
+    CatalogBaseTable table = tiDBCatalog.getTable(DATABASE_NAME, tableName);
     String createDatagenSql = format(
         "CREATE TABLE datagen \n%s\n WITH (\n" + " 'connector' = 'datagen',\n"
             + " 'number-of-rows'='%s',\n" + " 'fields.c1.kind'='sequence',\n"
             + " 'fields.c1.start'='1',\n" + " 'fields.c1.end'='%s'\n" + ")",
         table.getUnresolvedSchema().toString(), rowCount, rowCount);
     tableEnvironment.executeSql(createDatagenSql);
-    String sql = format("INSERT INTO `tidb`.`test`.`%s` SELECT * FROM datagen", tableName);
+    String sql = format("INSERT INTO `tidb`.`%s`.`%s` SELECT * FROM datagen", DATABASE_NAME,
+        tableName);
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
     // splits
-    String splitRegionSql = format("SPLIT TABLE `%s` BETWEEN (0) AND (%s) REGIONS %s", tableName,
+    String splitRegionSql = format("SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (%s) REGIONS %s",
+        DATABASE_NAME, tableName,
         rowCount * 8, 100);
     tiDBCatalog.sqlUpdate(splitRegionSql);
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, tableName));

@@ -40,8 +40,8 @@ public class TIKVSourceTest extends FlinkTestBase {
       Map<String, String> properties = ConfigUtils.defaultProperties();
       ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
       String tableName = RandomUtils.randomString();
-      clientSession.sqlUpdate(String.format("CREATE TABLE `%s` (`c1` int,`c2` int)", tableName),
-          String.format("INSERT INTO `%s` VALUES(1,1)", tableName));
+      clientSession.sqlUpdate(String.format("CREATE TABLE `%s`.`%s` (`c1` int,`c2` int)", DATABASE_NAME, tableName),
+          String.format("INSERT INTO `%s`.`%s` VALUES(1,1)", DATABASE_NAME, tableName));
 
       if (i == 1) {
         // get timestamp
@@ -56,7 +56,7 @@ public class TIKVSourceTest extends FlinkTestBase {
       }
 
       // update
-      clientSession.sqlUpdate(String.format("UPDATE `%s` SET c1 = 2 WHERE c1 =1", tableName));
+      clientSession.sqlUpdate(String.format("UPDATE `%s`.`%s` SET c1 = 2 WHERE c1 =1", DATABASE_NAME, tableName));
 
       if (i == 3) {
         // get timestamp

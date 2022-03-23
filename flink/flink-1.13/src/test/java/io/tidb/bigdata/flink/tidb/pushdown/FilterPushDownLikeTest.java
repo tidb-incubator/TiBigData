@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidatorvalidator.doTestFilter;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.validator.getColumnType;
 import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
 
 import com.google.common.collect.ImmutableList;
@@ -44,74 +44,74 @@ public class FilterPushDownLikeTest {
     // char
     String column = "c6";
     Object value = "chartype%";
-    DataType type = getColumnType(column);
+    DataType type = validator.getColumnType(column);
     Expression expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "chartype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // varchar
     column = "c7";
     value = "varchartype%";
-    type = getColumnType(column);
+    type = validator.getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "varchartype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // tinytext
     column = "c8";
     value = "tinytexttype%";
-    type = getColumnType(column);
+    type = validator.getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "tinytexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // mediumtext
     column = "c9";
     value = "mediumtexttype%";
-    type = getColumnType(column);
+    type = validator.getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "mediumtexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // text
     column = "c10";
     value = "texttype%";
-    type = getColumnType(column);
+    type = validator.getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "texttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // longtext
     column = "c11";
     value = "longtexttype%";
-    type = getColumnType(column);
+    type = validator.getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "longtexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // enum
     column = "c28";
@@ -119,12 +119,12 @@ public class FilterPushDownLikeTest {
     type = StringType.VARCHAR;
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(rows, expression,
+   validator.doTestFilter(rows, expression,
         String.format("`%s` like '%s'", column, value));
     value = "2";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-    doTestFilter(ImmutableList.of(), expression,
+   validator.doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` like '%s'", column, value));
   }
 
@@ -139,15 +139,15 @@ public class FilterPushDownLikeTest {
     // json
     String column = "c27";
     Object value = "{\"a\": 1, \"b\": 2}";
-    doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
 
     // set
     column = "c29";
     value = "a";
-    doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
+   validator.doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
 
     // columns to columns
-    doTestFilter(rows, null, "`c11` like `c11`");
+   validator.doTestFilter(rows, null, "`c11` like `c11`");
   }
 
 }

@@ -27,19 +27,18 @@ public class TiDBWriteHelperTest extends FlinkTestBase {
     ClientSession clientSession = ClientSession.create(
         new ClientConfig(ConfigUtils.defaultProperties()));
     String tableName = RandomUtils.randomString();
-    String databaseName = "test";
     clientSession.sqlUpdate(String.format(
-        "CREATE TABLE IF NOT EXISTS `%s`\n" + "(\n" + "    c1  bigint,\n" + "    UNIQUE KEY(c1)"
-            + ")", tableName));
-    writeData(clientSession, tableName, databaseName);
-    writeData(clientSession, tableName, databaseName);
+        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    UNIQUE KEY(c1)"
+            + ")", DATABASE_NAME, tableName));
+    writeData(clientSession, tableName);
+    writeData(clientSession, tableName);
   }
 
-  private void writeData(ClientSession clientSession, String tableName, String databaseName) {
+  private void writeData(ClientSession clientSession, String tableName) {
     TiTimestamp timestamp = clientSession.getSnapshotVersion();
-    DynamicRowIDAllocator rowIDAllocator = new DynamicRowIDAllocator(clientSession, databaseName,
+    DynamicRowIDAllocator rowIDAllocator = new DynamicRowIDAllocator(clientSession, DATABASE_NAME,
         tableName, 100);
-    TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(clientSession, timestamp, databaseName,
+    TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(clientSession, timestamp, DATABASE_NAME,
         tableName, false, true, rowIDAllocator);
     TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(clientSession.getTiSession(),
         timestamp.getVersion());

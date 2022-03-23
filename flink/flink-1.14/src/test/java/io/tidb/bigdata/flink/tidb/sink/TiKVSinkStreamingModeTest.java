@@ -114,7 +114,7 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
         .returns(typeInformation);
     tableEnvironment.createTemporaryView(srcTable, dataStream);
     tableEnvironment.sqlUpdate(
-        String.format("INSERT INTO `tidb`.`test`.`%s` SELECT c1 FROM %s WHERE c1 <= 100", dstTable,
+        String.format("INSERT INTO `tidb`.`%s`.`%s` SELECT c1 FROM %s WHERE c1 <= 100", DATABASE_NAME, dstTable,
             srcTable));
     tableEnvironment.execute("test");
 
