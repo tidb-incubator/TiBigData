@@ -56,39 +56,39 @@ public class FilterPushDownNotComparisonTest {
     // in
     String whereCondition = "`c1` IN (1,2)";
     Expression expression = Expressions.or(c1_equal_1, c1_equal_2);
-   doTestFilter(rows, expression, whereCondition);
+    doTestFilter(rows, expression, whereCondition);
     whereCondition = "`c1` IN (2,3)";
     expression = Expressions.or(c1_equal_2, c1_equal_3);
-   doTestFilter(ImmutableList.of(), expression, whereCondition);
+    doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // or
     whereCondition = "`c1` = 1 or c1 = 2";
     expression = Expressions.or(c1_equal_1, c1_equal_2);
-   doTestFilter(rows, expression, whereCondition);
+    doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "`c1` = 2 or c1 = 3";
     expression = Expressions.or(c1_equal_2, c1_equal_3);
-   doTestFilter(ImmutableList.of(), expression, whereCondition);
+    doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // and
     whereCondition = "`c1` = 1 AND `c2` = 1 AND `c6` = 'chartype'";
     expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_1, c6_equal_chartype));
-   doTestFilter(rows, expression, whereCondition);
+    doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "`c1` = 1 AND `c2` = 2 AND `c6` = 'chartype'";
     expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_2, c6_equal_chartype));
-   doTestFilter(ImmutableList.of(), expression, whereCondition);
+    doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // or & and
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 1";
     expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_1),
         Expressions.or(c2_equal_2, c1_equal_1));
-   doTestFilter(rows, expression, whereCondition);
+    doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 3";
     expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_3),
         Expressions.or(c2_equal_2, c1_equal_3));
-   doTestFilter(ImmutableList.of(), expression, whereCondition);
+    doTestFilter(ImmutableList.of(), expression, whereCondition);
 
   }
 
@@ -100,17 +100,17 @@ public class FilterPushDownNotComparisonTest {
     List<Row> rows = rows();
     // or
     String whereCondition = "`c1` = 1 or `c1` = `c2`";
-   doTestFilter(rows, null, whereCondition);
+    doTestFilter(rows, null, whereCondition);
 
     // and
     whereCondition = "`c1` = 1 AND `c2` = 1 AND `c1` = `c2`";
     Expression expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_1));
-   doTestFilter(rows, expression, whereCondition);
+    doTestFilter(rows, expression, whereCondition);
 
     // and
     whereCondition = "`c1` = 2 AND `c2` = 1 AND `c1` = `c2`";
     expression = Expressions.and(ImmutableList.of(c1_equal_2, c2_equal_1));
-   doTestFilter(ImmutableList.of(), expression, whereCondition);
+    doTestFilter(ImmutableList.of(), expression, whereCondition);
   }
 
 }

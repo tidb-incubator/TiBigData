@@ -44,11 +44,11 @@ public class FilterPushDownNullTest {
     String column = "c1";
     DataType type = getColumnType(column);
     Expression expression = Expressions.isNull(Expressions.column(column, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
 
     // NOT NULL
     expression = Expressions.not(Expressions.isNull(Expressions.column(column, type)));
-   doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
+    doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
 
   }
 

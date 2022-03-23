@@ -47,11 +47,11 @@ public class FilterPushDownLikeTest {
     DataType type = getColumnType(column);
     Expression expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "chartype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // varchar
     column = "c7";
@@ -59,11 +59,11 @@ public class FilterPushDownLikeTest {
     type = getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "varchartype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // tinytext
     column = "c8";
@@ -71,11 +71,11 @@ public class FilterPushDownLikeTest {
     type = getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "tinytexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // mediumtext
     column = "c9";
@@ -83,11 +83,11 @@ public class FilterPushDownLikeTest {
     type = getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "mediumtexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // text
     column = "c10";
@@ -95,11 +95,11 @@ public class FilterPushDownLikeTest {
     type = getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "texttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // longtext
     column = "c11";
@@ -107,11 +107,11 @@ public class FilterPushDownLikeTest {
     type = getColumnType(column);
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
     value = "longtexttype1";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` like '%s'", column, value));
 
     // enum
     column = "c28";
@@ -119,12 +119,12 @@ public class FilterPushDownLikeTest {
     type = StringType.VARCHAR;
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression,
+    doTestFilter(rows, expression,
         String.format("`%s` like '%s'", column, value));
     value = "2";
     expression = Expressions.like(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` like '%s'", column, value));
   }
 
@@ -139,15 +139,15 @@ public class FilterPushDownLikeTest {
     // json
     String column = "c27";
     Object value = "{\"a\": 1, \"b\": 2}";
-   doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
 
     // set
     column = "c29";
     value = "a";
-   doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
+    doTestFilter(rows, null, String.format("`%s` like '%s'", column, value));
 
     // columns to columns
-   doTestFilter(rows, null, "`c11` like `c11`");
+    doTestFilter(rows, null, "`c11` like `c11`");
   }
 
 }

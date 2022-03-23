@@ -50,20 +50,20 @@ public class FilterPushDownEqualTest {
     DataType type = getColumnType(column);
     Expression expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
     value = 2;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
     // Swap column and value, we only test for tinyint, other types are same as tinyint
     value = 1;
     expression = Expressions.equal(Expressions.constant(value, type),
         Expressions.column(column, type));
-   doTestFilter(rows, expression, String.format("%s = `%s`", value, column));
+    doTestFilter(rows, expression, String.format("%s = `%s`", value, column));
     value = 2;
     expression = Expressions.equal(Expressions.constant(value, type),
         Expressions.column(column, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("%s = `%s`", value, column));
+    doTestFilter(ImmutableList.of(), expression, String.format("%s = `%s`", value, column));
 
     // smallint
     column = "c2";
@@ -71,11 +71,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
     value = 2;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
 
     // mediumint
     column = "c3";
@@ -83,11 +83,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
     value = 2;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
 
     // int
     column = "c4";
@@ -95,11 +95,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
     value = 2;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
 
     // bigint
     column = "c5";
@@ -107,11 +107,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = %s", column, value));
     value = 2;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = %s", column, value));
 
     // char
     column = "c6";
@@ -119,11 +119,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "chartype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // varchar
     column = "c7";
@@ -131,11 +131,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "varchartype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // tinytext
     column = "c8";
@@ -143,11 +143,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "tinytexttype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // mediumtext
     column = "c9";
@@ -155,11 +155,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "mediumtexttype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // text
     column = "c10";
@@ -167,11 +167,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "texttype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // longtext
     column = "c11";
@@ -179,11 +179,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = '%s'", column, value));
     value = "longtexttype1";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
+    doTestFilter(ImmutableList.of(), expression, String.format("`%s` = '%s'", column, value));
 
     // float
     column = "c18";
@@ -191,11 +191,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS FLOAT)", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS FLOAT)", column, value));
     value = 1.235;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST(%s AS FLOAT)", column, value));
 
     // double
@@ -204,11 +204,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS DOUBLE)", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS DOUBLE)", column, value));
     value = 2.456789123;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST(%s AS DOUBLE)", column, value));
 
     // decimal
@@ -217,11 +217,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS DECIMAL(6,3))", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = CAST(%s AS DECIMAL(6,3))", column, value));
     value = 123.567;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST(%s AS DECIMAL(6,3))", column, value));
 
     // date
@@ -230,11 +230,11 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression, String.format("`%s` = CAST('%s' AS DATE)", column, value));
+    doTestFilter(rows, expression, String.format("`%s` = CAST('%s' AS DATE)", column, value));
     value = Date.valueOf("2020-08-11");
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST('%s' AS DATE)", column, value));
 
     // datetime
@@ -243,12 +243,12 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression,
+    doTestFilter(rows, expression,
         String.format("`%s` = CAST('%s' AS TIMESTAMP(6))", column, value));
     value = Timestamp.valueOf("2020-08-10 15:30:30");
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST('%s' AS TIMESTAMP(6))", column, value));
 
     // timestamp
@@ -261,7 +261,7 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(utcTimestamp, type));
-   doTestFilter(rows, expression,
+    doTestFilter(rows, expression,
         String.format("`%s` = CAST('%s' AS TIMESTAMP(6))", column, timestamp));
 
     timestamp = Timestamp.valueOf("2020-08-10 16:30:30");
@@ -271,7 +271,7 @@ public class FilterPushDownEqualTest {
     utcTimestamp = Timestamp.valueOf(utc.toLocalDateTime());
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(utcTimestamp, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = CAST('%s' AS TIMESTAMP(6))", column, timestamp));
 
     // year
@@ -280,12 +280,12 @@ public class FilterPushDownEqualTest {
     type = getColumnType(column);
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression,
+    doTestFilter(rows, expression,
         String.format("`%s` = %s", column, value));
     value = 2021;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = %s", column, value));
 
     // enum
@@ -294,12 +294,12 @@ public class FilterPushDownEqualTest {
     type = StringType.VARCHAR;
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(rows, expression,
+    doTestFilter(rows, expression,
         String.format("`%s` = '%s'", column, value));
     value = "2";
     expression = Expressions.equal(Expressions.column(column, type),
         Expressions.constant(value, type));
-   doTestFilter(ImmutableList.of(), expression,
+    doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` = '%s'", column, value));
   }
 
@@ -313,15 +313,15 @@ public class FilterPushDownEqualTest {
     // json
     String column = "c27";
     Object value = "{\"a\": 1, \"b\": 2}";
-   doTestFilter(rows, null, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, null, String.format("`%s` = '%s'", column, value));
 
     // set
     column = "c29";
     value = "a";
-   doTestFilter(rows, null, String.format("`%s` = '%s'", column, value));
+    doTestFilter(rows, null, String.format("`%s` = '%s'", column, value));
 
     // columns to columns
-   doTestFilter(rows, null, "`c1` = `c2`");
+    doTestFilter(rows, null, "`c1` = `c2`");
   }
 
 }
