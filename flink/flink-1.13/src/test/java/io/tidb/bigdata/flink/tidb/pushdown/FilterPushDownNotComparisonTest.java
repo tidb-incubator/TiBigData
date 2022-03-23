@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidatorvalidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.validator.getColumnType;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
 import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
 
 import com.google.common.collect.ImmutableList;
@@ -32,9 +32,9 @@ import org.tikv.common.row.Row;
 @Category(IntegrationTest.class)
 public class FilterPushDownNotComparisonTest {
 
-  Expression c1 = Expressions.column("c1", validator.getColumnType("c1"));
-  Expression c2 = Expressions.column("c2", validator.getColumnType("c2"));
-  Expression c6 = Expressions.column("c6", validator.getColumnType("c6"));
+  Expression c1 = Expressions.column("c1", getColumnType("c1"));
+  Expression c2 = Expressions.column("c2", getColumnType("c2"));
+  Expression c6 = Expressions.column("c6", getColumnType("c6"));
   Expression constant_1 = Expressions.constant(1, null);
   Expression constant_2 = Expressions.constant(2, null);
   Expression constant_3 = Expressions.constant(3, null);
@@ -56,39 +56,39 @@ public class FilterPushDownNotComparisonTest {
     // in
     String whereCondition = "`c1` IN (1,2)";
     Expression expression = Expressions.or(c1_equal_1, c1_equal_2);
-   validator.doTestFilter(rows, expression, whereCondition);
+   doTestFilter(rows, expression, whereCondition);
     whereCondition = "`c1` IN (2,3)";
     expression = Expressions.or(c1_equal_2, c1_equal_3);
-   validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
+   doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // or
     whereCondition = "`c1` = 1 or c1 = 2";
     expression = Expressions.or(c1_equal_1, c1_equal_2);
-   validator.doTestFilter(rows, expression, whereCondition);
+   doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "`c1` = 2 or c1 = 3";
     expression = Expressions.or(c1_equal_2, c1_equal_3);
-   validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
+   doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // and
     whereCondition = "`c1` = 1 AND `c2` = 1 AND `c6` = 'chartype'";
     expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_1, c6_equal_chartype));
-   validator.doTestFilter(rows, expression, whereCondition);
+   doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "`c1` = 1 AND `c2` = 2 AND `c6` = 'chartype'";
     expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_2, c6_equal_chartype));
-   validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
+   doTestFilter(ImmutableList.of(), expression, whereCondition);
 
     // or & and
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 1";
     expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_1),
         Expressions.or(c2_equal_2, c1_equal_1));
-   validator.doTestFilter(rows, expression, whereCondition);
+   doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 3";
     expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_3),
         Expressions.or(c2_equal_2, c1_equal_3));
-   validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
+   doTestFilter(ImmutableList.of(), expression, whereCondition);
 
   }
 
@@ -100,17 +100,17 @@ public class FilterPushDownNotComparisonTest {
     List<Row> rows = rows();
     // or
     String whereCondition = "`c1` = 1 or `c1` = `c2`";
-   validator.doTestFilter(rows, null, whereCondition);
+   doTestFilter(rows, null, whereCondition);
 
     // and
     whereCondition = "`c1` = 1 AND `c2` = 1 AND `c1` = `c2`";
     Expression expression = Expressions.and(ImmutableList.of(c1_equal_1, c2_equal_1));
-   validator.doTestFilter(rows, expression, whereCondition);
+   doTestFilter(rows, expression, whereCondition);
 
     // and
     whereCondition = "`c1` = 2 AND `c2` = 1 AND `c1` = `c2`";
     expression = Expressions.and(ImmutableList.of(c1_equal_2, c2_equal_1));
-   validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
+   doTestFilter(ImmutableList.of(), expression, whereCondition);
   }
 
 }

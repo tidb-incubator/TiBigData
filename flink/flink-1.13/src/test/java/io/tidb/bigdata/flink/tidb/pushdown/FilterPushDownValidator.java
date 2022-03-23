@@ -129,7 +129,7 @@ public class FilterPushDownValidator {
   /**
    * Test for expressions and rows.
    */
-  public static voidvalidator.doTestFilter(List<Row> expectedRows, Expression expectedExpression,
+  public static void doTestFilter(List<Row> expectedRows, Expression expectedExpression,
       String whereCondition) {
     List<ResolvedExpression> filters = FilterPushDownTestUtils.getFilters(whereCondition);
     Expression actualExpression = instance.filterPushDownHelper.toTiDBExpression(filters)
@@ -144,7 +144,7 @@ public class FilterPushDownValidator {
     }
   }
 
-  public static DataType validator.getColumnType(String column) {
+  public static DataType getColumnType(String column) {
     return instance.nameTypeMap.get(column);
   }
 

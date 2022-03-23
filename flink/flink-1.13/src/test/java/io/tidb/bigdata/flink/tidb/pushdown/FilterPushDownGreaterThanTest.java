@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidatorvalidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.validator.getColumnType;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
+import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
 import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
 
 import com.google.common.collect.ImmutableList;
@@ -47,208 +47,208 @@ public class FilterPushDownGreaterThanTest {
     // tinyint
     String column = "c1";
     Object value = 0;
-    DataType type = validator.getColumnType(column);
+    DataType type = getColumnType(column);
     Expression expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
     value = 1;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
     // Swap column and value, we only test for tinyint, other types are same as tinyint
     value = 2;
     expression = Expressions.greaterThan(Expressions.constant(value, type),
         Expressions.column(column, type));
-   validator.doTestFilter(rows, expression, String.format("%s > `%s`", value, column));
+   doTestFilter(rows, expression, String.format("%s > `%s`", value, column));
     value = 1;
     expression = Expressions.greaterThan(Expressions.constant(value, type),
         Expressions.column(column, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("%s > `%s`", value, column));
+   doTestFilter(ImmutableList.of(), expression, String.format("%s > `%s`", value, column));
 
     // smallint
     column = "c2";
     value = 0;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
     value = 1;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
 
     // mediumint
     column = "c3";
     value = 0;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
     value = 1;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
 
     // int
     column = "c4";
     value = 0;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
     value = 1;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
 
     // bigint
     column = "c5";
     value = 0;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > %s", column, value));
     value = 1;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > %s", column, value));
 
     // char
     column = "c6";
     value = "chartyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "chartype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // varchar
     column = "c7";
     value = "varchartyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "varchartype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // tinytext
     column = "c8";
     value = "tinytexttyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "tinytexttype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // mediumtext
     column = "c9";
     value = "mediumtexttyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "mediumtexttype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // text
     column = "c10";
     value = "texttyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "texttype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // longtext
     column = "c11";
     value = "longtexttyp";
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > '%s'", column, value));
     value = "longtexttype";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
+   doTestFilter(ImmutableList.of(), expression, String.format("`%s` > '%s'", column, value));
 
     // float
     column = "c18";
     value = 1.233;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS FLOAT)", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS FLOAT)", column, value));
     value = 1.234;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST(%s AS FLOAT)", column, value));
 
     // double
     column = "c19";
     value = 2.456788;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS DOUBLE)", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS DOUBLE)", column, value));
     value = 2.456789;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST(%s AS DOUBLE)", column, value));
 
     // decimal
     column = "c20";
     value = 123.455;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS DECIMAL(6,3))", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > CAST(%s AS DECIMAL(6,3))", column, value));
     value = 123.456;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST(%s AS DECIMAL(6,3))", column, value));
 
     // date
     column = "c21";
     value = Date.valueOf("2020-08-09");
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression, String.format("`%s` > CAST('%s' AS DATE)", column, value));
+   doTestFilter(rows, expression, String.format("`%s` > CAST('%s' AS DATE)", column, value));
     value = Date.valueOf("2020-08-10");
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST('%s' AS DATE)", column, value));
 
     // datetime
     column = "c23";
     value = Timestamp.valueOf("2020-08-10 15:30:28");
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression,
+   doTestFilter(rows, expression,
         String.format("`%s` > CAST('%s' AS TIMESTAMP(6))", column, value));
     value = Timestamp.valueOf("2020-08-10 15:30:29");
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST('%s' AS TIMESTAMP(6))", column, value));
 
     // timestamp
@@ -258,10 +258,10 @@ public class FilterPushDownGreaterThanTest {
         ZoneId.systemDefault());
     ZonedDateTime utc = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
     Timestamp utcTimestamp = Timestamp.valueOf(utc.toLocalDateTime());
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(utcTimestamp, type));
-   validator.doTestFilter(rows, expression,
+   doTestFilter(rows, expression,
         String.format("`%s` > CAST('%s' AS TIMESTAMP(6))", column, timestamp));
 
     timestamp = Timestamp.valueOf("2020-08-10 16:30:29");
@@ -271,21 +271,21 @@ public class FilterPushDownGreaterThanTest {
     utcTimestamp = Timestamp.valueOf(utc.toLocalDateTime());
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(utcTimestamp, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > CAST('%s' AS TIMESTAMP(6))", column, timestamp));
 
     // year
     column = "c25";
     value = 2019;
-    type = validator.getColumnType(column);
+    type = getColumnType(column);
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression,
+   doTestFilter(rows, expression,
         String.format("`%s` > %s", column, value));
     value = 2020;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > %s", column, value));
 
     // enum
@@ -294,12 +294,12 @@ public class FilterPushDownGreaterThanTest {
     type = StringType.VARCHAR;
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(rows, expression,
+   doTestFilter(rows, expression,
         String.format("`%s` > '%s'", column, value));
     value = "1";
     expression = Expressions.greaterThan(Expressions.column(column, type),
         Expressions.constant(value, type));
-   validator.doTestFilter(ImmutableList.of(), expression,
+   doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` > '%s'", column, value));
 
   }
@@ -315,15 +315,15 @@ public class FilterPushDownGreaterThanTest {
     // json
     String column = "c27";
     Object value = "{\"a\": 1, \"b\": 2}";
-   validator.doTestFilter(rows, null, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, null, String.format("`%s` > '%s'", column, value));
 
     // set
     column = "c29";
     value = "a";
-   validator.doTestFilter(rows, null, String.format("`%s` > '%s'", column, value));
+   doTestFilter(rows, null, String.format("`%s` > '%s'", column, value));
 
     // columns to columns
-   validator.doTestFilter(rows, null, "`c1` > `c2`");
+   doTestFilter(rows, null, "`c1` > `c2`");
   }
 
 }
