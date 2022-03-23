@@ -16,28 +16,45 @@
 
 package io.tidb.bigdata.flink.connector.catalog;
 
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
 import io.tidb.bigdata.flink.tidb.TiDBBaseCatalog;
+import io.tidb.bigdata.flink.tidb.TypeUtils;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.api.TableSchema.Builder;
 import org.apache.flink.table.factories.Factory;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
-  
+
   public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase, properties);
   }
-  
+
   public TiDBCatalog(String name, Map<String, String> properties) {
     super(name, properties);
   }
-  
+
   public TiDBCatalog(Map<String, String> properties) {
     super(properties);
   }
-  
+
   @Override
   public Optional<Factory> getFactory() {
     return Optional.of(new TiDBDynamicTableFactory());
+  }
+
+  @Override
+  public TableSchema getTableSchema(String databaseName, String tableName) {
+    Builder schemaBuilder = getClientSession()
+        .getTableMust(databaseName, tableName)
+        .getColumns()
+        .stream()
+        .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
+            TypeUtils.getFlinkType(c.getType())), (builder1, builder2) -> null);
+    TiDBSchemaAdapter.parserMetadataColumns(properties)
+        .forEach((name, metadata) -> schemaBuilder.field(name, metadata.getType()));
+    return schemaBuilder.build();
   }
 }

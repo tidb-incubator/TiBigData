@@ -86,6 +86,11 @@ public class TiDBOptions {
   public static final Set<String> VALID_STREAMING_CODECS =
       ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
 
+  // For example:
+  // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
+  public static final String METADATA_INCLUDED = "tidb.metadata.included";
+  public static final String METADATA_INCLUDED_ALL = "*";
+
   public static Set<ConfigOption<?>> requiredOptions() {
     return withMoreRequiredOptions();
   }

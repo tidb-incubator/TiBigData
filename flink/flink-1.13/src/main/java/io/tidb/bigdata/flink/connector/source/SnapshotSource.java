@@ -72,7 +72,8 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     this.limit = limit;
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
       this.columns =
-          session.getTableColumns(databaseName, tableName, schema.getPhysicalFieldNames())
+          session.getTableColumns(databaseName, tableName,
+                  schema.getPhysicalFieldNamesWithoutMeta())
               .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
                   + databaseName + "." + tableName));
       this.timestamp = getOptionalVersion().orElseGet(

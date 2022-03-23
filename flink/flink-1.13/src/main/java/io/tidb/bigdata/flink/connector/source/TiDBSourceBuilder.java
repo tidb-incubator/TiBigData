@@ -33,15 +33,12 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
 import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
@@ -58,10 +55,9 @@ public class TiDBSourceBuilder implements Serializable {
   private final Expression expression;
   private final Integer limit;
 
-  public TiDBSourceBuilder(ResolvedCatalogTable table,
-      Function<DataType, TypeInformation<RowData>> typeInfoFactory,
-      TiDBMetadata[] metadata, int[] projectedFields, Expression expression, Integer limit) {
-    this.schema = new TiDBSchemaAdapter(table, typeInfoFactory, metadata, projectedFields);
+  public TiDBSourceBuilder(ResolvedCatalogTable table, TiDBSchemaAdapter schema,
+      Expression expression, Integer limit) {
+    this.schema = schema;
     setProperties(table.getOptions());
     this.expression = expression;
     this.limit = limit;

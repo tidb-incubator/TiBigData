@@ -53,6 +53,7 @@ import org.apache.flink.table.data.RowData;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -492,5 +493,31 @@ public class FlinkTest {
     results.sort(Comparator.naturalOrder());
     Assert.assertEquals(2000, results.size());
     Assert.assertEquals(IntStream.range(0, 2000).boxed().collect(Collectors.toList()), results);
+  }
+
+  @Test
+  @Ignore("Need kafka")
+  public void testCdc() {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
+        .inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+
+    String createCatalogSql = "CREATE CATALOG `tidb` \n"
+        + "WITH (\n"
+        + "  'type' = 'tidb',\n"
+        + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',\n"
+        + "  'tidb.username' = 'root',\n"
+        + "  'tidb.password' = '',\n"
+        + "  'tidb.metadata.included' = '*',\n"
+        + "  'tidb.streaming.source' = 'kafka',\n"
+        + "  'tidb.streaming.codec' = 'craft',\n"
+        + "  'tidb.streaming.kafka.bootstrap.servers' = 'localhost:9092',\n"
+        + "  'tidb.streaming.kafka.topic' = 'test_cdc',\n"
+        + "  'tidb.streaming.kafka.group.id' = 'test_cdc_group',\n"
+        + "  'ignore-parse-errors' = 'true'\n"
+        + ")";
+    tableEnvironment.executeSql(createCatalogSql);
+    tableEnvironment.executeSql("SELECT * FROM `tidb`.`test`.`test_cdc`").print();
   }
 }
