@@ -121,8 +121,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 }
 
                 stage('Test') {
-                    def java_8_modules = ["jdbc", "ticdc",]
-                    def java_11_modules = ["prestosql", "trino", "flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb"]
+                    def java_8_modules = ["flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb", "jdbc/driver", "ticdc", "jdbc/mariadb-compat"]
+                    def java_11_modules = ["prestosql", "trino"]
 
                     groovy.lang.Closure run_integration_test = { module, isJava8 ->
                         dir("/home/jenkins/agent/git/tibigdata") {
@@ -130,11 +130,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                 java_home = ""
 
                                 if (!isJava8) {
-                                   java_home = "export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12"
+                                    java_home = "export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12"
                                 }
 
                                 timeout(120) {
-                                        sh """
+                                    sh """
                                         set -x
                                         set -euo pipefail
                                         export TIDB_HOST="127.0.0.1"
@@ -162,11 +162,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                     tests = [:]
                     for (module in java_8_modules) {
-                        tests[module] = {run_integration_test(module, true)}
+                        tests[module] = { run_integration_test(module, true) }
                     }
 
                     for (module in java_11_modules) {
-                        tests[module] = {run_integration_test(module, false)}
+                        tests[module] = { run_integration_test(module, false) }
                     }
 
                     parallel tests
