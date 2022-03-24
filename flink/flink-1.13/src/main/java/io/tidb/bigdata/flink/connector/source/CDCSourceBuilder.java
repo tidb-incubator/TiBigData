@@ -67,7 +67,7 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
       cdcMetadata = Arrays.stream(metadata).map(TiDBMetadata::toCraft).toArray(CDCMetadata[]::new);
     }
     return new KafkaCDCSourceBuilder(
-        new CDCDeserializationSchemaBuilder(schema.getPhysicalDataType(),
+        new CDCDeserializationSchemaBuilder(schema.getRowDataType(),
             (ignored) -> schema.getProducedType())
             .startTs(ts.getVersion())
             .metadata(cdcMetadata)

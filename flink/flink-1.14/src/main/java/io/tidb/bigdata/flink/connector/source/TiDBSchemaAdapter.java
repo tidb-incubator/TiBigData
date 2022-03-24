@@ -32,9 +32,11 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -60,72 +62,78 @@ public class TiDBSchemaAdapter implements Serializable {
 
   private final Map<String, String> properties;
 
-  private DataType physicalDataType;
-  private int physicalFieldCount;
-  private String[] physicalFieldNames;
-  private DataType[] physicalFieldTypes;
+  private DataType rowDataType;
+  private List<String> fieldNames;
+  private List<DataType> fieldTypes;
   private LinkedHashMap<String, TiDBMetadata> metadata;
 
   public TiDBSchemaAdapter(ResolvedCatalogTable table) {
     this.properties = table.getOptions();
-    this.metadata = parseMetadataColumns(properties);
+    this.metadata = new LinkedHashMap<>();
     ResolvedSchema schema = table.getResolvedSchema();
-    Field[] physicalFields = schema.getColumns()
-        .stream().filter(Column::isPhysical).map(c ->
-            DataTypes.FIELD(c.getName(), DataTypeUtils.removeTimeAttribute(c.getDataType()))
-        ).toArray(Field[]::new);
-    buildFields(physicalFields);
+    Field[] fields = schema.getColumns()
+        .stream()
+        .filter(Column::isPhysical)
+        .map(c -> DataTypes.FIELD(c.getName(), DataTypeUtils.removeTimeAttribute(c.getDataType())))
+        .toArray(Field[]::new);
+    buildFields(fields);
   }
 
-  private void buildFields(Field[] physicalFields) {
-    this.physicalDataType = DataTypes.ROW(physicalFields).notNull();
-    this.physicalFieldNames = Arrays.stream(physicalFields)
-        .map(Field::getName).toArray(String[]::new);
-    this.physicalFieldTypes = Arrays.stream(physicalFields)
-        .map(Field::getDataType).toArray(DataType[]::new);
-    this.physicalFieldCount = physicalFieldNames.length;
+  private void buildFields(Field[] fields) {
+    this.rowDataType = DataTypes.ROW(fields).notNull();
+    this.fieldNames = Arrays.stream(fields)
+        .map(Field::getName).collect(Collectors.toList());
+    this.fieldTypes = Arrays.stream(fields)
+        .map(Field::getDataType).collect(Collectors.toList());
   }
 
-  public void setProjectedFields(int[] projectedFields) {
+  public void applyProjectedFields(int[] projectedFields) {
     if (projectedFields == null) {
       return;
     }
     LinkedHashMap<String, TiDBMetadata> metadata = new LinkedHashMap<>();
-    Field[] physicalFields = new Field[projectedFields.length];
+    Field[] fields = new Field[projectedFields.length];
     for (int i = 0; i <= projectedFields.length - 1; i++) {
-      String fieldName = physicalFieldNames[projectedFields[i]];
-      DataType fieldType = physicalFieldTypes[projectedFields[i]];
-      physicalFields[i] = DataTypes.FIELD(fieldName, fieldType);
+      String fieldName = fieldNames.get(projectedFields[i]);
+      DataType fieldType = fieldTypes.get(projectedFields[i]);
+      fields[i] = DataTypes.FIELD(fieldName, fieldType);
       if (this.metadata.containsKey(fieldName)) {
         metadata.put(fieldName, this.metadata.get(fieldName));
       }
     }
     this.metadata = metadata;
-    buildFields(physicalFields);
+    buildFields(fields);
+  }
+
+  public void applyReadableMetadata(List<String> metadataKeys, DataType producedDataType) {
+    rowDataType = producedDataType;
+    // append meta columns
+    this.metadata = new LinkedHashMap<>();
+    for (String key : metadataKeys) {
+      TiDBMetadata tiDBMetadata = TiDBMetadata.fromKey(key);
+      fieldNames.add(key);
+      fieldTypes.add(tiDBMetadata.getType());
+      this.metadata.put(key, tiDBMetadata);
+    }
   }
 
   private Object[] makeRow(final TiTimestamp timestamp) {
-    Object[] objects = new Object[physicalFieldCount];
-    for (int i = physicalFieldCount - metadata.size(); i <= physicalFieldCount - 1; i++) {
-      objects[i] = metadata.get(physicalFieldNames[i]).extract(timestamp);
+    Object[] objects = new Object[fieldNames.size()];
+    for (int i = fieldNames.size() - metadata.size(); i <= fieldNames.size() - 1; i++) {
+      objects[i] = metadata.get(fieldNames.get(i)).extract(timestamp);
     }
     return objects;
   }
 
   public String[] getPhysicalFieldNamesWithoutMeta() {
-    return Arrays.copyOfRange(physicalFieldNames, 0,
-        physicalFieldNames.length - metadata.size());
-  }
-
-  public String[] getPhysicalFieldNames() {
-    return physicalFieldNames;
+    return fieldNames.stream().filter(name -> !metadata.containsKey(name)).toArray(String[]::new);
   }
 
   public GenericRowData convert(final TiTimestamp timestamp, RecordCursorInternal cursor) {
     Object[] objects = makeRow(timestamp);
-    for (int idx = 0; idx < physicalFieldCount - metadata.size(); idx++) {
+    for (int idx = 0; idx < fieldNames.size() - metadata.size(); idx++) {
       objects[idx] = toRowDataType(
-          getObjectWithDataType(cursor.getObject(idx), physicalFieldTypes[idx],
+          getObjectWithDataType(cursor.getObject(idx), fieldTypes.get(idx),
               cursor.getType(idx)).orElse(null));
     }
     return GenericRowData.ofKind(RowKind.INSERT, objects);
@@ -181,6 +189,13 @@ public class TiDBSchemaAdapter implements Serializable {
     }
   }
 
+  /**
+   * transform TiKV java object to Flink java object by given Flink Datatype
+   *
+   * @param object    TiKV java object
+   * @param flinkType Flink datatype
+   * @param tidbType  TiDB datatype
+   */
   public static Optional<Object> getObjectWithDataType(@Nullable Object object, DataType flinkType,
       org.tikv.common.types.DataType tidbType) {
     if (object == null) {
@@ -250,14 +265,14 @@ public class TiDBSchemaAdapter implements Serializable {
     return Optional.of(object);
   }
 
-  public DataType getPhysicalDataType() {
-    return physicalDataType;
+  public DataType getRowDataType() {
+    return rowDataType;
   }
 
   @SuppressWarnings("unchecked")
   public TypeInformation<RowData> getProducedType() {
     return (TypeInformation<RowData>) ScanRuntimeProviderContext.INSTANCE.createTypeInformation(
-        physicalDataType);
+        rowDataType);
   }
 
   public TiDBMetadata[] getMetadata() {

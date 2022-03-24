@@ -114,7 +114,8 @@ public class TiDBRowConverter implements Serializable {
     Builder builder = Schema.newBuilder();
     columns.forEach(column -> builder.column(column.getName(), toFlinkType(column.getType())));
     if (metadata.size() != 0) {
-      metadata.forEach((name, meta) -> builder.column(name, meta.getType()));
+      metadata.forEach(
+          (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
     }
     return builder.build();
   }
