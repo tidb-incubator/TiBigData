@@ -53,7 +53,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     ], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
     ]) {
         catchError {
-            node('build') {
+            node(label) {
                 println "${NODE_NAME}"
                 container("java") {
                     stage('Prepare') {
@@ -85,7 +85,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         def java_11_modules = ["prestosql", "trino"]
 
                         groovy.lang.Closure run_integration_test = { module, isJava8 ->
-                            node('build') {
+                            node(label) {
                                 println "${NODE_NAME}"
                                 container("java") {
                                     dir("/home/jenkins/agent/git/tibigdata/_run") {
