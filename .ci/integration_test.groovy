@@ -78,36 +78,26 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
                         }
 
-                    }
+                        dir("/home/jenkins/agent/git/tibigdata/_run") {
+                            sh "rm -rf *"
 
-                    stage('Test') {
-                        def java_8_modules = ["flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb", "jdbc/driver", "ticdc", "jdbc/mariadb-compat"]
-                        def java_11_modules = ["prestosql", "trino"]
+                            // tidb
+                            def tidb_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/tidb/${TIDB_BRANCH}/sha1").trim()
+                            sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/tidb/${tidb_sha1}/centos7/tidb-server.tar.gz | tar xz"
+                            // tikv
+                            def tikv_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/tikv/${TIKV_BRANCH}/sha1").trim()
+                            sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/tikv/${tikv_sha1}/centos7/tikv-server.tar.gz | tar xz"
+                            // pd
+                            def pd_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/pd/${PD_BRANCH}/sha1").trim()
+                            sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/pd/${pd_sha1}/centos7/pd-server.tar.gz | tar xz"
+                            //ticdc
+                            def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
+                            sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
+                            // kafka
+                            sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
+                            sh "mv ${kafka_version} kafka/"
 
-                        groovy.lang.Closure run_integration_test = { module, isJava8 ->
-                            node(label) {
-                                println "${NODE_NAME}"
-                                container("java") {
-                                    dir("/home/jenkins/agent/git/tibigdata/_run") {
-                                        sh "rm -rf *"
-
-                                        // tidb
-                                        def tidb_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/tidb/${TIDB_BRANCH}/sha1").trim()
-                                        sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/tidb/${tidb_sha1}/centos7/tidb-server.tar.gz | tar xz"
-                                        // tikv
-                                        def tikv_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/tikv/${TIKV_BRANCH}/sha1").trim()
-                                        sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/tikv/${tikv_sha1}/centos7/tikv-server.tar.gz | tar xz"
-                                        // pd
-                                        def pd_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/pd/${PD_BRANCH}/sha1").trim()
-                                        sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/pd/${pd_sha1}/centos7/pd-server.tar.gz | tar xz"
-                                        //ticdc
-                                        def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
-                                        sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
-                                        // kafka
-                                        sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
-                                        sh "mv ${kafka_version} kafka/"
-
-                                        sh """
+                            sh """
                                         killall -9 tidb-server || true
                                         killall -9 tikv-server || true
                                         killall -9 pd-server || true
@@ -124,7 +114,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         sleep 60
                                     """
 
-                                        sh """
+                            sh """
                                         rm -rf /tmp/zookeeper
                                         rm -rf /tmp/kafka-logs
                                         kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
@@ -135,14 +125,26 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         kafka/bin/kafka-topics.sh --describe --topic tidb_test --bootstrap-server localhost:9092
                                     """
 
-                                        sh """
+                            sh """
                                         curl -s 127.0.0.1:2379/pd/api/v1/status
                                         cd ticdc-linux-amd64
                                         ./bin/cdc server --pd="http://127.0.0.1:2379"  --log-file=ticdc.log --addr="0.0.0.0:8301" --advertise-addr="127.0.0.1:8301" &
                                         sleep 10
                                         ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test" --no-confirm
                                     """
-                                    }
+                        }
+
+
+                    }
+
+                    stage('Test') {
+                        def java_8_modules = ["flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb", "jdbc/driver", "ticdc", "jdbc/mariadb-compat"]
+                        def java_11_modules = ["prestosql", "trino"]
+
+                        groovy.lang.Closure run_integration_test = { module, isJava8 ->
+                            node(label) {
+                                println "${NODE_NAME}"
+                                container("java") {
 
                                     dir("/home/jenkins/agent/git/tibigdata") {
                                         try {
