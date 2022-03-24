@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector.source;
 
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CANAL_JSON;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CRAFT;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_JSON;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_SOURCE;
@@ -145,6 +146,8 @@ public class TiDBSourceBuilder implements Serializable {
                 return cdcBuilder.craft();
               case STREAMING_CODEC_JSON:
                 return cdcBuilder.json();
+              case STREAMING_CODEC_CANAL_JSON:
+                return cdcBuilder.canalJson();
               default:
                 throw new IllegalArgumentException("Invalid streaming codec: '"
                     + streamingCodec + "'");

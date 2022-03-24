@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -267,6 +268,14 @@ public class TiDBSchemaAdapter implements Serializable {
 
   public DataType getRowDataType() {
     return rowDataType;
+  }
+
+  public DataType getPhysicalRowDataType() {
+    Field[] fields = IntStream.range(0, fieldNames.size())
+        .filter(i -> !metadata.containsKey(fieldNames.get(i)))
+        .mapToObj(i -> DataTypes.FIELD(fieldNames.get(i), fieldTypes.get(i)))
+        .toArray(Field[]::new);
+    return DataTypes.ROW(fields);
   }
 
   @SuppressWarnings("unchecked")

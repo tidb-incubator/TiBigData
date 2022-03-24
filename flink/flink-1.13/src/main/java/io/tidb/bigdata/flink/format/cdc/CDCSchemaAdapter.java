@@ -140,9 +140,9 @@ public class CDCSchemaAdapter implements Serializable {
   }
 
   private Object[] makeRow(final Event event) {
-    Object[] objects = new Object[physicalFieldCount];
-    for (int i = physicalFieldCount - metadata.length; i <= physicalFieldCount - 1; i++) {
-      objects[i] = metadata[i - (physicalFieldCount - metadata.length)].extract(event);
+    Object[] objects = new Object[physicalFieldCount + metadata.length];
+    for (int i = physicalFieldCount; i <= physicalFieldCount + metadata.length - 1; i++) {
+      objects[i] = metadata[i - physicalFieldCount].extract(event);
     }
     return objects;
   }

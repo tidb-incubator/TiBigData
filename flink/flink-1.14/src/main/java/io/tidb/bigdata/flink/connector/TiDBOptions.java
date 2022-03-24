@@ -131,8 +131,9 @@ public class TiDBOptions {
 
   public static final String STREAMING_CODEC_JSON = "json";
   public static final String STREAMING_CODEC_CRAFT = "craft";
+  public static final String STREAMING_CODEC_CANAL_JSON = "canal-json";
   public static final Set<String> VALID_STREAMING_CODECS =
-      ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
+      ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON, STREAMING_CODEC_CANAL_JSON);
 
   // For example:
   // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'

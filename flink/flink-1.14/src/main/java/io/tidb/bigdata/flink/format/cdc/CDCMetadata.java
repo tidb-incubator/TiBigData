@@ -18,8 +18,11 @@ package io.tidb.bigdata.flink.format.cdc;
 
 import io.tidb.bigdata.cdc.Event;
 import io.tidb.bigdata.cdc.json.jackson.JacksonFactory;
+import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -104,6 +107,12 @@ public enum CDCMetadata {
         .map(String::toUpperCase)
         .map(CDCMetadata::valueOf)
         .toArray(CDCMetadata[]::new);
+  }
+
+  public Optional<TiDBMetadata> toTiDBMetadata() {
+    return Arrays.stream(TiDBMetadata.values())
+        .filter(tiDBMetadata -> tiDBMetadata.toCraft() == this)
+        .findFirst();
   }
 
   public static Map<String, DataType> listReadableMetadata() {

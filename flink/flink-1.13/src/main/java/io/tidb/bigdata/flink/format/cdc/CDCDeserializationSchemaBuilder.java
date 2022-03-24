@@ -20,11 +20,13 @@ import io.tidb.bigdata.cdc.Key;
 import java.util.Set;
 import java.util.function.Function;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 
 public class CDCDeserializationSchemaBuilder {
+
   public CDCDeserializationSchemaBuilder(final DataType physicalDataType,
       final Function<DataType, TypeInformation<RowData>> typeInfoFactory) {
     this.physicalDataType = Preconditions.checkNotNull(physicalDataType);
@@ -81,5 +83,17 @@ public class CDCDeserializationSchemaBuilder {
     return new JsonDeserializationSchema(
         new CDCSchemaAdapter(physicalDataType, typeInfoFactory, metadata),
         eventTypes, schemas, tables, startTs, ignoreParseErrors);
+  }
+
+  public TiDBCanalJsonDeserializationSchema canalJson() {
+    return new TiDBCanalJsonDeserializationSchema(
+        physicalDataType,
+        schemas,
+        tables,
+        metadata,
+        startTs,
+        typeInfoFactory.apply(physicalDataType),
+        ignoreParseErrors,
+        TimestampFormat.ISO_8601);
   }
 }

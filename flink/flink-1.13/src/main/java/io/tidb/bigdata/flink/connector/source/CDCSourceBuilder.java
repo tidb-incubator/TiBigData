@@ -53,6 +53,10 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
     return doBuild(builder.json());
   }
 
+  public CDCSource<SplitT, EnumChkT> canalJson() {
+    return doBuild(builder.canalJson());
+  }
+
   private final CDCDeserializationSchemaBuilder builder;
 
   protected CDCSourceBuilder(CDCDeserializationSchemaBuilder builder) {
@@ -67,7 +71,7 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
       cdcMetadata = Arrays.stream(metadata).map(TiDBMetadata::toCraft).toArray(CDCMetadata[]::new);
     }
     return new KafkaCDCSourceBuilder(
-        new CDCDeserializationSchemaBuilder(schema.getRowDataType(),
+        new CDCDeserializationSchemaBuilder(schema.getPhysicalRowDataType(),
             (ignored) -> schema.getProducedType())
             .startTs(ts.getVersion())
             .metadata(cdcMetadata)

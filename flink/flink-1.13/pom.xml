@@ -46,6 +46,12 @@
     <!-- flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
+      <artifactId>flink-json</artifactId>
+      <version>${dep.flink.version}</version>
+      <scope>${flink.scope}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
       <version>${dep.flink.version}</version>
       <scope>${flink.scope}</scope>
