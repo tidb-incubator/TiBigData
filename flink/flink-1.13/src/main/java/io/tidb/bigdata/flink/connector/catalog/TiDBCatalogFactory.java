@@ -58,7 +58,8 @@ public class TiDBCatalogFactory implements CatalogFactory {
         TiDBOptions.FILTER_PUSH_DOWN,
         TiDBOptions.DNS_SEARCH,
         TiDBOptions.SNAPSHOT_TIMESTAMP,
-        TiDBOptions.SNAPSHOT_VERSION
+        TiDBOptions.SNAPSHOT_VERSION,
+        TiDBOptions.SOURCE_FAILOVER
     );
   }
   

@@ -31,4 +31,8 @@ public class RandomUtils {
     return random.nextInt();
   }
 
+  public static int randomInt(int bound) {
+    return random.nextInt(bound);
+  }
+
 }

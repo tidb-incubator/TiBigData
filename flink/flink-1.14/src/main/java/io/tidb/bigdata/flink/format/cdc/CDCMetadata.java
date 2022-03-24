@@ -38,7 +38,9 @@ public enum CDCMetadata {
   TYPE("type", DataTypes.STRING().notNull(), CDCMetadata::typeName),
   TYPE_CODE("type_code", DataTypes.INT().notNull(), CDCMetadata::typeCode),
   KEY("key", DataTypes.STRING().nullable(), CDCMetadata::key),
-  VALUE("value", DataTypes.STRING().nullable(), CDCMetadata::value);
+  VALUE("value", DataTypes.STRING().nullable(), CDCMetadata::value),
+  SOURCE_EVENT("source_event", DataTypes.STRING().notNull(),
+      event -> StringData.fromString("STREAMING"));
 
   private static final CDCMetadata[] EMPTY = new CDCMetadata[0];
   private static final JacksonFactory flinkShadedJackson =

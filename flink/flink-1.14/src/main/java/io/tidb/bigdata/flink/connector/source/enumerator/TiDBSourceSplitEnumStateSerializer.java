@@ -22,9 +22,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
+import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceSplitEnumStateSerializer
     implements SimpleVersionedSerializer<TiDBSourceSplitEnumState> {
@@ -40,7 +41,10 @@ public class TiDBSourceSplitEnumStateSerializer
   public byte[] serialize(TiDBSourceSplitEnumState state) throws IOException {
     try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos)) {
-      for (TiDBSourceSplit split : state.assignedSplits()) {
+      TiTimestamp timestamp = state.getTimestamp();
+      dos.writeLong(timestamp.getPhysical());
+      dos.writeLong(timestamp.getLogical());
+      for (TiDBSourceSplit split : state.getSplits()) {
         split.serialize(dos);
       }
       dos.flush();
@@ -58,11 +62,12 @@ public class TiDBSourceSplitEnumStateSerializer
               version, CURRENT_VERSION));
     }
     try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
-      Set<TiDBSourceSplit> splits = new HashSet<>();
+      TiTimestamp timestamp = new TiTimestamp(dis.readLong(), dis.readLong());
+      List<TiDBSourceSplit> splits = new ArrayList<>();
       while (dis.available() > 0) {
         splits.add(TiDBSourceSplit.deserialize(dis));
       }
-      return new TiDBSourceSplitEnumState(splits);
+      return new TiDBSourceSplitEnumState(splits, timestamp);
     }
   }
 }

@@ -33,15 +33,12 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
 import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
@@ -58,10 +55,9 @@ public class TiDBSourceBuilder implements Serializable {
   private final Expression expression;
   private final Integer limit;
 
-  public TiDBSourceBuilder(ResolvedCatalogTable table,
-      Function<DataType, TypeInformation<RowData>> typeInfoFactory,
-      TiDBMetadata[] metadata, int[] projectedFields, Expression expression, Integer limit) {
-    this.schema = new TiDBSchemaAdapter(table, typeInfoFactory, metadata, projectedFields);
+  public TiDBSourceBuilder(ResolvedCatalogTable table, TiDBSchemaAdapter schema,
+      Expression expression, Integer limit) {
+    this.schema = schema;
     setProperties(table.getOptions());
     this.expression = expression;
     this.limit = limit;
@@ -104,7 +100,7 @@ public class TiDBSourceBuilder implements Serializable {
     return this;
   }
 
-  private CDCSourceBuilder createCDCBuilder(TiTimestamp timestamp) {
+  private CDCSourceBuilder<?, ?> createCDCBuilder(TiTimestamp timestamp) {
     if (streamingSource.equals(STREAMING_SOURCE_KAFKA)) {
       return CDCSourceBuilder
           .kafka(databaseName, tableName, timestamp, schema)
@@ -133,8 +129,17 @@ public class TiDBSourceBuilder implements Serializable {
     builder.addSource(
         (SourceFactory<RowData, Source<RowData, ?, ?>, TiDBSourceSplitEnumerator>) context -> {
           {
-            final CDCSourceBuilder cdcBuilder = createCDCBuilder(
-                context.getPreviousEnumerator().getTimestamp());
+            TiDBSourceSplitEnumerator previousEnumerator = context.getPreviousEnumerator();
+            TiTimestamp timestamp;
+            if (previousEnumerator == null) {
+              // If previousEnumerator is null, the batch enumerator has been finished
+              // in the last checkpoint/savepoint. On this condition, timestamp is no longer valid,
+              // we should use kafka offset.
+              timestamp = new TiTimestamp(0, 0);
+            } else {
+              timestamp = previousEnumerator.getTimestamp();
+            }
+            final CDCSourceBuilder<?, ?> cdcBuilder = createCDCBuilder(timestamp);
             switch (streamingCodec) {
               case STREAMING_CODEC_CRAFT:
                 return cdcBuilder.craft();

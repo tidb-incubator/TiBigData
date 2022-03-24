@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.connector.table;
 
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.TiDBSourceBuilder;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -48,8 +49,8 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   private final ResolvedCatalogTable table;
   private final ChangelogMode changelogMode;
   private final LookupTableSourceHelper lookupTableSourceHelper;
+  private final TiDBSchemaAdapter schema;
   private FilterPushDownHelper filterPushDownHelper;
-  private int[] projectedFields;
   private Integer limit;
   private Expression expression;
 
@@ -63,6 +64,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
     this.table = table;
     this.changelogMode = changelogMode;
     this.lookupTableSourceHelper = lookupTableSourceHelper;
+    this.schema = new TiDBSchemaAdapter(table);
   }
 
   @Override
@@ -72,17 +74,13 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
 
   @Override
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext scanContext) {
-    /* Disable metadata as it doesn't work with projection push down at this time */
-    return SourceProvider.of(
-        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields,
-            expression, limit).build());
+    return SourceProvider.of(new TiDBSourceBuilder(table, schema, expression, limit).build());
   }
 
   @Override
   public DynamicTableSource copy() {
     TiDBDynamicTableSource otherSource =
         new TiDBDynamicTableSource(table, changelogMode, lookupTableSourceHelper);
-    otherSource.projectedFields = this.projectedFields;
     otherSource.filterPushDownHelper = this.filterPushDownHelper;
     return otherSource;
   }
@@ -104,7 +102,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
 
   @Override
   public void applyProjection(int[][] projectedFields) {
-    this.projectedFields = Arrays.stream(projectedFields).mapToInt(f -> f[0]).toArray();
+    schema.setProjectedFields(Arrays.stream(projectedFields).mapToInt(f -> f[0]).toArray());
   }
 
   @Override

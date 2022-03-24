@@ -22,10 +22,12 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.WRITE_MODE;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
@@ -44,6 +46,7 @@ import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
+
   public static final String IDENTIFIER = "tidb";
 
   /**
@@ -90,7 +93,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public String factoryIdentifier() {
-    return IDENTIFIER;
+    throw new UnsupportedOperationException("TiDB factory is only work for catalog.");
   }
 
   @Override
@@ -121,6 +124,10 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
+    Map<String, String> options = context.getCatalogTable().getOptions();
+    if (TiDBSchemaAdapter.parseMetadataColumns(options).size() != 0) {
+      throw new IllegalStateException("Metadata columns is not supported for sink");
+    }
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();

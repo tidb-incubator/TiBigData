@@ -20,17 +20,20 @@ import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumStat
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumStateSerializer;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
 import io.tidb.bigdata.flink.connector.source.reader.TiDBSourceReader;
-import io.tidb.bigdata.flink.connector.source.reader.TiDBSourceSplitReader;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplitSerializer;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.SplitManagerInternal;
+import io.tidb.bigdata.tidb.TableHandleInternal;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
@@ -40,7 +43,6 @@ import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.java.typeutils.ResultTypeQueryable;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.expression.Expression;
@@ -55,7 +57,9 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   private final TiDBSchemaAdapter schema;
   private final Expression expression;
   private final Integer limit;
+  private final List<ColumnHandleInternal> columns;
   private final TiTimestamp timestamp;
+  private final List<TiDBSourceSplit> splits;
 
   public SnapshotSource(String databaseName, String tableName,
       Map<String, String> properties, TiDBSchemaAdapter schema,
@@ -66,7 +70,24 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     this.schema = schema;
     this.expression = expression;
     this.limit = limit;
-    this.timestamp = getOptionalVersion().orElseGet(() -> getOptionalTimestamp().orElse(null));
+    try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
+      this.columns =
+          session.getTableColumns(databaseName, tableName,
+                  schema.getPhysicalFieldNamesWithoutMeta())
+              .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
+                  + databaseName + "." + tableName));
+      this.timestamp = getOptionalVersion().orElseGet(
+          () -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
+      session.getTableMust(databaseName, tableName);
+      TableHandleInternal tableHandleInternal = new TableHandleInternal(
+          UUID.randomUUID().toString(), this.databaseName, this.tableName);
+      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
+      this.splits = splitManagerInternal.getSplits(tableHandleInternal, timestamp)
+          .stream().map(split -> new TiDBSourceSplit(split, 0))
+          .collect(Collectors.toList());
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 
   @Override
@@ -74,49 +95,23 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     return Boundedness.BOUNDED;
   }
 
-  private static Configuration toConfiguration(Map<String, String> properties) {
-    Configuration config = new Configuration();
-    for (Map.Entry<String, String> entry : properties.entrySet()) {
-      config.setString(entry.getKey(), entry.getValue());
-    }
-    return config;
-  }
-
   @Override
   public SourceReader<RowData, TiDBSourceSplit> createReader(SourceReaderContext context)
       throws Exception {
-    ClientSession session = null;
-    try {
-      final Map<String, String> properties = this.properties;
-      session = ClientSession.create(new ClientConfig(properties));
-      final List<ColumnHandleInternal> columns =
-          session.getTableColumns(databaseName, tableName, schema.getPhysicalFieldNames())
-              .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
-                  + databaseName + "." + tableName));
-      final ClientSession s = session;
-      schema.open();
-      return new TiDBSourceReader(
-          () -> new TiDBSourceSplitReader(s, columns, schema, expression, limit, timestamp),
-          toConfiguration(properties), context);
-    } catch (Exception ex) {
-      if (session != null) {
-        session.close();
-      }
-      throw ex;
-    }
+    return new TiDBSourceReader(context, properties, columns, schema, expression, limit);
   }
 
   @Override
   public SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> createEnumerator(
-      SplitEnumeratorContext<TiDBSourceSplit> context) {
-    return new TiDBSourceSplitEnumerator(this.properties, context);
+      SplitEnumeratorContext<TiDBSourceSplit> context) throws Exception {
+    return new TiDBSourceSplitEnumerator(splits, timestamp, context);
   }
 
   @Override
   public SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> restoreEnumerator(
       SplitEnumeratorContext<TiDBSourceSplit> context,
       TiDBSourceSplitEnumState state) {
-    return new TiDBSourceSplitEnumerator(this.properties, context, state.assignedSplits());
+    return new TiDBSourceSplitEnumerator(state.getSplits(), timestamp, context);
   }
 
   @Override

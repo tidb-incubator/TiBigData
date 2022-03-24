@@ -117,6 +117,10 @@ public class TiDBOptions {
       .withDescription(
           "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
 
+  // split or offset
+  public static final ConfigOption<String> SOURCE_FAILOVER = optional("tidb.source.failover",
+      "split");
+
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
   public static final String STREAMING_SOURCE_KAFKA = "kafka";
@@ -129,6 +133,12 @@ public class TiDBOptions {
   public static final String STREAMING_CODEC_CRAFT = "craft";
   public static final Set<String> VALID_STREAMING_CODECS =
       ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
+
+  // For example:
+  // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
+  public static final String METADATA_INCLUDED = "tidb.metadata.included";
+  public static final String METADATA_INCLUDED_ALL = "*";
+
 
   /**
    * see {@link org.apache.flink.connector.jdbc.table.JdbcConnectorOptions}
@@ -167,7 +177,8 @@ public class TiDBOptions {
             SINK_BUFFER_SIZE,
             ROW_ID_ALLOCATOR_STEP,
             IGNORE_AUTOINCREMENT_COLUMN_VALUE,
-            DEDUPLICATE)
+            DEDUPLICATE,
+            SOURCE_FAILOVER)
         .build();
   }
 

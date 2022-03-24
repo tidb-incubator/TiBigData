@@ -20,12 +20,10 @@ import io.tidb.bigdata.cdc.Event;
 import io.tidb.bigdata.cdc.RowColumn;
 import io.tidb.bigdata.flink.format.cdc.RowColumnConverters.Converter;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.data.GenericRowData;
@@ -34,10 +32,10 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.table.types.logical.RowType.RowField;
-import org.apache.flink.table.types.utils.DataTypeUtils;
 import org.apache.flink.types.RowKind;
 
 public class CDCSchemaAdapter implements Serializable {
+
   /**
    * Readable metadata
    */
@@ -49,6 +47,7 @@ public class CDCSchemaAdapter implements Serializable {
   private final TypeInformation<RowData> typeInfo;
 
   private static class ColumnContext implements Serializable {
+
     private final int index;
     private final Converter converter;
 
@@ -59,6 +58,7 @@ public class CDCSchemaAdapter implements Serializable {
   }
 
   public static class RowBuilder {
+
     private final Object[] objects;
 
     public RowBuilder(Object[] objects) {
@@ -109,27 +109,13 @@ public class CDCSchemaAdapter implements Serializable {
    */
   private final int physicalFieldCount;
 
-  /**
-   * Number of final produced fields.
-   */
-  private final int producedFieldCount;
-
   public CDCSchemaAdapter(final DataType physicalDataType,
       final Function<DataType, TypeInformation<RowData>> typeInfoFactory,
       @Nullable final CDCMetadata[] metadata) {
     this.metadata = CDCMetadata.notNull(metadata);
     final RowType physicalRowType = (RowType) physicalDataType.getLogicalType();
-    final DataType producedDataType;
     this.physicalFieldCount = physicalRowType.getFieldCount();
-    if (metadata != null) {
-      producedDataType = DataTypeUtils.appendRowFields(physicalDataType,
-          Arrays.stream(metadata).map(CDCMetadata::toField).collect(Collectors.toList()));
-      this.producedFieldCount = this.physicalFieldCount + metadata.length;
-    } else {
-      producedDataType = physicalDataType;
-      this.producedFieldCount = this.physicalFieldCount;
-    }
-    this.typeInfo = typeInfoFactory.apply(producedDataType);
+    this.typeInfo = typeInfoFactory.apply(physicalDataType);
     this.physicalFields = new HashMap<>();
     int index = 0;
     for (final RowField field : physicalRowType.getFields()) {
@@ -154,12 +140,9 @@ public class CDCSchemaAdapter implements Serializable {
   }
 
   private Object[] makeRow(final Event event) {
-    int metaIndex = physicalFieldCount;
-    Object[] objects = new Object[producedFieldCount];
-    if (metadata != null) {
-      for (CDCMetadata meta : metadata) {
-        objects[metaIndex++] = meta.extract(event);
-      }
+    Object[] objects = new Object[physicalFieldCount];
+    for (int i = physicalFieldCount - metadata.length; i <= physicalFieldCount - 1; i++) {
+      objects[i] = metadata[i - (physicalFieldCount - metadata.length)].extract(event);
     }
     return objects;
   }

@@ -2,9 +2,11 @@ package io.tidb.bigdata.flink.connector.utils;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import java.io.Serializable;
 import java.sql.Date;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.Schema;
@@ -108,9 +110,12 @@ public class TiDBRowConverter implements Serializable {
     return notNull ? flinkType.notNull() : flinkType.nullable();
   }
 
-  public Schema getSchema() {
+  public Schema getSchema(LinkedHashMap<String, TiDBMetadata> metadata) {
     Builder builder = Schema.newBuilder();
     columns.forEach(column -> builder.column(column.getName(), toFlinkType(column.getType())));
+    if (metadata.size() != 0) {
+      metadata.forEach((name, meta) -> builder.column(name, meta.getType()));
+    }
     return builder.build();
   }
 
