@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.tidb.bigdata.tidb.handle;
 
 import java.util.Arrays;
@@ -23,6 +24,7 @@ import org.tikv.common.types.DataType;
 import org.tikv.common.types.IntegerType;
 
 public class IntHandle implements Handle {
+
   private final long handle;
   private final int infFlag;
 
@@ -122,7 +124,7 @@ public class IntHandle implements Handle {
 
   @Override
   public Object[] data() {
-    return new Object[] {handle};
+    return new Object[]{handle};
   }
 
   @Override
