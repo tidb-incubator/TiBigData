@@ -124,7 +124,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     def java_8_modules = ["jdbc", "ticdc",]
                     def java_11_modules = ["prestosql", "trino", "flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb"]
 
-                    groovy.lang.Closure run_integration_test = { (module, isJava8) ->
+                    groovy.lang.Closure run_integration_test = { module, isJava8 ->
                         dir("/home/jenkins/agent/git/tibigdata") {
                             try {
                                 java_home = ""
