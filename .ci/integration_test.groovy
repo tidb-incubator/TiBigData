@@ -41,6 +41,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
     catchError {
         node('build') {
+            println "${NODE_NAME}"
             container("java") {
                 stage('Prepare') {
                     dir("/home/jenkins/agent/git/tibigdata") {
@@ -125,16 +126,19 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     def java_11_modules = ["prestosql", "trino"]
 
                     groovy.lang.Closure run_integration_test = { module, isJava8 ->
-                        dir("/home/jenkins/agent/git/tibigdata") {
-                            try {
-                                java_home = ""
+                        node('test' + module) {
+                            println "${NODE_NAME}"
+                            container("java") {
+                                dir("/home/jenkins/agent/git/tibigdata") {
+                                    try {
+                                        java_home = ""
 
-                                if (!isJava8) {
-                                    java_home = "export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12"
-                                }
+                                        if (!isJava8) {
+                                            java_home = "export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12"
+                                        }
 
-                                timeout(120) {
-                                    sh """
+                                        timeout(120) {
+                                            sh """
                                         set -x
                                         set -euo pipefail
                                         export TIDB_HOST="127.0.0.1"
@@ -144,18 +148,20 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         $java_home
                                         mvn clean test-compile failsafe:integration-test -am -pl ${module}
                                     """
-                                }
-                            } catch (err) {
-                                sh """
+                                        }
+                                    } catch (err) {
+                                        sh """
                             ps aux | grep '-server' || true
                             curl -s 127.0.0.1:2379/pd/api/v1/status || true
                             """
-                                sh "cat _run/pd.log"
-                                sh "cat _run/tikv.log"
-                                sh "cat _run/tidb.log"
-                                sh "cat _run/kafka/logs/server.log"
-                                sh "cat _run/ticdc-linux-amd64/ticdc.log"
-                                throw err
+                                        sh "cat _run/pd.log"
+                                        sh "cat _run/tikv.log"
+                                        sh "cat _run/tidb.log"
+                                        sh "cat _run/kafka/logs/server.log"
+                                        sh "cat _run/ticdc-linux-amd64/ticdc.log"
+                                        throw err
+                                    }
+                                }
                             }
                         }
                     }
