@@ -85,6 +85,7 @@ public class CDCDeserializationSchemaBuilder {
         eventTypes, schemas, tables, startTs, ignoreParseErrors);
   }
 
+  // We use a new decoder, since canal does not follow TiCDC open protocol.
   public TiDBCanalJsonDeserializationSchema canalJson() {
     return new TiDBCanalJsonDeserializationSchema(
         physicalDataType,
