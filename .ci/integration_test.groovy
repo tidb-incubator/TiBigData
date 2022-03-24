@@ -40,7 +40,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     println "TICDC_BRANCH=${TICDC_BRANCH}"
 
     catchError {
-        node ('build') {
+        node('build') {
             container("java") {
                 stage('Prepare') {
                     dir("/home/jenkins/agent/git/tibigdata") {
@@ -121,24 +121,55 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 }
 
                 stage('Test') {
-                    dir("/home/jenkins/agent/git/tibigdata") {
-                        try {
-                            timeout(120) {
-                                sh ".ci/test.sh"
-                            }
-                        } catch (err) {
-                            sh """
+                    def java_8_modules = ["jdbc", "ticdc",]
+                    def java_11_modules = ["prestosql", "trino", "flink/flink-1.11", "flink/flink-1.12", "flink/flink-1.13", "flink/flink-1.14", "mapreduce/mapreduce-base", "prestodb"]
+
+                    groovy.lang.Closure run_integration_test = { (module, isJava8) ->
+                        dir("/home/jenkins/agent/git/tibigdata") {
+                            try {
+                                java_home = ""
+
+                                if (!isJava8) {
+                                   java_home = "export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12"
+                                }
+
+                                timeout(120) {
+                                        sh """
+                                        set -x
+                                        set -euo pipefail
+                                        export TIDB_HOST="127.0.0.1"
+                                        export TIDB_PORT="4000"
+                                        export TIDB_USER="root"
+                                        export TIDB_PASSWORD=""
+                                        $java_home
+                                        mvn clean test-compile failsafe:integration-test -am -pl ${module}
+                                    """
+                                }
+                            } catch (err) {
+                                sh """
                             ps aux | grep '-server' || true
                             curl -s 127.0.0.1:2379/pd/api/v1/status || true
                             """
-                            sh "cat _run/pd.log"
-                            sh "cat _run/tikv.log"
-                            sh "cat _run/tidb.log"
-                            sh "cat _run/kafka/logs/server.log"
-                            sh "cat _run/ticdc-linux-amd64/ticdc.log"
-                            throw err
+                                sh "cat _run/pd.log"
+                                sh "cat _run/tikv.log"
+                                sh "cat _run/tidb.log"
+                                sh "cat _run/kafka/logs/server.log"
+                                sh "cat _run/ticdc-linux-amd64/ticdc.log"
+                                throw err
+                            }
                         }
                     }
+
+                    tests = [:]
+                    for (module in java_8_modules) {
+                        tests[module] = {run_integration_test(module, true)}
+                    }
+
+                    for (module in java_11_modules) {
+                        tests[module] = {run_integration_test(module, false)}
+                    }
+
+                    parallel tests
                 }
             }
         }
@@ -147,12 +178,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
     stage('Summary') {
         def duration = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000 / 60).setScale(2, BigDecimal.ROUND_HALF_UP)
-        def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" +
-        "${ghprbPullLink}" + "\n" +
-        "${ghprbPullDescription}" + "\n" +
-        "Integration Common Test Result: `${currentBuild.result}`" + "\n" +
-        "Elapsed Time: `${duration} mins` " + "\n" +
-        "${env.RUN_DISPLAY_URL}"
+        def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" + "${ghprbPullLink}" + "\n" + "${ghprbPullDescription}" + "\n" + "Integration Common Test Result: `${currentBuild.result}`" + "\n" + "Elapsed Time: `${duration} mins` " + "\n" + "${env.RUN_DISPLAY_URL}"
 
         print msg
     }
