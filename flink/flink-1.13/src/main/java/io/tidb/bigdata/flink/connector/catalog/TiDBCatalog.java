@@ -16,15 +16,28 @@
 
 package io.tidb.bigdata.flink.connector.catalog;
 
+import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.DATABASE_NAME;
+import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
+
+import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
 import io.tidb.bigdata.flink.tidb.TiDBBaseCatalog;
 import io.tidb.bigdata.flink.tidb.TypeUtils;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.api.TableSchema.Builder;
+import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.catalog.CatalogBaseTable;
+import org.apache.flink.table.catalog.CatalogTable;
+import org.apache.flink.table.catalog.ObjectPath;
+import org.apache.flink.table.catalog.exceptions.CatalogException;
+import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.factories.Factory;
+import org.tikv.common.meta.TiColumnInfo;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
 
@@ -46,15 +59,27 @@ public class TiDBCatalog extends TiDBBaseCatalog {
   }
 
   @Override
-  public TableSchema getTableSchema(String databaseName, String tableName) {
-    Builder schemaBuilder = getClientSession()
+  public CatalogBaseTable getTable(ObjectPath tablePath)
+      throws TableNotExistException, CatalogException {
+    String databaseName = tablePath.getDatabaseName();
+    String tableName = tablePath.getObjectName();
+    Map<String, String> properties = new HashMap<>(this.properties);
+    properties.put(DATABASE_NAME.key(), databaseName);
+    properties.put(TABLE_NAME.key(), tableName);
+    return CatalogTable.of(getSchema(databaseName, tableName), "", ImmutableList.of(), properties);
+  }
+
+  public Schema getSchema(String databaseName, String tableName) {
+    Schema.Builder builder = Schema.newBuilder();
+    List<TiColumnInfo> columns = getClientSession()
         .getTableMust(databaseName, tableName)
-        .getColumns()
-        .stream()
-        .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
-            TypeUtils.getFlinkType(c.getType())), (builder1, builder2) -> null);
-    TiDBSchemaAdapter.parseMetadataColumns(properties)
-        .forEach((name, metadata) -> schemaBuilder.field(name, metadata.getType()));
-    return schemaBuilder.build();
+        .getColumns();
+    columns.forEach(
+        column -> builder.column(column.getName(), TypeUtils.getFlinkType(column.getType())));
+    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
+        properties);
+    metadata.forEach(
+        (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
+    return builder.build();
   }
 }
