@@ -29,7 +29,6 @@ import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -227,61 +226,6 @@ public class FlinkTest {
     Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put(TIDB_WRITE_MODE, "upsert");
     return runByCatalog(properties);
-  }
-
-  @Test
-  public void testTableFactory() throws Exception {
-    // only test for timestamp
-    Map<String, String> properties = ConfigUtils.defaultProperties();
-    properties.put("connector", "tidb");
-    properties.put(TiDBOptions.DATABASE_NAME.key(), "test");
-    properties.put(TiDBOptions.TABLE_NAME.key(), "test_timestamp");
-    properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
-    properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
-    testTableFactoryWithTimestampFormat(properties);
-
-    properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
-    properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
-    testTableFactoryWithTimestampFormat(properties);
-
-    properties.put("tidb.timestamp-format.c1", "yyyy-MM-dd HH:mm:ss");
-    properties.put("timestamp-format.c1", "yyyy-MM-dd HH:mm");
-    properties.put("tidb.timestamp-format.c2", "yyyy-MM-dd HH:mm:ss");
-    properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm");
-    testTableFactoryWithTimestampFormat(properties);
-  }
-
-  private void testTableFactoryWithTimestampFormat(Map<String, String> properties) {
-    // env
-    TableEnvironment tableEnvironment = getTableEnvironment();
-    // create test database and table
-    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
-    tiDBCatalog.open();
-    tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`");
-    tiDBCatalog.sqlUpdate("CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
-        "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
-    String propertiesString = properties.entrySet().stream()
-        .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue())).collect(
-            Collectors.joining(",\n"));
-    String createTableSql = format(
-        "CREATE TABLE `test_timestamp`(`c1` timestamp, `c2` string) WITH (\n%s\n)",
-        propertiesString);
-    tableEnvironment.executeSql(createTableSql);
-    Row row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
-    Row row1 = new Row(2);
-    row1.setField(0, LocalDateTime.of(2020, 1, 1, 12, 0, 1));
-    row1.setField(1, "2020-01-01 12:00:02");
-    Assert.assertEquals(row, row1);
-
-    tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
-    createTableSql = format(
-        "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
-    tableEnvironment.executeSql(createTableSql);
-    row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
-    row1 = new Row(1);
-    row1.setField(0, "2020-01-01 12:00:02");
-    Assert.assertEquals(row, row1);
-    tiDBCatalog.close();
   }
 
   @Test
