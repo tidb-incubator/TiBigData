@@ -50,7 +50,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   private final ResolvedCatalogTable table;
   private final ChangelogMode changelogMode;
   private final LookupTableSourceHelper lookupTableSourceHelper;
-  private final TiDBSchemaAdapter schema;
+  private TiDBSchemaAdapter schema;
   private FilterPushDownHelper filterPushDownHelper;
   private Integer limit;
   private Expression expression;
@@ -83,6 +83,7 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
     TiDBDynamicTableSource otherSource =
         new TiDBDynamicTableSource(table, changelogMode, lookupTableSourceHelper);
     otherSource.filterPushDownHelper = this.filterPushDownHelper;
+    otherSource.schema = this.schema;
     return otherSource;
   }
 
