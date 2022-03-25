@@ -113,6 +113,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                 sh "mv ${kafka_version} kafka/"
 
                                 sh """
+                                        set -e
+                                        set -x
                                         killall -9 tidb-server || true
                                         killall -9 tikv-server || true
                                         killall -9 pd-server || true
@@ -124,9 +126,10 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         bin/tikv-server --pd=127.0.0.1:2379 -s tikv --addr=0.0.0.0:20160 --advertise-addr=127.0.0.1:20160 --config=../.ci/config/tikv.toml &>tikv.log &
                                         sleep 10
                                         ps aux | grep '-server' || true
-                                        curl -s 127.0.0.1:2379/pd/api/v1/status || true
+                                        curl -s 127.0.0.1:2379/pd/api/v1/status
                                         bin/tidb-server --store=tikv --path="127.0.0.1:2379" --config=../.ci/config/tidb.toml &>tidb.log &
                                         sleep 60
+                                        cat _run/pd.log
                                     """
 
                                 sh """
