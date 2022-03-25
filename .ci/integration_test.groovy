@@ -72,6 +72,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         dir("/maven"){
                             dir = "/maven"
                             sh """
+                        set -e
+                        set -x  
                         rm -rf /maven/.m2/repository/*
                         rm -rf /maven/.m2/settings.xml
                         rm -rf ~/.m2/settings.xml
