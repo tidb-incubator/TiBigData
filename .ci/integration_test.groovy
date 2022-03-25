@@ -179,11 +179,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
             }
 
             tests = [:]
-            for (i in 0..<java_8_modules.size()) {
+            for (int i = 0; i < java_8_modules.size(); i++) {
                 tests[java_8_modules.get(i)] = { run_integration_test(java_8_modules.get(i), true) }
             }
 
-            for (i in 0..<java_11_modules.size()) {
+            for (int i = 0; i < java_11_modules.size(); i++) {
                 tests[java_11_modules.get(i)] = { run_integration_test(java_11_modules.get(i), true) }
             }
 
