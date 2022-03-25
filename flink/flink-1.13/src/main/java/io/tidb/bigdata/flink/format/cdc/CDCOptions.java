@@ -29,6 +29,7 @@ import org.apache.flink.configuration.ReadableConfig;
 
 public class CDCOptions {
 
+  // Options for format
   public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS =
       ConfigOptions.key("ignore-parse-errors").booleanType().defaultValue(false)
           .withDescription(

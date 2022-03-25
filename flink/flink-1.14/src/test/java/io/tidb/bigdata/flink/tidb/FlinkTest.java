@@ -924,7 +924,7 @@ public class FlinkTest {
         + "  'tidb.streaming.kafka.bootstrap.servers' = 'localhost:9092',\n"
         + "  'tidb.streaming.kafka.topic' = 'test_cdc',\n"
         + "  'tidb.streaming.kafka.group.id' = 'test_cdc_group',\n"
-        + "  'ignore-parse-errors' = 'true'\n"
+        + "  'tidb.streaming.ignore-parse-errors' = 'true'\n"
         + ")";
     tableEnvironment.executeSql(createCatalogSql);
     tableEnvironment.executeSql("SELECT * FROM `tidb`.`test`.`test_cdc`").print();

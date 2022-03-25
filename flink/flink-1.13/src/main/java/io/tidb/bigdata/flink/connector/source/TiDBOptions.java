@@ -87,6 +87,13 @@ public class TiDBOptions {
   public static final Set<String> VALID_STREAMING_CODECS =
       ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON, STREAMING_CODEC_CANAL_JSON);
 
+  // Options for catalog
+  public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS =
+      ConfigOptions.key("tidb.streaming.ignore-parse-errors").booleanType().defaultValue(false)
+          .withDescription(
+              "Optional flag to skip change events with parse errors instead of failing;\n"
+                  + "fields are set to null in case of errors, false by default.");
+
   // For example:
   // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
   public static final String METADATA_INCLUDED = "tidb.metadata.included";

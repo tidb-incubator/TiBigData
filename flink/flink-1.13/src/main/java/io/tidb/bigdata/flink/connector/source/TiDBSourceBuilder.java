@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.connector.source;
 
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.IGNORE_PARSE_ERRORS;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CANAL_JSON;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CRAFT;
@@ -26,7 +27,6 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_SOURC
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.VALID_STREAMING_CODECS;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.VALID_STREAMING_SOURCES;
-import static io.tidb.bigdata.flink.format.cdc.CDCOptions.IGNORE_PARSE_ERRORS;
 
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
 import io.tidb.bigdata.tidb.ClientConfig;
