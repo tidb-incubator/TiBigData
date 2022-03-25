@@ -40,18 +40,12 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     println "TICDC_BRANCH=${TICDC_BRANCH}"
 
     def label = "regression-test-tispark-${BUILD_NUMBER}"
-    podTemplate(name: label, label: label, instanceCap: 12, namespace: 'jenkins-tispark', containers: [
-            containerTemplate(name: 'golang', image: 'hub.pingcap.net/jenkins/centos7_golang-1.12:cached',
-                    envVars: [
-                            envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),
-                    ], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
-            containerTemplate(name: 'java', image: 'hub.pingcap.net/jenkins/centos7_golang-1.13_java:cached',
-                    resourceRequestCpu: '8000m',
-                    resourceRequestMemory: '24Gi',
-                    envVars: [
-                            envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),
-                    ], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
-    ]) {
+    podTemplate(name: label, label: label, instanceCap: 12, namespace: 'jenkins-tispark', containers: [containerTemplate(name: 'golang', image: 'hub.pingcap.net/jenkins/centos7_golang-1.12:cached',
+            envVars: [envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
+                                                                                                       containerTemplate(name: 'java', image: 'hub.pingcap.net/jenkins/centos7_golang-1.13_java:cached',
+                                                                                                               resourceRequestCpu: '8000m',
+                                                                                                               resourceRequestMemory: '24Gi',
+                                                                                                               envVars: [envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),]) {
         catchError {
             node(label) {
                 println "${NODE_NAME}"
@@ -66,23 +60,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             sh "git checkout -f ${ghprbActualCommit}"
 
                             stash includes: "**", name: "tibigdata"
-                        }
-
-                        sh "mkdir -p /maven/.m2/repository/"
-
-                        dir("/maven"){
-                            sh (script:  """
-                        set -e
-                        set -x  
-                        rm -rf /maven/.m2/repository/*
-                        rm -rf /maven/.m2/settings.xml
-                        rm -rf ~/.m2/settings.xml
-                    
-                        archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
-                        curl -sL \$archive_url | tar -zx -C /maven
-                        """, returnStatus: true)
-
-                            stash includes: "**", name: "maven"
                         }
 
                     }
@@ -100,6 +77,17 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                                     dir("/home/jenkins/agent/lib") {
                                         sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
+
+                                        sh(script: """
+                                        set -e
+                                        set -x  
+                                        rm -rf /maven/.m2/repository/*
+                                        rm -rf /maven/.m2/settings.xml
+                                        rm -rf ~/.m2/settings.xml
+                    
+                                        archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
+                                        curl -sL \$archive_url | tar -zx -C /maven
+                                        """, returnStatus: true)
                                     }
 
                                     dir("/home/jenkins/agent/git/tibigdata/_run") {
@@ -196,11 +184,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         }
 
                         tests = [:]
-                        for (i in 0..< java_8_modules.size()) {
+                        for (i in 0..<java_8_modules.size()) {
                             tests[java_8_modules.get(i)] = { run_integration_test(java_8_modules.get(i), true) }
                         }
 
-                        for (i in 0..< java_11_modules.size()) {
+                        for (i in 0..<java_11_modules.size()) {
                             tests[java_11_modules.get(i)] = { run_integration_test(java_11_modules.get(i), true) }
                         }
 
