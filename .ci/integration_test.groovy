@@ -41,7 +41,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
     catchError {
         stage('Prepare') {
-            node("bulid") {
+            node("build") {
                 println "${NODE_NAME}"
                 container("java") {
                     dir("/home/jenkins/agent/git/tibigdata") {
