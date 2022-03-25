@@ -132,7 +132,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                     """
 
                             sh """
-                                        curl -s 127.0.0.1:2379/pd/api/v1/status
                                         cd ticdc-linux-amd64
                                         ./bin/cdc server --pd="http://127.0.0.1:2379"  --log-file=ticdc.log --addr="0.0.0.0:8301" --advertise-addr="127.0.0.1:8301" &
                                         sleep 10
