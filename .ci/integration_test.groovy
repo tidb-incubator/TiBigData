@@ -67,7 +67,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 node('build') {
                     println "${NODE_NAME}"
                     container("java") {
-                        unstash 'maven'
                         unstash 'tibigdata'
 
                         dir("/home/jenkins/agent/lib") {
