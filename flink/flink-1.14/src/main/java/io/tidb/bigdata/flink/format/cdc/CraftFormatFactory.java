@@ -72,10 +72,9 @@ public class CraftFormatFactory
       @Override
       public DeserializationSchema<RowData> createRuntimeDecoder(
           DynamicTableSource.Context context, DataType physicalDataType) {
-        return new CDCDeserializationSchemaBuilder(
-            physicalDataType, context::createTypeInformation)
+        return new CDCDeserializationSchemaBuilder(physicalDataType,
+            CDCMetadata.toMetadata(metadataKeys))
             .startTs(earliestTs)
-            .metadata(CDCMetadata.toMetadata(metadataKeys))
             .types(types)
             .schemas(schemas)
             .tables(tables)

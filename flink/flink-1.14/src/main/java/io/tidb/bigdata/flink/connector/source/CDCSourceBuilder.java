@@ -31,6 +31,7 @@ import org.tikv.common.meta.TiTimestamp;
 
 public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> implements
     Serializable {
+
   public enum Type {
     KAFKA,
   }
@@ -65,21 +66,16 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
 
   public static KafkaCDCSourceBuilder
   kafka(String database, String table, TiTimestamp ts, TiDBSchemaAdapter schema) {
-    CDCMetadata[] cdcMetadata = null;
-    TiDBMetadata[] metadata = schema.getMetadata();
-    if (metadata != null) {
-      cdcMetadata = Arrays.stream(metadata).map(TiDBMetadata::toCraft).toArray(CDCMetadata[]::new);
-    }
     return new KafkaCDCSourceBuilder(
         new CDCDeserializationSchemaBuilder(schema.getPhysicalRowDataType(),
-            (ignored) -> schema.getProducedType())
+            schema.getCDCMetadata())
             .startTs(ts.getVersion())
-            .metadata(cdcMetadata)
             .types(ROW_CHANGED_EVENT)
             .schemas(ImmutableSet.of(database))
             .tables(ImmutableSet.of(table)));
   }
 
+  @SuppressWarnings("unchecked")
   public <T extends CDCSourceBuilder<SplitT, EnumChkT>> T ignoreParseErrors(boolean ignore) {
     this.builder.ignoreParseErrors(ignore);
     return (T) this;

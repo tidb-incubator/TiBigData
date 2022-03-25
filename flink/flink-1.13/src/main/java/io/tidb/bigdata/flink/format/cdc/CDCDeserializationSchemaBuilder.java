@@ -16,36 +16,29 @@
 
 package io.tidb.bigdata.flink.format.cdc;
 
+import com.google.common.base.Preconditions;
 import io.tidb.bigdata.cdc.Key;
 import java.util.Set;
-import java.util.function.Function;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
-import org.apache.flink.util.Preconditions;
 
 public class CDCDeserializationSchemaBuilder {
 
-  public CDCDeserializationSchemaBuilder(final DataType physicalDataType,
-      final Function<DataType, TypeInformation<RowData>> typeInfoFactory) {
-    this.physicalDataType = Preconditions.checkNotNull(physicalDataType);
-    this.typeInfoFactory = Preconditions.checkNotNull(typeInfoFactory);
-  }
-
   private final DataType physicalDataType;
-  private final Function<DataType, TypeInformation<RowData>> typeInfoFactory;
-  private CDCMetadata[] metadata;
+  private final CDCMetadata[] metadata;
+  private final TypeInformation<RowData> typeInformation;
   private Set<Key.Type> eventTypes;
   private Set<String> schemas;
   private Set<String> tables;
   private long startTs;
   private boolean ignoreParseErrors;
 
-
-  public CDCDeserializationSchemaBuilder metadata(final CDCMetadata[] metadata) {
-    this.metadata = metadata;
-    return this;
+  public CDCDeserializationSchemaBuilder(DataType physicalDataType, CDCMetadata[] metadata) {
+    this.physicalDataType = Preconditions.checkNotNull(physicalDataType);
+    this.metadata = Preconditions.checkNotNull(metadata);
+    this.typeInformation = CDCSchemaAdapter.getProducedType(physicalDataType, metadata);
   }
 
   public CDCDeserializationSchemaBuilder types(final Set<Key.Type> eventTypes) {
@@ -75,13 +68,13 @@ public class CDCDeserializationSchemaBuilder {
 
   public CraftDeserializationSchema craft() {
     return new CraftDeserializationSchema(
-        new CDCSchemaAdapter(physicalDataType, typeInfoFactory, metadata),
+        new CDCSchemaAdapter(physicalDataType, metadata),
         eventTypes, schemas, tables, startTs, ignoreParseErrors);
   }
 
   public JsonDeserializationSchema json() {
     return new JsonDeserializationSchema(
-        new CDCSchemaAdapter(physicalDataType, typeInfoFactory, metadata),
+        new CDCSchemaAdapter(physicalDataType, metadata),
         eventTypes, schemas, tables, startTs, ignoreParseErrors);
   }
 
@@ -93,8 +86,8 @@ public class CDCDeserializationSchemaBuilder {
         tables,
         metadata,
         startTs,
-        typeInfoFactory.apply(physicalDataType),
+        typeInformation,
         ignoreParseErrors,
-        TimestampFormat.ISO_8601);
+        TimestampFormat.SQL);
   }
 }

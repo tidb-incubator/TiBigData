@@ -22,6 +22,8 @@ import static org.tikv.common.types.MySQLType.TypeDatetime;
 import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
 import com.google.common.collect.ImmutableMap;
+import io.tidb.bigdata.flink.format.cdc.CDCMetadata;
+import io.tidb.bigdata.flink.format.cdc.CDCSchemaAdapter;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -286,6 +288,17 @@ public class TiDBSchemaAdapter implements Serializable {
 
   public TiDBMetadata[] getMetadata() {
     return metadata.values().toArray(new TiDBMetadata[0]);
+  }
+
+  public CDCMetadata[] getCDCMetadata() {
+    return metadata.values()
+        .stream()
+        .map(TiDBMetadata::toCraft)
+        .toArray(CDCMetadata[]::new);
+  }
+
+  public CDCSchemaAdapter toCDCSchemaAdapter() {
+    return new CDCSchemaAdapter(getPhysicalRowDataType(), getCDCMetadata());
   }
 
   public static LinkedHashMap<String, TiDBMetadata> parseMetadataColumns(

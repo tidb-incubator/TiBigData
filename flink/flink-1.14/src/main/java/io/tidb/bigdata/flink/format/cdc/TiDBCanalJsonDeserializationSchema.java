@@ -96,8 +96,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     this.jsonDeserializer =
         new JsonRowDataDeserializationSchema(
             jsonRowType,
-            // the result type is never used, so it's fine to pass in the produced type
-            // info
+            // the result type is never used, so it's fine to pass in the produced type info
             producedTypeInfo,
             false, // ignoreParseErrors already contains the functionality of
             // failOnMissingField
@@ -260,6 +259,4 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
             DataTypes.FIELD(DATABASE, DataTypes.STRING()));
     return (RowType) root.getLogicalType();
   }
-
-
 }
