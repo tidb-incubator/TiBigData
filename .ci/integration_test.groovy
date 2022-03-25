@@ -64,7 +64,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
             def java_11_modules = ["prestosql", "trino"]
 
             groovy.lang.Closure run_integration_test = { module, isJava8 ->
-                node("build") {
+                node('build') {
                     println "${NODE_NAME}"
                     container("java") {
                         unstash 'maven'
@@ -189,18 +189,17 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
             parallel tests
         }
+
+
+        currentBuild.result = "SUCCESS"
     }
-}
 
-currentBuild.result = "SUCCESS"
-}
+    stage('Summary') {
+        def duration = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000 / 60).setScale(2, BigDecimal.ROUND_HALF_UP)
+        def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" + "${ghprbPullLink}" + "\n" + "${ghprbPullDescription}" + "\n" + "Integration Common Test Result: `${currentBuild.result}`" + "\n" + "Elapsed Time: `${duration} mins` " + "\n" + "${env.RUN_DISPLAY_URL}"
 
-stage('Summary') {
-    def duration = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000 / 60).setScale(2, BigDecimal.ROUND_HALF_UP)
-    def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" + "${ghprbPullLink}" + "\n" + "${ghprbPullDescription}" + "\n" + "Integration Common Test Result: `${currentBuild.result}`" + "\n" + "Elapsed Time: `${duration} mins` " + "\n" + "${env.RUN_DISPLAY_URL}"
-
-    print msg
-}
+        print msg
+    }
 }
 
 
