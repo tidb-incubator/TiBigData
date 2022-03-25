@@ -72,9 +72,15 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             }
                             checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PruneStaleBranch'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: credentialsId, refspec: '+refs/pull/*:refs/remotes/origin/pr/*', url: 'git@github.com:tidb-incubator/TiBigData.git']]]
                             sh "git checkout -f ${ghprbActualCommit}"
+
+
+                            stash includes: "**", name: "tibigdata"
                         }
 
-                        stash includes: "/home/jenkins/agent/git/tibigdata/**", name: "tispark", useDefaultExcludes: false
+                        dir("/maven"){
+                            stash includes: "**", name: "maven"
+                        }
+
                     }
 
                     stage('Test') {
