@@ -70,10 +70,16 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         }
 
                         dir("/maven"){
+                            dir = "/maven"
                             sh """
                         rm -rf /maven/.m2/repository/*
                         rm -rf /maven/.m2/settings.xml
                         rm -rf ~/.m2/settings.xml
+                        if [[ ! -e $dir ]]; then
+                            mkdir $dir
+                        elif [[ ! -d $dir ]]; then
+                            echo "$dir already exists but is not a directory" 1>&2
+                        fi
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/client-java/cache/tikv-client-java-m2-cache-latest.tar.gz
                         curl -sL \$archive_url | tar -zx -C /maven
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
