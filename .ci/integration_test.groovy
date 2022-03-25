@@ -78,8 +78,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         container("java") {
                             unstash 'tibigdata'
 
-                            sh "ls -al"
-                            sh "pwd"
                             dir("/home/jenkins/agent/lib") {
                                 sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
 
@@ -96,7 +94,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             }
                             try {
                                 dir("_run") {
-                                    sh "pwd"
                                     sh "rm -rf *"
 
                                     // tidb
@@ -132,7 +129,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         ps aux | grep '-server' || true
                                         bin/tidb-server --store=tikv --path="127.0.0.1:2379" --config=../.ci/config/tidb.toml &>tidb.log &
                                         sleep 60
-          
+                                        
+                                        curl -s 127.0.0.1:2379/pd/api/v1/status
                                     """
 
                                     sh """
@@ -154,7 +152,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                     """
                                 }
 
-                                sh "pwd"
                                 java_home = ""
 
                                 if (!isJava8) {
@@ -192,13 +189,13 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                 tests = [:]
                 for (int i = 0; i < java_8_modules.size(); i++) {
-                    module = java_8_modules.get(i)
-                    tests[module] = { run_integration_test(module, true) }
+                    String module = java_8_modules.get(i)
+                    tests[module] = { run_integration_test(module, true) }(module)
                 }
 
                 for (int i = 0; i < java_11_modules.size(); i++) {
-                    module = java_11_modules.get(i)
-                    tests[module] = { run_integration_test(module, true) }
+                    String module = java_11_modules.get(i)
+                    tests[module] = { run_integration_test(module, false) }(module)
                 }
 
                 parallel tests
