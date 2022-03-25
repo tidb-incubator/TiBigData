@@ -180,11 +180,13 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
             tests = [:]
             for (int i = 0; i < java_8_modules.size(); i++) {
-                tests[java_8_modules.get(i)] = { run_integration_test(java_8_modules.get(i), true) }
+                module = java_8_modules.get(i)
+                tests[module] = { run_integration_test(module, true) }
             }
 
             for (int i = 0; i < java_11_modules.size(); i++) {
-                tests[java_11_modules.get(i)] = { run_integration_test(java_11_modules.get(i), true) }
+                module = java_11_modules.get(i)
+                tests[module] = { run_integration_test(module, true) }
             }
 
             parallel tests
