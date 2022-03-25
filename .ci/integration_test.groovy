@@ -79,7 +79,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         rm -rf ~/.m2/settings.xml
                     
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
-                        curl -sL \\$archive_url | tar -zx -C /maven
+                        curl -sL \$archive_url | tar -zx -C /maven
                         """, returnStatus: true)
 
                             stash includes: "**", name: "maven"
@@ -95,6 +95,9 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             node(label) {
                                 println "${NODE_NAME}"
                                 container("java") {
+                                    unstash 'maven'
+                                    unstash 'tibigdata'
+
                                     dir("/home/jenkins/agent/lib") {
                                         sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
                                     }
