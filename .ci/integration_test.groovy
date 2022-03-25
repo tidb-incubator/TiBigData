@@ -79,7 +79,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
                         curl -o tibigdata-m2-cache-latest.tar.gz \$archive_url 
-                        tar -xzvf tispark-m2-cache-latest.tar.gz -C /maven
                         """, returnStatus: true)
 
                             stash includes: "**", name: "maven"
