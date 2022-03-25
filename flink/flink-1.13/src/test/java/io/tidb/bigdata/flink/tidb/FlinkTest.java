@@ -455,7 +455,7 @@ public class FlinkTest {
         + "  'tidb.password' = '',\n"
         + "  'tidb.metadata.included' = '*',\n"
         + "  'tidb.streaming.source' = 'kafka',\n"
-        + "  'tidb.streaming.codec' = 'canal-json',\n"
+        + "  'tidb.streaming.codec' = 'json',\n"
         + "  'tidb.streaming.kafka.bootstrap.servers' = 'localhost:9092',\n"
         + "  'tidb.streaming.kafka.topic' = 'test_cdc',\n"
         + "  'tidb.streaming.kafka.group.id' = 'test_cdc_group',\n"
