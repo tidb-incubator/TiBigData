@@ -78,6 +78,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         container("java") {
                             unstash 'tibigdata'
 
+
+                            sh "ls -al /home/jenkins/agent/git/tibigdata"
                             dir("/home/jenkins/agent/lib") {
                                 sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
 
