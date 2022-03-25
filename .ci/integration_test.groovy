@@ -71,7 +71,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                         dir("/maven"){
                             dir = "/maven"
-                            sh """
+                            sh (script:  """
                         set -e
                         set -x  
                         rm -rf /maven/.m2/repository/*
@@ -86,7 +86,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         curl -sL \$archive_url | tar -zx -C /maven
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
                         curl -sL \$archive_url | tar -zx -C /maven
-                        """
+                        """, returnStatus: true)
                             stash includes: "**", name: "maven"
                         }
 
