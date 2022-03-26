@@ -19,7 +19,6 @@ package io.tidb.bigdata.flink.format.cdc;
 import com.google.common.base.Preconditions;
 import io.tidb.bigdata.cdc.Key;
 import java.util.Set;
-import java.util.function.Function;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.table.data.RowData;
@@ -37,7 +36,7 @@ public class CDCDeserializationSchemaBuilder {
   private boolean ignoreParseErrors;
 
   public CDCDeserializationSchemaBuilder(DataType physicalDataType, CDCMetadata[] metadata) {
-    this.physicalDataType = com.google.common.base.Preconditions.checkNotNull(physicalDataType);
+    this.physicalDataType = Preconditions.checkNotNull(physicalDataType);
     this.metadata = Preconditions.checkNotNull(metadata);
     this.typeInformation = CDCSchemaAdapter.getProducedType(physicalDataType, metadata);
   }
