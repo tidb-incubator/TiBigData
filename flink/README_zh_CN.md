@@ -74,6 +74,8 @@ bin/start-cluster.sh
 
 ## 利用 Flink 读写 TiDB
 
+TiBigData 支持以**批模式**和**流批一体模式**消费数据。本篇后续内容仅介绍以**批模式**读取 TiDB 数据，**流批一体模式**请参考 [TiBigData 流批一体模式](./README_streaming_zh_CN.md).
+
 在 Flink 集群部署完成后，你可以尝试使用 Flink 的 sql-client 来读写 TiDB 内表的数据。
 
 ```bash

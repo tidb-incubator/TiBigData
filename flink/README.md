@@ -63,6 +63,8 @@ You should be able to navigate to the web UI at http://localhost:8081 to view th
 
 ## Read & Write
 
+TiBigData supports **Batch Mode** and **Streaming Mode**. The subsequent content of this article only introduces reading TiDB in **Batch Mode**，For **Streaming Mode**, please refer to [TiBigData Streaming](./README_streaming.md).
+
 After the Flink cluster is deployed, you could use Flink sql-client to read and write data from TiDB.
 
 ```bash
