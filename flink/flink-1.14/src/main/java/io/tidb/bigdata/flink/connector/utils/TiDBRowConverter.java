@@ -110,17 +110,6 @@ public class TiDBRowConverter implements Serializable {
     return notNull ? flinkType.notNull() : flinkType.nullable();
   }
 
-  public Schema getSchema(LinkedHashMap<String, TiDBMetadata> metadata) {
-    Builder builder = Schema.newBuilder();
-    columns.forEach(column -> builder.column(column.getName(), toFlinkType(column.getType())));
-    if (metadata.size() != 0) {
-      metadata.forEach(
-          (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
-    }
-    return builder.build();
-  }
-
-
   private void setDefaultValue(Row row, int pos, DataType type) {
     // TODO set default value
     row.set(pos, type, null);

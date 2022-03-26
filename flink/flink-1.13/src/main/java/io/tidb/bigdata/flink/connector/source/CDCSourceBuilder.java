@@ -38,11 +38,10 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
 
   public abstract Type type();
 
-  protected abstract CDCSource<SplitT, EnumChkT>
-  doBuild(DeserializationSchema<RowData> schema);
+  protected abstract CDCSource<SplitT, EnumChkT> doBuild(DeserializationSchema<RowData> schema);
 
-  protected abstract CDCSource<SplitT, EnumChkT>
-  doBuild(KafkaDeserializationSchema<RowData> schema);
+  protected abstract CDCSource<SplitT, EnumChkT> doBuild(
+      KafkaDeserializationSchema<RowData> schema);
 
   public CDCSource<SplitT, EnumChkT> craft() {
     return doBuild(builder.craft());
@@ -62,8 +61,8 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
     this.builder = builder;
   }
 
-  public static KafkaCDCSourceBuilder
-  kafka(String database, String table, TiTimestamp ts, TiDBSchemaAdapter schema) {
+  public static KafkaCDCSourceBuilder kafka(String database, String table, TiTimestamp ts,
+      TiDBSchemaAdapter schema) {
     return new KafkaCDCSourceBuilder(
         new CDCDeserializationSchemaBuilder(schema.getPhysicalRowDataType(),
             schema.getCDCMetadata())

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.Schema.Builder;
 import org.apache.flink.table.catalog.AbstractCatalog;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogDatabase;
@@ -190,6 +191,25 @@ public class TiDBCatalog extends AbstractCatalog {
     return getTable(tablePath.getDatabaseName(), tablePath.getObjectName());
   }
 
+  public Schema getSchema(String databaseName, String tableName) {
+    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
+    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
+        properties);
+    Builder builder = Schema.newBuilder();
+    tiTableInfo.getColumns().forEach(column -> builder.column(column.getName(),
+        TiDBRowConverter.toFlinkType(column.getType())));
+    if (metadata.size() != 0) {
+      metadata.forEach(
+          (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
+    }
+    List<String> primaryKeyColumns = getClientSession().getPrimaryKeyColumns(databaseName,
+        tableName);
+    if (primaryKeyColumns.size() > 0) {
+      builder.primaryKey(primaryKeyColumns);
+    }
+    return builder.build();
+  }
+
   public CatalogBaseTable getTable(String databaseName, String tableName)
       throws TableNotExistException, CatalogException {
     Map<String, String> properties = new HashMap<>(this.properties);
@@ -198,7 +218,7 @@ public class TiDBCatalog extends AbstractCatalog {
     TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
     LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
         properties);
-    Schema schema = new TiDBRowConverter(tiTableInfo).getSchema(metadata);
+    Schema schema = getSchema(databaseName, tableName);
     return CatalogTable.of(schema, tiTableInfo.getComment(), ImmutableList.of(), properties);
   }
 

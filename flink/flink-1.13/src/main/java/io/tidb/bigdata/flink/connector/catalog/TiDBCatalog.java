@@ -37,6 +37,7 @@ import org.apache.flink.table.catalog.ObjectPath;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.factories.Factory;
+import org.apache.flink.table.types.DataType;
 import org.tikv.common.meta.TiColumnInfo;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
@@ -75,11 +76,20 @@ public class TiDBCatalog extends TiDBBaseCatalog {
         .getTableMust(databaseName, tableName)
         .getColumns();
     columns.forEach(
-        column -> builder.column(column.getName(), TypeUtils.getFlinkType(column.getType())));
+        column -> {
+          DataType flinkType = TypeUtils.getFlinkType(column.getType());
+          flinkType = column.getType().isNotNull() ? flinkType.notNull() : flinkType.nullable();
+          builder.column(column.getName(), flinkType);
+        });
     LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
         properties);
     metadata.forEach(
         (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
+    List<String> primaryKeyColumns = getClientSession().getPrimaryKeyColumns(databaseName,
+        tableName);
+    if (primaryKeyColumns.size() > 0) {
+      builder.primaryKey(primaryKeyColumns);
+    }
     return builder.build();
   }
 }
