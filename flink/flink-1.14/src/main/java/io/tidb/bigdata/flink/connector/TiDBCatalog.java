@@ -191,6 +191,18 @@ public class TiDBCatalog extends AbstractCatalog {
     return getTable(tablePath.getDatabaseName(), tablePath.getObjectName());
   }
 
+  public CatalogBaseTable getTable(String databaseName, String tableName)
+      throws TableNotExistException, CatalogException {
+    Map<String, String> properties = new HashMap<>(this.properties);
+    properties.put(DATABASE_NAME.key(), databaseName);
+    properties.put(TABLE_NAME.key(), tableName);
+    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
+    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
+        properties);
+    Schema schema = getSchema(databaseName, tableName);
+    return CatalogTable.of(schema, tiTableInfo.getComment(), ImmutableList.of(), properties);
+  }
+
   public Schema getSchema(String databaseName, String tableName) {
     TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
     LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
@@ -208,18 +220,6 @@ public class TiDBCatalog extends AbstractCatalog {
       builder.primaryKey(primaryKeyColumns);
     }
     return builder.build();
-  }
-
-  public CatalogBaseTable getTable(String databaseName, String tableName)
-      throws TableNotExistException, CatalogException {
-    Map<String, String> properties = new HashMap<>(this.properties);
-    properties.put(DATABASE_NAME.key(), databaseName);
-    properties.put(TABLE_NAME.key(), tableName);
-    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
-    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
-        properties);
-    Schema schema = getSchema(databaseName, tableName);
-    return CatalogTable.of(schema, tiTableInfo.getComment(), ImmutableList.of(), properties);
   }
 
   @Override
