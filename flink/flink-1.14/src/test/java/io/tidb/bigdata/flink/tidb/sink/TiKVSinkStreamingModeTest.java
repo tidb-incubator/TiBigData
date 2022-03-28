@@ -57,6 +57,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
@@ -123,6 +125,8 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
 
   public static class RandomExceptionMapFunction implements MapFunction<Long, RowData> {
 
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     private static final Random RANDOM = new Random();
     private static final Set<Long> randomLong = new HashSet<>();
 
@@ -133,9 +137,9 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
     }
 
     public RandomExceptionMapFunction() {
-      System.out.println("----------------------------");
-      System.out.println(randomLong);
-      System.out.println("----------------------------");
+      logger.info("----------------------------");
+      logger.info(String.valueOf(randomLong));
+      logger.info("----------------------------");
     }
 
     @Override
@@ -145,8 +149,8 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
       // Waiting for checkpoint
       Thread.sleep(50L);
       if (randomLong.remove(value)) {
-        System.out.println("----------------------------" + value);
-        throw new IllegalStateException();
+        logger.info("----------------------------" + value);
+        throw new IllegalStateException("Mock exception");
       }
       return rowData;
     }
