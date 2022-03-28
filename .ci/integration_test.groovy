@@ -201,7 +201,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 parallel tests
             }
 
-
             currentBuild.result = "SUCCESS"
         }
     }
