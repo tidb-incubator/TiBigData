@@ -19,7 +19,6 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import io.tidb.bigdata.test.IntegrationTest;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -71,9 +70,7 @@ import org.apache.flink.table.expressions.Expression;
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.Factory;
-import org.junit.experimental.categories.Category;
 
-@Category(IntegrationTest.class)
 public class FilterPushDownTestUtils {
 
   private static final TableEnvironment tableEnvironment;

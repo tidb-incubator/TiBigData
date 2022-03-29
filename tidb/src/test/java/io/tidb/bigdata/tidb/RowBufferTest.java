@@ -36,7 +36,7 @@ public class RowBufferTest {
   @Test
   public void testDeduplicateRowBuffer() {
     String tableName = RandomUtils.randomString();
-    clientSession.sqlUpdate(String.format("CREATE TABLE IF NOT EXISTS `%s`\n"
+    clientSession.sqlUpdate(String.format("CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
         + "(\n"
         + "    c1  int,\n"
         + "    c2  int,\n"
@@ -49,7 +49,7 @@ public class RowBufferTest {
         + "    UNIQUE KEY(c3),\n"
         + "    UNIQUE KEY(c4,c5),\n"
         + "    UNIQUE KEY(c6)"
-        + ")", tableName));
+        + ")", "test", tableName));
     TiTableInfo tiTableInfo = clientSession.getTableMust("test", tableName);
     RowBuffer buffer = RowBuffer.createDeduplicateRowBuffer(tiTableInfo, true, 1000);
     Row row1 = ObjectRowImpl.create(new Object[]{1, 2, 3, 4, 5, 6, 7});
