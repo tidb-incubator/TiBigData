@@ -1,5 +1,5 @@
 def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
-    
+
     catchError {
         node ('build') {
             container("java") {
@@ -27,7 +27,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
 
                 stage('Build') {
                     dir("/home/jenkins/agent/git/tibigdata") {
-                        timeout(30) {
+                        timeout(90) {
                             sh ".ci/build.sh"
                         }
                     }
@@ -36,7 +36,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
         }
         currentBuild.result = "SUCCESS"
     }
-    
+
     stage('Summary') {
         def duration = ((System.currentTimeMillis() - currentBuild.startTimeInMillis) / 1000 / 60).setScale(2, BigDecimal.ROUND_HALF_UP)
         def msg = "[#${ghprbPullId}: ${ghprbPullTitle}]" + "\n" +
