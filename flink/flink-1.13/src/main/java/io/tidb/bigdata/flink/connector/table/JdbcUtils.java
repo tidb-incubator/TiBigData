@@ -28,29 +28,14 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 
 import io.tidb.bigdata.flink.connector.table.AsyncLookupOptions.Builder;
 import io.tidb.bigdata.jdbc.TiDBDriver;
-import io.vertx.sqlclient.Tuple;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.flink.connector.jdbc.dialect.MySQLDialect;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
-import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
-import org.apache.flink.connector.jdbc.utils.JdbcTypeUtil;
-import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.logical.DecimalType;
-import org.apache.flink.table.types.logical.LogicalType;
-import org.apache.flink.table.types.logical.LogicalTypeRoot;
-import org.apache.flink.table.types.logical.TimestampType;
-import org.apache.flink.table.types.utils.TypeConversions;
+
 
 public class JdbcUtils {
 
