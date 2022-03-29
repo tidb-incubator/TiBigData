@@ -15,33 +15,36 @@
   <url>https://github.com/pingcap-incubator/TiBigData</url>
 
   <properties>
-    <dep.flink.version>1.13.0</dep.flink.version>
+    <dep.flink.version>1.13.2</dep.flink.version>
+    <dep.agroal.version>1.14</dep.agroal.version>
+    <dep.vertx.version>4.2.3</dep.vertx.version>
   </properties>
 
   <dependencies>
-    <!-- flink base -->
+    <!-- vertx jdbc -->
     <dependency>
-      <groupId>io.tidb</groupId>
-      <artifactId>flink-tidb-connector-base</artifactId>
-      <version>${project.version}</version>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-jdbc-client</artifactId>
+      <version>${dep.vertx.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.agroal</groupId>
+      <artifactId>agroal-pool</artifactId>
+      <version>${dep.agroal.version}</version>
+    </dependency>
+
     <!-- TiCDC parser -->
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>ticdc</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <!-- jackson -->
+    <!-- Google collection -->
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-      <version>${dep.jackson.version}</version>
-    </dependency>
-    <!-- apache commons -->
-    <dependency>
-      <groupId>commons-beanutils</groupId>
-      <artifactId>commons-beanutils</artifactId>
-      <version>${dep.apache.commons.version}</version>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>21.0</version>
+      <scope>${flink.scope}</scope>
     </dependency>
     <!-- flink -->
     <dependency>
@@ -97,6 +100,12 @@
       <artifactId>bigdata-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>flink-tidb-connector-base</artifactId>
+      <version>0.0.5-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 

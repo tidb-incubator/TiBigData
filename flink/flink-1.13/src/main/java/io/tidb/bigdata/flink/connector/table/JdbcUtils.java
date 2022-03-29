@@ -16,19 +16,41 @@
 
 package io.tidb.bigdata.flink.connector.table;
 
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.ASYNC_MODE;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_URL;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.LOOKUP_MAX_POOL;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.PASSWORD;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.USERNAME;
+import static java.lang.String.format;
 import static org.apache.flink.util.Preconditions.checkArgument;
 
+import io.tidb.bigdata.flink.connector.table.AsyncLookupOptions.Builder;
 import io.tidb.bigdata.jdbc.TiDBDriver;
+import io.vertx.sqlclient.Tuple;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.sql.Date;
+import java.sql.SQLException;
+import java.sql.Time;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.flink.connector.jdbc.dialect.MySQLDialect;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
+import org.apache.flink.connector.jdbc.statement.FieldNamedPreparedStatement;
+import org.apache.flink.connector.jdbc.utils.JdbcTypeUtil;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.types.logical.DecimalType;
+import org.apache.flink.table.types.logical.LogicalType;
+import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.logical.TimestampType;
+import org.apache.flink.table.types.utils.TypeConversions;
 
 public class JdbcUtils {
 
@@ -66,4 +88,43 @@ public class JdbcUtils {
         .setDriverName(driverName)
         .build();
   }
+
+  public static AsyncLookupOptions getAsyncJdbcOptions(Map<String, String> properties) {
+    Builder builder = AsyncLookupOptions.builder();
+    String mode = properties.get(ASYNC_MODE.key());
+    String poolSize = properties.get(LOOKUP_MAX_POOL.key());
+    if (poolSize != null) {
+      int maxPoolSize = Integer.parseInt(poolSize);
+      builder.setMaxPoolSize(maxPoolSize);
+    }
+    if (mode != null) {
+      boolean async = "true".equals(mode);
+      builder.setAsync(async);
+    }
+    // jdbc options
+    return builder.build();
+  }
+
+  public static String quoteIdentifier(String identifier) {
+    return "`" + identifier + "`";
+  }
+
+  public static String getSelectFromStatement(
+      String tableName, String[] selectFields, String[] conditionFields) {
+    String selectExpressions =
+        Arrays.stream(selectFields)
+            .map(JdbcUtils::quoteIdentifier)
+            .collect(Collectors.joining(", "));
+    String fieldExpressions =
+        Arrays.stream(conditionFields)
+            .map(f -> format("%s = ?", quoteIdentifier(f)))
+            .collect(Collectors.joining(" AND "));
+    return "SELECT "
+        + selectExpressions
+        + " FROM "
+        + quoteIdentifier(tableName)
+        + (conditionFields.length > 0 ? " WHERE " + fieldExpressions : "");
+  }
+
+
 }

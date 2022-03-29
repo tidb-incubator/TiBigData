@@ -86,7 +86,7 @@ public class TiDBSchemaAdapter implements Serializable {
 
     this.physicalDataType = DataTypes.ROW(physicalFields).notNull();
     this.physicalFieldNames = Arrays.stream(physicalFields)
-        .map(Field::getName).toArray(String[]::new);
+        .map(f -> f.getName().toLowerCase()).toArray(String[]::new);
     this.physicalFieldTypes = Arrays.stream(physicalFields)
         .map(Field::getDataType).toArray(DataType[]::new);
     this.physicalFieldCount = physicalFieldNames.length;

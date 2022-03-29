@@ -42,8 +42,10 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 import org.apache.flink.table.factories.DynamicTableSinkFactory;
 import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.utils.TableSchemaUtils;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
+
   public static final String IDENTIFIER = "tidb";
 
   /**
@@ -135,14 +137,21 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         .withMaxRetries(config.get(SINK_MAX_RETRIES))
         .build();
     // dml options
+    TableSchema physicalSchema =
+        TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
+    String[] keyFields =
+        schema.getPrimaryKey()
+            .map(pk -> pk.getColumns().toArray(new String[0]))
+            .orElse(null);
     JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
         .withTableName(jdbcOptions.getTableName())
         .withDialect(jdbcOptions.getDialect())
         .withFieldNames(schema.getFieldNames())
-        .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+        .withKeyFields(keyFields)
         .build();
 
-    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+    return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions,
+        physicalSchema);
   }
 
   private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,

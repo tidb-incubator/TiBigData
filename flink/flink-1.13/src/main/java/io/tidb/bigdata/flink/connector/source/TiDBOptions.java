@@ -46,6 +46,10 @@ public class TiDBOptions {
 
   public static final ConfigOption<String> TABLE_NAME = required("tidb.table.name");
 
+  public static final ConfigOption<String> ASYNC_MODE = optional("tidb.lookup.async");
+
+  public static final ConfigOption<String> LOOKUP_MAX_POOL = optional("tidb.lookup.max_pool_size");
+
   public static final ConfigOption<String> MAX_POOL_SIZE = required(ClientConfig.MAX_POOL_SIZE);
 
   public static final ConfigOption<String> MIN_IDLE_SIZE = required(ClientConfig.MIN_IDLE_SIZE);

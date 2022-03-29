@@ -20,16 +20,21 @@ import java.util.Arrays;
 import java.util.Map;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.connector.jdbc.table.JdbcRowDataLookupFunction;
+import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.connector.source.AsyncTableFunctionProvider;
 import org.apache.flink.table.connector.source.LookupTableSource.LookupContext;
 import org.apache.flink.table.connector.source.LookupTableSource.LookupRuntimeProvider;
 import org.apache.flink.table.connector.source.TableFunctionProvider;
+import org.apache.flink.table.functions.AsyncTableFunction;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.table.utils.TableSchemaUtils;
 import org.apache.flink.util.Preconditions;
 
 public class LookupTableSourceHelper {
+
   private final JdbcLookupOptions lookupOptions;
 
   public LookupTableSourceHelper(
@@ -39,27 +44,38 @@ public class LookupTableSourceHelper {
 
   public LookupRuntimeProvider getLookupRuntimeProvider(
       ResolvedCatalogTable table, LookupContext context) {
+
     String[] keyNames = new String[context.getKeys().length];
-    ResolvedSchema schema = table.getResolvedSchema();
-    Column[] columns = schema.getColumns().stream()
-        .filter(Column::isPhysical).toArray(Column[]::new);
+    TableSchema physicalSchema =
+        TableSchemaUtils.getPhysicalSchema(table.getSchema());
     Map<String, String> properties = table.getOptions();
     for (int i = 0; i < keyNames.length; i++) {
       int[] innerKeyArr = context.getKeys()[i];
       Preconditions.checkArgument(
           innerKeyArr.length == 1, "JDBC only support non-nested look up keys");
-      keyNames[i] = columns[innerKeyArr[0]].getName();
+      keyNames[i] = physicalSchema.getFieldNames()[innerKeyArr[0]];
     }
-    final RowType rowType = (RowType) schema.toSourceRowDataType().getLogicalType();
+    final RowType rowType = (RowType) physicalSchema.toRowDataType().getLogicalType();
+    final AsyncLookupOptions asyncLookupOptions = JdbcUtils.getAsyncJdbcOptions(properties);
+    if (asyncLookupOptions.isAsync()) {
+      return AsyncTableFunctionProvider.of(
+          new AsyncJdbcLookUpFunction(
+              JdbcUtils.getJdbcOptions(properties),
+              asyncLookupOptions,
+              physicalSchema.getFieldNames(),
+              physicalSchema.getFieldDataTypes(),
+              keyNames,
+              rowType));
+    } else {
+      return TableFunctionProvider.of(
+          new JdbcRowDataLookupFunction(
+              JdbcUtils.getJdbcOptions(properties),
+              lookupOptions,
+              physicalSchema.getFieldNames(),
+              physicalSchema.getFieldDataTypes(),
+              keyNames,
+              rowType));
+    }
 
-    return TableFunctionProvider.of(
-        new JdbcRowDataLookupFunction(
-            JdbcUtils.getJdbcOptions(properties),
-            lookupOptions,
-            Arrays.stream(columns).map(Column::getName).toArray(String[]::new),
-            Arrays.stream(columns).map(Column::getDataType).toArray(
-                org.apache.flink.table.types.DataType[]::new),
-            keyNames,
-            rowType));
   }
 }
