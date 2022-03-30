@@ -55,7 +55,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public String factoryIdentifier() {
-    throw new UnsupportedOperationException("TiDB factory is only work for catalog.");
+    throw new UnsupportedOperationException("TiDB table factory is not supported anymore, please use catalog.");
   }
 
   @Override
