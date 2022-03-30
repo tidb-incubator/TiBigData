@@ -167,7 +167,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         export TIDB_USER="root"
                                         export TIDB_PASSWORD=""
                                         $java_home
-                                        mvn clean test-compile failsafe:integration-test -am -pl ${module}
+                                        mvn clean test-compile failsafe:verify -am -pl ${module}
                                     """
                                 }
                             } catch (err) {
