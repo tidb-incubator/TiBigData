@@ -15,3 +15,5 @@
 
 io.tidb.bigdata.flink.connector.TiDBCatalogFactory
 io.tidb.bigdata.flink.format.cdc.CraftFormatFactory
+io.tidb.bigdata.flink.connector.TiDBDynamicTableFactory
+
