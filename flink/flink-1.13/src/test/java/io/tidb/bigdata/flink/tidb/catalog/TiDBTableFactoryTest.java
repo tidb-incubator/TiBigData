@@ -16,37 +16,22 @@
 
 package io.tidb.bigdata.flink.tidb.catalog;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.isA;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.hasProperty;
-
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
-import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.junit.Rule;
+import org.apache.flink.table.api.TableEnvironment;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.ExpectedException;
 
 @Category(IntegrationTest.class)
 public class TiDBTableFactoryTest extends FlinkTestBase {
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
-  public void testUnsupportedTableFactory() throws Exception {
-    exceptionRule.expect(ValidationException.class);
-    exceptionRule.expectCause(allOf(
-        isA(UnsupportedOperationException.class),
-        hasProperty("message",
-            containsString("TiDB table factory is not supported anymore, please use catalog."))
-    ));
+  public void testSupportedTableFactory() throws Exception {
 
-    StreamTableEnvironment tableEnvironment = getBatchModeStreamTableEnvironment();
-    tableEnvironment.sqlUpdate("CREATE TABLE `people`(\n"
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    tableEnvironment.executeSql("CREATE TABLE `people`(\n"
         + "  `id` INT,\n"
         + "  `name` STRING\n"
         + ") WITH (\n"
@@ -57,9 +42,5 @@ public class TiDBTableFactoryTest extends FlinkTestBase {
         + "  'tidb.database.name' = 'test',\n"
         + "  'tidb.table.name' = 'people'\n"
         + ")");
-
-    tableEnvironment.sqlUpdate(
-        "SELECT * FROM people");
-    tableEnvironment.execute("test");
   }
 }
