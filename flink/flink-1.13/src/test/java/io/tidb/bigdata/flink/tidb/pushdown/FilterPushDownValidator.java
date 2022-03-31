@@ -18,7 +18,8 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
-import io.tidb.bigdata.flink.connector.table.FilterPushDownHelper;
+import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -40,7 +41,6 @@ import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.StoreVersion;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.meta.TiTableInfo;
@@ -92,10 +92,9 @@ public class FilterPushDownValidator extends ExternalResource {
   private List<Row> rows;
   private Map<String, DataType> nameTypeMap;
   private FilterPushDownHelper filterPushDownHelper;
-  private boolean isSupportEnumPushDown;
 
-  public boolean isSupportEnumPushDown() {
-    return isSupportEnumPushDown;
+  public FilterPushDownHelper getFilterPushDownHelper() {
+    return filterPushDownHelper;
   }
 
   @Override
@@ -112,9 +111,9 @@ public class FilterPushDownValidator extends ExternalResource {
     this.rows = ImmutableList.copyOf(scanRows(DATABASE, TABLE, Optional.empty()));
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
-    this.isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0",
-        this.clientSession.getTiSession().getPDClient());
-    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, isSupportEnumPushDown);
+    List<io.tidb.bigdata.flink.connector.utils.StoreVersion> tiKVVersions = StoreVersion.fetchTiKVVersions(
+        clientSession.getTiSession().getPDClient());
+    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
   }
 
   @Override

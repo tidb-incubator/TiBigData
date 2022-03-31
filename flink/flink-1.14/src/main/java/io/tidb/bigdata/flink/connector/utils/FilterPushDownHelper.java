@@ -81,11 +81,16 @@ public class FilterPushDownHelper {
   private final Map<String, org.tikv.common.types.DataType> nameTypeMap;
   private final boolean isSupportEnumPushDown;
 
-  public FilterPushDownHelper(TiTableInfo tiTableInfo, boolean isSupportEnumPushDown) {
+  public boolean isSupportEnumPushDown() {
+    return isSupportEnumPushDown;
+  }
+
+  public FilterPushDownHelper(TiTableInfo tiTableInfo, List<StoreVersion> tiKVVersions) {
     this.tiTableInfo = tiTableInfo;
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
-    this.isSupportEnumPushDown = isSupportEnumPushDown;
+    // enum push down is only supported when TiKV version >= 5.1.0
+    this.isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0", tiKVVersions);
   }
 
   public Optional<Expression> toTiDBExpression(List<ResolvedExpression> filters) {

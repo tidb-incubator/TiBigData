@@ -299,7 +299,7 @@ public class FilterPushDownGreaterThanTest extends FilterPushDownTestBase {
         String.format("`%s` > %s", column, value));
 
     // enum pushDown, only supported when TiKV version >= 5.1.0
-    if (validator.isSupportEnumPushDown()) {
+    if (validator.getFilterPushDownHelper().isSupportEnumPushDown()) {
       column = "c28";
       value = "0";
       type = StringType.VARCHAR;

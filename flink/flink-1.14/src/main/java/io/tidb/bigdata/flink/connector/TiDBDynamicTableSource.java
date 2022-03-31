@@ -19,6 +19,7 @@ package io.tidb.bigdata.flink.connector;
 import io.tidb.bigdata.flink.connector.source.TiDBSourceBuilder;
 import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
 import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.util.Arrays;
@@ -38,7 +39,6 @@ import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.StoreVersion;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTableInfo;
 
@@ -119,10 +119,9 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
       try (ClientSession clientSession = ClientSession.create(clientConfig)) {
         tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
-        // enum pushDown, only supported when TiKV version >= 5.1.0
-        boolean isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0",
+        List<StoreVersion> tiKVVersions = StoreVersion.fetchTiKVVersions(
             clientSession.getTiSession().getPDClient());
-        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, isSupportEnumPushDown);
+        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
       } catch (Exception e) {
         throw new IllegalStateException("can not get table", e);
       }
