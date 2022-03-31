@@ -38,11 +38,16 @@ public class TiDBTableFactoryTest extends FlinkTestBase {
 
   @Test
   public void testUnsupportedTableFactory() throws Exception {
-    exceptionRule.expect(ValidationException.class);
-    exceptionRule.expectCause(allOf(
-        isA(UnsupportedOperationException.class),
+    exceptionRule.expect(allOf(
+        isA(ValidationException.class),
         hasProperty("message",
-            containsString("TiDB table factory is not supported anymore, please use catalog."))
+            containsString("Unable to create a source for reading table"))
+    ));
+
+    exceptionRule.expectCause(allOf(
+        isA(ValidationException.class),
+        hasProperty("message",
+            containsString("Cannot discover a connector using option: 'connector'='tidb'"))
     ));
 
     StreamTableEnvironment tableEnvironment = getBatchModeStreamTableEnvironment();

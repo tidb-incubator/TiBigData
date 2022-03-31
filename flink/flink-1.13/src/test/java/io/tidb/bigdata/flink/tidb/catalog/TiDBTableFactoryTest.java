@@ -25,7 +25,6 @@ import org.junit.experimental.categories.Category;
 @Category(IntegrationTest.class)
 public class TiDBTableFactoryTest extends FlinkTestBase {
 
-
   @Test
   public void testSupportedTableFactory() throws Exception {
 

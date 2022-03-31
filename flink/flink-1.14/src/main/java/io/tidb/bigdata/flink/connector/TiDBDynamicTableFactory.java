@@ -121,7 +121,6 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     }
   }
 
-
   private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
       String tableName) {
     // check write mode
