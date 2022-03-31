@@ -253,8 +253,9 @@ public class FilterPushDownHelper {
 
     // Convert Type, TODO: json and set
     org.tikv.common.types.DataType resultType = tidbType;
-    if (tidbType.getType() == MySQLType.TypeEnum && this.isSupportEnumPushDown) {
-      if (!(value instanceof String)) {
+    if (tidbType.getType() == MySQLType.TypeEnum) {
+      // If enum push down is not supported, we will return empty as a placeholder.
+      if (!isSupportEnumPushDown || !(value instanceof String)) {
         return Optional.empty();
       }
       resultType = StringType.VARCHAR;
