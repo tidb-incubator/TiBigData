@@ -37,15 +37,21 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.flink.table.expressions.ResolvedExpression;
 import org.junit.Assert;
+import org.junit.rules.ExternalResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.tikv.common.StoreVersion;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.row.Row;
 import org.tikv.common.types.DataType;
 
-public class FilterPushDownValidator {
+public class FilterPushDownValidator extends ExternalResource {
 
-  private static final String DATABASE = "test";
+  protected final Logger logger = LoggerFactory.getLogger(this.getClass());
+
+  private static final String DATABASE = "pushdown_test";
   private static final String TABLE = "all_types";
   private static final String INSERT_SQL = String.format("INSERT IGNORE INTO `%s`.`%s`\n"
       + "VALUES (\n"
@@ -79,27 +85,42 @@ public class FilterPushDownValidator {
       + " '1',\n"
       + " 'a'\n"
       + ")", DATABASE, TABLE);
-
-  private static final FilterPushDownValidator instance = new FilterPushDownValidator();
-
+  
   private TiDBCatalog catalog;
   private ClientSession clientSession;
   private TiTableInfo tiTableInfo;
   private List<Row> rows;
   private Map<String, DataType> nameTypeMap;
   private FilterPushDownHelper filterPushDownHelper;
+  private boolean isSupportEnumPushDown;
 
-  private FilterPushDownValidator() {
+  public boolean isSupportEnumPushDown() {
+    return isSupportEnumPushDown;
+  }
+
+  @Override
+  protected void before() throws Throwable {
     Map<String, String> properties = ConfigUtils.defaultProperties();
     this.catalog = new TiDBCatalog("tidb", properties);
     this.clientSession = ClientSession.create(new ClientConfig(properties));
     catalog.open();
+    catalog.sqlUpdate(String.format("CREATE DATABASE IF NOT EXISTS `%s`", DATABASE));
+    logger.info("create database {}", DATABASE);
+
     catalog.sqlUpdate(TableUtils.getTableSqlWithAllTypes(DATABASE, TABLE), INSERT_SQL);
     this.tiTableInfo = clientSession.getTableMust(DATABASE, TABLE);
     this.rows = ImmutableList.copyOf(scanRows(DATABASE, TABLE, Optional.empty()));
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
-    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+    this.isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0",
+        this.clientSession.getTiSession().getPDClient());
+    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, isSupportEnumPushDown);
+  }
+
+  @Override
+  protected void after() {
+    clientSession.sqlUpdate(String.format("DROP DATABASE IF EXISTS `%s`", DATABASE));
+    logger.info("Drop database {}", DATABASE);
   }
 
   private List<Row> scanRows(String database, String table, Optional<Expression> expression) {
@@ -118,7 +139,7 @@ public class FilterPushDownValidator {
     return rows;
   }
 
-  private static Object[] toObjectArray(Row row) {
+  private Object[] toObjectArray(Row row) {
     Object[] objects = new Object[row.fieldCount()];
     for (int i = 0; i < row.fieldCount(); i++) {
       objects[i] = row.get(i, null);
@@ -129,13 +150,13 @@ public class FilterPushDownValidator {
   /**
    * Test for expressions and rows.
    */
-  public static void doTestFilter(List<Row> expectedRows, Expression expectedExpression,
+  public void doTestFilter(List<Row> expectedRows, Expression expectedExpression,
       String whereCondition) {
     List<ResolvedExpression> filters = FilterPushDownTestUtils.getFilters(whereCondition);
-    Expression actualExpression = instance.filterPushDownHelper.toTiDBExpression(filters)
+    Expression actualExpression = filterPushDownHelper.toTiDBExpression(filters)
         .orElse(null);
     Assert.assertEquals(Objects.toString(expectedExpression), Objects.toString(actualExpression));
-    List<Row> rows = instance.scanRows(DATABASE, TABLE, Optional.ofNullable(actualExpression));
+    List<Row> rows = scanRows(DATABASE, TABLE, Optional.ofNullable(actualExpression));
     Assert.assertEquals(expectedRows.size(), rows.size());
     for (int i = 0; i < rows.size(); i++) {
       Object[] expected = toObjectArray(expectedRows.get(i));
@@ -144,13 +165,12 @@ public class FilterPushDownValidator {
     }
   }
 
-  public static DataType getColumnType(String column) {
-    return instance.nameTypeMap.get(column);
+  public DataType getColumnType(String column) {
+    return nameTypeMap.get(column);
   }
 
-  public static List<Row> rows() {
-    return instance.rows;
+  public List<Row> rows() {
+    return rows;
   }
-
 
 }

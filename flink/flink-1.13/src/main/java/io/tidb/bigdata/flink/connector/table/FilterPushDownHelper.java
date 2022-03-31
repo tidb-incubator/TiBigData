@@ -79,11 +79,13 @@ public class FilterPushDownHelper {
 
   private final TiTableInfo tiTableInfo;
   private final Map<String, org.tikv.common.types.DataType> nameTypeMap;
+  private final boolean isSupportEnumPushDown;
 
-  public FilterPushDownHelper(TiTableInfo tiTableInfo) {
+  public FilterPushDownHelper(TiTableInfo tiTableInfo, boolean isSupportEnumPushDown) {
     this.tiTableInfo = tiTableInfo;
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
+    this.isSupportEnumPushDown = isSupportEnumPushDown;
   }
 
   public Optional<Expression> toTiDBExpression(List<ResolvedExpression> filters) {
@@ -246,7 +248,7 @@ public class FilterPushDownHelper {
 
     // Convert Type, TODO: json and set
     org.tikv.common.types.DataType resultType = tidbType;
-    if (tidbType.getType() == MySQLType.TypeEnum) {
+    if (tidbType.getType() == MySQLType.TypeEnum && this.isSupportEnumPushDown) {
       if (!(value instanceof String)) {
         return Optional.empty();
       }

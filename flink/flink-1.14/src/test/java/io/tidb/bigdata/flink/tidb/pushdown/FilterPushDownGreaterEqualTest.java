@@ -298,18 +298,20 @@ public class FilterPushDownGreaterEqualTest extends FilterPushDownTestBase {
     validator.doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` >= %s", column, value));
 
-    // enum
-    column = "c28";
-    value = "1";
-    type = StringType.VARCHAR;
-    expression = Expressions.greaterEqual(Expressions.column(column, type),
-        Expressions.constant(value, type));
-    validator.doTestFilter(rows, expression, String.format("`%s` >= '%s'", column, value));
-    value = "2";
-    expression = Expressions.greaterEqual(Expressions.column(column, type),
-        Expressions.constant(value, type));
-    validator.doTestFilter(ImmutableList.of(), expression,
-        String.format("`%s` >= '%s'", column, value));
+    // enum pushDown, only supported when TiKV version >= 5.1.0
+    if (validator.isSupportEnumPushDown()) {
+      column = "c28";
+      value = "1";
+      type = StringType.VARCHAR;
+      expression = Expressions.greaterEqual(Expressions.column(column, type),
+          Expressions.constant(value, type));
+      validator.doTestFilter(rows, expression, String.format("`%s` >= '%s'", column, value));
+      value = "2";
+      expression = Expressions.greaterEqual(Expressions.column(column, type),
+          Expressions.constant(value, type));
+      validator.doTestFilter(ImmutableList.of(), expression,
+          String.format("`%s` >= '%s'", column, value));
+    }
   }
 
   /**

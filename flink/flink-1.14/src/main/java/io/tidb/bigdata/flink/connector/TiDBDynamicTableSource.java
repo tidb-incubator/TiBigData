@@ -38,6 +38,7 @@ import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.StoreVersion;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTableInfo;
 
@@ -117,7 +118,11 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
       TiTableInfo tiTableInfo;
       try (ClientSession clientSession = ClientSession.create(clientConfig)) {
         tiTableInfo = clientSession.getTableMust(databaseName, tableName);
-        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+
+        // enum pushDown, only supported when TiKV version >= 5.1.0
+        boolean isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0",
+            clientSession.getTiSession().getPDClient());
+        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, isSupportEnumPushDown);
       } catch (Exception e) {
         throw new IllegalStateException("can not get table", e);
       }

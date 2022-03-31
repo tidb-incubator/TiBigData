@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.StoreVersion;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.meta.TiTableInfo;
@@ -91,6 +92,11 @@ public class FilterPushDownValidator extends ExternalResource {
   private List<Row> rows;
   private Map<String, DataType> nameTypeMap;
   private FilterPushDownHelper filterPushDownHelper;
+  private boolean isSupportEnumPushDown;
+
+  public boolean isSupportEnumPushDown() {
+    return isSupportEnumPushDown;
+  }
 
   @Override
   protected void before() throws Throwable {
@@ -106,7 +112,9 @@ public class FilterPushDownValidator extends ExternalResource {
     this.rows = ImmutableList.copyOf(scanRows(DATABASE, TABLE, Optional.empty()));
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
-    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+    this.isSupportEnumPushDown = StoreVersion.minTiKVVersion("5.1.0",
+        this.clientSession.getTiSession().getPDClient());
+    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, isSupportEnumPushDown);
   }
 
   @Override
