@@ -47,7 +47,10 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     envVars: [
                             envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),
                     ], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
-    ]) {
+    ],
+            volumes: [
+                    hostPathVolume(mountPath: '/home/jenkins', hostPath: '/home/jenkins'),
+            ]) {
         catchError {
             stage('Prepare') {
                 node(label) {
