@@ -50,13 +50,15 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     ],
             volumes: [
                     hostPathVolume(mountPath: '/home/jenkins', hostPath: '/home/jenkins'),
-            ]) {
+            ],
+            idleMinutes: 10
+    ) {
         catchError {
             stage('Prepare') {
                 node(label) {
                     println "${NODE_NAME}"
                     container("java") {
-                        dir("/home/jenkins/agent/git/tibigdata") {
+                        dir("/home/jenkins/tibigdata") {
 
                             if (sh(returnStatus: true, script: '[ -d .git ] && [ -f Makefile ] && git rev-parse --git-dir > /dev/null 2>&1') != 0) {
                                 deleteDir()
@@ -79,7 +81,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                     node(label) {
                         println "${NODE_NAME}"
                         container("java") {
-                            unstash 'tibigdata'
 
                             dir("/home/jenkins/agent/lib") {
                                 sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
@@ -96,9 +97,14 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         """, returnStatus: true)
                             }
                             try {
-                                dir("_run") {
+                                dir("/home/jenkins/tibigdata") {
                                     sh "rm -rf *"
 
+                                    unstash 'tibigdata'
+                                }
+
+
+                                dir("/home/jenkins/tibigdata/_run") {
                                     // tidb
                                     def tidb_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/tidb/${TIDB_BRANCH}/sha1").trim()
                                     sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/tidb/${tidb_sha1}/centos7/tidb-server.tar.gz | tar xz"
@@ -178,11 +184,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                             ps aux | grep '-server' || true
                             curl -s 127.0.0.1:2379/pd/api/v1/status || true
                             """
-                                sh "cat _run/pd.log"
-                                sh "cat _run/tikv.log"
-                                sh "cat _run/tidb.log"
-                                sh "cat _run/kafka/logs/server.log"
-                                sh "cat _run/ticdc-linux-amd64/ticdc.log"
+                                sh "cat /home/jenkins/tibigdata/_run/pd.log"
+                                sh "cat /home/jenkins/tibigdata/_run/tikv.log"
+                                sh "cat /home/jenkins/tibigdata/_run/tidb.log"
+                                sh "cat /home/jenkins/tibigdata/_run/kafka/logs/server.log"
+                                sh "cat /home/jenkins/tibigdata/_run/ticdc-linux-amd64/ticdc.log"
                                 throw err
                             }
 
