@@ -34,7 +34,7 @@ public class StoreVersion {
   private int v1 = 9999;
   private int v2 = 9999;
 
-  private StoreVersion(String version) {
+  public StoreVersion(String version) {
     try {
       // tiflash version starts with `v`
       if (version.startsWith("v")) {
@@ -53,21 +53,6 @@ public class StoreVersion {
     } catch (Exception e) {
       logger.warn("invalid store version: " + version, e);
     }
-  }
-
-  public static int compareTo(String v0, String v1) {
-    return new StoreVersion(v0).toIntVersion() - new StoreVersion(v1).toIntVersion();
-  }
-
-  public static boolean minTiKVVersion(String version, List<StoreVersion> storeList) {
-    StoreVersion storeVersion = new StoreVersion(version);
-
-    for (StoreVersion tiKVVersion : storeList) {
-      if (storeVersion.greatThan(tiKVVersion)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   public static List<StoreVersion> fetchTiKVVersions(PDClient pdClient) {
@@ -100,7 +85,7 @@ public class StoreVersion {
     return v0 * SCALE * SCALE + v1 * SCALE + v2;
   }
 
-  private boolean greatThan(StoreVersion other) {
+  public boolean greatThan(StoreVersion other) {
     return toIntVersion() > other.toIntVersion();
   }
 }
