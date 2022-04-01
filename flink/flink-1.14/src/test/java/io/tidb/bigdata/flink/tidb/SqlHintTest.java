@@ -28,6 +28,7 @@ import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import java.util.Map;
 import org.apache.flink.table.api.TableEnvironment;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -35,12 +36,16 @@ import org.junit.experimental.categories.Category;
 @Category(IntegrationTest.class)
 public class SqlHintTest extends FlinkTestBase {
 
+  private String srcTable;
+
+  private String dstTable;
+
   @Test
   public void testSqlHint() throws Exception {
     final int rowCount = 100000;
-    final String srcTable = RandomUtils.randomString();
+    srcTable = RandomUtils.randomString();
     generateData(srcTable, rowCount);
-    final String dstTable = RandomUtils.randomString();
+    dstTable = RandomUtils.randomString();
 
     TableEnvironment tableEnvironment = getTableEnvironment();
 
@@ -60,5 +65,11 @@ public class SqlHintTest extends FlinkTestBase {
     tableEnvironment.execute("test");
 
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+  }
+
+  @After
+  public void teardown() {
+    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
 }
