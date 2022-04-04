@@ -52,7 +52,7 @@ public class TiDBCatalogFactory implements CatalogFactory {
     return ImmutableSet.of(
         TiDBOptions.PASSWORD,
         TiDBOptions.MAX_POOL_SIZE,
-        TiDBOptions.LOOKUP_MAX_POOL,
+        TiDBOptions.LOOKUP_MAX_POOL_SIZE,
         TiDBOptions.ASYNC_MODE,
         TiDBOptions.MIN_IDLE_SIZE,
         TiDBOptions.WRITE_MODE,

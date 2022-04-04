@@ -19,7 +19,7 @@ package io.tidb.bigdata.flink.connector.table;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.ASYNC_MODE;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_URL;
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.LOOKUP_MAX_POOL;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.LOOKUP_MAX_POOL_SIZE;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.PASSWORD;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.USERNAME;
@@ -77,7 +77,7 @@ public class JdbcUtils {
   public static AsyncLookupOptions getAsyncJdbcOptions(Map<String, String> properties) {
     Builder builder = AsyncLookupOptions.builder();
     String mode = properties.get(ASYNC_MODE.key());
-    String poolSize = properties.get(LOOKUP_MAX_POOL.key());
+    String poolSize = properties.get(LOOKUP_MAX_POOL_SIZE.key());
     if (poolSize != null) {
       int maxPoolSize = Integer.parseInt(poolSize);
       builder.setMaxPoolSize(maxPoolSize);

@@ -129,5 +129,36 @@ public class TIKVSourceTest extends FlinkTestBase {
       Assert.assertEquals(row, row1);
     }
   }
-
+  @Test
+  public void testAsyncLookupTableSource() throws Exception {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    Map<String, String> properties = defaultProperties();
+    properties.put("tidb.lookup.async","true");
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tiDBCatalog.open();
+    String tableName = RandomUtils.randomString();
+    String createTableSql1 = String.format(
+        "CREATE TABLE `%s`.`%s` (c1 int, c2 varchar(255), PRIMARY KEY(`c1`))", DATABASE_NAME,
+        tableName);
+    String insertDataSql = String.format(
+        "INSERT INTO `%s`.`%s` VALUES (1,'data1'),(2,'data2'),(3,'data3'),(4,'data4')",
+        DATABASE_NAME, tableName);
+    tiDBCatalog.sqlUpdate(createTableSql1, insertDataSql);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    tableEnvironment.executeSql(CREATE_DATAGEN_TABLE_SQL);
+    String sql = String.format("SELECT * FROM `datagen` "
+        + "LEFT JOIN `%s`.`%s`.`%s` FOR SYSTEM_TIME AS OF datagen.proctime AS `dim_table` "
+        + "ON datagen.c1 = dim_table.c1 ", "tidb", DATABASE_NAME, tableName);
+    CloseableIterator<Row> iterator = tableEnvironment.executeSql(sql).collect();
+    while (iterator.hasNext()) {
+      Row row = iterator.next();
+      Object c1 = row.getField(0);
+      String c2 = String.format("data%s", c1);
+      boolean isJoin = (int) c1 <= 4;
+      Row row1 = Row.of(c1, row.getField(1), isJoin ? c1 : null, isJoin ? c2 : null);
+      Assert.assertEquals(row, row1);
+    }
+  }
 }

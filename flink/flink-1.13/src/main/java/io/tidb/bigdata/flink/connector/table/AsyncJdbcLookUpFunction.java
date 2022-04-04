@@ -48,12 +48,10 @@ import org.apache.flink.table.types.logical.RowType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * @author ly
- */
+
 public class AsyncJdbcLookUpFunction extends AsyncTableFunction<RowData> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JdbcRowDataLookupFunction.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AsyncJdbcLookUpFunction.class);
   private static final long serialVersionUID = 2L;
 
   private final String query;
@@ -111,6 +109,7 @@ public class AsyncJdbcLookUpFunction extends AsyncTableFunction<RowData> {
 
   @Override
   public void open(FunctionContext context) {
+    LOG.info("open async jdbc client");
     String userName = options.getUsername().isPresent() ? options.getUsername().get() : "";
     String passWord = options.getPassword().isPresent() ? options.getPassword().get() : "";
     this.pool = JDBCPool.pool(Vertx.vertx(),

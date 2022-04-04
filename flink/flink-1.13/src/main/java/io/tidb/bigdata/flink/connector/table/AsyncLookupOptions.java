@@ -21,11 +21,7 @@ import java.util.Objects;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions.Builder;
 
-/**
- * Async Lookup options for JDBC
- *
- * @author ly
- */
+
 public class AsyncLookupOptions implements Serializable {
 
   private final boolean async;
