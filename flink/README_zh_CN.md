@@ -10,6 +10,7 @@
 * [利用 Flink 读写 TiDB](#利用-flink-读写-tidb)
 * [Flink 与 TiDB 的类型映射](#flink-与-tidb-的类型映射)
 * [高级配置](#高级配置)
+* [TableFactory（废弃）](#tablefactory废弃)
 * [常见问题](#常见问题)
   * [TiBigData 会占用 TiDB 的资源吗](#tibigdata-会占用-tidb-的资源吗)
   * [Flink 的配置应该如何设置](#flink-的配置应该如何设置)
@@ -223,6 +224,29 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tikv.sink.ignore-autoincrement-column-value | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，对于 autoincrement 列，会自动生成以替换原有的值。如果设置为 `false`，autoincrement 列的值不能为 null。                                                                                                                                                                                     |
 | tikv.sink.deduplicate                       | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，重复的行数据将会进行去重。如果设置为 `false`，需要确保没有重复的行数据，不然程序会抛出异常。                                                                                                                                                                                                           |
 
+
+## TableFactory（废弃）
+
+注意：TableFactory 已被废弃，只在 Flink-1.13（包括）版本之前可用，请使用 catalog。 
+
+TiBigData 也实现了 Flink TableFactory 相关的 API，不过我们并不推荐你使用它，会引入数据类型转换和列对齐的相关难题，会增加使用成本。我们将会在 Flink 1.14 **不再支持**，所以本小节只做简单介绍。
+
+你可以使用如下 SQL 在 Flink 中创建 TiDB 的映射表并查询。
+
+```sql
+CREATE TABLE `people`(
+  `id` INT,
+  `name` STRING
+) WITH (
+  'connector' = 'tidb',
+  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
+  'tidb.username' = 'root',
+  'tidb.password' = '',
+  'tidb.database.name' = 'test',
+  'tidb.table.name' = 'people'
+);
+SELECT * FROM people;
+```
 
 ## 常见问题
 
