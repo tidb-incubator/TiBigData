@@ -22,13 +22,11 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.WRITE_MODE;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
-import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.time.Duration;
-import java.util.Map;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
@@ -38,6 +36,7 @@ import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
+import org.apache.flink.table.api.TableColumn.MetadataColumn;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -125,14 +124,13 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
-    Map<String, String> options = context.getCatalogTable().getOptions();
-    if (TiDBSchemaAdapter.parseMetadataColumns(options).size() != 0) {
+    TableSchema schema = context.getCatalogTable().getSchema();
+    if (schema.getTableColumns().stream().anyMatch(column -> column instanceof MetadataColumn)) {
       throw new IllegalStateException("Metadata columns is not supported for sink");
     }
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    TableSchema schema = context.getCatalogTable().getSchema();
     String databaseName = config.get(DATABASE_NAME);
     // jdbc options
     JdbcOptions jdbcOptions = JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());

@@ -30,12 +30,10 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_MA
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
-import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
-import java.util.Map;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
@@ -44,6 +42,7 @@ import org.apache.flink.connector.jdbc.internal.options.JdbcConnectorOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
+import org.apache.flink.table.api.TableColumn.MetadataColumn;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -85,8 +84,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
-    Map<String, String> options = context.getCatalogTable().getOptions();
-    if (TiDBSchemaAdapter.parseMetadataColumns(options).size() != 0) {
+    if (context.getCatalogTable().getSchema().getTableColumns().stream()
+        .anyMatch(column -> column instanceof MetadataColumn)) {
       throw new IllegalStateException("Metadata columns is not supported for sink");
     }
     FactoryUtil.TableFactoryHelper helper = FactoryUtil

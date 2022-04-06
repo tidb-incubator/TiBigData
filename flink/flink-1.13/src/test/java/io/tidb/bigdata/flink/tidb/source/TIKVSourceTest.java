@@ -150,6 +150,7 @@ public class TIKVSourceTest extends FlinkTestBase {
     String values = IntStream.range(0, 2000).mapToObj(i -> "(" + i + ")")
         .collect(Collectors.joining(","));
     clientSession.sqlUpdate(
+        "USE " + DATABASE_NAME,
         String.format("CREATE TABLE `%s` (`c1` int unique key)", tableName),
         String.format("SPLIT TABLE `%s` BETWEEN (0) AND (2000) REGIONS %s", tableName, 2),
         String.format("INSERT INTO `%s` VALUES %s", tableName, values));
@@ -193,7 +194,7 @@ public class TIKVSourceTest extends FlinkTestBase {
     String tableName = RandomUtils.randomString();
     String values = IntStream.range(0, 2000).mapToObj(i -> "(" + i + ")")
         .collect(Collectors.joining(","));
-    clientSession.sqlUpdate(
+    clientSession.sqlUpdate("USE " + DATABASE_NAME,
         String.format("CREATE TABLE `%s` (`c1` int unique key)", tableName),
         String.format("SPLIT TABLE `%s` BETWEEN (0) AND (2000) REGIONS %s", tableName, 2),
         String.format("INSERT INTO `%s` VALUES %s", tableName, values));
