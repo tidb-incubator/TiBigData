@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.connector.table;
+package io.tidb.bigdata.flink.connector.utils;
 
 import java.util.Arrays;
 import java.util.Map;

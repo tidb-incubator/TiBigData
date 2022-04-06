@@ -115,18 +115,20 @@ public class FilterPushDownLikeTest extends FilterPushDownTestBase {
     validator.doTestFilter(ImmutableList.of(), expression,
         String.format("`%s` like '%s'", column, value));
 
-    // enum
-    column = "c28";
-    value = "1%";
-    type = StringType.VARCHAR;
-    expression = Expressions.like(Expressions.column(column, type),
-        Expressions.constant(value, type));
-    validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
-    value = "2";
-    expression = Expressions.like(Expressions.column(column, type),
-        Expressions.constant(value, type));
-    validator.doTestFilter(ImmutableList.of(), expression,
-        String.format("`%s` like '%s'", column, value));
+    // enum pushDown, only supported when TiKV version >= 5.1.0
+    if (validator.getFilterPushDownHelper().isSupportEnumPushDown()) {
+      column = "c28";
+      value = "1%";
+      type = StringType.VARCHAR;
+      expression = Expressions.like(Expressions.column(column, type),
+          Expressions.constant(value, type));
+      validator.doTestFilter(rows, expression, String.format("`%s` like '%s'", column, value));
+      value = "2";
+      expression = Expressions.like(Expressions.column(column, type),
+          Expressions.constant(value, type));
+      validator.doTestFilter(ImmutableList.of(), expression,
+          String.format("`%s` like '%s'", column, value));
+    }
   }
 
   /**

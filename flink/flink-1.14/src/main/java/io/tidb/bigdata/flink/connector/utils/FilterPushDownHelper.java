@@ -79,11 +79,20 @@ public class FilterPushDownHelper {
 
   private final TiTableInfo tiTableInfo;
   private final Map<String, org.tikv.common.types.DataType> nameTypeMap;
+  private final Optional<StoreVersion> minimumTiKVVersion;
 
-  public FilterPushDownHelper(TiTableInfo tiTableInfo) {
+  public boolean isSupportEnumPushDown() {
+    // enum push down is only supported when TiKV version >= 5.1.0
+    return this.minimumTiKVVersion.map(storeVersion -> storeVersion.greatThan(new StoreVersion("5.1.0")))
+        .orElse(false);
+  }
+
+  public FilterPushDownHelper(TiTableInfo tiTableInfo, List<StoreVersion> tiKVVersions) {
     this.tiTableInfo = tiTableInfo;
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
+
+    this.minimumTiKVVersion = tiKVVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
   }
 
   public Optional<Expression> toTiDBExpression(List<ResolvedExpression> filters) {
@@ -247,7 +256,8 @@ public class FilterPushDownHelper {
     // Convert Type, TODO: json and set
     org.tikv.common.types.DataType resultType = tidbType;
     if (tidbType.getType() == MySQLType.TypeEnum) {
-      if (!(value instanceof String)) {
+      // If enum push down is not supported, we will return empty as a placeholder.
+      if (!isSupportEnumPushDown() || !(value instanceof String)) {
         return Optional.empty();
       }
       resultType = StringType.VARCHAR;

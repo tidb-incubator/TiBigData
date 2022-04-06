@@ -16,37 +16,37 @@
 
 支持的数据类型如下：
 
-|     TiDB     |    Flink     | Supported |
-|:------------:|:------------:|:---------:|
-|   TINYINT    |   TINYINT    |   TRUE    |
-|   SMALLINT   |   SMALLINT   |   TRUE    |
-|  MEDIUMINT   |     INT      |   TRUE    |
-|     INT      |     INT      |   TRUE    |
-|    BIGINT    |    BIGINT    |   TRUE    |
-|     CHAR     |    STRING    |   TRUE    |
-|   VARCHAR    |    STRING    |   TRUE    |
-|   TINYTEXT   |    STRING    |   TRUE    |
-|  MEDIUMTEXT  |    STRING    |   TRUE    |
-|     TEXT     |    STRING    |   TRUE    |
-|   LONGTEXT   |    STRING    |   TRUE    |
-|    BINARY    |    BYTES     |   FALSE   |
-|  VARBINARY   |    BYTES     |   FALSE   |
-|   TINYBLOB   |    BYTES     |   FALSE   |
-|  MEDIUMBLOB  |    BYTES     |   FALSE   |
-|     BLOB     |    BYTES     |   FALSE   |
-|   LONGBLOB   |    BYTES     |   FALSE   |
-|    FLOAT     |    FLOAT     |   TRUE    |
-|    DOUBLE    |    DOUBLE    |   TRUE    |
-| DECIMAL(p,s) | DECIMAL(p,s) |   TRUE    |
-|     DATE     |     DATE     |   TRUE    |
-|     TIME     |     TIME     |   TRUE    |
-|   DATETIME   |  TIMESTAMP   |   TRUE    |
-|  TIMESTAMP   |  TIMESTAMP   |   TRUE    |
-|     YEAR     |   SMALLINT   |   TRUE    |
-|     BOOL     |   BOOLEAN    |   TRUE    |
-|     JSON     |    STRING    |   FALSE   |
-|     ENUM     |    STRING    |   TRUE    |
-|     SET      |    STRING    |   FALSE   |
+|     TiDB     |    Flink     |      Supported      |
+|:------------:|:------------:|:-------------------:|
+|   TINYINT    |   TINYINT    |        TRUE         |
+|   SMALLINT   |   SMALLINT   |        TRUE         |
+|  MEDIUMINT   |     INT      |        TRUE         |
+|     INT      |     INT      |        TRUE         |
+|    BIGINT    |    BIGINT    |        TRUE         |
+|     CHAR     |    STRING    |        TRUE         |
+|   VARCHAR    |    STRING    |        TRUE         |
+|   TINYTEXT   |    STRING    |        TRUE         |
+|  MEDIUMTEXT  |    STRING    |        TRUE         |
+|     TEXT     |    STRING    |        TRUE         |
+|   LONGTEXT   |    STRING    |        TRUE         |
+|    BINARY    |    BYTES     |        FALSE        |
+|  VARBINARY   |    BYTES     |        FALSE        |
+|   TINYBLOB   |    BYTES     |        FALSE        |
+|  MEDIUMBLOB  |    BYTES     |        FALSE        |
+|     BLOB     |    BYTES     |        FALSE        |
+|   LONGBLOB   |    BYTES     |        FALSE        |
+|    FLOAT     |    FLOAT     |        TRUE         |
+|    DOUBLE    |    DOUBLE    |        TRUE         |
+| DECIMAL(p,s) | DECIMAL(p,s) |        TRUE         |
+|     DATE     |     DATE     |        TRUE         |
+|     TIME     |     TIME     |        TRUE         |
+|   DATETIME   |  TIMESTAMP   |        TRUE         |
+|  TIMESTAMP   |  TIMESTAMP   |        TRUE         |
+|     YEAR     |   SMALLINT   |        TRUE         |
+|     BOOL     |   BOOLEAN    |        TRUE         |
+|     JSON     |    STRING    |        FALSE        |
+|     ENUM     |    STRING    | TRUE(TiKV >= 5.1.0) |
+|     SET      |    STRING    |        FALSE        |
 
 ### 'LIKE'
 

@@ -16,10 +16,6 @@
 
 package io.tidb.bigdata.flink.tidb.pushdown;
 
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.doTestFilter;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.getColumnType;
-import static io.tidb.bigdata.flink.tidb.pushdown.FilterPushDownValidator.rows;
-
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.Expressions;
@@ -31,24 +27,24 @@ import org.tikv.common.row.Row;
 import org.tikv.common.types.DataType;
 
 @Category(IntegrationTest.class)
-public class FilterPushDownNullTest {
+public class FilterPushDownNullTest extends FilterPushDownTestBase {
 
   /**
    * Filters shot will return correct rows, and filters missed will return empty row list.
    */
   @Test
   public void testSupportedFilter() {
-    List<Row> rows = rows();
+    List<Row> rows = validator.rows();
 
     // IS NULL
     String column = "c1";
-    DataType type = getColumnType(column);
+    DataType type = validator.getColumnType(column);
     Expression expression = Expressions.isNull(Expressions.column(column, type));
-    doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
+    validator.doTestFilter(ImmutableList.of(), expression, String.format("`%s` IS NULL", column));
 
     // NOT NULL
     expression = Expressions.not(Expressions.isNull(Expressions.column(column, type)));
-    doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
+    validator.doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
 
   }
 

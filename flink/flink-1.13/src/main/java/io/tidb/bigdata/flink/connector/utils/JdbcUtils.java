@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.connector.table;
+package io.tidb.bigdata.flink.connector.utils;
 
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_URL;
