@@ -23,6 +23,7 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.WRITE_MODE;
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
+import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;

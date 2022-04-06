@@ -57,7 +57,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public String factoryIdentifier() {
-    throw new UnsupportedOperationException("TiDB factory is only work for catalog.");
+    throw new UnsupportedOperationException("TiDB table factory is not supported anymore, please use catalog.");
   }
 
   @Override
@@ -125,7 +125,6 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       throw new UnsupportedOperationException("Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
     }
   }
-
 
   private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
       String tableName) {

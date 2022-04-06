@@ -10,6 +10,8 @@
 * [Read & Write](#read--write)
 * [DataTypes supported](#datatypes-supported)
 * [Configuration](#configuration)
+* [TableFactory(deprecated)](#tablefactorydeprecated)
+
 
 ## 1 Environment
 
@@ -210,3 +212,25 @@ Received a total of 1 row
 | tikv.sink.deduplicate                               | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, duplicate row will be de-duplicated. If `false`, you should make sure each row is unique otherwise exception will be thrown.                                                                                                                                                                                                                                                                    |
 
 
+## TableFactory(deprecated)
+
+Attention: TableFactory is deprecated, only support before Flink 1.13(included).
+
+TiBigData also implements the Flink TableFactory API, but we don't recommend you to use it, it will introduce difficulties related to data type conversion and column alignment, which will increase the cost of using it. We stop supporting it in Flink-1.14, so this section is only a brief introduction.
+
+You can use the following SQL to create a TiDB mapping table in Flink and query it.
+
+```sql
+CREATE TABLE `people`(
+  `id` INT,
+  `name` STRING
+) WITH (
+  'connector' = 'tidb',
+  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
+  'tidb.username' = 'root',
+  'tidb.password' = '',
+  'tidb.database.name' = 'test',
+  'tidb.table.name' = 'people'
+);
+SELECT * FROM people;
+```

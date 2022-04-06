@@ -19,6 +19,7 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -92,6 +93,10 @@ public class FilterPushDownValidator extends ExternalResource {
   private Map<String, DataType> nameTypeMap;
   private FilterPushDownHelper filterPushDownHelper;
 
+  public FilterPushDownHelper getFilterPushDownHelper() {
+    return filterPushDownHelper;
+  }
+
   @Override
   protected void before() throws Throwable {
     Map<String, String> properties = ConfigUtils.defaultProperties();
@@ -106,7 +111,9 @@ public class FilterPushDownValidator extends ExternalResource {
     this.rows = ImmutableList.copyOf(scanRows(DATABASE, TABLE, Optional.empty()));
     this.nameTypeMap = tiTableInfo.getColumns().stream()
         .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
-    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+    List<io.tidb.bigdata.flink.connector.utils.StoreVersion> tiKVVersions = StoreVersion.fetchTiKVVersions(
+        clientSession.getTiSession().getPDClient());
+    this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
   }
 
   @Override

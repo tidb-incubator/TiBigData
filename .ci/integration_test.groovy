@@ -1,9 +1,9 @@
 def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
 
-    def TIDB_BRANCH = "release-4.0"
-    def TIKV_BRANCH = "release-4.0"
-    def PD_BRANCH = "release-4.0"
-    def TICDC_BRANCH = "release-4.0"
+    def TIDB_BRANCH = "master"
+    def TIKV_BRANCH = "master"
+    def PD_BRANCH = "master"
+    def TICDC_BRANCH = "master"
 
     def kafka_version = "kafka_2.12-2.7.0"
 
@@ -167,7 +167,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         export TIDB_USER="root"
                                         export TIDB_PASSWORD=""
                                         $java_home
-                                        mvn clean test-compile failsafe:integration-test -am -pl ${module}
+                                        mvn clean test-compile failsafe:integration-test failsafe:verify -am -pl ${module}
                                     """
                                 }
                             } catch (err) {
