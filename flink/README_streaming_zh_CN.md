@@ -10,8 +10,9 @@ TiBigData 支持以某一快照读取 TiDB 内存量数据，再合并此快照�
 * [4 配置并启动 TiCDC](#4-配置并启动-TiCDC)
 * [5 利用 Flink 读写 TiDB](#5-利用-Flink-读写-TiDB)
 * [6 高级配置](#6-高级配置)
-* [7 TiDB Metadata](#7-TiDB-Metadata)
-* [8 注意事项](#8-注意事项)
+* [7 Codec](#7-Codec)
+* [8 TiDB Metadata](#8-TiDB-Metadata)
+* [9 注意事项](#9-注意事项)
 
 ## 1 环境准备
 
@@ -98,17 +99,25 @@ UPDATE `test`.`test_cdc` SET id = 1 WHERE id = 2;
 
 除了支持 [TiDB 批模式](./README_zh_CN.md) 中的配置外，流模式新增了以下配置：
 
-| Configuration                          | Default Value | Description                                                                                                                                    |
-|:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                                                                             |
-| tidb.streaming.codec                   | -             | TiDB 的变更日志选取的编码方式，当前支持 default(json)，craft，canal-json 三种格式，其中 craft 和 canal-json 格式需要高版本 TiDB(5.x)，并且 canal-json 使用时必须开启 TiDB 扩展字段以读取 commitTs |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                                                                |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                    |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                 |
-| tidb.streaming.ignore-parse-errors     | -             | 在解码失败时，是否忽略异常                                                                                                                                  |
-| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#7-TiDB-Metadata)                                                                                             |
+| Configuration                          | Default Value | Description                                                                         |
+|:---------------------------------------|:--------------|:------------------------------------------------------------------------------------|
+| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                  |
+| tidb.streaming.codec                   | -             | TiDB 的变更日志选取的编码方式，当前支持 default(json)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec) |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                     |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                         |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                      |
+| tidb.streaming.ignore-parse-errors     | -             | 在解码失败时，是否忽略异常                                                                       |
+| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                  |
 
-## 7 TiDB Metadata
+## 7 Codec
+
+TiBigData 支持多种 TiCDC 的编码类型，分别是 default(json)，craft，canal-json.
+
+1. json 是 TiCDC 的默认实现，具有很强的可读性；
+2. craft 牺牲了可读性，是完全二进制的编码方式，具有更高的压缩率，需要高版本 TiDB(5.x)；
+3. canal-json 是对 canal 的兼容，使用时必须开启 TiDB 扩展字段以读取 commitTs，低版本的 TiDB 没有这个字段，所以不能使用。
+
+## 8 TiDB Metadata
 
 TiBigData 支持添加一些额外的列作为元数据，元数据列会追加到原始数据的最后。
 
@@ -124,7 +133,7 @@ TiBigData 支持添加一些额外的列作为元数据，元数据列会追加�
 
 启用部分元数据并重命名元数据列名：`'tidb.metadata.included' = 'commit_timestamp=ts'`。
 
-## 8 注意事项
+## 9 注意事项
 
 1. 在第一次运行任务时，TiBigData 将从 TiDB 以指定的**快照时间**（可以使用 `tidb.snapshot_timestamp` 或者 `tidb.snapshot_version` 配置）读取存量数据，再从 Kafka 读取此**快照时间**以后的 CDC 数据，对 Kafka 的数据的消费是从 earliest offset 开始；此后任务重启，从 checkpoint/savepoint 恢复的时候，将不会从 TiDB 再次读取数据，而是从上次记录的 Kafka offset 开始消费；
 2. **快照时间** 如果不配置，将会以当前任务运行时的快照为准，我们建议不配置；

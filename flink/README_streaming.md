@@ -10,8 +10,9 @@ TiBigData supports reading snapshot data from TiDB, and then merging the TiCDC d
 * [4 Configure TiCDC](#4-Configure-TiCDC)
 * [5 Reading TiDB in Streaming Mode](#5-Reading-TiDB-in-Streaming-Mode )
 * [6 Configuration](#6-Configuration)
-* [7 TiDB Metadata](#7-TiDB-Metadata)
-* [8 Note](#8-Note)
+* [7 TiDB Metadata](#7-Codec)
+* [8 TiDB Metadata](#8-TiDB-Metadata)
+* [9 Note](#8-Note)
 
 ## 1 Environment
 
@@ -97,17 +98,25 @@ You will find that the data in Flink is the same as the real data of tidb and is
 
 In addition to supporting the configuration in [TiDB Batch Mode](./README.md), the streaming mode adds the following configuration:
 
-| Configuration                          | Default Value | Description                                                                                                                                                                                                                                         |
-|:---------------------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later.                                                                                                            |
-| tidb.streaming.codec                   | -             | TiDB's change log encoding method, currently supports default(json), craft, canal-json, among which craft and canal-json formats require higher TiDB version (5.x), and canal-json must be used with TiDB extended fields enabled to read commitTs. |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                                                                                                                                |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                                                                                                                         |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                                                                                                                      |
-| tidb.streaming.ignore-parse-errors     | -             | Whether to ignore exceptions in case of decoding failure                                                                                                                                                                                            |
-| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#7-TiDB-Metadata)                                                                                                                                                                                                |
+| Configuration                          | Default Value | Description                                                                                                                              |
+|:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later. |
+| tidb.streaming.codec                   | -             | TiDB's change log encoding method, currently supports default(json), craft, canal-json. See [TiDB Metadata](#7 Codec)                    |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                     |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                              |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                           |
+| tidb.streaming.ignore-parse-errors     | -             | Whether to ignore exceptions in case of decoding failure                                                                                 |
+| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                     |
 
-## 7 TiDB Metadata
+## 7 Codec
+
+TiBigData supports several TiCDC encoding types, namely default(json), craft, and canal-json.
+
+1. json is the default implementation of TiCDC and is highly readable;
+2. craft sacrifices readability, is fully binary encoded, has higher compression, and requires a high version of TiDB(5.x).
+3. canal-json is compatible with canal and must be used with the TiDB extension field enabled to read `commitTs`. Lower versions of TiDB do not have `commitTs`, so it cannot be used.
+
+## 8 TiDB Metadata
 
 TiBigData supports adding some additional columns as metadata, which will be appended to the end of the original data.
 
@@ -123,7 +132,7 @@ Enable all metadata：`'tidb.metadata.included' = '*'`；
 
 Enable partial metadata and rename metadata column names：`'tidb.metadata.included' = 'commit_timestamp=ts,commit_version=version,source_event=source'`。
 
-## 8 Note
+## 9 Note
 
 1. The first time you run a job, TiBigData will read from TiDB by **snapshot time**(configured by `tidb.snapshot_timestamp` or `tidb.snapshot_version` )，then read the CDC data from Kafka after this **snapshot time**, the consumption of Kafka data starts from the earliest offset. After that, when the job is restarted and resumed from checkpoint/savepoint, the data will not be read from TiDB again, but will be consumed from the last recorded Kafka offset;
 2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. We recommend not configuring snapshot time;
