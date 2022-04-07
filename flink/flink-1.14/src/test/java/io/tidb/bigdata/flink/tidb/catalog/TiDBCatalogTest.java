@@ -20,6 +20,7 @@ import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static java.lang.String.format;
+import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BUFFER_FLUSH_MAX_ROWS;
 
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
@@ -33,6 +34,7 @@ import java.util.stream.IntStream;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -77,7 +79,10 @@ public class TiDBCatalogTest extends FlinkTestBase {
   public void testCatalog() throws Exception {
     // read by limit
     String tableName = RandomUtils.randomString();
-    Row row = runByCatalog(defaultProperties(),
+    Map<String, String> properties = defaultProperties();
+    properties.put(SINK_BUFFER_FLUSH_MAX_ROWS.key(), "1");
+
+    Row row = runByCatalog(properties,
         format("SELECT * FROM `%s`.`%s`.`%s` LIMIT 1", CATALOG_NAME, DATABASE_NAME, tableName),
         tableName);
     // replica read
@@ -89,7 +94,7 @@ public class TiDBCatalogTest extends FlinkTestBase {
     Assert.assertEquals(row1, upsertAndRead());
     // filter push down
     tableName = RandomUtils.randomString();
-    Assert.assertEquals(row, runByCatalog(defaultProperties(),
+    Assert.assertEquals(row, runByCatalog(properties,
         format("SELECT * FROM `%s`.`%s`.`%s` WHERE (c1 = 1 OR c3 = 1) AND c2 = 1", CATALOG_NAME,
             DATABASE_NAME, tableName), tableName));
     // column pruner
@@ -97,7 +102,7 @@ public class TiDBCatalogTest extends FlinkTestBase {
     // select 10 column randomly
     Random random = new Random();
     int[] ints = IntStream.range(0, 10).map(i -> random.nextInt(29)).toArray();
-    row1 = runByCatalog(defaultProperties(), format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
+    row1 = runByCatalog(properties, format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
         Arrays.stream(ints).mapToObj(i -> "c" + (i + 1)).collect(Collectors.joining(",")),
         CATALOG_NAME, DATABASE_NAME, tableName), tableName);
     Assert.assertEquals(row1, copyRow(row, ints));
@@ -142,7 +147,10 @@ public class TiDBCatalogTest extends FlinkTestBase {
       resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, tableName);
     }
     TableResult tableResult = tableEnvironment.executeSql(resultSql);
-    Row row = tableResult.collect().next();
+    Row row;
+    try (CloseableIterator<Row> iterator = tableResult.collect()) {
+      row = iterator.next();
+    }
     tiDBCatalog.sqlUpdate(dropTableSql);
     return row;
   }
