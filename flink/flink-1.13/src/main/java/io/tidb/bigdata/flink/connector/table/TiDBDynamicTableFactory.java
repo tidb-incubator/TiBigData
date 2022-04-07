@@ -125,6 +125,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
     TableSchema schema = context.getCatalogTable().getSchema();
+    // Metadata columns is not real columns, should not be created for sink.
     if (schema.getTableColumns().stream().anyMatch(column -> column instanceof MetadataColumn)) {
       throw new IllegalStateException("Metadata columns is not supported for sink");
     }
