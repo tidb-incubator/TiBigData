@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -62,12 +63,16 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
     this.deduplicate = deduplicate;
   }
 
+  private String srcTable;
+
+  private String dstTable;
+
   @Test
   public void testMiniBatchTransaction() throws Exception {
     final int rowCount = 100000;
-    final String srcTable = RandomUtils.randomString();
+    srcTable = RandomUtils.randomString();
     generateData(srcTable, rowCount);
-    final String dstTable = RandomUtils.randomString();
+    dstTable = RandomUtils.randomString();
     StreamTableEnvironment tableEnvironment = getBatchModeStreamTableEnvironment();
 
     Map<String, String> properties = defaultProperties();
@@ -84,5 +89,11 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
         + "FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
     tableEnvironment.execute("test");
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+  }
+
+  @After
+  public void teardown() {
+    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
 }

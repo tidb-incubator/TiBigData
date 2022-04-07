@@ -19,6 +19,7 @@ package io.tidb.bigdata.flink.connector;
 import io.tidb.bigdata.flink.connector.source.TiDBSourceBuilder;
 import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
 import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.util.Arrays;
@@ -117,7 +118,10 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
       TiTableInfo tiTableInfo;
       try (ClientSession clientSession = ClientSession.create(clientConfig)) {
         tiTableInfo = clientSession.getTableMust(databaseName, tableName);
-        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo);
+
+        List<StoreVersion> tiKVVersions = StoreVersion.fetchTiKVVersions(
+            clientSession.getTiSession().getPDClient());
+        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
       } catch (Exception e) {
         throw new IllegalStateException("can not get table", e);
       }
