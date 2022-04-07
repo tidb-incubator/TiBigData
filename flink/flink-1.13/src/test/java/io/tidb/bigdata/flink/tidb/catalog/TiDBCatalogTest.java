@@ -33,6 +33,7 @@ import java.util.stream.IntStream;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.TableResult;
 import org.apache.flink.types.Row;
+import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -142,7 +143,10 @@ public class TiDBCatalogTest extends FlinkTestBase {
       resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, tableName);
     }
     TableResult tableResult = tableEnvironment.executeSql(resultSql);
-    Row row = tableResult.collect().next();
+    Row row;
+    try (CloseableIterator<Row> iterator = tableResult.collect()) {
+      row = iterator.next();
+    }
     tiDBCatalog.sqlUpdate(dropTableSql);
     return row;
   }
