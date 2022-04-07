@@ -140,8 +140,8 @@ public class TiDBCatalogTest extends FlinkTestBase {
     // register catalog
     tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
     // insert data
-    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 1)).await();
-    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 2)).await();
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 1));
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 2));
     // query
     if (resultSql == null) {
       resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, tableName);
