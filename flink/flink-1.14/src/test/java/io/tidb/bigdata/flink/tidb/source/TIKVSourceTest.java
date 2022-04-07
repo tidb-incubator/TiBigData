@@ -103,12 +103,13 @@ public class TIKVSourceTest extends FlinkTestBase {
       tableEnvironment.executeSql(createCatalogSql);
       String queryTableSql = format("SELECT * FROM `%s`.`%s`.`%s`", "tidb", DATABASE_NAME,
           tableName);
-      CloseableIterator<Row> iterator = tableEnvironment.executeSql(queryTableSql).collect();
-      while (iterator.hasNext()) {
-        Row row = iterator.next();
-        Assert.assertEquals(Row.of(1, 1), row);
+
+      try (CloseableIterator<Row> iterator = tableEnvironment.executeSql(queryTableSql).collect()) {
+        while (iterator.hasNext()) {
+          Row row = iterator.next();
+          Assert.assertEquals(Row.of(1, 1), row);
+        }
       }
-      iterator.close();
     }
   }
 
@@ -133,14 +134,16 @@ public class TIKVSourceTest extends FlinkTestBase {
     String sql = String.format("SELECT * FROM `datagen` "
         + "LEFT JOIN `%s`.`%s`.`%s` FOR SYSTEM_TIME AS OF datagen.proctime AS `dim_table` "
         + "ON datagen.c1 = dim_table.c1 ", "tidb", DATABASE_NAME, tableName);
-    CloseableIterator<Row> iterator = tableEnvironment.executeSql(sql).collect();
-    while (iterator.hasNext()) {
-      Row row = iterator.next();
-      Object c1 = row.getField(0);
-      String c2 = String.format("data%s", c1);
-      boolean isJoin = (int) c1 <= 4;
-      Row row1 = Row.of(c1, row.getField(1), isJoin ? c1 : null, isJoin ? c2 : null);
-      Assert.assertEquals(row, row1);
+
+    try (CloseableIterator<Row> iterator = tableEnvironment.executeSql(sql).collect()) {
+      while (iterator.hasNext()) {
+        Row row = iterator.next();
+        Object c1 = row.getField(0);
+        String c2 = String.format("data%s", c1);
+        boolean isJoin = (int) c1 <= 4;
+        Row row1 = Row.of(c1, row.getField(1), isJoin ? c1 : null, isJoin ? c2 : null);
+        Assert.assertEquals(row, row1);
+      }
     }
   }
 
