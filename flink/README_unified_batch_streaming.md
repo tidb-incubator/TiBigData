@@ -136,7 +136,7 @@ Enable partial metadata and rename metadata column names：`'tidb.metadata.inclu
 
 1. The first time you run a job, TiBigData will read from TiDB by **snapshot time**(configured by `tidb.snapshot_timestamp` or `tidb.snapshot_version` )，then read the CDC data from Kafka after this **snapshot time**, the consumption of Kafka data starts from the earliest offset. After that, when the job is restarted and resumed from checkpoint/savepoint, the data will not be read from TiDB again, but will be consumed from the last recorded Kafka offset;
 2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. Configuring it yourself may result in incomplete data due to the selection of the wrong version, so we recommend not configuring it;
-3. When metadata columns are enabled, writing will be disabled in Flink;
+3. When metadata columns are enabled, writing will be disabled in Flink, because metadata columns are not real data in TiDB;
 4. Job parallelism must be less than or equal to the number of partitions in Kafka.
 
 
