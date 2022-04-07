@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.flink.tidb.catalog;
 
+import static io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory.SINK_BUFFER_FLUSH_MAX_ROWS;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
@@ -78,7 +79,10 @@ public class TiDBCatalogTest extends FlinkTestBase {
   public void testCatalog() throws Exception {
     // read by limit
     String tableName = RandomUtils.randomString();
-    Row row = runByCatalog(defaultProperties(),
+    Map<String, String> properties = defaultProperties();
+    properties.put(SINK_BUFFER_FLUSH_MAX_ROWS.key(), "1");
+
+    Row row = runByCatalog(properties,
         format("SELECT * FROM `%s`.`%s`.`%s` LIMIT 1", CATALOG_NAME, DATABASE_NAME, tableName),
         tableName);
     // replica read
@@ -90,7 +94,7 @@ public class TiDBCatalogTest extends FlinkTestBase {
     Assert.assertEquals(row1, upsertAndRead());
     // filter push down
     tableName = RandomUtils.randomString();
-    Assert.assertEquals(row, runByCatalog(defaultProperties(),
+    Assert.assertEquals(row, runByCatalog(properties,
         format("SELECT * FROM `%s`.`%s`.`%s` WHERE (c1 = 1 OR c3 = 1) AND c2 = 1", CATALOG_NAME,
             DATABASE_NAME, tableName), tableName));
     // column pruner
@@ -98,7 +102,7 @@ public class TiDBCatalogTest extends FlinkTestBase {
     // select 10 column randomly
     Random random = new Random();
     int[] ints = IntStream.range(0, 10).map(i -> random.nextInt(29)).toArray();
-    row1 = runByCatalog(defaultProperties(), format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
+    row1 = runByCatalog(properties, format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
         Arrays.stream(ints).mapToObj(i -> "c" + (i + 1)).collect(Collectors.joining(",")),
         CATALOG_NAME, DATABASE_NAME, tableName), tableName);
     Assert.assertEquals(row1, copyRow(row, ints));
@@ -136,8 +140,8 @@ public class TiDBCatalogTest extends FlinkTestBase {
     // register catalog
     tableEnvironment.registerCatalog(CATALOG_NAME, tiDBCatalog);
     // insert data
-    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 1));
-    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 2));
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 1)).await();
+    tableEnvironment.executeSql(getInsertRowSql(tableName, (byte) 1, (short) 2)).await();
     // query
     if (resultSql == null) {
       resultSql = format("SELECT * FROM `%s`.`%s`.`%s`", CATALOG_NAME, DATABASE_NAME, tableName);
