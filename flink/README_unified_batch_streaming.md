@@ -13,6 +13,7 @@ TiBigData supports reading snapshot data from TiDB, and then merging the TiCDC d
 * [7 TiDB Metadata](#7-Codec)
 * [8 TiDB Metadata](#8-TiDB-Metadata)
 * [9 Note](#9-Note)
+* [10 Questions and Answers](#10-Questions-and-Answers)
 
 ## 1 Environment
 
@@ -139,4 +140,9 @@ Enable partial metadata and rename metadata column names：`'tidb.metadata.inclu
 3. When metadata columns are enabled, writing will be disabled in Flink, because metadata columns are not real data in TiDB;
 4. Job parallelism must be less than or equal to the number of partitions in Kafka.
 
+## 10 Questions and Answers
+
+### What is the difference between TiBigData Unified Batch & Streaming mode and Flink TiDB CDC
+
+TiBigData leaves the complexity of CDC entirely to native TiCDC, it only needs to consume the data sent to Kafka by TiCDC instead of starting TiCDC inside Flink itself, which may be safer. When you need to reuse CDC data (a TiKV cluster with multiple libraries and multiple tables), TiBigData is a good choice. If you don't want to introduce additional components like TiCDC or Kafka, Flink TiDB CDC is a good choice.
 

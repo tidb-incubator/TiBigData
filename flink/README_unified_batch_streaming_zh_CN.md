@@ -13,6 +13,7 @@ TiBigData 支持以某一快照读取 TiDB 内存量数据，再合并此快照�
 * [7 Codec](#7-Codec)
 * [8 TiDB Metadata](#8-TiDB-Metadata)
 * [9 注意事项](#9-注意事项)
+* [10 常见问题](#10-常见问题)
 
 ## 1 环境准备
 
@@ -140,7 +141,12 @@ TiBigData 支持添加一些额外的列作为元数据，元数据列会追加�
 3. 启用元数据列后，写入将会被禁用，因为元数据列并不是 TiDB 里真实的数据；
 4. 任务并行度必须小于或等于 Kafka 的分区数，否则会有状态恢复相关的异常。
 
-## 常见问题
+## 10 常见问题
+
+### TiBigData 流批一体模式与 Flink TiDB CDC 的区别是什么
+
+TiBigData 将 CDC 的复杂度完全交给原生的 TiCDC，它只需要消费 TiCDC 发送到 Kafka 里的数据，而不用自己在 Flink 内部启动 TiCDC，这可能会更安全。当你需要复用 CDC 数据的时候（一个 TiKV 集群有多个库多个表），TiBigData 是一个很好的选择。如果你不想引入额外的组件，比如 TiCDC 或者 Kafka，Flink TiDB CDC 是一个很好的选择。
+
 
 
 
