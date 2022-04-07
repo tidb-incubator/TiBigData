@@ -102,11 +102,11 @@ UPDATE `test`.`test_cdc` SET id = 1 WHERE id = 2;
 | Configuration                          | Default Value | Description                                                                         |
 |:---------------------------------------|:--------------|:------------------------------------------------------------------------------------|
 | tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                  |
-| tidb.streaming.codec                   | -             | TiDB 的变更日志选取的编码方式，当前支持 default(json)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec) |
+| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 default(json)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec) |
 | tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                     |
 | tidb.streaming.kafka.topic             | -             | Kafka topic                                                                         |
 | tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                      |
-| tidb.streaming.ignore-parse-errors     | -             | 在解码失败时，是否忽略异常                                                                       |
+| tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                       |
 | tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                  |
 
 ## 7 Codec

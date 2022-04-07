@@ -101,11 +101,11 @@ In addition to supporting the configuration in [TiDB Batch Mode](./README.md), t
 | Configuration                          | Default Value | Description                                                                                                                              |
 |:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
 | tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later. |
-| tidb.streaming.codec                   | -             | TiDB's change log encoding method, currently supports default(json), craft, canal-json. See [TiDB Metadata](#7 Codec)                    |
+| tidb.streaming.codec                   | craft         | TiDB's change log encoding method, currently supports default(json), craft, canal-json. See [TiDB Metadata](#7 Codec)                    |
 | tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                     |
 | tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                              |
 | tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                           |
-| tidb.streaming.ignore-parse-errors     | -             | Whether to ignore exceptions in case of decoding failure                                                                                 |
+| tidb.streaming.ignore-parse-errors     | false         | Whether to ignore exceptions in case of decoding failure                                                                                 |
 | tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                     |
 
 ## 7 Codec
