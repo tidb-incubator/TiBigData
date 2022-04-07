@@ -1,4 +1,4 @@
-# TiBigData Streaming Mode
+# TiBigData Unified Batch & Streaming
 
 TiBigData supports reading snapshot data from TiDB, and then merging the TiCDC data after this snapshot to build a real-time TiDB table snapshot.
 
@@ -12,7 +12,7 @@ TiBigData supports reading snapshot data from TiDB, and then merging the TiCDC d
 * [6 Configuration](#6-Configuration)
 * [7 TiDB Metadata](#7-Codec)
 * [8 TiDB Metadata](#8-TiDB-Metadata)
-* [9 Note](#8-Note)
+* [9 Note](#9-Note)
 
 ## 1 Environment
 
@@ -135,7 +135,7 @@ Enable partial metadata and rename metadata column names：`'tidb.metadata.inclu
 ## 9 Note
 
 1. The first time you run a job, TiBigData will read from TiDB by **snapshot time**(configured by `tidb.snapshot_timestamp` or `tidb.snapshot_version` )，then read the CDC data from Kafka after this **snapshot time**, the consumption of Kafka data starts from the earliest offset. After that, when the job is restarted and resumed from checkpoint/savepoint, the data will not be read from TiDB again, but will be consumed from the last recorded Kafka offset;
-2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. We recommend not configuring snapshot time;
+2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. Configuring it yourself may result in incomplete data due to the selection of the wrong version, so we recommend not configuring it;
 3. When metadata columns are enabled, writing will be disabled in Flink;
 4. Job parallelism must be less than or equal to the number of partitions in Kafka.
 
