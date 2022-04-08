@@ -14,6 +14,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
                         curl -sL \$archive_url | tar -zx -C /maven
                         export M2_HOME=/maven
+                        export MAVEN_HOME=/maven
                         mvn help:effective-settings
      
                         """
