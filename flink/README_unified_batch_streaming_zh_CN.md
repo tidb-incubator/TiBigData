@@ -100,16 +100,16 @@ UPDATE `test`.`test_cdc` SET id = 1 WHERE id = 2;
 
 除了支持 [TiDB 批模式](./README_zh_CN.md) 中的配置外，流模式新增了以下配置：
 
-| Configuration                          | Default Value | Description                                                                                                                                                 |
-|:---------------------------------------|:--------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.source.failover                   | split         | TiDB 批阶段失败时的恢复策略，可选 split 与 offset。split 会从失败的 region 恢复，保证 exactly once 语义；offset 会从失败的单行数据恢复，保证 exactly once 语义。注意，offset 行为在高版本 TiDB(6+) 可能会发生改变，导致不能使用。 |
-| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                                                                                          |
-| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec)                                                              |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                                                                             |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                                 |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                              |
-| tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                                                                               |
-| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                                                                                          |
+| Configuration                          | Default Value | Description                                                                                                                                                  |
+|:---------------------------------------|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.source.failover                   | split         | TiDB 批阶段失败时的恢复策略，可选 split 与 offset。split 会从失败的 region 恢复，保证 at least once 语义；offset 会从失败的单行数据恢复，保证 exactly once 语义。注意，offset 行为在高版本 TiDB(6+) 可能会发生改变，导致不能使用。 |
+| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                                                                                           |
+| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec)                                                               |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                                                                              |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                                  |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                               |
+| tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                                                                                |
+| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                                                                                           |
 
 ## 7 Codec
 
