@@ -6,17 +6,13 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                 stage('Prepare') {
                     dir("/home/jenkins/agent/git/tibigdata") {
                         sh """
-                        rm -rf /maven/.m2/repository/*
-                        rm -rf /maven/.m2/settings.xml
+                        echo $HOME
+                        rm -rf /$HOME/.m2/repository/*
+                        rm -rf /$HOME/.m2/settings.xml
                         rm -rf ~/.m2/settings.xml
-                        archive_url=http://fileserver.pingcap.net/download/builds/pingcap/client-java/cache/tikv-client-java-m2-cache-latest.tar.gz
-                        curl -sL \$archive_url | tar -zx -C /maven
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
-                        curl -sL \$archive_url | tar -zx -C /maven
-                        export M2_HOME=/maven
-                        export MAVEN_HOME=/maven
-                        mvn help:effective-settings
-     
+                        curl -sL \$archive_url | tar -zx -C /$HOME
+                        mvn help:effective-settings 
                         """
                         if (sh(returnStatus: true, script: '[ -d .git ] && [ -f Makefile ] && git rev-parse --git-dir > /dev/null 2>&1') != 0) {
                             deleteDir()
