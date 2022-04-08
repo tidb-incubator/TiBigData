@@ -10,7 +10,7 @@ TiBigData supports reading snapshot data from TiDB, and then merging the TiCDC d
 * [4 Configure TiCDC](#4-Configure-TiCDC)
 * [5 Reading TiDB in Streaming Mode](#5-Reading-TiDB-in-Streaming-Mode )
 * [6 Configuration](#6-Configuration)
-* [7 TiDB Metadata](#7-Codec)
+* [7 Codec](#7-Codec)
 * [8 TiDB Metadata](#8-TiDB-Metadata)
 * [9 Note](#9-Note)
 * [10 Questions and Answers](#10-Questions-and-Answers)
