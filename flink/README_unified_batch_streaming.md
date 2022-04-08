@@ -99,19 +99,19 @@ You will find that the data in Flink is the same as the real data of tidb and is
 
 In addition to supporting the configuration in [TiDB Batch Mode](./README.md), the streaming mode adds the following configuration:
 
-| Configuration                          | Default Value | Description                                                                                                                              |
-|:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later. |
-| tidb.streaming.codec                   | craft         | TiDB's change log encoding method, currently supports default(json), craft, canal-json. See [TiDB Metadata](#7 Codec)                    |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                     |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                              |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                           |
-| tidb.streaming.ignore-parse-errors     | false         | Whether to ignore exceptions in case of decoding failure                                                                                 |
-| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                     |
+| Configuration                          | Default Value | Description                                                                                                                                               |
+|:---------------------------------------|:--------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later.                  |
+| tidb.streaming.codec                   | craft         | TiDB's change log encoding method, currently supports json(called default in the lower version of tidb), craft, canal-json. See [TiDB Metadata](#7 Codec) |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                                      |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                               |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                            |
+| tidb.streaming.ignore-parse-errors     | false         | Whether to ignore exceptions in case of decoding failure                                                                                                  |
+| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                                      |
 
 ## 7 Codec
 
-TiBigData supports several TiCDC encoding types, namely default(json), craft, and canal-json.
+TiBigData supports several TiCDC encoding types, namely json(called default in the lower version of tidb), craft, and canal-json.
 
 1. json is the default implementation of TiCDC and is highly readable;
 2. craft sacrifices readability, is fully binary encoded, has higher compression, and requires a high version of TiDB(5.x).
@@ -136,7 +136,7 @@ Enable partial metadata and rename metadata column names：`'tidb.metadata.inclu
 ## 9 Note
 
 1. The first time you run a job, TiBigData will read from TiDB by **snapshot time**(configured by `tidb.snapshot_timestamp` or `tidb.snapshot_version` )，then read the CDC data from Kafka after this **snapshot time**, the consumption of Kafka data starts from the earliest offset. After that, when the job is restarted and resumed from checkpoint/savepoint, the data will not be read from TiDB again, but will be consumed from the last recorded Kafka offset;
-2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. Configuring it yourself may result in incomplete data due to the selection of the wrong version, so we recommend not configuring it;
+2. If you do not configure **snapshot time**, we will choose the current time as the snapshot time. The configuration must meet this condition `(${now} - ${snapshot_timestamp}) + ${batch stage execution time}) < ${GC lifetime}`. Configuring it yourself may result in incomplete data due to the selection of the wrong version, so we recommend not configuring it;
 3. When metadata columns are enabled, writing will be disabled in Flink, because metadata columns are not real data in TiDB;
 4. Job parallelism must be less than or equal to the number of partitions in Kafka.
 
