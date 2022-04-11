@@ -115,7 +115,7 @@ In addition to supporting the configuration in [TiDB Batch Mode](./README.md), t
 TiBigData supports several TiCDC encoding types, namely json(called default in the lower version of tidb), craft, and canal-json.
 
 1. json is the default implementation of TiCDC and is highly readable;
-2. craft sacrifices readability, is fully binary encoded, has higher compression, and requires a high version of TiDB(5.x).
+2. craft sacrifices readability, is fully binary encoded, has higher compression, and requires a high version of TiDB(5.x). Currently, craft is still incubating, but it is working properly;
 3. canal-json is compatible with canal and must be used with the TiDB extension field enabled to read `commitTs`. Lower versions of TiDB do not have `commitTs`, so it cannot be used.
 
 ## 8 TiDB Metadata

@@ -116,7 +116,7 @@ UPDATE `test`.`test_cdc` SET id = 1 WHERE id = 2;
 TiBigData 支持多种 TiCDC 的编码类型，分别是 json(低版本 TiDB 叫 default)，craft，canal-json.
 
 1. json 是 TiCDC 的默认实现，具有很强的可读性；
-2. craft 牺牲了可读性，是完全二进制的编码方式，具有更高的压缩率，需要高版本 TiDB(5.x)；
+2. craft 牺牲了可读性，是完全二进制的编码方式，具有更高的压缩率，需要高版本 TiDB(5.x)，当前还在孵化中，但是已经能够正常使用；
 3. canal-json 是对 canal 的兼容，使用时必须开启 TiDB 扩展字段以读取 commitTs，低版本的 TiDB 没有这个字段，所以不能使用。
 
 ## 8 TiDB Metadata
