@@ -66,19 +66,17 @@ public class JsonValueDecoder implements ValueDecoder {
   }
 
   private static Object checkAndConvertFromString(int type, long flags, String value) {
-    if (RowColumn.isUnsigned(flags)) {
-      switch (RowColumn.getType(type)) {
-        case TINYTEXT:
-          // FALLTHROUGH
-        case MEDIUMTEXT:
-          // FALLTHROUGH
-        case LONGTEXT:
-          // FALLTHROUGH
-        case TEXT:
-          return Base64.getDecoder().decode(value);
-        default:
-          break;
-      }
+    switch (RowColumn.getType(type)) {
+      case TINYTEXT:
+        // FALLTHROUGH
+      case MEDIUMTEXT:
+        // FALLTHROUGH
+      case LONGTEXT:
+        // FALLTHROUGH
+      case TEXT:
+        return Base64.getDecoder().decode(value);
+      default:
+        break;
     }
     return value;
   }

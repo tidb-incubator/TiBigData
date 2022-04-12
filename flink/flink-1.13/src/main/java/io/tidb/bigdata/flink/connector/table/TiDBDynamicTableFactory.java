@@ -36,6 +36,7 @@ import org.apache.flink.connector.jdbc.internal.options.JdbcDmlOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.table.JdbcDynamicTableSink;
+import org.apache.flink.table.api.TableColumn.MetadataColumn;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
@@ -45,6 +46,7 @@ import org.apache.flink.table.factories.DynamicTableSourceFactory;
 import org.apache.flink.table.factories.FactoryUtil;
 
 public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, DynamicTableSinkFactory {
+
   public static final String IDENTIFIER = "tidb";
 
   /**
@@ -122,10 +124,14 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
+    TableSchema schema = context.getCatalogTable().getSchema();
+    // Metadata columns is not real columns, should not be created for sink.
+    if (schema.getTableColumns().stream().anyMatch(column -> column instanceof MetadataColumn)) {
+      throw new IllegalStateException("Metadata columns is not supported for sink");
+    }
     FactoryUtil.TableFactoryHelper helper = FactoryUtil
         .createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    TableSchema schema = context.getCatalogTable().getSchema();
     String databaseName = config.get(DATABASE_NAME);
     // jdbc options
     JdbcOptions jdbcOptions = JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());

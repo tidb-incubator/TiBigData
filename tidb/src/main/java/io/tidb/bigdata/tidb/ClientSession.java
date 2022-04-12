@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
@@ -194,7 +195,9 @@ public final class ClientSession implements AutoCloseable {
     final Map<String, ColumnHandleInternal> columnsMap =
         allColumns.stream().collect(
             Collectors.toMap(ColumnHandleInternal::getName, Function.identity()));
-    return columns.map(columnsMap::get).collect(Collectors.toList());
+    return columns.map(column -> Objects.requireNonNull(columnsMap.get(column),
+            "Column `" + column + "` does not exist"))
+        .collect(Collectors.toList());
   }
 
   private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {

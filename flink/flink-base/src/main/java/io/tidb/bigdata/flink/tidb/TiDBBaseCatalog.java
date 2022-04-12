@@ -69,7 +69,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   public static final String DEFAULT_NAME = "tidb";
 
-  private final Map<String, String> properties;
+  protected final Map<String, String> properties;
 
   private final CatalogLoadMode catalogLoadMode;
 
@@ -387,7 +387,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
     getClientSession().sqlUpdate(sqls);
   }
 
-  private ClientSession getClientSession() {
+  protected ClientSession getClientSession() {
     if (clientSession.isPresent()) {
       return clientSession.get();
     }

@@ -16,6 +16,11 @@
 
 package org.apache.flink.connector.base.source.hybrid;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.api.connector.source.SourceEvent;
@@ -24,16 +29,8 @@ import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.core.io.InputStatus;
 import org.apache.flink.util.Preconditions;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Hybrid source reader that delegates to the actual source reader.
@@ -53,17 +50,15 @@ import java.util.concurrent.CompletableFuture;
 public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit> {
     private static final Logger LOG = LoggerFactory.getLogger(HybridSourceReader.class);
     private final SourceReaderContext readerContext;
-    private final Map<Integer, Source> switchedSources;
+    private final SwitchedSources switchedSources = new SwitchedSources();
     private int currentSourceIndex = -1;
     private boolean isFinalSource;
     private SourceReader<T, ? extends SourceSplit> currentReader;
-    private CompletableFuture<Void> availabilityFuture;
+    private CompletableFuture<Void> availabilityFuture = new CompletableFuture<>();
     private List<HybridSourceSplit> restoredSplits = new ArrayList<>();
 
-    public HybridSourceReader(
-            SourceReaderContext readerContext, Map<Integer, Source> switchedSources) {
+    public HybridSourceReader(SourceReaderContext readerContext) {
         this.readerContext = readerContext;
-        this.switchedSources = switchedSources;
     }
 
     @Override
@@ -99,6 +94,10 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
                 // More splits may arrive for a subsequent reader.
                 // InputStatus.NOTHING_AVAILABLE suspends poll, requires completion of the
                 // availability future after receiving more splits to resume.
+                if (availabilityFuture.isDone()) {
+                    // reset to avoid continued polling
+                    availabilityFuture = new CompletableFuture();
+                }
                 return InputStatus.NOTHING_AVAILABLE;
             }
         }
@@ -111,18 +110,26 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
                 currentReader != null
                         ? currentReader.snapshotState(checkpointId)
                         : Collections.emptyList();
-        return HybridSourceSplit.wrapSplits(currentSourceIndex, state);
+        return HybridSourceSplit.wrapSplits(state, currentSourceIndex, switchedSources);
+    }
+
+    @Override
+    public void notifyCheckpointComplete(long checkpointId) throws Exception {
+        if (currentReader != null) {
+            currentReader.notifyCheckpointComplete(checkpointId);
+        }
+    }
+
+    @Override
+    public void notifyCheckpointAborted(long checkpointId) throws Exception {
+        if (currentReader != null) {
+            currentReader.notifyCheckpointAborted(checkpointId);
+        }
     }
 
     @Override
     public CompletableFuture<Void> isAvailable() {
-        // track future to resume reader after source switch
-        if (currentReader != null) {
-            return availabilityFuture = currentReader.isAvailable();
-        } else {
-            LOG.debug("Suspending pollNext due to no underlying reader");
-            return availabilityFuture = new CompletableFuture<>();
-        }
+        return availabilityFuture;
     }
 
     @Override
@@ -144,7 +151,7 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
                         "Split %s while current source is %s",
                         split,
                         currentSourceIndex);
-                realSplits.add(split.getWrappedSplit());
+                realSplits.add(HybridSourceSplit.unwrapSplit(split, switchedSources));
             }
             currentReader.addSplits((List) realSplits);
         }
@@ -174,7 +181,7 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
             switchedSources.put(sse.sourceIndex(), sse.source());
             setCurrentReader(sse.sourceIndex());
             isFinalSource = sse.isFinalSource();
-            if (availabilityFuture != null && !availabilityFuture.isDone()) {
+            if (!availabilityFuture.isDone()) {
                 // continue polling
                 availabilityFuture.complete(null);
             }
@@ -199,7 +206,6 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
         Preconditions.checkArgument(index != currentSourceIndex);
         if (currentReader != null) {
             try {
-                // TODO: retain splits for snapshotState
                 currentReader.close();
             } catch (Exception e) {
                 throw new RuntimeException("Failed to close current reader", e);
@@ -211,9 +217,7 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
                     currentReader);
         }
         // TODO: track previous readers splits till checkpoint
-        Source source =
-                Preconditions.checkNotNull(
-                        switchedSources.get(index), "Source for index=%s not available", index);
+        Source source = switchedSources.sourceOf(index);
         SourceReader<T, ?> reader;
         try {
             reader = source.createReader(readerContext);
@@ -223,6 +227,16 @@ public class HybridSourceReader<T> implements SourceReader<T, HybridSourceSplit>
         reader.start();
         currentSourceIndex = index;
         currentReader = reader;
+        currentReader
+                .isAvailable()
+                .whenComplete(
+                        (result, ex) -> {
+                            if (ex == null) {
+                                availabilityFuture.complete(result);
+                            } else {
+                                availabilityFuture.completeExceptionally(ex);
+                            }
+                        });
         LOG.debug(
                 "Reader started: subtask={} sourceIndex={} {}",
                 readerContext.getIndexOfSubtask(),

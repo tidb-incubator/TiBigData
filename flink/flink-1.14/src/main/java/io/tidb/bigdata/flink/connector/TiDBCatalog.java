@@ -21,15 +21,19 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.TABLE_NAME;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.utils.TiDBRowConverter;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.table.api.Schema;
+import org.apache.flink.table.api.Schema.Builder;
 import org.apache.flink.table.catalog.AbstractCatalog;
 import org.apache.flink.table.catalog.CatalogBaseTable;
 import org.apache.flink.table.catalog.CatalogDatabase;
@@ -193,8 +197,29 @@ public class TiDBCatalog extends AbstractCatalog {
     properties.put(DATABASE_NAME.key(), databaseName);
     properties.put(TABLE_NAME.key(), tableName);
     TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
-    Schema schema = new TiDBRowConverter(tiTableInfo).getSchema();
+    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
+        properties);
+    Schema schema = getSchema(databaseName, tableName);
     return CatalogTable.of(schema, tiTableInfo.getComment(), ImmutableList.of(), properties);
+  }
+
+  public Schema getSchema(String databaseName, String tableName) {
+    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
+    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
+        properties);
+    Builder builder = Schema.newBuilder();
+    tiTableInfo.getColumns().forEach(column -> builder.column(column.getName(),
+        TiDBRowConverter.toFlinkType(column.getType())));
+    if (metadata.size() != 0) {
+      metadata.forEach(
+          (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
+    }
+    List<String> primaryKeyColumns = getClientSession().getPrimaryKeyColumns(databaseName,
+        tableName);
+    if (primaryKeyColumns.size() > 0) {
+      builder.primaryKey(primaryKeyColumns);
+    }
+    return builder.build();
   }
 
   @Override

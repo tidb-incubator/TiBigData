@@ -19,9 +19,7 @@ package io.tidb.bigdata.flink.connector.source;
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.cdc.Key;
 import io.tidb.bigdata.flink.format.cdc.CDCDeserializationSchemaBuilder;
-import io.tidb.bigdata.flink.format.cdc.CDCMetadata;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Set;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.connector.source.SourceSplit;
@@ -53,6 +51,10 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
     return doBuild(builder.json());
   }
 
+  public CDCSource<SplitT, EnumChkT> canalJson() {
+    return doBuild(builder.canalJson());
+  }
+
   private final CDCDeserializationSchemaBuilder builder;
 
   protected CDCSourceBuilder(CDCDeserializationSchemaBuilder builder) {
@@ -61,21 +63,16 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
 
   public static KafkaCDCSourceBuilder kafka(String database, String table, TiTimestamp ts,
       TiDBSchemaAdapter schema) {
-    CDCMetadata[] cdcMetadata = null;
-    TiDBMetadata[] metadata = schema.getMetadata();
-    if (metadata != null) {
-      cdcMetadata = Arrays.stream(metadata).map(TiDBMetadata::toCraft).toArray(CDCMetadata[]::new);
-    }
     return new KafkaCDCSourceBuilder(
-        new CDCDeserializationSchemaBuilder(schema.getPhysicalDataType(),
-            (ignored) -> schema.getProducedType())
+        new CDCDeserializationSchemaBuilder(schema.getPhysicalRowDataType(),
+            schema.getCDCMetadata())
             .startTs(ts.getVersion())
-            .metadata(cdcMetadata)
             .types(ROW_CHANGED_EVENT)
             .schemas(ImmutableSet.of(database))
             .tables(ImmutableSet.of(table)));
   }
 
+  @SuppressWarnings("unchecked")
   public <T extends CDCSourceBuilder<SplitT, EnumChkT>> T ignoreParseErrors(boolean ignore) {
     this.builder.ignoreParseErrors(ignore);
     return (T) this;
