@@ -51,7 +51,7 @@ public class TiDBMapreduceDemo {
   }
 
   public static Job createJob(String[] args)
-      throws IOException, ClassNotFoundException, InterruptedException {
+      throws IOException {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
