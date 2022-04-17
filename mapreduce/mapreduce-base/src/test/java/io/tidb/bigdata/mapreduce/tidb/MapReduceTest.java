@@ -18,6 +18,8 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo;
+import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
@@ -27,57 +29,28 @@ import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.TableHandleInternal;
-import org.junit.Assert;
-import org.junit.Test;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
 public class MapReduceTest {
-  public static final String TIDB_HOST = "TIDB_HOST";
-
-  public static final String TIDB_PORT = "TIDB_PORT";
-
-  public static final String TIDB_USER = "TIDB_USER";
-
-  public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
-
-  public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
-
-  public static final String tidbPort = getEnvOrDefault(TIDB_PORT, "4000");
-
-  public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
-
-  public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
-
-  private static String getEnvOrDefault(String key, String default0) {
-    String tmp = System.getenv(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    tmp = System.getProperty(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    return default0;
-  }
 
   public static final String DATABASE_NAME = "test";
 
@@ -181,32 +154,29 @@ public class MapReduceTest {
   }
 
   public ClientSession getSingleConnection() {
-
-    Map<String, String> properties = new HashMap<>();
-    properties.put(ClientConfig.DATABASE_URL, String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort));
-    properties.put(ClientConfig.USERNAME, tidbUser);
-    properties.put(ClientConfig.PASSWORD, tidbPassword);
-
-    return ClientSession.create(new ClientConfig(properties));
+    return ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
   }
 
-  @Test
-  public void testReadRecords() throws Exception {
-
-    try (Connection connection = DriverManager.getConnection(
-        String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort), tidbUser, tidbPassword)) {
+  @Before
+  public void before() throws Exception {
+    try (ClientSession clientSession = getSingleConnection();
+        Connection connection = clientSession.getJdbcConnection()) {
       doUpdateSql(connection, getCreateDatabaseSql(DATABASE_NAME));
       doUpdateSql(connection, getDropTableSql(TABLE_NAME));
       doUpdateSql(connection, getCreateTableSql(TABLE_NAME));
       doUpdateSql(connection, getInsertRowSql(TABLE_NAME));
     }
+  }
 
+  @Test
+  public void testReadRecords() throws Exception {
     ClientSession clientSession = getSingleConnection();
     TableHandleInternal tableHandleInternal = new TableHandleInternal(
         UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals = clientSession.getTableColumns(tableHandleInternal)
+    List<ColumnHandleInternal> columnHandleInternals = clientSession.getTableColumns(
+            tableHandleInternal)
         .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
@@ -286,4 +256,36 @@ public class MapReduceTest {
 
     clientSession.close();
   }
+
+  @Test
+  public void testRunLocalMapReduce()
+      throws IOException, ClassNotFoundException, InterruptedException {
+    List<String> options = new ArrayList<>();
+    ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
+    // database url
+    options.add("-du");
+    options.add(clientConfig.getDatabaseUrl());
+    // database
+    options.add("-dn");
+    options.add(DATABASE_NAME);
+    // table
+    options.add("-t");
+    options.add(TABLE_NAME);
+    // user
+    options.add("-u");
+    options.add(clientConfig.getUsername());
+    // password
+    options.add("-p");
+    options.add(clientConfig.getPassword());
+    // fields
+    for (int i = 1; i <= 29; i++) {
+      options.add("-f");
+      options.add("c" + i);
+    }
+    int code = TiDBMapreduceDemo.run(options.toArray(new String[0]));
+    if (code != 0) {
+      System.exit(code);
+    }
+  }
+
 }

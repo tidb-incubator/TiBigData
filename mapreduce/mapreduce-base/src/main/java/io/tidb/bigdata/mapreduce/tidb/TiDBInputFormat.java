@@ -16,9 +16,6 @@
 
 package io.tidb.bigdata.mapreduce.tidb;
 
-import static java.lang.String.format;
-
-import com.google.common.base.Preconditions;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
@@ -30,13 +27,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
@@ -50,8 +43,8 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 /**
  * A InputFormat that reads input data from an TiDB table.
  * <p>
- * DBInputFormat emits LongWritables containing the record number as
- * key and TiDBWritables as value.
+ * DBInputFormat emits LongWritables containing the record number as key and TiDBWritables as
+ * value.
  * <p>
  */
 public class TiDBInputFormat<T extends TiDBWritable>
@@ -111,28 +104,19 @@ public class TiDBInputFormat<T extends TiDBWritable>
 
     this.tableHandleInternal = new TableHandleInternal(
         UUID.randomUUID().toString(), databaseName, tableName);
-    List<ColumnHandleInternal> columns = clientSession.getTableColumns(tableHandleInternal)
-        .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
-    Map<String, Integer> nameAndIndex = new HashMap<>();
-
-    IntStream.range(0, columns.size())
-        .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
 
     String[] fieldNames =
         Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
 
     if (1 == fieldNames.length && "*".equals(fieldNames[0])) {
-      this.columnHandleInternals = columns;
+      this.columnHandleInternals = clientSession.getTableColumnsMust(databaseName, tableName);
       fieldNames = columnHandleInternals.stream().map(ColumnHandleInternal::getName).collect(
           Collectors.toList()).toArray(new String[columnHandleInternals.size()]);
       dbConf.setInputFieldNames(fieldNames);
     } else {
-      // check column
-      Arrays.stream(fieldNames)
-          .forEach(name -> Preconditions.checkState(nameAndIndex.containsKey(name),
-              format("can not find column: %s in table `%s`.`%s`", name, databaseName, tableName)));
-      this.columnHandleInternals = Arrays.stream(fieldNames)
-          .map(name -> columns.get(nameAndIndex.get(name))).collect(Collectors.toList());
+      this.columnHandleInternals = clientSession.getTableColumns(
+              tableHandleInternal, Arrays.asList(fieldNames))
+          .orElseThrow(() -> new IllegalStateException("Can not get columns"));
     }
 
     conf.setStrings("tidb.field.names",
@@ -140,19 +124,23 @@ public class TiDBInputFormat<T extends TiDBWritable>
             Collectors.toList()).toArray(new String[columnHandleInternals.size()]));
 
     try (Connection con = dbConf.getJdbcConnection()) {
-      String sql = "select "
-          + StringUtils.join(fieldNames, ',')
-          + " from "
-          + databaseName
+      String sql = "SELECT "
+          + Arrays.stream(fieldNames).map(this::quote).collect(Collectors.joining(","))
+          + " FROM "
+          + quote(databaseName)
           + "."
-          + tableName
-          + " limit 1";
+          + quote(tableName)
+          + " LIMIT 1";
       try (PreparedStatement ps = con.prepareStatement(sql)) {
         this.resultSetMetaData = ps.executeQuery().getMetaData();
       }
     } catch (SQLException e) {
-      e.printStackTrace();
+      throw new IllegalStateException(e);
     }
+  }
+
+  private String quote(String s) {
+    return "`" + s + "`";
   }
 
   @Override
