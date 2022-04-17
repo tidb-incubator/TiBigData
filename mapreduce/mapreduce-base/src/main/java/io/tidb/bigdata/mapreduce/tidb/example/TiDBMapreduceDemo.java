@@ -35,9 +35,17 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
 public class TiDBMapreduceDemo {
 
-  public static void main(String[] args)
-      throws IOException, ClassNotFoundException, InterruptedException {
+  public static void main(String[] args) {
+    try {
+      System.exit(run(args));
+    } catch (Exception e) {
+      e.printStackTrace();
+      System.exit(1);
+    }
+  }
 
+  public static int run(String[] args)
+      throws IOException, ClassNotFoundException, InterruptedException {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
@@ -63,8 +71,7 @@ public class TiDBMapreduceDemo {
     job.setMapperClass(TiDBMapper.class);
     job.setOutputFormatClass(NullOutputFormat.class);
     job.setNumReduceTasks(0);
-
-    System.exit(job.waitForCompletion(true) ? 0 : 1);
+    return job.waitForCompletion(true) ? 0 : 1;
   }
 
   public static class TiDBMapper extends
@@ -104,6 +111,7 @@ public class TiDBMapreduceDemo {
 
 
   public static class TiDBRowData implements TiDBWritable {
+
     private Integer c1;
     private Integer c2;
     private Integer c3;

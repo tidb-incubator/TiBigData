@@ -282,7 +282,10 @@ public class MapReduceTest {
       options.add("-f");
       options.add("c" + i);
     }
-    TiDBMapreduceDemo.main(options.toArray(new String[0]));
+    int code = TiDBMapreduceDemo.run(options.toArray(new String[0]));
+    if (code != 0) {
+      System.exit(code);
+    }
   }
 
 }
