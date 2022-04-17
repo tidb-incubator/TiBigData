@@ -112,7 +112,10 @@ public class TiDBConfiguration {
 
   public ClientSession getTiDBConnection() {
 
-    Map<String, String> properties = new HashMap<>(3);
+    Map<String, String> properties = new HashMap<>();
+    // set all config to tidb
+    conf.iterator().forEachRemaining(e -> properties.put(e.getKey(), e.getValue()));
+    // mapreduce config overwrite tidb config
     properties.put(ClientConfig.DATABASE_URL, conf.get(URL_PROPERTY));
     properties.put(ClientConfig.USERNAME, conf.get(USERNAME_PROPERTY));
     properties.put(ClientConfig.PASSWORD, conf.get(PASSWORD_PROPERTY));
