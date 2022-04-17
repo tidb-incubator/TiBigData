@@ -69,6 +69,9 @@ public class TiDBConfiguration {
   public static final String INPUT_CLASS_PROPERTY =
       "mapreduce.jdbc.input.class";
 
+  public static final String REGIONS_PER_SPLIT = "tidb.regions-per-split";
+  public static final int REGIONS_PER_SPLIT_DEFAULT = 5;
+
 
   /**
    * Sets the TiDB access related fields in the {@link Configuration}.

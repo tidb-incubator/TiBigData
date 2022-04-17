@@ -16,6 +16,10 @@
 
 package io.tidb.bigdata.mapreduce.tidb;
 
+import static io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration.REGIONS_PER_SPLIT;
+import static io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration.REGIONS_PER_SPLIT_DEFAULT;
+
+import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
@@ -71,15 +75,13 @@ public class TiDBInputFormat<T extends TiDBWritable>
    */
   @Override
   public List<InputSplit> getSplits(JobContext job) {
-    List<InputSplit> splits = new ArrayList<>();
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    for (SplitInternal splitInternal : splitInternals) {
-      splits.add(new TiDBInputSplit(splitInternal.getStartKey(), splitInternal.getEndKey(),
-          tableHandleInternal.getConnectorId(), tableHandleInternal.getSchemaName(),
-          tableHandleInternal.getTableName()));
-    }
-    return splits;
+    int regionsPerSplit = job.getConfiguration()
+        .getInt(REGIONS_PER_SPLIT, REGIONS_PER_SPLIT_DEFAULT);
+    return Lists.partition(splitInternals, regionsPerSplit).stream()
+        .map(TiDBInputSplit::new)
+        .collect(Collectors.toList());
   }
 
   @Override
@@ -156,13 +158,13 @@ public class TiDBInputFormat<T extends TiDBWritable>
   /**
    * Initializes the map-part of the job with the appropriate input settings.
    *
-   * @param job The map-reduce job
-   * @param inputClass the class object implementing TiDBWritable, which is the
-   * Java object holding tuple fields.
-   * @param tableName The table to read data from
+   * @param job        The map-reduce job
+   * @param inputClass the class object implementing TiDBWritable, which is the Java object holding
+   *                   tuple fields.
+   * @param tableName  The table to read data from
    * @param fieldNames The field names in the table
-   * @param limit the limit of per mapper read record
-   * @param snapshot snapshot time
+   * @param limit      the limit of per mapper read record
+   * @param snapshot   snapshot time
    * @see #setInput(Job, Class, String, String[], java.lang.Integer, String)
    */
   public static void setInput(Job job,
@@ -172,7 +174,7 @@ public class TiDBInputFormat<T extends TiDBWritable>
     dbConf.setInputClass(inputClass);
     dbConf.setInputTableName(tableName);
     if (null == fieldNames || 0 == fieldNames.length) {
-      dbConf.setInputFieldNames(new String[] {"*"});
+      dbConf.setInputFieldNames(new String[]{"*"});
     } else {
       dbConf.setInputFieldNames(fieldNames);
     }

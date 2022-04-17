@@ -42,14 +42,15 @@ public class TiDBMapreduceDemo {
 
   public static void main(String[] args) {
     try {
-      System.exit(run(args));
+      Job job = createJob(args);
+      System.exit(job.waitForCompletion(true) ? 0 : 1);
     } catch (Exception e) {
       e.printStackTrace();
       System.exit(1);
     }
   }
 
-  public static int run(String[] args)
+  public static Job createJob(String[] args)
       throws IOException, ClassNotFoundException, InterruptedException {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
@@ -76,7 +77,7 @@ public class TiDBMapreduceDemo {
     job.setMapperClass(TiDBMapper.class);
     job.setOutputFormatClass(NullOutputFormat.class);
     job.setNumReduceTasks(0);
-    return job.waitForCompletion(true) ? 0 : 1;
+    return job;
   }
 
   public static class TiDBMapper extends
