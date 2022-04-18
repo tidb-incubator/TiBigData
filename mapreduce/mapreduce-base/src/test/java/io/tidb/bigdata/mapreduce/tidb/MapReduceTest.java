@@ -39,11 +39,14 @@ import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -257,6 +260,11 @@ public class MapReduceTest {
     clientSession.close();
   }
 
+  private long getMapInputRecords(Job job) throws IOException {
+    return job.getCounters().getGroup("org.apache.hadoop.mapreduce.TaskCounter")
+        .findCounter("MAP_INPUT_RECORDS").getValue();
+  }
+
   @Test
   public void testRunLocalMapReduce()
       throws IOException, ClassNotFoundException, InterruptedException {
@@ -282,10 +290,50 @@ public class MapReduceTest {
       options.add("-f");
       options.add("c" + i);
     }
-    int code = TiDBMapreduceDemo.run(options.toArray(new String[0]));
-    if (code != 0) {
-      System.exit(code);
+    Job job = TiDBMapreduceDemo.createJob(options.toArray(new String[0]));
+    Assert.assertTrue(job.waitForCompletion(true));
+    Assert.assertEquals(1, getMapInputRecords(job));
+  }
+
+  @Test
+  public void testMultipleRegions() throws Exception {
+    String tableName = "test_multiple_regions";
+    String dbTable = String.format("`%s`.`%s`", DATABASE_NAME, tableName);
+    try (ClientSession clientSession = getSingleConnection()) {
+      clientSession.sqlUpdate(
+          "DROP TABLE IF EXISTS " + dbTable,
+          String.format("CREATE TABLE IF NOT EXISTS %s (`id` INT PRIMARY KEY AUTO_INCREMENT)",
+              dbTable),
+          String.format("INSERT INTO %s VALUES %s", dbTable,
+              StringUtils.join(",", Collections.nCopies(10000, "(null)"))),
+          String.format("SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (10000) REGIONS 10",
+              DATABASE_NAME, tableName)
+      );
     }
+    List<String> options = new ArrayList<>();
+    ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
+    // database url
+    options.add("-du");
+    options.add(clientConfig.getDatabaseUrl());
+    // database
+    options.add("-dn");
+    options.add(DATABASE_NAME);
+    // table
+    options.add("-t");
+    options.add(tableName);
+    // user
+    options.add("-u");
+    options.add(clientConfig.getUsername());
+    // password
+    options.add("-p");
+    options.add(clientConfig.getPassword());
+    // fields
+    options.add("-f");
+    options.add("id");
+
+    Job job = TiDBMapreduceDemo.createJob(options.toArray(new String[0]));
+    Assert.assertTrue(job.waitForCompletion(true));
+    Assert.assertEquals(10000, getMapInputRecords(job));
   }
 
 }
