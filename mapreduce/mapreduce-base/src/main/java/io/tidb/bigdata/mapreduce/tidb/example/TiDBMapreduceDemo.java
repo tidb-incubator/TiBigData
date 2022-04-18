@@ -129,48 +129,49 @@ public class TiDBMapreduceDemo {
       fieldNames = new String[columnCount];
       values = new Object[columnCount];
       for (int i = 1; i <= columnCount; i++) {
-        fieldNames[i - 1] = metaData.getColumnName(i);
+        final int fieldIndex = i - 1;
+        fieldNames[fieldIndex] = metaData.getColumnName(i);
         String className = metaData.getColumnClassName(i);
         TiDBJdbcClassName tiDBJdbcClassName = TiDBJdbcClassName.fromClassName(className);
         switch (tiDBJdbcClassName) {
           case BOOLEAN:
-            values[i - 1] = resultSet.getBoolean(i);
+            values[fieldIndex] = resultSet.getBoolean(i);
             break;
           case BYTE:
           case SHORT:
           case INTEGER:
-            values[i - 1] = resultSet.getInt(i);
+            values[fieldIndex] = resultSet.getInt(i);
             break;
           case LONG:
-            values[i - 1] = resultSet.getLong(i);
+            values[fieldIndex] = resultSet.getLong(i);
             break;
           case FLOAT:
-            values[i - 1] = resultSet.getFloat(i);
+            values[fieldIndex] = resultSet.getFloat(i);
             break;
           case BIGDECIMAL:
-            values[i - 1] = resultSet.getBigDecimal(i);
+            values[fieldIndex] = resultSet.getBigDecimal(i);
             break;
           case DOUBLE:
-            values[i - 1] = resultSet.getDouble(i);
+            values[fieldIndex] = resultSet.getDouble(i);
             break;
           case TIME:
-            values[i - 1] = resultSet.getTime(i);
+            values[fieldIndex] = resultSet.getTime(i);
             break;
           case TIMESTAMP:
-            values[i - 1] = resultSet.getTimestamp(i);
+            values[fieldIndex] = resultSet.getTimestamp(i);
             break;
           case DATE:
             if (metaData.getColumnTypeName(i).equals("YEAR")) {
-              values[i - 1] = resultSet.getInt(i);
+              values[fieldIndex] = resultSet.getInt(i);
             } else {
-              values[i - 1] = resultSet.getDate(i);
+              values[fieldIndex] = resultSet.getDate(i);
             }
             break;
           case STRING:
-            values[i - 1] = resultSet.getString(i);
+            values[fieldIndex] = resultSet.getString(i);
             break;
           case BYTES:
-            values[i - 1] = resultSet.getBytes(i);
+            values[fieldIndex] = resultSet.getBytes(i);
             break;
           default:
             throw new IllegalArgumentException("Unsupported class name: " + className);
