@@ -22,9 +22,9 @@ import static java.util.Objects.requireNonNull;
 import io.airlift.slice.Slice;
 import io.prestosql.spi.type.Type;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.Objects;
 import java.util.function.Function;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public final class TypeHelper {
 

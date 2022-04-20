@@ -1,17 +1,18 @@
 /*
- * Copyright 2020 PingCAP, Inc.
+ * Copyright 2021 TiKV Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package io.tidb.bigdata.tidb.columnar;
@@ -29,7 +30,6 @@ public class TiCoreTime {
   private static final long MINUTE_BIT_FIELD_OFFSET = 30, MINUTE_BIT_FIELD_WIDTH = 6;
   private static final long SECOND_BIT_FIELD_OFFSET = 24, SECOND_BIT_FIELD_WIDTH = 6;
   private static final long MICROSECOND_BIT_FIELD_OFFSET = 4, MICROSECOND_BIT_FIELD_WIDTH = 20;
-  private static final long NANOSECOND_BIT_FIELD_OFFSET = 0, NANOSECOND_BIT_FIELD_WIDTH = 24;
   private static final long YEAR_BIT_FIELD_MASK =
       ((1L << YEAR_BIT_FIELD_WIDTH) - 1) << YEAR_BIT_FIELD_OFFSET;
   private static final long MONTH_BIT_FIELD_MASK =
@@ -44,8 +44,6 @@ public class TiCoreTime {
       ((1L << SECOND_BIT_FIELD_WIDTH) - 1) << SECOND_BIT_FIELD_OFFSET;
   private static final long MICROSECOND_BIT_FIELD_MASK =
       ((1L << MICROSECOND_BIT_FIELD_WIDTH) - 1) << MICROSECOND_BIT_FIELD_OFFSET;
-  private static final long NANOSECOND_BIT_FIELD_MASK =
-      ((1L << NANOSECOND_BIT_FIELD_WIDTH) - 1) << NANOSECOND_BIT_FIELD_OFFSET;
 
   private final long coreTime;
 
@@ -77,11 +75,7 @@ public class TiCoreTime {
     return (int) ((coreTime & SECOND_BIT_FIELD_MASK) >>> SECOND_BIT_FIELD_OFFSET);
   }
 
-  public int getMicroSecond() {
-    return (int) ((coreTime & MICROSECOND_BIT_FIELD_MASK) >>> MICROSECOND_BIT_FIELD_OFFSET);
-  }
-
-  public int getNanoSecond() {
-    return (int) ((coreTime & NANOSECOND_BIT_FIELD_MASK) >>> NANOSECOND_BIT_FIELD_OFFSET);
+  public long getMicroSecond() {
+    return (coreTime & MICROSECOND_BIT_FIELD_MASK) >>> MICROSECOND_BIT_FIELD_OFFSET;
   }
 }

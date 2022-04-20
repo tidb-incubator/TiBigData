@@ -19,6 +19,17 @@ package io.tidb.bigdata.prestodb.tidb.optimization;
 import static com.facebook.presto.expressions.translator.TranslatedExpression.untranslated;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static io.tidb.bigdata.prestodb.tidb.optimization.TiDBPlanOptimizerProvider.isPushdownType;
+import static io.tidb.bigdata.tidb.types.DateType.DATE;
+import static io.tidb.bigdata.tidb.types.IntegerType.BIGINT;
+import static io.tidb.bigdata.tidb.types.IntegerType.INT;
+import static io.tidb.bigdata.tidb.types.IntegerType.SMALLINT;
+import static io.tidb.bigdata.tidb.types.IntegerType.TINYINT;
+import static io.tidb.bigdata.tidb.types.RealType.DOUBLE;
+import static io.tidb.bigdata.tidb.types.RealType.FLOAT;
+import static io.tidb.bigdata.tidb.types.StringType.CHAR;
+import static io.tidb.bigdata.tidb.types.StringType.VARCHAR;
+import static io.tidb.bigdata.tidb.types.TimeType.TIME;
+import static io.tidb.bigdata.tidb.types.TimestampType.TIMESTAMP;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 
@@ -55,17 +66,6 @@ import io.tidb.bigdata.tidb.expression.Expression;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import staticio.tidb.bigdata.tidb.types.DateType.DATE;
-import staticio.tidb.bigdata.tidb.types.IntegerType.BIGINT;
-import staticio.tidb.bigdata.tidb.types.IntegerType.INT;
-import staticio.tidb.bigdata.tidb.types.IntegerType.SMALLINT;
-import staticio.tidb.bigdata.tidb.types.IntegerType.TINYINT;
-import staticio.tidb.bigdata.tidb.types.RealType.DOUBLE;
-import staticio.tidb.bigdata.tidb.types.RealType.FLOAT;
-import staticio.tidb.bigdata.tidb.types.StringType.CHAR;
-import staticio.tidb.bigdata.tidb.types.StringType.VARCHAR;
-import staticio.tidb.bigdata.tidb.types.TimeType.TIME;
-import staticio.tidb.bigdata.tidb.types.TimestampType.TIMESTAMP;
 
 public final class PredicateTranslator
     extends RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {

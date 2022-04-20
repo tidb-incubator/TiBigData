@@ -21,10 +21,10 @@ import static java.util.Objects.requireNonNull;
 
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import io.trino.spi.type.Type;
 import java.util.Objects;
 import java.util.function.Function;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public final class TypeHelper {
 

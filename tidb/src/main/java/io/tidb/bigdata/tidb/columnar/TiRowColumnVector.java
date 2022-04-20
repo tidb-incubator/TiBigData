@@ -1,17 +1,18 @@
 /*
- * Copyright 2019 PingCAP, Inc.
+ * Copyright 2021 TiKV Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package io.tidb.bigdata.tidb.columnar;
@@ -21,10 +22,10 @@ import io.tidb.bigdata.tidb.types.DataType;
 import java.math.BigDecimal;
 
 /**
- * An implementation of {@link TiColumnVector}. It is a faked column vector; the underlying data is
- * in row format.
+ * An implementation of {@link io.tidb.bigdata.tidb.columnar.TiColumnVector}. It is a faked column
+ * vector; the underlying data is in row format.
  */
-public class TiRowColumnVector extends TiColumnVector {
+public class TiRowColumnVector extends io.tidb.bigdata.tidb.columnar.TiColumnVector {
   /** Represents the column index of original row */
   private final int colIdx;
   /** row-wise format data and data is already decoded */

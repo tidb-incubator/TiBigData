@@ -1,17 +1,18 @@
 /*
- * Copyright 2019 PingCAP, Inc.
+ * Copyright 2021 TiKV Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package io.tidb.bigdata.tidb.columnar;
@@ -31,16 +32,18 @@ import io.tidb.bigdata.tidb.types.TimeType;
 import io.tidb.bigdata.tidb.types.TimestampType;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.joda.time.LocalDate;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+import org.tikv.common.exception.UnsupportedSyntaxException;
 import org.tikv.common.util.JsonUtils;
 
-/** An implementation of {@link TiColumnVector}. All data is stored in TiDB chunk format. */
-public class TiChunkColumnVector extends TiColumnVector {
+/**
+ * An implementation of {@link io.tidb.bigdata.tidb.columnar.TiColumnVector}. All data is stored in
+ * TiDB chunk format.
+ */
+public class TiChunkColumnVector extends io.tidb.bigdata.tidb.columnar.TiColumnVector {
   /** Represents the length of each different data type */
   private final int fixLength;
   /** Represents how many nulls in this column vector */
@@ -51,9 +54,6 @@ public class TiChunkColumnVector extends TiColumnVector {
   private final long[] offsets;
 
   private final ByteBuffer data;
-
-  private static final DateTimeFormatter DATE_TIME_FORMATTER =
-      DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.S");
 
   public TiChunkColumnVector(
       DataType dataType,
@@ -131,8 +131,7 @@ public class TiChunkColumnVector extends TiColumnVector {
 
   private long getTime(int rowId) {
     int startPos = rowId * fixLength;
-    long time = data.getLong(startPos);
-    TiCoreTime coreTime = new TiCoreTime(time);
+    TiCoreTime coreTime = new TiCoreTime(data.getLong(startPos));
 
     int year = coreTime.getYear();
     int month = coreTime.getMonth();
@@ -140,26 +139,47 @@ public class TiChunkColumnVector extends TiColumnVector {
     int hour = coreTime.getHour();
     int minute = coreTime.getMinute();
     int second = coreTime.getSecond();
-    int microsecond = coreTime.getMicroSecond();
-    int nanosecond = coreTime.getNanoSecond();
+    long microsecond = coreTime.getMicroSecond();
+    boolean zeroDate = false, zeroTime = false;
+    boolean zeroInDate = false;
+    if (year == 0 && month == 0 && day == 0) {
+      zeroDate = true;
+    }
+    if (hour == 0 && minute == 0 && microsecond == 0) {
+      zeroTime = true;
+    }
+    if (month == 0 || day == 0) {
+      zeroInDate = true;
+    }
     // This behavior can be modified using the zeroDateTimeBehavior configuration property.
     // The allowable values are:
     //    * exception (the default), which throws an SQLException with an SQLState of S1009.
     //    * convertToNull, which returns NULL instead of the date.
     //    * round, which rounds the date to the nearest closest value which is 0001-01-01.
-    if (time == 0) {
+    if (zeroDate && zeroTime) {
       year = 1;
       month = 1;
       day = 1;
+    } else if (!zeroDate && zeroInDate) {
+      String dateString = String.format("%04d-%02d-%02d", year, month, day);
+      try {
+        Date d = new SimpleDateFormat("yyyy-MM-dd").parse(dateString);
+        year = d.getYear() + 1900;
+        month = d.getMonth() + 1;
+        day = d.getDate();
+      } catch (Exception e) {
+        throw new UnsupportedSyntaxException("illegal date value: " + dateString);
+      }
     }
     if (this.type instanceof DateType) {
       LocalDate date = new LocalDate(year, month, day);
-      return ((DateType) this.type).getDays(date);
+      return ((DateType) type).getDays(date);
     } else if (type instanceof DateTimeType || type instanceof TimestampType) {
-      LocalDateTime dateTime =
-          LocalDateTime.of(year, month, day, hour, minute, second, microsecond * 1000);
-      ZonedDateTime zonedDateTime = ZonedDateTime.of(dateTime, ZoneOffset.systemDefault());
-      return zonedDateTime.toEpochSecond() * 1000000 + microsecond;
+      // only return microsecond from epoch.
+      Timestamp ts =
+          new Timestamp(
+              year - 1900, month - 1, day, hour, minute, second, (int) microsecond * 1000);
+      return ts.getTime() / 1000 * 1000000 + ts.getNanos() / 1000;
     } else {
       throw new UnsupportedOperationException("data, datetime, timestamp are already handled.");
     }

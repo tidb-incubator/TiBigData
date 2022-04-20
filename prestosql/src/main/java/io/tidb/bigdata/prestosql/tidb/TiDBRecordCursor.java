@@ -28,8 +28,8 @@ import io.tidb.bigdata.prestosql.tidb.TypeHelper.RecordCursorReader;
 import io.tidb.bigdata.prestosql.tidb.TypeHelper.SliceRecordCursorReader;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.Wrapper;
-import java.util.List;
 import io.tidb.bigdata.tidb.types.DataType;
+import java.util.List;
 
 public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implements RecordCursor {
 

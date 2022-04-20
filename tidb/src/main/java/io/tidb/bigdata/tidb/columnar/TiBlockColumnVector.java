@@ -1,25 +1,24 @@
 /*
- * Copyright 2020 PingCAP, Inc.
+ * Copyright 2021 TiKV Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package io.tidb.bigdata.tidb.columnar;
 
-import static io.tidb.bigdata.tidb.util.MemoryUtil.EMPTY_BYTE_BUFFER_DIRECT;
+import static io.tidb.bigdata.tidb.util.MemoryUtil.EMPTY_BYTE_BUFFER;
 
-import io.tidb.bigdata.tidb.codec.Codec.DateCodec;
-import io.tidb.bigdata.tidb.codec.Codec.DateTimeCodec;
 import io.tidb.bigdata.tidb.columnar.datatypes.CHType;
 import io.tidb.bigdata.tidb.types.AbstractDateTimeType;
 import io.tidb.bigdata.tidb.types.BytesType;
@@ -28,42 +27,41 @@ import io.tidb.bigdata.tidb.util.MemoryUtil;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import org.joda.time.DateTimeZone;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 import org.joda.time.LocalDate;
-import org.tikv.common.ExtendedDateTime;
 
-public class TiBlockColumnVector extends TiColumnVector {
-  long offsetsAddr;
-  ByteBuffer offsets;
-  long nullMapAddr;
-  ByteBuffer nullMap;
-  long dataAddr;
-  ByteBuffer data;
-  private int fixedLength;
+public class TiBlockColumnVector extends io.tidb.bigdata.tidb.columnar.TiColumnVector {
+  private final ByteBuffer offsets;
+  private final ByteBuffer nullMap;
+  private final ByteBuffer data;
+  private final int fixedLength;
 
   public TiBlockColumnVector(CHType type, ByteBuffer data, int numOfRows, int fixedLength) {
     super(type.toDataType(), numOfRows);
-    this.data = data;
-    this.dataAddr = MemoryUtil.getAddress(data);
-    fillEmptyNullMap();
-    fillEmptyOffsets();
+    this.data = Objects.requireNonNull(data);
+    this.nullMap = null;
+    this.offsets = null;
     this.fixedLength = fixedLength;
   }
 
   public TiBlockColumnVector(CHType type) {
     super(type.toDataType(), 0);
+    this.data = EMPTY_BYTE_BUFFER;
+    this.nullMap = null;
+    this.offsets = null;
+    this.fixedLength = -1;
   }
 
   public TiBlockColumnVector(
       CHType type, ByteBuffer nullMap, ByteBuffer data, int numOfRows, int fixedLength) {
     // chType -> data type
     super(type.toDataType(), numOfRows);
-    this.nullMap = nullMap;
-    this.nullMapAddr = MemoryUtil.getAddress(nullMap);
-    this.data = data;
-    this.dataAddr = MemoryUtil.getAddress(data);
-    fillEmptyOffsets();
+    this.nullMap = Objects.requireNonNull(nullMap);
+    this.data = Objects.requireNonNull(data);
+    this.offsets = null;
     this.fixedLength = fixedLength;
   }
 
@@ -72,23 +70,10 @@ public class TiBlockColumnVector extends TiColumnVector {
       CHType type, ByteBuffer nullMap, ByteBuffer offsets, ByteBuffer data, int numOfRows) {
     // chType -> data type
     super(type.toDataType(), numOfRows);
-    this.offsets = offsets;
-    this.offsetsAddr = MemoryUtil.getAddress(offsets);
-    this.nullMap = nullMap;
-    this.nullMapAddr = MemoryUtil.getAddress(nullMap);
-    this.data = data;
-    this.dataAddr = MemoryUtil.getAddress(data);
+    this.offsets = Objects.requireNonNull(offsets);
+    this.nullMap = nullMap; // may be null
+    this.data = Objects.requireNonNull(data);
     this.fixedLength = -1;
-  }
-
-  private void fillEmptyNullMap() {
-    this.nullMap = EMPTY_BYTE_BUFFER_DIRECT;
-    this.nullMapAddr = MemoryUtil.getAddress(this.nullMap);
-  }
-
-  private void fillEmptyOffsets() {
-    this.offsets = EMPTY_BYTE_BUFFER_DIRECT;
-    this.offsetsAddr = MemoryUtil.getAddress(this.offsets);
   }
 
   /**
@@ -98,42 +83,37 @@ public class TiBlockColumnVector extends TiColumnVector {
    * in-memory and we don't expect any exception to happen during closing.
    */
   @Override
-  public void close() {
-    if (dataAddr != 0) {
-      MemoryUtil.free(data);
-    }
-
-    if (offsetsAddr != 0) {
-      MemoryUtil.free(offsets);
-    }
-
-    if (nullMapAddr != 0) {
-      MemoryUtil.free(nullMap);
-    }
-    dataAddr = 0;
-    offsetsAddr = 0;
-    nullMapAddr = 0;
-  }
+  public void close() {}
 
   /** Returns true if this column vector contains any null values. */
   @Override
   public boolean hasNull() {
-    return nullMap == null;
+    if (nullMap != null) {
+      byte[] array = nullMap.array();
+      for (byte b : array) {
+        if (b != 0) return true;
+      }
+    }
+    return false;
   }
 
   /** Returns the number of nulls in this column vector. */
   @Override
   public int numNulls() {
-    throw new UnsupportedOperationException("numNulls is not supported for TiBlockColumnVector");
+    int n = 0;
+    if (nullMap != null) {
+      byte[] array = nullMap.array();
+      for (byte b : array) {
+        if (b != 0) n++;
+      }
+    }
+    return n;
   }
 
   /** Returns whether the value at rowId is NULL. */
   @Override
   public boolean isNullAt(int rowId) {
-    if (nullMap == EMPTY_BYTE_BUFFER_DIRECT) {
-      return false;
-    }
-    return MemoryUtil.getByte(nullMapAddr + rowId) != 0;
+    return nullMap != null && nullMap.get(rowId) != 0;
   }
 
   /**
@@ -151,7 +131,7 @@ public class TiBlockColumnVector extends TiColumnVector {
    */
   @Override
   public byte getByte(int rowId) {
-    return MemoryUtil.getByte(dataAddr + rowId);
+    return data.get(rowId);
   }
 
   /**
@@ -160,7 +140,7 @@ public class TiBlockColumnVector extends TiColumnVector {
    */
   @Override
   public short getShort(int rowId) {
-    return MemoryUtil.getShort(dataAddr + ((long) rowId << 1));
+    return data.getShort(rowId << 1);
   }
 
   /**
@@ -172,23 +152,39 @@ public class TiBlockColumnVector extends TiColumnVector {
     if (type instanceof DateType) {
       return (int) getTime(rowId);
     }
-    return MemoryUtil.getInt(dataAddr + ((long) rowId << 2));
+    return data.getInt(rowId << 2);
   }
 
-  private long getDateTime(int rowId, DateTimeZone tz) {
-    long v = MemoryUtil.getLong(dataAddr + ((long) rowId << 3));
-    ExtendedDateTime extendedDateTime = DateTimeCodec.fromPackedLong(v, tz);
-    if (extendedDateTime == null) {
-      // TODO: make this behavior configurable
-      return 0;
-    }
-    Timestamp ts = extendedDateTime.toTimeStamp();
-    return ts.getTime() / 1000 * 1000000 + ts.getNanos() / 1000;
+  // returns microseconds since epoch - fields are interpreted in current default timezone
+  private long getDateTime(int rowId) {
+    long v = data.getLong(rowId << 3);
+    long ymdhms = v >>> 24;
+    long ymd = ymdhms >>> 17;
+    int day = (int) (ymd & ((1 << 5) - 1));
+    long ym = ymd >>> 5;
+    int month = (int) (ym % 13);
+    int year = (int) (ym / 13);
+
+    int hms = (int) (ymdhms & ((1 << 17) - 1));
+    int second = hms & ((1 << 6) - 1);
+    int minute = (hms >>> 6) & ((1 << 6) - 1);
+    int hour = hms >>> 12;
+    int microsec = (int) (v % (1 << 24));
+    ZonedDateTime zdt =
+        ZonedDateTime.of(
+            year, month, day, hour, minute, second, microsec * 1000, ZoneId.systemDefault());
+    Instant instant = zdt.toInstant();
+    return instant.getEpochSecond() * 1000_000L + instant.getNano() / 1000;
   }
 
   private long getTime(int rowId) {
-    long v = MemoryUtil.getLong(dataAddr + ((long) rowId << 3));
-    LocalDate date = DateCodec.fromPackedLong(v);
+    long v = data.getLong(rowId << 3);
+    long ymd = v >>> 41;
+    long ym = ymd >>> 5;
+    int year = (int) (ym / 13);
+    int month = (int) (ym % 13);
+    int day = (int) (ymd & ((1 << 5) - 1));
+    LocalDate date = new LocalDate(year, month, day);
     return ((DateType) type).getDays(date);
   }
   /**
@@ -198,7 +194,7 @@ public class TiBlockColumnVector extends TiColumnVector {
   @Override
   public long getLong(int rowId) {
     if (type instanceof AbstractDateTimeType) {
-      return getDateTime(rowId, ((AbstractDateTimeType) type).getTimezone());
+      return getDateTime(rowId);
     }
     if (fixedLength == 1) {
       return getByte(rowId);
@@ -207,7 +203,7 @@ public class TiBlockColumnVector extends TiColumnVector {
     } else if (fixedLength == 4) {
       return getInt(rowId);
     } else if (fixedLength == 8) {
-      return MemoryUtil.getLong(dataAddr + ((long) rowId * fixedLength));
+      return data.getLong(rowId << 3);
     }
     throw new UnsupportedOperationException(
         String.format("getting long with fixed length %d", fixedLength));
@@ -219,7 +215,7 @@ public class TiBlockColumnVector extends TiColumnVector {
    */
   @Override
   public float getFloat(int rowId) {
-    return MemoryUtil.getFloat(dataAddr + ((long) rowId * fixedLength));
+    return data.getFloat(rowId * fixedLength);
   }
 
   /**
@@ -228,7 +224,7 @@ public class TiBlockColumnVector extends TiColumnVector {
    */
   @Override
   public double getDouble(int rowId) {
-    return MemoryUtil.getDouble(dataAddr + ((long) rowId * fixedLength));
+    return data.getDouble(rowId * fixedLength);
   }
 
   /**
@@ -236,28 +232,24 @@ public class TiBlockColumnVector extends TiColumnVector {
    */
   @Override
   public BigDecimal getDecimal(int rowId, int precision, int scale) {
-    long rowIdAddr = (long) rowId * fixedLength + dataAddr;
     if (fixedLength == 4) {
-      return MemoryUtil.getDecimal32(rowIdAddr, scale);
+      return MemoryUtil.getDecimal32(data, rowId << 2, scale);
     } else if (fixedLength == 8) {
-      return MemoryUtil.getDecimal64(rowIdAddr, scale);
+      return MemoryUtil.getDecimal64(data, rowId << 3, scale);
     } else if (fixedLength == 16) {
-      return MemoryUtil.getDecimal128(rowIdAddr, scale);
+      return MemoryUtil.getDecimal128(data, rowId << 4, scale);
     } else {
-      return MemoryUtil.getDecimal256(rowIdAddr, scale);
+      return MemoryUtil.getDecimal256(data, rowId * fixedLength, scale);
     }
   }
 
   private long offsetAt(int i) {
-    return i == 0 ? 0 : MemoryUtil.getLong(offsetsAddr + ((long) (i - 1) << 3));
+    return i == 0 ? 0L : offsets.getLong((i - 1) << 3);
   }
 
   public int sizeAt(int i) {
     return (int)
-        (i == 0
-            ? MemoryUtil.getLong(offsetsAddr)
-            : MemoryUtil.getLong(offsetsAddr + ((long) i << 3))
-                - MemoryUtil.getLong(offsetsAddr + ((long) (i - 1) << 3)));
+        (i == 0 ? offsets.getLong(0) : offsets.getLong(i << 3) - offsets.getLong((i - 1) << 3));
   }
 
   /**
@@ -270,13 +262,13 @@ public class TiBlockColumnVector extends TiColumnVector {
     // FixedString case
     if (fixedLength != -1) {
       byte[] chars = new byte[fixedLength];
-      MemoryUtil.getBytes((int) (dataAddr + fixedLength * rowId), chars, 0, fixedLength);
+      data.get(chars, rowId * fixedLength, fixedLength);
       return new String(chars);
     } else {
-      long offset = (dataAddr + offsetAt(rowId));
+      int offset = (int) offsetAt(rowId);
       int numBytes = sizeAt(rowId) - 1;
       byte[] chars = new byte[numBytes];
-      MemoryUtil.getBytes(offset, chars, 0, numBytes);
+      data.get(chars, offset, numBytes);
       return new String(chars, StandardCharsets.UTF_8);
     }
   }
@@ -287,10 +279,10 @@ public class TiBlockColumnVector extends TiColumnVector {
   @Override
   public byte[] getBinary(int rowId) {
     if (type.equals(BytesType.BLOB) || type.equals(BytesType.TINY_BLOB)) {
-      long offset = (dataAddr + offsetAt(rowId));
+      int offset = (int) offsetAt(rowId);
       int numBytes = sizeAt(rowId) - 1;
       byte[] ret = new byte[numBytes];
-      MemoryUtil.getBytes(offset, ret, 0, numBytes);
+      data.get(ret, offset, numBytes);
       return ret;
     } else {
       throw new UnsupportedOperationException(

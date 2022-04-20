@@ -26,12 +26,12 @@ import io.tidb.bigdata.tidb.DataTypes;
 import io.tidb.bigdata.tidb.Expressions;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.trino.tidb.TypeHelper.RecordCursorReader;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.type.Type;
 import java.util.List;
 import java.util.Objects;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {
 

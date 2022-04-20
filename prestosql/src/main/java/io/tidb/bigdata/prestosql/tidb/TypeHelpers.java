@@ -53,6 +53,11 @@ import io.prestosql.spi.type.TimestampWithTimeZoneType;
 import io.prestosql.spi.type.Type;
 import io.prestosql.spi.type.VarcharType;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.BytesType;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.EnumType;
+import io.tidb.bigdata.tidb.types.SetType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Date;
@@ -62,11 +67,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import io.tidb.bigdata.tidb.types.BytesType;
-import io.tidb.bigdata.tidb.types.DataType;
-import io.tidb.bigdata.tidb.types.EnumType;
-import io.tidb.bigdata.tidb.types.SetType;
-import io.tidb.bigdata.tidb.types.StringType;
 
 public final class TypeHelpers {
 

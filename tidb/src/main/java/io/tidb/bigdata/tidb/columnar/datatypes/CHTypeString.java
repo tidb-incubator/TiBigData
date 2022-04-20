@@ -1,23 +1,23 @@
 /*
- * Copyright 2020 PingCAP, Inc.
+ * Copyright 2021 TiKV Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package io.tidb.bigdata.tidb.columnar.datatypes;
 
-import static io.tidb.bigdata.tidb.util.MemoryUtil.EMPTY_BYTE_BUFFER_DIRECT;
-import static io.tidb.bigdata.tidb.util.MemoryUtil.allocateDirect;
+import static io.tidb.bigdata.tidb.util.MemoryUtil.allocate;
 
 import com.google.common.base.Preconditions;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
@@ -32,7 +32,7 @@ public class CHTypeString extends CHType {
   // Use to prevent frequently reallocate the chars buffer.
   // ClickHouse does not pass a total length at the beginning, so sad...
   private static final ThreadLocal<ByteBuffer> initBuffer =
-      ThreadLocal.withInitial(() -> allocateDirect(102400));
+      ThreadLocal.withInitial(() -> allocate(102400));
 
   public CHTypeString() {
     this.length = -1;
@@ -58,12 +58,13 @@ public class CHTypeString extends CHType {
     if (isNullable()) {
       nullMap = decodeNullMap(cdi, size);
     } else {
-      nullMap = EMPTY_BYTE_BUFFER_DIRECT;
+      nullMap = null;
     }
 
-    ByteBuffer offsets = allocateDirect(size << 3);
-    ByteBuffer initCharsBuf = initBuffer.get();
-    AutoGrowByteBuffer autoGrowCharsBuf = new AutoGrowByteBuffer(initCharsBuf);
+    ByteBuffer offsets = allocate(size << 3);
+    ByteBuffer initDataBuf = initBuffer.get();
+    io.tidb.bigdata.tidb.columnar.datatypes.AutoGrowByteBuffer autoGrowDataBuf =
+        new AutoGrowByteBuffer(initDataBuf);
 
     int offset = 0;
     for (int i = 0; i < size; i++) {
@@ -72,20 +73,18 @@ public class CHTypeString extends CHType {
       offset += valueSize + 1;
       offsets.putLong(offset);
 
-      autoGrowCharsBuf.put(cdi, valueSize);
-      autoGrowCharsBuf.putByte((byte) 0); // terminating zero byte
+      autoGrowDataBuf.put(cdi, valueSize);
+      autoGrowDataBuf.putByte((byte) 0); // terminating zero byte
     }
 
-    Preconditions.checkState(offset == autoGrowCharsBuf.dataSize());
+    Preconditions.checkState(offset == autoGrowDataBuf.dataSize());
 
-    ByteBuffer chars = autoGrowCharsBuf.getByteBuffer();
-    if (chars == initCharsBuf) {
+    ByteBuffer data = autoGrowDataBuf.getByteBuffer();
+    if (data == initDataBuf) {
       // Copy out.
-      ByteBuffer newChars = allocateDirect(offset);
-      MemoryUtil.copyMemory(MemoryUtil.getAddress(chars), MemoryUtil.getAddress(newChars), offset);
-      chars = newChars;
+      data = MemoryUtil.copyOf(data, offset);
     }
 
-    return new TiBlockColumnVector(this, nullMap, offsets, chars, size);
+    return new TiBlockColumnVector(this, nullMap, offsets, data, size);
   }
 }
