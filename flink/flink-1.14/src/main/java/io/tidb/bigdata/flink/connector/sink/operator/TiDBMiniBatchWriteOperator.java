@@ -18,7 +18,7 @@ package io.tidb.bigdata.flink.connector.sink.operator;
 
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.tidb.RowBuffer;
-import io.tidb.bigdata.tidb.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.ArrayList;

@@ -20,6 +20,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

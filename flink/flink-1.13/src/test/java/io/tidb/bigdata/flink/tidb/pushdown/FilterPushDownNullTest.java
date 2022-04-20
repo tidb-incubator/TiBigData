@@ -22,7 +22,7 @@ import io.tidb.bigdata.tidb.Expressions;
 import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.tikv.common.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Expression;
 import org.tikv.common.row.Row;
 import org.tikv.common.types.DataType;
 

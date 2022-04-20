@@ -44,7 +44,7 @@ import com.facebook.presto.spi.statistics.ComputedStatistics;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.Slice;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.MetadataInternal;
 import io.tidb.bigdata.tidb.Wrapper;
 import java.util.Arrays;

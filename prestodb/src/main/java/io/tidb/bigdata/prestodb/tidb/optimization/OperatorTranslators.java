@@ -25,10 +25,10 @@ import com.facebook.presto.spi.function.ScalarFunction;
 import com.facebook.presto.spi.function.ScalarOperator;
 import com.facebook.presto.spi.function.SqlType;
 import com.facebook.presto.spi.type.StandardTypes;
-import org.tikv.common.expression.ArithmeticBinaryExpression;
-import org.tikv.common.expression.ComparisonBinaryExpression;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.expression.Not;
+import  io.tidb.bigdata.tidb.expression.ArithmeticBinaryExpression;
+import  io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
+import  io.tidb.bigdata.tidb.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Not;
 
 
 public final class OperatorTranslators {

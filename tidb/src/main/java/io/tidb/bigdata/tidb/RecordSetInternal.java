@@ -19,14 +19,16 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.key.Base64KeyRange;
+import io.tidb.bigdata.tidb.meta.TiDAGRequest;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Optional;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.meta.TiDAGRequest;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.operation.iterator.CoprocessorIterator;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
+import io.tidb.bigdata.tidb.row.Row;
 
 public final class RecordSetInternal {
 

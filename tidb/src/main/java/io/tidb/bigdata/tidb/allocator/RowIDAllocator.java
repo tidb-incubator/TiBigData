@@ -17,6 +17,13 @@
 package io.tidb.bigdata.tidb.allocator;
 
 import com.google.common.primitives.UnsignedLongs;
+import org.tikv.shade.com.google.protobuf.ByteString;
+import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
+import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.KeyUtils;
+import io.tidb.bigdata.tidb.codec.MetaCodec;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,19 +37,12 @@ import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.Snapshot;
 import org.tikv.common.TiSession;
-import org.tikv.common.codec.Codec.IntegerCodec;
-import org.tikv.common.codec.CodecDataInput;
-import org.tikv.common.codec.CodecDataOutput;
-import org.tikv.common.codec.KeyUtils;
-import org.tikv.common.codec.MetaCodec;
 import org.tikv.common.exception.AllocateRowIDOverflowException;
 import org.tikv.common.exception.TiBatchWriteException;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.util.BackOffFunction;
 import org.tikv.common.util.BackOffer;
 import org.tikv.common.util.ConcreteBackOffer;
-import org.tikv.shade.com.google.protobuf.ByteString;
 import org.tikv.txn.TwoPhaseCommitter;
 
 /**
@@ -209,7 +209,7 @@ public final class RowIDAllocator implements Serializable {
 
     CodecDataOutput cdo = new CodecDataOutput();
     MetaCodec.encodeHashDataKey(cdo, key.toByteArray(), field.toByteArray());
-    ByteString dataKey = cdo.toByteString();
+    ByteString dataKey = cdo.toShadeByteString();
     byte[] oldVal = snapshot.get(dataKey.toByteArray());
 
     byte[] newVal = calculateNewVal.apply(oldVal);

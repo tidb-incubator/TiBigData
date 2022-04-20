@@ -45,7 +45,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Expression;
 import org.tikv.common.meta.TiTableInfo;
 
 public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSource,

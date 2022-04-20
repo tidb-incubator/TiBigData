@@ -1,0 +1,22 @@
+syntax = "proto2";
+
+package tipb;
+
+option java_multiple_files = true;
+option java_package = "com.pingcap.tidb.tipb";
+
+import "gogoproto/gogo.proto";
+
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message InUnionMetadata {
+    required bool in_union = 1 [(gogoproto.nullable) = false];
+}
+
+message CompareInMetadata {
+    required bool has_null = 1 [(gogoproto.nullable) = false];
+    // consts represents all non-null const args in repeated Datum format.
+    optional bytes consts = 2;
+}

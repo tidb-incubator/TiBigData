@@ -17,7 +17,7 @@
 package io.tidb.bigdata.flink.connector.source.split;
 
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;

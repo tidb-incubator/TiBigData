@@ -65,7 +65,7 @@ import io.tidb.bigdata.tidb.Expressions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.tikv.common.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Expression;
 
 public final class PredicateTranslator extends
     RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {

@@ -41,7 +41,7 @@ import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.Preconditions;
-import org.tikv.common.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceBuilder implements Serializable {

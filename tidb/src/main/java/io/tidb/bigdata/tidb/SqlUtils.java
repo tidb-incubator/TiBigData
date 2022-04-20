@@ -25,9 +25,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 
 public class SqlUtils {
 

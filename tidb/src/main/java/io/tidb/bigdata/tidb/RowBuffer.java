@@ -22,10 +22,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.tikv.common.meta.TiIndexColumn;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.row.Row;
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import org.tikv.common.util.Pair;
 
 public abstract class RowBuffer {

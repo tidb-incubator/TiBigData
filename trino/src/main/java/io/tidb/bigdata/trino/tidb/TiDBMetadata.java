@@ -28,7 +28,7 @@ import static java.util.function.Function.identity;
 
 import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.Slice;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.MetadataInternal;
 import io.tidb.bigdata.tidb.Wrapper;
 import io.trino.spi.connector.ColumnHandle;

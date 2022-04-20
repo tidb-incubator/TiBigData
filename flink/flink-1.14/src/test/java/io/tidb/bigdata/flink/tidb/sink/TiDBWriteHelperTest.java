@@ -22,7 +22,7 @@ import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import java.util.Collection;

@@ -19,6 +19,8 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.key.Base64KeyRange;
 import java.io.Serializable;
 import java.util.Objects;
 import org.tikv.common.meta.TiTimestamp;

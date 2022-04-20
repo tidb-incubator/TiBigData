@@ -17,21 +17,21 @@
 package io.tidb.bigdata.tidb;
 
 import static com.google.common.base.Preconditions.checkState;
-import static org.tikv.common.types.IntegerType.TINYINT;
+import static io.tidb.bigdata.tidb.types.IntegerType.TINYINT;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
-import org.tikv.common.expression.ArithmeticBinaryExpression;
-import org.tikv.common.expression.ColumnRef;
-import org.tikv.common.expression.ComparisonBinaryExpression;
-import org.tikv.common.expression.Constant;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.expression.IsNull;
-import org.tikv.common.expression.LogicalBinaryExpression;
-import org.tikv.common.expression.Not;
-import org.tikv.common.expression.StringRegExpression;
-import org.tikv.common.types.DataType;
+import  io.tidb.bigdata.tidb.expression.ArithmeticBinaryExpression;
+import  io.tidb.bigdata.tidb.expression.ColumnRef;
+import  io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
+import  io.tidb.bigdata.tidb.expression.Constant;
+import  io.tidb.bigdata.tidb.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.IsNull;
+import  io.tidb.bigdata.tidb.expression.LogicalBinaryExpression;
+import  io.tidb.bigdata.tidb.expression.Not;
+import  io.tidb.bigdata.tidb.expression.StringRegExpression;
+import io.tidb.bigdata.tidb.types.DataType;
 
 public final class Expressions {
 

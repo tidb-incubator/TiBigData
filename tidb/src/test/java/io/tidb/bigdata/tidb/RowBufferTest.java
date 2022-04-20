@@ -23,9 +23,9 @@ import io.tidb.bigdata.test.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.row.ObjectRowImpl;
-import org.tikv.common.row.Row;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.ObjectRowImpl;
+import io.tidb.bigdata.tidb.row.Row;
 
 @Category(IntegrationTest.class)
 public class RowBufferTest {

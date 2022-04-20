@@ -25,12 +25,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.prestosql.spi.connector.ColumnHandle;
 import io.prestosql.spi.type.Type;
 import io.tidb.bigdata.prestosql.tidb.TypeHelper.RecordCursorReader;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.DataTypes;
 import io.tidb.bigdata.tidb.Expressions;
 import java.util.List;
 import java.util.Objects;
-import org.tikv.common.expression.Expression;
+import  io.tidb.bigdata.tidb.expression.Expression;
 import org.tikv.common.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {

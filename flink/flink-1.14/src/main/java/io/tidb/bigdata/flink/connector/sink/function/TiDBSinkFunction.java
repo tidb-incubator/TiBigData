@@ -21,10 +21,11 @@ import io.tidb.bigdata.flink.connector.sink.function.TiDBSinkFunction.TiDBTransa
 import io.tidb.bigdata.flink.connector.sink.function.TiDBSinkFunction.TiDBTransactionState;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.Row;
 
 /**
  * ATTENTIONS: Right now, this class has not provided exactly-once semantic.
