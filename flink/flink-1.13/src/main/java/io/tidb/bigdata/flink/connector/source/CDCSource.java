@@ -40,8 +40,7 @@ public class CDCSource<SplitT extends SourceSplit, EnumChkT>
   }
 
   @Override
-  public SourceReader<RowData, SplitT> createReader(SourceReaderContext context)
-      throws Exception {
+  public SourceReader<RowData, SplitT> createReader(SourceReaderContext context) throws Exception {
     return wrapped.createReader(context);
   }
 
@@ -52,8 +51,8 @@ public class CDCSource<SplitT extends SourceSplit, EnumChkT>
   }
 
   @Override
-  public SplitEnumerator<SplitT, EnumChkT>
-      restoreEnumerator(SplitEnumeratorContext<SplitT> context, EnumChkT o) throws Exception {
+  public SplitEnumerator<SplitT, EnumChkT> restoreEnumerator(
+      SplitEnumeratorContext<SplitT> context, EnumChkT o) throws Exception {
     return wrapped.restoreEnumerator(context, o);
   }
 

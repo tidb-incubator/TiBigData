@@ -17,11 +17,17 @@
 
 package io.tidb.bigdata.tidb.expression;
 
-import static  io.tidb.bigdata.tidb.expression.PartitionPruner.extractLogicalOrComparisonExpr;
+import static io.tidb.bigdata.tidb.expression.PartitionPruner.extractLogicalOrComparisonExpr;
 
 import com.google.common.collect.RangeSet;
 import io.tidb.bigdata.tidb.expression.visitor.PartAndFilterExprRewriter;
 import io.tidb.bigdata.tidb.expression.visitor.PrunedPartitionBuilder;
+import io.tidb.bigdata.tidb.key.TypedKey;
+import io.tidb.bigdata.tidb.meta.TiPartitionDef;
+import io.tidb.bigdata.tidb.meta.TiPartitionInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.parser.TiParser;
+import io.tidb.bigdata.tidb.predicates.PredicateUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,12 +35,6 @@ import java.util.Objects;
 import java.util.Set;
 import org.tikv.common.exception.UnsupportedPartitionExprException;
 import org.tikv.common.exception.UnsupportedSyntaxException;
-import io.tidb.bigdata.tidb.key.TypedKey;
-import io.tidb.bigdata.tidb.meta.TiPartitionDef;
-import io.tidb.bigdata.tidb.meta.TiPartitionInfo;
-import io.tidb.bigdata.tidb.meta.TiTableInfo;
-import  io.tidb.bigdata.tidb.parser.TiParser;
-import  io.tidb.bigdata.tidb.predicates.PredicateUtils;
 
 @SuppressWarnings("UnstableApiUsage")
 public class RangePartitionPruner {

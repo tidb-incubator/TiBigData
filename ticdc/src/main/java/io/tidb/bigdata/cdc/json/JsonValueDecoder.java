@@ -34,9 +34,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * TiCDC open protocol json format event value decoder, parse bits into event value instances.
- */
+/** TiCDC open protocol json format event value decoder, parse bits into event value instances. */
 public class JsonValueDecoder implements ValueDecoder {
 
   private static final ThreadLocal<ArrayList<RowColumn>> tlsRowColumnBuffer =
@@ -107,11 +105,13 @@ public class JsonValueDecoder implements ValueDecoder {
         default:
           throw new RuntimeException("Invalid column value type: " + valueNode.getType());
       }
-      buffer.add(new RowColumn(
-          entry.getKey(),
-          value,
-          node.getBoolean(COLUMN_WHERE_HANDLE_TOKEN, false),
-          type, flags));
+      buffer.add(
+          new RowColumn(
+              entry.getKey(),
+              value,
+              node.getBoolean(COLUMN_WHERE_HANDLE_TOKEN, false),
+              type,
+              flags));
     }
     final RowColumn[] columns = buffer.toArray(new RowColumn[0]);
     buffer.clear();
@@ -122,8 +122,8 @@ public class JsonValueDecoder implements ValueDecoder {
     return new RowDeletedValue(parseColumns(object));
   }
 
-  private static RowChangedValue parseRowChangedUpdateValue(final Optional<JsonNode> oldValue,
-      final JsonNode newValue) {
+  private static RowChangedValue parseRowChangedUpdateValue(
+      final Optional<JsonNode> oldValue, final JsonNode newValue) {
     return oldValue
         .map(o -> (RowChangedValue) (new RowUpdatedValue(parseColumns(o), parseColumns(newValue))))
         .orElseGet(() -> new RowInsertedValue(parseColumns(newValue)));
@@ -131,8 +131,8 @@ public class JsonValueDecoder implements ValueDecoder {
 
   private static RowChangedValue parseRowChangedValue(final JsonNode node) {
     if (node.has(UPDATE_NEW_VALUE_TOKEN)) {
-      return parseRowChangedUpdateValue(node.get(UPDATE_OLD_VALUE_TOKEN),
-          node.mustGet(UPDATE_NEW_VALUE_TOKEN));
+      return parseRowChangedUpdateValue(
+          node.get(UPDATE_OLD_VALUE_TOKEN), node.mustGet(UPDATE_NEW_VALUE_TOKEN));
     } else if (node.has(UPDATE_DELETE_VALUE_TOKEN)) {
       return parseRowChangedDeleteValue(node.mustGet(UPDATE_DELETE_VALUE_TOKEN));
     } else {

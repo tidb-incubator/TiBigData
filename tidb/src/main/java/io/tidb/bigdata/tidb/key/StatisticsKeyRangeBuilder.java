@@ -16,8 +16,7 @@
 
 package io.tidb.bigdata.tidb.key;
 
-
-import  io.tidb.bigdata.tidb.predicates.IndexRange;
+import io.tidb.bigdata.tidb.predicates.IndexRange;
 import org.tikv.common.util.Pair;
 
 // A builder to build key range for Statistics keys

@@ -18,7 +18,6 @@
 
 package io.tidb.bigdata.tidb.statistics;
 
-
 import io.tidb.bigdata.tidb.key.Key;
 
 /**

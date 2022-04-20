@@ -23,13 +23,13 @@ import com.pingcap.tidb.tipb.ExprType;
 import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.Collation;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.math.BigDecimal;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.TypeException;
-import io.tidb.bigdata.tidb.meta.Collation;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 public class IntegerType extends DataType {
 
@@ -45,13 +45,13 @@ public class IntegerType extends DataType {
       new IntegerType(MySQLType.TypeLonglong, PriKeyFlag, 20, 0);
 
   public static final MySQLType[] subTypes =
-      new MySQLType[]{
-          MySQLType.TypeTiny,
-          MySQLType.TypeShort,
-          MySQLType.TypeInt24,
-          MySQLType.TypeLong,
-          MySQLType.TypeLonglong,
-          MySQLType.TypeYear
+      new MySQLType[] {
+        MySQLType.TypeTiny,
+        MySQLType.TypeShort,
+        MySQLType.TypeInt24,
+        MySQLType.TypeLong,
+        MySQLType.TypeLonglong,
+        MySQLType.TypeYear
       };
 
   protected IntegerType(MySQLType type, int flag, int len, int decimal) {
@@ -93,9 +93,7 @@ public class IntegerType extends DataType {
     return other instanceof IntegerType;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   protected Object decodeNotNull(int flag, CodecDataInput cdi) {
     long ret;
@@ -121,9 +119,7 @@ public class IntegerType extends DataType {
     return ret;
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   protected void encodeKey(CodecDataOutput cdo, Object value) {
     long longVal = Converter.convertToLong(value);
@@ -134,9 +130,7 @@ public class IntegerType extends DataType {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   protected void encodeValue(CodecDataOutput cdo, Object value) {
     long longVal = Converter.convertToLong(value);
@@ -147,9 +141,7 @@ public class IntegerType extends DataType {
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   protected void encodeProto(CodecDataOutput cdo, Object value) {
     long longVal = Converter.convertToLong(value);
@@ -177,9 +169,7 @@ public class IntegerType extends DataType {
     return tp == MySQLType.TypeLonglong && isUnsigned();
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  /** {@inheritDoc} */
   @Override
   public Object getOriginDefaultValueNonNull(String value, long version) {
     return Long.parseLong(value);

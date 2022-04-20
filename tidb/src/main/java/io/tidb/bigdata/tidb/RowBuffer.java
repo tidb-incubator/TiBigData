@@ -16,16 +16,16 @@
 
 package io.tidb.bigdata.tidb;
 
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import io.tidb.bigdata.tidb.meta.TiIndexColumn;
-import io.tidb.bigdata.tidb.meta.TiIndexInfo;
-import io.tidb.bigdata.tidb.meta.TiTableInfo;
-import io.tidb.bigdata.tidb.row.Row;
 import org.tikv.common.util.Pair;
 
 public abstract class RowBuffer {
@@ -65,9 +65,7 @@ public abstract class RowBuffer {
   }
 
   public static RowBuffer createDeduplicateRowBuffer(
-      TiTableInfo tiTableInfo,
-      boolean ignoreAutoincrementColumn,
-      int bufferSize) {
+      TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
     return new DeduplicateRowBuffer(tiTableInfo, ignoreAutoincrementColumn, bufferSize);
   }
 
@@ -93,18 +91,20 @@ public abstract class RowBuffer {
     // index -> index values
     private final List<Pair<List<Integer>, Set<List<Object>>>> uniqueIndexValues;
 
-    private DeduplicateRowBuffer(TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn,
-        int bufferSize) {
+    private DeduplicateRowBuffer(
+        TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
       super(bufferSize);
       this.tiTableInfo = tiTableInfo;
-      List<TiIndexInfo> uniqueIndexes = SqlUtils.getUniqueIndexes(tiTableInfo,
-          ignoreAutoincrementColumn);
+      List<TiIndexInfo> uniqueIndexes =
+          SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
       this.uniqueIndexValues = new ArrayList<>(uniqueIndexes.size());
       for (TiIndexInfo uniqueIndex : uniqueIndexes) {
-        List<Integer> columnIndex = uniqueIndex.getIndexColumns()
-            .stream()
-            .map(TiIndexColumn::getOffset)
-            .collect(Collectors.toList());
+        List<Integer> columnIndex =
+            uniqueIndex
+                .getIndexColumns()
+                .stream()
+                .map(TiIndexColumn::getOffset)
+                .collect(Collectors.toList());
         uniqueIndexValues.add(new Pair<>(columnIndex, new HashSet<>()));
       }
     }
@@ -122,9 +122,8 @@ public abstract class RowBuffer {
       for (Pair<List<Integer>, Set<List<Object>>> pair : uniqueIndexValues) {
         List<Integer> indexColumns = pair.first;
         Set<List<Object>> indexValues = pair.second;
-        List<Object> indexValue = indexColumns.stream()
-            .map(i -> row.get(i, null))
-            .collect(Collectors.toList());
+        List<Object> indexValue =
+            indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList());
         if (indexValues.contains(indexValue)) {
           return false;
         }
@@ -148,6 +147,4 @@ public abstract class RowBuffer {
       }
     }
   }
-
 }
-

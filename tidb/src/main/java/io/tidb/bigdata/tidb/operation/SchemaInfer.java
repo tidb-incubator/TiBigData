@@ -16,10 +16,10 @@
 
 package io.tidb.bigdata.tidb.operation;
 
-import com.pingcap.tikv.expression.ByItem;
-import com.pingcap.tikv.expression.Expression;
-import com.pingcap.tikv.meta.TiDAGRequest;
-import com.pingcap.tikv.types.DataType;
+import io.tidb.bigdata.tidb.expression.ByItem;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.meta.TiDAGRequest;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;

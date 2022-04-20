@@ -27,9 +27,9 @@ import static io.tidb.bigdata.tidb.expression.ArithmeticBinaryExpression.Type.PL
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Objects;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public class ArithmeticBinaryExpression extends Expression {
   private final Expression left;

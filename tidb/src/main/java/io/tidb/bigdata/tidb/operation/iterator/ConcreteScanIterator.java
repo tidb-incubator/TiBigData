@@ -20,25 +20,24 @@ package io.tidb.bigdata.tidb.operation.iterator;
 
 import static java.util.Objects.requireNonNull;
 
-import com.google.protobuf.ByteString;
-import com.pingcap.tikv.TiConfiguration;
-import com.pingcap.tikv.exception.GrpcException;
-import com.pingcap.tikv.exception.KeyException;
-import com.pingcap.tikv.exception.TiKVException;
-import com.pingcap.tikv.key.Key;
-import com.pingcap.tikv.region.RegionStoreClient;
-import com.pingcap.tikv.region.RegionStoreClient.RegionStoreClientBuilder;
-import com.pingcap.tikv.region.TiRegion;
-import com.pingcap.tikv.util.BackOffFunction;
-import com.pingcap.tikv.util.BackOffer;
-import com.pingcap.tikv.util.ConcreteBackOffer;
-import com.pingcap.tikv.util.Pair;
+import io.tidb.bigdata.tidb.key.Key;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.TiConfiguration;
+import org.tikv.common.exception.GrpcException;
+import org.tikv.common.exception.KeyException;
+import org.tikv.common.region.RegionStoreClient;
+import org.tikv.common.region.RegionStoreClient.RegionStoreClientBuilder;
+import org.tikv.common.region.TiRegion;
+import org.tikv.common.region.TiStore;
+import org.tikv.common.util.BackOffer;
+import org.tikv.common.util.ConcreteBackOffer;
+import org.tikv.common.util.Pair;
 import org.tikv.kvproto.Kvrpcpb.KvPair;
-import org.tikv.kvproto.Metapb;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 public class ConcreteScanIterator extends ScanIterator {
+
   private final long version;
   private final Logger logger = LoggerFactory.getLogger(ConcreteScanIterator.class);
 
@@ -55,32 +54,22 @@ public class ConcreteScanIterator extends ScanIterator {
 
   @Override
   TiRegion loadCurrentRegionToCache() throws GrpcException {
-    BackOffer backOffer = ConcreteBackOffer.newScannerNextMaxBackOff();
-    while (true) {
-      try (RegionStoreClient client = builder.build(startKey)) {
-        TiRegion region = client.getRegion();
-        if (limit <= 0) {
-          currentCache = null;
-        } else {
-          try {
-            int scanSize = Math.min(limit, conf.getScanBatchSize());
-            currentCache = client.scan(backOffer, startKey, scanSize, version);
-          } catch (final TiKVException e) {
-            backOffer.doBackOff(BackOffFunction.BackOffFuncType.BoRegionMiss, e);
-            continue;
-          }
-        }
-        return region;
-      }
+    TiRegion region;
+    try (RegionStoreClient client = builder.build(startKey)) {
+      client.setTimeout(conf.getScanTimeout());
+      region = client.getRegion();
+      BackOffer backOffer = ConcreteBackOffer.newScannerNextMaxBackOff();
+      currentCache = client.scan(backOffer, startKey, version);
+      return region;
     }
   }
 
   private ByteString resolveCurrentLock(KvPair current) {
     logger.warn(String.format("resolve current key error %s", current.getError().toString()));
-    Pair<TiRegion, Metapb.Store> pair =
+    Pair<TiRegion, TiStore> pair =
         builder.getRegionManager().getRegionStorePairByKey(current.getKey());
     TiRegion region = pair.first;
-    Metapb.Store store = pair.second;
+    TiStore store = pair.second;
     BackOffer backOffer = ConcreteBackOffer.newGetBackOff();
     try (RegionStoreClient client = builder.build(region, store)) {
       return client.get(backOffer, current.getKey(), version);

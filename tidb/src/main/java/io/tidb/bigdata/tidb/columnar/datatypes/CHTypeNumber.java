@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.columnar.datatypes;
 
-
 import static io.tidb.bigdata.tidb.types.DecimalType.BIG_INT_DECIMAL;
 
 import io.tidb.bigdata.tidb.types.DataType;

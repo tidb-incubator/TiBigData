@@ -75,51 +75,46 @@ public class TiDBOptions {
 
   public static final ConfigOption<String> DNS_SEARCH = optional(ClientConfig.TIDB_DNS_SEARCH);
 
-  public static final ConfigOption<String> SNAPSHOT_TIMESTAMP = optional(
-      ClientConfig.SNAPSHOT_TIMESTAMP);
+  public static final ConfigOption<String> SNAPSHOT_TIMESTAMP =
+      optional(ClientConfig.SNAPSHOT_TIMESTAMP);
 
-  public static final ConfigOption<String> SNAPSHOT_VERSION = optional(
-      ClientConfig.SNAPSHOT_VERSION);
+  public static final ConfigOption<String> SNAPSHOT_VERSION =
+      optional(ClientConfig.SNAPSHOT_VERSION);
 
   public static final ConfigOption<SinkImpl> SINK_IMPL =
-      ConfigOptions.key("tidb.sink.impl")
-          .enumType(SinkImpl.class)
-          .defaultValue(JDBC);
+      ConfigOptions.key("tidb.sink.impl").enumType(SinkImpl.class).defaultValue(JDBC);
   public static final ConfigOption<SinkTransaction> SINK_TRANSACTION =
       ConfigOptions.key("tikv.sink.transaction")
           .enumType(SinkTransaction.class)
           .defaultValue(MINIBATCH);
 
-  public static final ConfigOption<Integer> SINK_BUFFER_SIZE = ConfigOptions
-      .key("tikv.sink.buffer-size")
-      .intType()
-      .defaultValue(1000);
-  public static final ConfigOption<Integer> ROW_ID_ALLOCATOR_STEP = ConfigOptions
-      .key("tikv.sink.row-id-allocator.step")
-      .intType()
-      .defaultValue(30000);
-  public static final ConfigOption<Boolean> IGNORE_AUTOINCREMENT_COLUMN_VALUE = ConfigOptions
-      .key("tikv.sink.ignore-autoincrement-column-value")
-      .booleanType()
-      .defaultValue(false)
-      .withDescription("If true, "
-          + "for autoincrement column, we will generate value instead of the the actual value. "
-          + "And if false, the value of autoincrement column can not be null");
-  public static final ConfigOption<Boolean> DEDUPLICATE = ConfigOptions
-      .key("tikv.sink.deduplicate")
-      .booleanType()
-      .defaultValue(false)
-      .withDescription("Whether deduplicate row by unique key");
-  public static final ConfigOption<Long> TASK_START_INTERVAL = ConfigOptions
-      .key("tikv.sink.task-start-interval")
-      .longType()
-      .defaultValue(1000L)
-      .withDescription(
-          "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
+  public static final ConfigOption<Integer> SINK_BUFFER_SIZE =
+      ConfigOptions.key("tikv.sink.buffer-size").intType().defaultValue(1000);
+  public static final ConfigOption<Integer> ROW_ID_ALLOCATOR_STEP =
+      ConfigOptions.key("tikv.sink.row-id-allocator.step").intType().defaultValue(30000);
+  public static final ConfigOption<Boolean> IGNORE_AUTOINCREMENT_COLUMN_VALUE =
+      ConfigOptions.key("tikv.sink.ignore-autoincrement-column-value")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription(
+              "If true, "
+                  + "for autoincrement column, we will generate value instead of the the actual value. "
+                  + "And if false, the value of autoincrement column can not be null");
+  public static final ConfigOption<Boolean> DEDUPLICATE =
+      ConfigOptions.key("tikv.sink.deduplicate")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription("Whether deduplicate row by unique key");
+  public static final ConfigOption<Long> TASK_START_INTERVAL =
+      ConfigOptions.key("tikv.sink.task-start-interval")
+          .longType()
+          .defaultValue(1000L)
+          .withDescription(
+              "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
 
   // split or offset
-  public static final ConfigOption<String> SOURCE_FAILOVER = optional("tidb.source.failover",
-      "split");
+  public static final ConfigOption<String> SOURCE_FAILOVER =
+      optional("tidb.source.failover", "split");
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
@@ -137,7 +132,9 @@ public class TiDBOptions {
 
   // Options for catalog
   public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS =
-      ConfigOptions.key("tidb.streaming.ignore-parse-errors").booleanType().defaultValue(false)
+      ConfigOptions.key("tidb.streaming.ignore-parse-errors")
+          .booleanType()
+          .defaultValue(false)
           .withDescription(
               "Optional flag to skip change events with parse errors instead of failing;\n"
                   + "fields are set to null in case of errors, false by default.");
@@ -146,7 +143,6 @@ public class TiDBOptions {
   // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
   public static final String METADATA_INCLUDED = "tidb.metadata.included";
   public static final String METADATA_INCLUDED_ALL = "*";
-
 
   /**
    * see {@link org.apache.flink.connector.jdbc.table.JdbcConnectorOptions}
@@ -163,7 +159,6 @@ public class TiDBOptions {
         SINK_BUFFER_FLUSH_MAX_ROWS,
         SINK_BUFFER_FLUSH_INTERVAL,
         SINK_MAX_RETRIES);
-
   }
 
   public static Set<ConfigOption<?>> requiredOptions() {
@@ -173,7 +168,8 @@ public class TiDBOptions {
   public static Set<ConfigOption<?>> optionalOptions() {
     return ImmutableSet.<ConfigOption<?>>builder()
         .addAll(jdbcOptionalOptions())
-        .add(PASSWORD,
+        .add(
+            PASSWORD,
             REPLICA_READ,
             FILTER_PUSH_DOWN,
             MAX_POOL_SIZE,
@@ -191,7 +187,8 @@ public class TiDBOptions {
   }
 
   public enum SinkImpl {
-    JDBC, TIKV;
+    JDBC,
+    TIKV;
 
     public static SinkImpl fromString(String s) {
       for (SinkImpl value : values()) {
@@ -205,7 +202,9 @@ public class TiDBOptions {
   }
 
   public enum SinkTransaction {
-    GLOBAL, MINIBATCH, CHECKPOINT;
+    GLOBAL,
+    MINIBATCH,
+    CHECKPOINT;
 
     public static SinkTransaction fromString(String s) {
       for (SinkTransaction value : values()) {

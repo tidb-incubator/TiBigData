@@ -21,12 +21,12 @@ package io.tidb.bigdata.tidb.types;
 import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.util.Base64;
 import org.tikv.common.exception.CastingException;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.TypeException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 public class BitType extends IntegerType {
   public static final BitType BIT = new BitType(MySQLType.TypeBit);

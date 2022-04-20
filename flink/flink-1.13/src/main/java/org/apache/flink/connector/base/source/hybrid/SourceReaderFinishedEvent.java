@@ -24,24 +24,24 @@ import org.apache.flink.api.connector.source.SourceEvent;
  */
 public class SourceReaderFinishedEvent implements SourceEvent {
 
-    private static final long serialVersionUID = 1L;
-    private final int sourceIndex;
+  private static final long serialVersionUID = 1L;
+  private final int sourceIndex;
 
-    /**
-     * Constructor.
-     *
-     * @param sourceIndex
-     */
-    public SourceReaderFinishedEvent(int sourceIndex) {
-        this.sourceIndex = sourceIndex;
-    }
+  /**
+   * Constructor.
+   *
+   * @param sourceIndex
+   */
+  public SourceReaderFinishedEvent(int sourceIndex) {
+    this.sourceIndex = sourceIndex;
+  }
 
-    public int sourceIndex() {
-        return sourceIndex;
-    }
+  public int sourceIndex() {
+    return sourceIndex;
+  }
 
-    @Override
-    public String toString() {
-        return "SourceReaderFinishedEvent{" + "sourceIndex=" + sourceIndex + '}';
-    }
+  @Override
+  public String toString() {
+    return "SourceReaderFinishedEvent{" + "sourceIndex=" + sourceIndex + '}';
+  }
 }

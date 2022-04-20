@@ -18,7 +18,6 @@ package io.tidb.bigdata.tidb.codec;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import org.tikv.shade.com.google.protobuf.ByteString;
 import io.tidb.bigdata.tidb.codec.Codec.BytesCodec;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import org.tikv.common.Snapshot;
 import org.tikv.common.exception.TiClientInternalException;
 import org.tikv.common.util.Pair;
 import org.tikv.kvproto.Kvrpcpb.KvPair;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 public class MetaCodec {
   protected static final Logger logger = LoggerFactory.getLogger(MetaCodec.class);

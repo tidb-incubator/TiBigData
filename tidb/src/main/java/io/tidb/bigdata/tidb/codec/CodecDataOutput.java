@@ -16,10 +16,10 @@
 
 package io.tidb.bigdata.tidb.codec;
 
-import org.tikv.shade.com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 // A trivial implementation supposed to be replaced
 public class CodecDataOutput implements DataOutput {

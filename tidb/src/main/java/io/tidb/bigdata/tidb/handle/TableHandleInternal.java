@@ -29,10 +29,7 @@ public class TableHandleInternal implements Serializable {
   private final String schemaName;
   private final String tableName;
 
-  public TableHandleInternal(
-      String connectorId,
-      String schemaName,
-      String tableName) {
+  public TableHandleInternal(String connectorId, String schemaName, String tableName) {
     this.connectorId = requireNonNull(connectorId, "connectorId is null");
     this.schemaName = requireNonNull(schemaName, "schemaName is null");
     this.tableName = requireNonNull(tableName, "tableName is null");

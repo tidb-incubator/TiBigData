@@ -18,20 +18,19 @@
 
 package io.tidb.bigdata.tidb.types;
 
-
 import static io.tidb.bigdata.tidb.types.Converter.UTC_TIME_FORMATTER;
 
 import io.tidb.bigdata.tidb.codec.Codec.DateTimeCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.sql.Timestamp;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.LocalDateTime;
 import org.tikv.common.ExtendedDateTime;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 /**
  * Timestamp in TiDB is represented as packed long including year/month and etc. When stored, it is
@@ -68,8 +67,7 @@ public class TimestampType extends AbstractDateTimeType {
     return convertToMysqlLocalTimestamp(value);
   }
 
-  private Timestamp convertToMysqlLocalTimestamp(Object value)
-      throws ConvertNotSupportException {
+  private Timestamp convertToMysqlLocalTimestamp(Object value) throws ConvertNotSupportException {
     Timestamp result;
     if (value instanceof Long) {
       throw new ConvertNotSupportException(value.getClass().getName(), this.getClass().getName());

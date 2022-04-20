@@ -21,13 +21,12 @@ import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.EnumCodec;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.TypeException;
 import org.tikv.common.exception.UnsupportedTypeException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
-
 
 public class EnumType extends DataType {
   public static final EnumType ENUM = new EnumType(MySQLType.TypeEnum);

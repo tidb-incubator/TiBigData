@@ -46,12 +46,10 @@ public class MockDiscoverer implements Discoverer {
   }
 
   @Override
-  public void succeeded(String backend) {
-  }
+  public void succeeded(String backend) {}
 
   @Override
-  public void failed(String backend) {
-  }
+  public void failed(String backend) {}
 
   @Override
   public long getLastReloadTime() {

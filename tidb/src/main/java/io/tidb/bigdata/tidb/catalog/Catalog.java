@@ -50,8 +50,7 @@ public class Catalog implements AutoCloseable {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   private synchronized void reloadCache(boolean loadTables) {
     Snapshot snapshot = snapshotProvider.get();

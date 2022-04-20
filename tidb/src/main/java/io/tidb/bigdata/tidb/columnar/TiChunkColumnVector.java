@@ -18,6 +18,7 @@ package io.tidb.bigdata.tidb.columnar;
 
 import com.google.common.primitives.UnsignedLong;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.MyDecimal;
 import io.tidb.bigdata.tidb.types.AbstractDateTimeType;
 import io.tidb.bigdata.tidb.types.BitType;
 import io.tidb.bigdata.tidb.types.DataType;
@@ -36,7 +37,6 @@ import java.time.ZonedDateTime;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import  io.tidb.bigdata.tidb.codec.MyDecimal;
 import org.tikv.common.util.JsonUtils;
 
 /** An implementation of {@link TiColumnVector}. All data is stored in TiDB chunk format. */

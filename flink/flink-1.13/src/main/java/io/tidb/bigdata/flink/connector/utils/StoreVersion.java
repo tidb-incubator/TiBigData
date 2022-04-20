@@ -65,10 +65,13 @@ public class StoreVersion {
                 store ->
                     !isTiFlash(store)
                         && (store.getState() == Metapb.StoreState.Up
-                        || store.getState() == Metapb.StoreState.Offline))
+                            || store.getState() == Metapb.StoreState.Offline))
             .collect(Collectors.toList());
 
-    return storeList.stream().map(store -> new StoreVersion(store.getVersion())).collect(Collectors.toList());
+    return storeList
+        .stream()
+        .map(store -> new StoreVersion(store.getVersion()))
+        .collect(Collectors.toList());
   }
 
   private static boolean isTiFlash(Metapb.Store store) {

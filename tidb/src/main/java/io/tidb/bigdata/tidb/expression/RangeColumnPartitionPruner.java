@@ -61,8 +61,7 @@ public class RangeColumnPartitionPruner
   }
 
   @Override
-  protected Set<Integer> visit(
-      LogicalBinaryExpression node, LogicalBinaryExpression parent) {
+  protected Set<Integer> visit(LogicalBinaryExpression node, LogicalBinaryExpression parent) {
     Expression left = node.getLeft();
     Expression right = node.getRight();
     Set<Integer> partsIsCoveredByLeft = left.accept(this, node);

@@ -24,6 +24,8 @@ import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
 import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,12 +47,14 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import org.tikv.common.meta.TiTableInfo;
 
-public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSource,
-    SupportsProjectionPushDown, SupportsFilterPushDown, SupportsLimitPushDown,
-    SupportsReadingMetadata {
+public class TiDBDynamicTableSource
+    implements ScanTableSource,
+        LookupTableSource,
+        SupportsProjectionPushDown,
+        SupportsFilterPushDown,
+        SupportsLimitPushDown,
+        SupportsReadingMetadata {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
@@ -62,13 +66,15 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
   private Integer limit;
   private Expression expression;
 
-  public TiDBDynamicTableSource(ResolvedCatalogTable table,
-      ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
+  public TiDBDynamicTableSource(
+      ResolvedCatalogTable table, ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
     this(table, changelogMode, new LookupTableSourceHelper(lookupOptions));
   }
 
-  private TiDBDynamicTableSource(ResolvedCatalogTable table,
-      ChangelogMode changelogMode, LookupTableSourceHelper lookupTableSourceHelper) {
+  private TiDBDynamicTableSource(
+      ResolvedCatalogTable table,
+      ChangelogMode changelogMode,
+      LookupTableSourceHelper lookupTableSourceHelper) {
     this.table = table;
     this.changelogMode = changelogMode;
     this.lookupTableSourceHelper = lookupTableSourceHelper;
@@ -124,8 +130,8 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
       try (ClientSession clientSession = ClientSession.create(clientConfig)) {
         tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
-        List<StoreVersion> tiKVVersions = StoreVersion.fetchTiKVVersions(
-            clientSession.getTiSession().getPDClient());
+        List<StoreVersion> tiKVVersions =
+            StoreVersion.fetchTiKVVersions(clientSession.getTiSession().getPDClient());
         this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
       } catch (Exception e) {
         throw new IllegalStateException("can not get table", e);

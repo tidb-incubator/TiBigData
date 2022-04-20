@@ -21,9 +21,7 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.factories.CatalogFactory;
 
-/**
- * Factory for {@link TiDBCatalog}
- */
+/** Factory for {@link TiDBCatalog} */
 public class TiDBCatalogFactory implements CatalogFactory {
 
   public static final String IDENTIFIER = "tidb";
@@ -49,5 +47,4 @@ public class TiDBCatalogFactory implements CatalogFactory {
   public Catalog createCatalog(Context context) {
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
-
 }

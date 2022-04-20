@@ -27,98 +27,96 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 /** Source split that wraps the actual split type. */
 public class HybridSourceSplit implements SourceSplit {
 
-    private final byte[] wrappedSplitBytes;
-    private final int wrappedSplitSerializerVersion;
-    private final int sourceIndex;
-    private final String splitId;
+  private final byte[] wrappedSplitBytes;
+  private final int wrappedSplitSerializerVersion;
+  private final int sourceIndex;
+  private final String splitId;
 
-    public HybridSourceSplit(
-            int sourceIndex, byte[] wrappedSplit, int serializerVersion, String splitId) {
-        this.sourceIndex = sourceIndex;
-        this.wrappedSplitBytes = wrappedSplit;
-        this.wrappedSplitSerializerVersion = serializerVersion;
-        this.splitId = splitId;
-    }
+  public HybridSourceSplit(
+      int sourceIndex, byte[] wrappedSplit, int serializerVersion, String splitId) {
+    this.sourceIndex = sourceIndex;
+    this.wrappedSplitBytes = wrappedSplit;
+    this.wrappedSplitSerializerVersion = serializerVersion;
+    this.splitId = splitId;
+  }
 
-    public int sourceIndex() {
-        return this.sourceIndex;
-    }
+  public int sourceIndex() {
+    return this.sourceIndex;
+  }
 
-    public byte[] wrappedSplitBytes() {
-        return wrappedSplitBytes;
-    }
+  public byte[] wrappedSplitBytes() {
+    return wrappedSplitBytes;
+  }
 
-    public int wrappedSplitSerializerVersion() {
-        return wrappedSplitSerializerVersion;
-    }
+  public int wrappedSplitSerializerVersion() {
+    return wrappedSplitSerializerVersion;
+  }
 
-    @Override
-    public String splitId() {
-        return splitId;
-    }
+  @Override
+  public String splitId() {
+    return splitId;
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        HybridSourceSplit that = (HybridSourceSplit) o;
-        return sourceIndex == that.sourceIndex
-                && Arrays.equals(wrappedSplitBytes, that.wrappedSplitBytes);
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    HybridSourceSplit that = (HybridSourceSplit) o;
+    return sourceIndex == that.sourceIndex
+        && Arrays.equals(wrappedSplitBytes, that.wrappedSplitBytes);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(wrappedSplitBytes, sourceIndex);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(wrappedSplitBytes, sourceIndex);
+  }
 
-    @Override
-    public String toString() {
-        return "HybridSourceSplit{" + "sourceIndex=" + sourceIndex + ", splitId=" + splitId + '}';
-    }
+  @Override
+  public String toString() {
+    return "HybridSourceSplit{" + "sourceIndex=" + sourceIndex + ", splitId=" + splitId + '}';
+  }
 
-    public static List<HybridSourceSplit> wrapSplits(
-            List<? extends SourceSplit> state, int readerIndex, SwitchedSources switchedSources) {
-        List<HybridSourceSplit> wrappedSplits = new ArrayList<>(state.size());
-        for (SourceSplit split : state) {
-            wrappedSplits.add(wrapSplit(split, readerIndex, switchedSources));
-        }
-        return wrappedSplits;
+  public static List<HybridSourceSplit> wrapSplits(
+      List<? extends SourceSplit> state, int readerIndex, SwitchedSources switchedSources) {
+    List<HybridSourceSplit> wrappedSplits = new ArrayList<>(state.size());
+    for (SourceSplit split : state) {
+      wrappedSplits.add(wrapSplit(split, readerIndex, switchedSources));
     }
+    return wrappedSplits;
+  }
 
-    public static HybridSourceSplit wrapSplit(
-            SourceSplit split, int sourceIndex, SwitchedSources switchedSources) {
-        try {
-            SimpleVersionedSerializer<SourceSplit> serializer =
-                    switchedSources.serializerOf(sourceIndex);
-            byte[] serialized = serializer.serialize(split);
-            return new HybridSourceSplit(
-                    sourceIndex, serialized, serializer.getVersion(), split.splitId());
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+  public static HybridSourceSplit wrapSplit(
+      SourceSplit split, int sourceIndex, SwitchedSources switchedSources) {
+    try {
+      SimpleVersionedSerializer<SourceSplit> serializer = switchedSources.serializerOf(sourceIndex);
+      byte[] serialized = serializer.serialize(split);
+      return new HybridSourceSplit(
+          sourceIndex, serialized, serializer.getVersion(), split.splitId());
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
+  }
 
-    public static List<SourceSplit> unwrapSplits(
-            List<HybridSourceSplit> splits, SwitchedSources switchedSources) {
-        List<SourceSplit> unwrappedSplits = new ArrayList<>(splits.size());
-        for (HybridSourceSplit split : splits) {
-            unwrappedSplits.add(unwrapSplit(split, switchedSources));
-        }
-        return unwrappedSplits;
+  public static List<SourceSplit> unwrapSplits(
+      List<HybridSourceSplit> splits, SwitchedSources switchedSources) {
+    List<SourceSplit> unwrappedSplits = new ArrayList<>(splits.size());
+    for (HybridSourceSplit split : splits) {
+      unwrappedSplits.add(unwrapSplit(split, switchedSources));
     }
+    return unwrappedSplits;
+  }
 
-    public static SourceSplit unwrapSplit(
-            HybridSourceSplit split, SwitchedSources switchedSources) {
-        try {
-            return switchedSources
-                    .serializerOf(split.sourceIndex())
-                    .deserialize(split.wrappedSplitSerializerVersion(), split.wrappedSplitBytes());
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+  public static SourceSplit unwrapSplit(HybridSourceSplit split, SwitchedSources switchedSources) {
+    try {
+      return switchedSources
+          .serializerOf(split.sourceIndex())
+          .deserialize(split.wrappedSplitSerializerVersion(), split.wrappedSplitBytes());
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
     }
+  }
 }

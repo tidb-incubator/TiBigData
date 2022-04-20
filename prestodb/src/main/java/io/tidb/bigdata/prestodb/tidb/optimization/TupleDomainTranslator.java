@@ -31,15 +31,15 @@ import io.tidb.bigdata.prestodb.tidb.TiDBColumnHandle;
 import io.tidb.bigdata.prestodb.tidb.TiDBSession;
 import io.tidb.bigdata.prestodb.tidb.TiDBTableHandle;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import  io.tidb.bigdata.tidb.expression.Expression;
 
 public final class TupleDomainTranslator {
 
-  private static Expression buildConjunctions(TiDBColumnHandle column, Domain domain,
-      Expression expression) {
+  private static Expression buildConjunctions(
+      TiDBColumnHandle column, Domain domain, Expression expression) {
     Expression columnRef = column.createColumnExpression();
     ValueSet values = domain.getValues();
     if (values.isNone()) {
@@ -60,9 +60,11 @@ public final class TupleDomainTranslator {
     for (Range range : values.getRanges().getOrderedRanges()) {
       checkState(!range.isAll());
       if (range.isSingleValue()) {
-        disjunctions = Expressions.or(Expressions
-                .equal(columnRef, column.createConstantExpression(range.getLow().getValue())),
-            disjunctions);
+        disjunctions =
+            Expressions.or(
+                Expressions.equal(
+                    columnRef, column.createConstantExpression(range.getLow().getValue())),
+                disjunctions);
       } else {
         Marker low = range.getLow();
         Marker high = range.getHigh();
@@ -70,14 +72,18 @@ public final class TupleDomainTranslator {
         if (!low.isLowerUnbounded()) {
           switch (low.getBound()) {
             case ABOVE:
-              rangeConjunctions = Expressions.and(Expressions
-                      .greaterThan(columnRef, column.createConstantExpression(low.getValue())),
-                  rangeConjunctions);
+              rangeConjunctions =
+                  Expressions.and(
+                      Expressions.greaterThan(
+                          columnRef, column.createConstantExpression(low.getValue())),
+                      rangeConjunctions);
               break;
             case EXACTLY:
-              rangeConjunctions = Expressions.and(Expressions
-                      .greaterEqual(columnRef, column.createConstantExpression(low.getValue())),
-                  rangeConjunctions);
+              rangeConjunctions =
+                  Expressions.and(
+                      Expressions.greaterEqual(
+                          columnRef, column.createConstantExpression(low.getValue())),
+                      rangeConjunctions);
               break;
             case BELOW:
               throw new IllegalArgumentException("Low marker should never use BELOW bound");
@@ -90,14 +96,18 @@ public final class TupleDomainTranslator {
             case ABOVE:
               throw new IllegalArgumentException("High marker should never use ABOVE bound");
             case EXACTLY:
-              rangeConjunctions = Expressions.and(Expressions
-                      .lessEqual(columnRef, column.createConstantExpression(high.getValue())),
-                  rangeConjunctions);
+              rangeConjunctions =
+                  Expressions.and(
+                      Expressions.lessEqual(
+                          columnRef, column.createConstantExpression(high.getValue())),
+                      rangeConjunctions);
               break;
             case BELOW:
-              rangeConjunctions = Expressions.and(
-                  Expressions.lessThan(columnRef, column.createConstantExpression(high.getValue())),
-                  rangeConjunctions);
+              rangeConjunctions =
+                  Expressions.and(
+                      Expressions.lessThan(
+                          columnRef, column.createConstantExpression(high.getValue())),
+                      rangeConjunctions);
               break;
             default:
               throw new AssertionError("Unhandled bound: " + high.getBound());
@@ -111,24 +121,33 @@ public final class TupleDomainTranslator {
 
   private static Map<TiDBColumnHandle, Domain> translatableDomains(
       Map<ColumnHandle, Domain> domains) {
-    return domains.entrySet().stream()
+    return domains
+        .entrySet()
+        .stream()
         .filter(e -> isPushdownType(((TiDBColumnHandle) e.getKey()).getPrestoType()))
         .collect(toImmutableMap(e -> (TiDBColumnHandle) e.getKey(), Map.Entry::getValue));
   }
 
-  public static Optional<Expression> translate(TiDBSession session, TiDBTableHandle table,
-      TupleDomain<ColumnHandle> tupleDomain) {
-    return tupleDomain.getDomains().map(domains -> {
-      Expression expression = null;
-      Map<TiDBColumnHandle, Domain> translatable = translatableDomains(domains);
-      List<String> translatableColumns = translatable.keySet().stream()
-          .map(TiDBColumnHandle::getName).collect(toImmutableList());
-      for (Map.Entry<TiDBColumnHandle, Domain> entry : translatable.entrySet()) {
-        TiDBColumnHandle column = (TiDBColumnHandle) entry.getKey();
-        Domain domain = entry.getValue();
-        expression = buildConjunctions(column, domain, expression);
-      }
-      return expression;
-    });
+  public static Optional<Expression> translate(
+      TiDBSession session, TiDBTableHandle table, TupleDomain<ColumnHandle> tupleDomain) {
+    return tupleDomain
+        .getDomains()
+        .map(
+            domains -> {
+              Expression expression = null;
+              Map<TiDBColumnHandle, Domain> translatable = translatableDomains(domains);
+              List<String> translatableColumns =
+                  translatable
+                      .keySet()
+                      .stream()
+                      .map(TiDBColumnHandle::getName)
+                      .collect(toImmutableList());
+              for (Map.Entry<TiDBColumnHandle, Domain> entry : translatable.entrySet()) {
+                TiDBColumnHandle column = (TiDBColumnHandle) entry.getKey();
+                Domain domain = entry.getValue();
+                expression = buildConjunctions(column, domain, expression);
+              }
+              return expression;
+            });
   }
 }

@@ -33,7 +33,6 @@ import org.tikv.common.ExtendedDateTime;
 import org.tikv.common.exception.CodecException;
 import org.tikv.common.util.JsonUtils;
 
-
 public class RowDecoderV2 {
 
   private static final long SIGN_MASK = 0x8000000000000000L;

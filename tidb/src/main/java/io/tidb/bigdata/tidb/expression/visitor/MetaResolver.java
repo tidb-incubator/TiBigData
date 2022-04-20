@@ -21,9 +21,9 @@ import io.tidb.bigdata.tidb.expression.ColumnRef;
 import io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
 import io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression.NormalizedPredicate;
 import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.List;
 import java.util.Objects;
-import io.tidb.bigdata.tidb.meta.TiTableInfo;
 
 public class MetaResolver extends DefaultVisitor<Void, Expression> {
   private final TiTableInfo table;

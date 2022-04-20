@@ -70,10 +70,11 @@ public class TiDBWriteHelper implements AutoCloseable {
   private Pair<List<byte[]>, List<byte[]>> transformKeyValue(List<BytePairWrapper> pairs) {
     List<byte[]> keys = new ArrayList<>();
     List<byte[]> values = new ArrayList<>();
-    pairs.forEach(pair -> {
-      keys.add(pair.getKey());
-      values.add(pair.getValue());
-    });
+    pairs.forEach(
+        pair -> {
+          keys.add(pair.getKey());
+          values.add(pair.getValue());
+        });
     return new Pair<>(keys, values);
   }
 
@@ -183,5 +184,4 @@ public class TiDBWriteHelper implements AutoCloseable {
       }
     }
   }
-
 }

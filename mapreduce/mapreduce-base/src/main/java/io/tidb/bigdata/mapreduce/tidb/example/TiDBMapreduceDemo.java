@@ -41,23 +41,28 @@ public class TiDBMapreduceDemo {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
-    TiDBConfiguration.configureDB(conf,
-        cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
+    TiDBConfiguration.configureDB(
+        conf, cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
     if (cmd.clusterTlsEnabled) {
       if (cmd.clusterUseJks) {
-        TiDBConfiguration.clusterTlsJks(conf,
+        TiDBConfiguration.clusterTlsJks(
+            conf,
             cmd.clusterJksKeyPath,
             cmd.clusterJksKeyPassword,
             cmd.clusterJksTrustPath,
             cmd.clusterJksTrustPassword);
       } else {
-        TiDBConfiguration.clusterTls(conf,
-            cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
+        TiDBConfiguration.clusterTls(conf, cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
       }
     }
     Job job = Job.getInstance(conf, "MRFormTiDB");
-    TiDBInputFormat.setInput(job, TiDBRowData.class, cmd.tableName,
-        cmd.fields.isEmpty() ? null : cmd.fields.toArray(new String[0]), cmd.limit, cmd.timestamp);
+    TiDBInputFormat.setInput(
+        job,
+        TiDBRowData.class,
+        cmd.tableName,
+        cmd.fields.isEmpty() ? null : cmd.fields.toArray(new String[0]),
+        cmd.limit,
+        cmd.timestamp);
     job.setJarByClass(TiDBMapreduceDemo.class);
     job.setInputFormatClass(TiDBInputFormat.class);
     job.setMapperClass(TiDBMapper.class);
@@ -67,8 +72,8 @@ public class TiDBMapreduceDemo {
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
 
-  public static class TiDBMapper extends
-      Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
+  public static class TiDBMapper
+      extends Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
     @Override
     protected void setup(Context context) {
       System.out.println("job attempt ID : " + context.getTaskAttemptID());
@@ -102,7 +107,6 @@ public class TiDBMapreduceDemo {
     }
   }
 
-
   public static class TiDBRowData implements TiDBWritable {
     private Integer c1;
     private Integer c2;
@@ -134,10 +138,7 @@ public class TiDBMapreduceDemo {
     private String c28;
     private String c29;
 
-
-    public TiDBRowData() {
-
-    }
+    public TiDBRowData() {}
 
     @Override
     public void readFields(ResultSet resultSet) throws SQLException {

@@ -18,14 +18,14 @@ package io.tidb.bigdata.trino.tidb;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import io.tidb.bigdata.tidb.Wrapper;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import io.trino.spi.connector.ConnectorInsertTableHandle;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 import io.trino.spi.connector.ConnectorTableHandle;
 
-public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
-    ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
+public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
+    implements ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
 
   @JsonCreator
   public TiDBTableHandle(

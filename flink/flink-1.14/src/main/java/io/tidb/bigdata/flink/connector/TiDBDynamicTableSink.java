@@ -30,7 +30,10 @@ public class TiDBDynamicTableSink implements DynamicTableSink {
   private final String tableName;
   private final TiDBSinkOptions sinkOptions;
 
-  public TiDBDynamicTableSink(String databaseName, String tableName, ResolvedCatalogTable table,
+  public TiDBDynamicTableSink(
+      String databaseName,
+      String tableName,
+      ResolvedCatalogTable table,
       TiDBSinkOptions tiDBSinkOptions) {
     this.table = table;
     this.databaseName = databaseName;

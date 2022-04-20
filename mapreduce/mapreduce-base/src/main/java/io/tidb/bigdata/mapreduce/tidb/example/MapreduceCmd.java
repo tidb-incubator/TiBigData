@@ -22,56 +22,95 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MapreduceCmd {
-  @Parameter(names = {"-field", "-f"}, description = "fields need query")
+  @Parameter(
+      names = {"-field", "-f"},
+      description = "fields need query")
   public List<String> fields = new ArrayList<>();
 
-  @Parameter(names = {"-databaseurl", "-du"}, description = "database url", required = true)
+  @Parameter(
+      names = {"-databaseurl", "-du"},
+      description = "database url",
+      required = true)
   public String databaseUrl;
 
-  @Parameter(names = {"-username", "-u"}, description = "username", required = true)
+  @Parameter(
+      names = {"-username", "-u"},
+      description = "username",
+      required = true)
   public String username;
 
-  @Parameter(names = {"-password",
-      "-p"}, description = "password", password = true, required = true)
+  @Parameter(
+      names = {"-password", "-p"},
+      description = "password",
+      password = true,
+      required = true)
   public String password;
 
-  @Parameter(names = {"-clusterTls"}, description = "enable cluster TLS")
+  @Parameter(
+      names = {"-clusterTls"},
+      description = "enable cluster TLS")
   public boolean clusterTlsEnabled = false;
 
-  @Parameter(names = {"-clusterTlsCA"}, description = "cluster TLS CA")
+  @Parameter(
+      names = {"-clusterTlsCA"},
+      description = "cluster TLS CA")
   public String clusterTlsCA;
 
-  @Parameter(names = {"-clusterTlsCert"}, description = "cluster TLS certificate")
+  @Parameter(
+      names = {"-clusterTlsCert"},
+      description = "cluster TLS certificate")
   public String clusterTlsCert;
 
-  @Parameter(names = {"-clusterTlsKey"}, description = "cluster TLS key")
+  @Parameter(
+      names = {"-clusterTlsKey"},
+      description = "cluster TLS key")
   public String clusterTlsKey;
 
-  @Parameter(names = {"-clusteruseJks"}, description = "use java key store")
+  @Parameter(
+      names = {"-clusteruseJks"},
+      description = "use java key store")
   public boolean clusterUseJks = false;
 
-  @Parameter(names = {"-clusterJksKeyPath"}, description = "cluster Jks Key Path")
+  @Parameter(
+      names = {"-clusterJksKeyPath"},
+      description = "cluster Jks Key Path")
   public String clusterJksKeyPath;
 
-  @Parameter(names = {"-clusterJksKeyPassword"}, description = "cluster Jks Key password")
+  @Parameter(
+      names = {"-clusterJksKeyPassword"},
+      description = "cluster Jks Key password")
   public String clusterJksKeyPassword;
 
-  @Parameter(names = {"-clusterJksTrustPath"}, description = "cluster Jks Trust Path")
+  @Parameter(
+      names = {"-clusterJksTrustPath"},
+      description = "cluster Jks Trust Path")
   public String clusterJksTrustPath;
 
-  @Parameter(names = {"-clusterJksTrustPassword"}, description = "cluster Jks Trust Password")
+  @Parameter(
+      names = {"-clusterJksTrustPassword"},
+      description = "cluster Jks Trust Password")
   public String clusterJksTrustPassword;
 
-  @Parameter(names = {"-databasename", "-dn"}, description = "database name", required = true)
+  @Parameter(
+      names = {"-databasename", "-dn"},
+      description = "database name",
+      required = true)
   public String databaseName;
 
-  @Parameter(names = {"-tablename", "-t"}, description = "table name", required = true)
+  @Parameter(
+      names = {"-tablename", "-t"},
+      description = "table name",
+      required = true)
   public String tableName;
 
-  @Parameter(names = {"-timestamp", "-ts"}, description = "TiDB snapshot timestamp")
+  @Parameter(
+      names = {"-timestamp", "-ts"},
+      description = "TiDB snapshot timestamp")
   public String timestamp;
 
-  @Parameter(names = {"-limit", "-l"}, description = "record limit per mapper")
+  @Parameter(
+      names = {"-limit", "-l"},
+      description = "record limit per mapper")
   public Integer limit = Integer.MAX_VALUE;
 
   public MapreduceCmd(String[] args) {

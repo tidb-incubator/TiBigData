@@ -72,8 +72,7 @@ public final class DDLValue implements Value {
 
   @Override
   public String toJson(JacksonFactory factory) {
-    return factory.toJson(
-        factory.createObject().put("q", query).put("t", type.code()));
+    return factory.toJson(factory.createObject().put("q", query).put("t", type.code()));
   }
 
   public enum Type {

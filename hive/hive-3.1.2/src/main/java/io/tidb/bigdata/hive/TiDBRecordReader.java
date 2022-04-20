@@ -18,10 +18,11 @@ package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -37,7 +38,6 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.types.DataType;
 
 public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable> {
 
@@ -52,7 +52,6 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   private Integer currentSplitIndex;
   private RecordCursorInternal currentCursor;
   private List<ColumnHandleInternal> columns;
-
 
   public TiDBRecordReader(InputSplit split, Map<String, String> properties) {
     this.currentSplitIndex = 0;
@@ -76,16 +75,19 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   private void initCurrentCursor() {
     SplitInternal splitInternal = splitInternals.get(currentSplitIndex);
 
-    columns = clientSession.getTableColumnsMust(splitInternal.getTable().getSchemaName(),
-        splitInternal.getTable().getTableName());
-    TiTimestamp timestamp = getOptionalVersion().orElseGet(
-        () -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
-    RecordSetInternal recordSetInternal = new RecordSetInternal(
-        clientSession,
-        splitInternal,
-        columns,
-        Optional.empty(),
-        Optional.ofNullable(timestamp));
+    columns =
+        clientSession.getTableColumnsMust(
+            splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
+    TiTimestamp timestamp =
+        getOptionalVersion()
+            .orElseGet(() -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
+    RecordSetInternal recordSetInternal =
+        new RecordSetInternal(
+            clientSession,
+            splitInternal,
+            columns,
+            Optional.empty(),
+            Optional.ofNullable(timestamp));
     currentCursor = recordSetInternal.cursor();
   }
 
@@ -148,15 +150,13 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   }
 
   private Optional<TiTimestamp> getOptionalTimestamp() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNotEmpty)
         .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
   }
 
   private Optional<TiTimestamp> getOptionalVersion() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
         .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));

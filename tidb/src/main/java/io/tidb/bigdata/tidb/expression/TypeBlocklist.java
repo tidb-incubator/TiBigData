@@ -44,9 +44,9 @@ import static io.tidb.bigdata.tidb.types.MySQLType.TypeVarString;
 import static io.tidb.bigdata.tidb.types.MySQLType.TypeVarchar;
 import static io.tidb.bigdata.tidb.types.MySQLType.TypeYear;
 
+import io.tidb.bigdata.tidb.types.MySQLType;
 import java.util.HashMap;
 import java.util.Map;
-import io.tidb.bigdata.tidb.types.MySQLType;
 
 public class TypeBlocklist extends Blocklist {
   private static final Map<MySQLType, String> typeToMySQLMap = initialTypeMap();

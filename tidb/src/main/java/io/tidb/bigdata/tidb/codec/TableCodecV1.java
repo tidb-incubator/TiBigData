@@ -20,18 +20,16 @@ import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.ObjectRowImpl;
+import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType.EncodeType;
 import io.tidb.bigdata.tidb.types.IntegerType;
 import java.util.HashMap;
 import java.util.List;
-import io.tidb.bigdata.tidb.row.ObjectRowImpl;
-import io.tidb.bigdata.tidb.row.Row;
 
 public class TableCodecV1 {
 
-  /**
-   * Row layout: colID1, value1, colID2, value2, .....
-   */
+  /** Row layout: colID1, value1, colID2, value2, ..... */
   protected static byte[] encodeRow(
       List<TiColumnInfo> columnInfos, Object[] values, boolean isPkHandle) {
     CodecDataOutput cdo = new CodecDataOutput();
@@ -48,7 +46,7 @@ public class TableCodecV1 {
 
     // We could not set nil value into kv.
     if (cdo.toBytes().length == 0) {
-      return new byte[]{Codec.NULL_FLAG};
+      return new byte[] {Codec.NULL_FLAG};
     }
 
     return cdo.toBytes();

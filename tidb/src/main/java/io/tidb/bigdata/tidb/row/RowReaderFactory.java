@@ -18,7 +18,6 @@
 
 package io.tidb.bigdata.tidb.row;
 
-
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
 
 public class RowReaderFactory {

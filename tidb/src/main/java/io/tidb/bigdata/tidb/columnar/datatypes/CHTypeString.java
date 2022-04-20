@@ -25,8 +25,8 @@ import io.tidb.bigdata.tidb.codec.CodecDataInput;
 import io.tidb.bigdata.tidb.columnar.TiBlockColumnVector;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.StringType;
-import java.nio.ByteBuffer;
 import io.tidb.bigdata.tidb.util.MemoryUtil;
+import java.nio.ByteBuffer;
 
 public class CHTypeString extends CHType {
   // Use to prevent frequently reallocate the chars buffer.

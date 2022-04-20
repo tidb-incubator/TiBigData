@@ -21,9 +21,9 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Objects;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public class AggregateFunction extends Expression {
   private final FunctionType type;

@@ -17,7 +17,8 @@
 package io.tidb.bigdata.tidb;
 
 public enum TiDBWriteMode {
-  APPEND, UPSERT;
+  APPEND,
+  UPSERT;
 
   public static TiDBWriteMode fromString(String string) {
     for (TiDBWriteMode value : TiDBWriteMode.values()) {

@@ -36,9 +36,11 @@ import com.pingcap.tidb.tipb.Limit;
 import com.pingcap.tidb.tipb.Selection;
 import com.pingcap.tidb.tipb.TableScan;
 import com.pingcap.tidb.tipb.TopN;
+import io.tidb.bigdata.tidb.codec.KeyUtils;
 import io.tidb.bigdata.tidb.expression.AggregateFunction;
 import io.tidb.bigdata.tidb.expression.ByItem;
 import io.tidb.bigdata.tidb.expression.ColumnRef;
+import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.expression.visitor.ProtoConverter;
 import io.tidb.bigdata.tidb.key.RowKey;
 import io.tidb.bigdata.tidb.predicates.PredicateUtils;
@@ -56,10 +58,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-import  io.tidb.bigdata.tidb.codec.KeyUtils;
 import org.tikv.common.exception.DAGRequestException;
 import org.tikv.common.exception.TiClientInternalException;
-import io.tidb.bigdata.tidb.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.region.TiStoreType;
 import org.tikv.common.util.KeyRangeUtils;
@@ -237,8 +237,7 @@ public class TiDAGRequest implements Serializable {
    * Selection > Aggregation > TopN/Limit a DAGRequest must contain one and only one TableScan or
    * IndexScan.
    *
-   * @param buildIndexScan whether the dagRequest to build should be an {@link
-   *     IndexScan}
+   * @param buildIndexScan whether the dagRequest to build should be an {@link IndexScan}
    * @return final DAGRequest built
    */
   private DAGRequest.Builder buildScan(boolean buildIndexScan, List<Integer> outputOffsets) {

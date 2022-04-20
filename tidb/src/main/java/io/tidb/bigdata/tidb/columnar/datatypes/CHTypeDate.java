@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.columnar.datatypes;
 
-
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.DateType;
 

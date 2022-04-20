@@ -19,13 +19,6 @@ package io.tidb.bigdata.tidb.expression;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.UnsignedLong;
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Objects;
-import org.joda.time.DateTime;
-import org.tikv.common.exception.TiExpressionException;
 import io.tidb.bigdata.tidb.types.BytesType;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.DateTimeType;
@@ -35,6 +28,13 @@ import io.tidb.bigdata.tidb.types.IntegerType;
 import io.tidb.bigdata.tidb.types.RealType;
 import io.tidb.bigdata.tidb.types.StringType;
 import io.tidb.bigdata.tidb.types.TimestampType;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.Objects;
+import org.joda.time.DateTime;
+import org.tikv.common.exception.TiExpressionException;
 
 // Refactor needed.
 // Refer to https://github.com/pingcap/tipb/blob/master/go-tipb/expression.pb.go

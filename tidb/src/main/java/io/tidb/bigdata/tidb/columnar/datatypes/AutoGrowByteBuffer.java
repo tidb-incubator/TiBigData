@@ -17,8 +17,8 @@
 package io.tidb.bigdata.tidb.columnar.datatypes;
 
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import java.nio.ByteBuffer;
 import io.tidb.bigdata.tidb.util.MemoryUtil;
+import java.nio.ByteBuffer;
 
 public class AutoGrowByteBuffer {
   private final ByteBuffer initBuf;

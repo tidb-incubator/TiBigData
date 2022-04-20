@@ -19,19 +19,17 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
 
 @Category(IntegrationTest.class)
 public class FilterPushDownNullTest extends FilterPushDownTestBase {
 
-  /**
-   * Filters shot will return correct rows, and filters missed will return empty row list.
-   */
+  /** Filters shot will return correct rows, and filters missed will return empty row list. */
   @Test
   public void testSupportedFilter() {
     List<Row> rows = validator.rows();
@@ -45,7 +43,5 @@ public class FilterPushDownNullTest extends FilterPushDownTestBase {
     // NOT NULL
     expression = Expressions.not(Expressions.isNull(Expressions.column(column, type)));
     validator.doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
-
   }
-
 }

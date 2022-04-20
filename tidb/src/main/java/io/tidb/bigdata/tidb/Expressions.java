@@ -19,19 +19,19 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.Preconditions.checkState;
 import static io.tidb.bigdata.tidb.types.IntegerType.TINYINT;
 
+import io.tidb.bigdata.tidb.expression.ArithmeticBinaryExpression;
+import io.tidb.bigdata.tidb.expression.ColumnRef;
+import io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
+import io.tidb.bigdata.tidb.expression.Constant;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.expression.IsNull;
+import io.tidb.bigdata.tidb.expression.LogicalBinaryExpression;
+import io.tidb.bigdata.tidb.expression.Not;
+import io.tidb.bigdata.tidb.expression.StringRegExpression;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
-import  io.tidb.bigdata.tidb.expression.ArithmeticBinaryExpression;
-import  io.tidb.bigdata.tidb.expression.ColumnRef;
-import  io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
-import  io.tidb.bigdata.tidb.expression.Constant;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import  io.tidb.bigdata.tidb.expression.IsNull;
-import  io.tidb.bigdata.tidb.expression.LogicalBinaryExpression;
-import  io.tidb.bigdata.tidb.expression.Not;
-import  io.tidb.bigdata.tidb.expression.StringRegExpression;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public final class Expressions {
 

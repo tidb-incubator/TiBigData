@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.meta;
 
-
 import org.tikv.common.exception.TiClientInternalException;
 
 public enum SchemaState {

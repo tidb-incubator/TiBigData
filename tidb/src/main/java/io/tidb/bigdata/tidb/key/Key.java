@@ -20,13 +20,13 @@ import static io.tidb.bigdata.tidb.codec.KeyUtils.formatBytes;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.primitives.Bytes;
-import org.tikv.shade.com.google.protobuf.ByteString;
 import io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.util.LogDesensitization;
 import java.util.Arrays;
 import javax.annotation.Nonnull;
 import org.tikv.common.util.FastByteComparisons;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 public class Key implements Comparable<Key> {
 
@@ -34,7 +34,7 @@ public class Key implements Comparable<Key> {
   public static final Key NULL = createNull();
   public static final Key MIN = createTypelessMin();
   public static final Key MAX = createTypelessMax();
-  protected static final byte[] TBL_PREFIX = new byte[]{'t'};
+  protected static final byte[] TBL_PREFIX = new byte[] {'t'};
   protected final byte[] value;
   protected final int infFlag;
 

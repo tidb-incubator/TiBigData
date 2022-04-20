@@ -23,13 +23,12 @@ import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.DecimalCodec;
 import io.tidb.bigdata.tidb.codec.Codec.RealCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.InvalidCodecFormatException;
 import org.tikv.common.exception.TypeException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
-
 
 public class RealType extends DataType {
   public static final RealType DOUBLE = new RealType(MySQLType.TypeDouble);

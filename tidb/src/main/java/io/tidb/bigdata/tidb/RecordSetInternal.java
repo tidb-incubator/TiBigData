@@ -23,12 +23,12 @@ import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.key.Base64KeyRange;
 import io.tidb.bigdata.tidb.meta.TiDAGRequest;
+import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
+import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Optional;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.operation.iterator.CoprocessorIterator;
-import io.tidb.bigdata.tidb.row.Row;
 
 public final class RecordSetInternal {
 
@@ -36,21 +36,28 @@ public final class RecordSetInternal {
   private final List<DataType> columnTypes;
   private final CoprocessorIterator<Row> iterator;
 
-  public RecordSetInternal(ClientSession session, SplitInternal split,
-      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
+  public RecordSetInternal(
+      ClientSession session,
+      SplitInternal split,
+      List<ColumnHandleInternal> columnHandles,
+      Optional<Expression> expression,
       Optional<TiTimestamp> timestamp) {
     this(session, split, columnHandles, expression, timestamp, Optional.empty());
   }
 
-  public RecordSetInternal(ClientSession session, SplitInternal split,
-      List<ColumnHandleInternal> columnHandles, Optional<Expression> expression,
-      Optional<TiTimestamp> timestamp, Optional<Integer> limit) {
+  public RecordSetInternal(
+      ClientSession session,
+      SplitInternal split,
+      List<ColumnHandleInternal> columnHandles,
+      Optional<Expression> expression,
+      Optional<TiTimestamp> timestamp,
+      Optional<Integer> limit) {
     requireNonNull(split, "split is null");
     this.columnHandles = requireNonNull(columnHandles, "columnHandles is null");
-    this.columnTypes = columnHandles.stream().map(ColumnHandleInternal::getType)
-        .collect(toImmutableList());
-    List<String> columns = columnHandles.stream().map(ColumnHandleInternal::getName)
-        .collect(toImmutableList());
+    this.columnTypes =
+        columnHandles.stream().map(ColumnHandleInternal::getType).collect(toImmutableList());
+    List<String> columns =
+        columnHandles.stream().map(ColumnHandleInternal::getName).collect(toImmutableList());
     TiDAGRequest.Builder request = session.request(split.getTable(), columns);
     limit.ifPresent(request::setLimit);
     expression.ifPresent(request::addFilter);

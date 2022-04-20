@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.parser;
 
-
 import static io.tidb.bigdata.tidb.types.IntegerType.BOOLEAN;
 
 import com.google.common.primitives.Doubles;
@@ -43,8 +42,7 @@ public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
 
   private TiTableInfo tableInfo;
 
-  public AstBuilder() {
-  }
+  public AstBuilder() {}
 
   public AstBuilder(TiTableInfo tableInfo) {
     this.tableInfo = tableInfo;

@@ -27,8 +27,8 @@ import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.meta.TiTimestamp;
 
-public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> implements
-    Serializable {
+public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT>
+    implements Serializable {
 
   public enum Type {
     KAFKA,
@@ -61,11 +61,11 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT> imp
     this.builder = builder;
   }
 
-  public static KafkaCDCSourceBuilder kafka(String database, String table, TiTimestamp ts,
-      TiDBSchemaAdapter schema) {
+  public static KafkaCDCSourceBuilder kafka(
+      String database, String table, TiTimestamp ts, TiDBSchemaAdapter schema) {
     return new KafkaCDCSourceBuilder(
-        new CDCDeserializationSchemaBuilder(schema.getPhysicalRowDataType(),
-            schema.getCDCMetadata())
+        new CDCDeserializationSchemaBuilder(
+                schema.getPhysicalRowDataType(), schema.getCDCMetadata())
             .startTs(ts.getVersion())
             .types(ROW_CHANGED_EVENT)
             .schemas(ImmutableSet.of(database))

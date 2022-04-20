@@ -25,52 +25,52 @@ import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 /** The {@link SimpleVersionedSerializer Serializer} for the enumerator state. */
 public class HybridSourceEnumeratorStateSerializer
-        implements SimpleVersionedSerializer<HybridSourceEnumeratorState> {
+    implements SimpleVersionedSerializer<HybridSourceEnumeratorState> {
 
-    private static final int CURRENT_VERSION = 0;
+  private static final int CURRENT_VERSION = 0;
 
-    public HybridSourceEnumeratorStateSerializer() {}
+  public HybridSourceEnumeratorStateSerializer() {}
 
-    @Override
-    public int getVersion() {
-        return CURRENT_VERSION;
+  @Override
+  public int getVersion() {
+    return CURRENT_VERSION;
+  }
+
+  @Override
+  public byte[] serialize(HybridSourceEnumeratorState enumState) throws IOException {
+    try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos)) {
+      out.writeInt(enumState.getCurrentSourceIndex());
+      out.writeInt(enumState.getWrappedStateSerializerVersion());
+      out.writeInt(enumState.getWrappedState().length);
+      out.write(enumState.getWrappedState());
+      out.flush();
+      return baos.toByteArray();
     }
+  }
 
-    @Override
-    public byte[] serialize(HybridSourceEnumeratorState enumState) throws IOException {
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                DataOutputStream out = new DataOutputStream(baos)) {
-            out.writeInt(enumState.getCurrentSourceIndex());
-            out.writeInt(enumState.getWrappedStateSerializerVersion());
-            out.writeInt(enumState.getWrappedState().length);
-            out.write(enumState.getWrappedState());
-            out.flush();
-            return baos.toByteArray();
-        }
+  @Override
+  public HybridSourceEnumeratorState deserialize(int version, byte[] serialized)
+      throws IOException {
+    if (version == 0) {
+      return deserializeV0(serialized);
     }
+    throw new IOException(
+        String.format(
+            "The bytes are serialized with version %d, "
+                + "while this deserializer only supports version up to %d",
+            version, CURRENT_VERSION));
+  }
 
-    @Override
-    public HybridSourceEnumeratorState deserialize(int version, byte[] serialized)
-            throws IOException {
-        if (version == 0) {
-            return deserializeV0(serialized);
-        }
-        throw new IOException(
-                String.format(
-                        "The bytes are serialized with version %d, "
-                                + "while this deserializer only supports version up to %d",
-                        version, CURRENT_VERSION));
+  private HybridSourceEnumeratorState deserializeV0(byte[] serialized) throws IOException {
+    try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
+        DataInputStream in = new DataInputStream(bais)) {
+      int sourceIndex = in.readInt();
+      int nestedVersion = in.readInt();
+      int length = in.readInt();
+      byte[] nestedBytes = new byte[length];
+      in.readFully(nestedBytes);
+      return new HybridSourceEnumeratorState(sourceIndex, nestedBytes, nestedVersion);
     }
-
-    private HybridSourceEnumeratorState deserializeV0(byte[] serialized) throws IOException {
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
-                DataInputStream in = new DataInputStream(bais)) {
-            int sourceIndex = in.readInt();
-            int nestedVersion = in.readInt();
-            int length = in.readInt();
-            byte[] nestedBytes = new byte[length];
-            in.readFully(nestedBytes);
-            return new HybridSourceEnumeratorState(sourceIndex, nestedBytes, nestedVersion);
-        }
-    }
+  }
 }

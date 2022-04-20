@@ -24,8 +24,8 @@ import io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression;
 import io.tidb.bigdata.tidb.expression.ComparisonBinaryExpression.NormalizedPredicate;
 import io.tidb.bigdata.tidb.expression.Constant;
 import io.tidb.bigdata.tidb.expression.Expression;
-import java.util.Set;
 import io.tidb.bigdata.tidb.key.TypedKey;
+import java.util.Set;
 
 /**
  * Apply partition pruning rule on filter condition. Partition pruning is based on a simple idea and

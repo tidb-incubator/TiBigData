@@ -20,14 +20,14 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.Collections.nCopies;
 
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
-import io.tidb.bigdata.tidb.meta.TiIndexInfo;
-import io.tidb.bigdata.tidb.meta.TiTableInfo;
 
 public class SqlUtils {
 
@@ -38,79 +38,107 @@ public class SqlUtils {
           + "WHERE `TABLE_SCHEMA` = '%s' AND `TABLE_NAME` = '%s';";
   public static final String TIDB_ROW_FORMAT_VERSION_SQL = "SELECT @@tidb_row_format_version";
 
-  private static List<String> concatNameType(List<String> columnNames, List<String> columnTypes,
-      List<String> primaryKeyColumns, List<String> uniqueKeyColumns) {
+  private static List<String> concatNameType(
+      List<String> columnNames,
+      List<String> columnTypes,
+      List<String> primaryKeyColumns,
+      List<String> uniqueKeyColumns) {
     List<String> nameType = new ArrayList<>(columnNames.size() + 1);
     for (int i = 0; i < columnNames.size(); i++) {
       nameType.add(format("`%s` %s", columnNames.get(i), columnTypes.get(i)));
     }
     if (primaryKeyColumns != null && primaryKeyColumns.size() != 0) {
-      nameType.add(format("PRIMARY KEY(%s)",
-          primaryKeyColumns.stream().map(pk -> "`" + pk + "`").collect(Collectors.joining(","))));
+      nameType.add(
+          format(
+              "PRIMARY KEY(%s)",
+              primaryKeyColumns
+                  .stream()
+                  .map(pk -> "`" + pk + "`")
+                  .collect(Collectors.joining(","))));
     }
     if (uniqueKeyColumns != null && uniqueKeyColumns.size() != 0) {
-      nameType.add(format("UNIQUE KEY(%s)",
-          uniqueKeyColumns.stream().map(uk -> "`" + uk + "`").collect(Collectors.joining(","))));
+      nameType.add(
+          format(
+              "UNIQUE KEY(%s)",
+              uniqueKeyColumns
+                  .stream()
+                  .map(uk -> "`" + uk + "`")
+                  .collect(Collectors.joining(","))));
     }
     return nameType;
   }
 
-
-  public static String getCreateTableSql(String databaseName, String tableName,
-      List<String> columnNames, List<String> columnTypes, List<String> primaryKeyColumns,
-      List<String> uniqueKeyColumns, boolean ignoreIfExists) {
-    return format("CREATE TABLE %s `%s`.`%s`(\n%s\n)",
+  public static String getCreateTableSql(
+      String databaseName,
+      String tableName,
+      List<String> columnNames,
+      List<String> columnTypes,
+      List<String> primaryKeyColumns,
+      List<String> uniqueKeyColumns,
+      boolean ignoreIfExists) {
+    return format(
+        "CREATE TABLE %s `%s`.`%s`(\n%s\n)",
         ignoreIfExists ? "IF NOT EXISTS" : "",
         databaseName,
         tableName,
-        join(",\n", concatNameType(columnNames, columnTypes, primaryKeyColumns, uniqueKeyColumns))
-    );
+        join(",\n", concatNameType(columnNames, columnTypes, primaryKeyColumns, uniqueKeyColumns)));
   }
 
-  public static String getInsertSql(String databaseName, String tableName,
-      List<String> columnNames) {
+  public static String getInsertSql(
+      String databaseName, String tableName, List<String> columnNames) {
     return format(
         "INSERT INTO `%s`.`%s`(%s) VALUES(%s)",
         databaseName,
         tableName,
         columnNames.stream().map(name -> format("`%s`", name)).collect(Collectors.joining(",")),
-        join(",", nCopies(columnNames.size(), "?"))
-    );
+        join(",", nCopies(columnNames.size(), "?")));
   }
 
-  public static String getUpsertSql(String databaseName, String tableName,
-      List<String> columnNames) {
+  public static String getUpsertSql(
+      String databaseName, String tableName, List<String> columnNames) {
     String insertSql = getInsertSql(databaseName, tableName, columnNames);
-    return format("%s ON DUPLICATE KEY UPDATE %s", insertSql,
-        columnNames.stream().map(columnName -> format("`%s`=VALUES(`%s`)", columnName, columnName))
+    return format(
+        "%s ON DUPLICATE KEY UPDATE %s",
+        insertSql,
+        columnNames
+            .stream()
+            .map(columnName -> format("`%s`=VALUES(`%s`)", columnName, columnName))
             .collect(Collectors.joining(",")));
   }
 
-  public static List<TiIndexInfo> getUniqueIndexes(TiTableInfo tiTableInfo,
-      boolean ignoreAutoincrementColumn) {
-    List<TiIndexInfo> uniqueIndexes = tiTableInfo.getIndices()
-        .stream()
-        .filter(TiIndexInfo::isUnique)
-        .collect(Collectors.toList());
-    Optional<String> autoIncrementColumn = Optional
-        .ofNullable(tiTableInfo.getAutoIncrementColInfo())
-        .map(TiColumnInfo::getName);
+  public static List<TiIndexInfo> getUniqueIndexes(
+      TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn) {
+    List<TiIndexInfo> uniqueIndexes =
+        tiTableInfo
+            .getIndices()
+            .stream()
+            .filter(TiIndexInfo::isUnique)
+            .collect(Collectors.toList());
+    Optional<String> autoIncrementColumn =
+        Optional.ofNullable(tiTableInfo.getAutoIncrementColInfo()).map(TiColumnInfo::getName);
     if (autoIncrementColumn.isPresent() && ignoreAutoincrementColumn) {
-      uniqueIndexes = uniqueIndexes.stream()
-          .filter(tiIndexInfo -> tiIndexInfo.getIndexColumns().stream()
-              .noneMatch(column -> column.getName().equals(autoIncrementColumn.get())))
-          .collect(Collectors.toList());
+      uniqueIndexes =
+          uniqueIndexes
+              .stream()
+              .filter(
+                  tiIndexInfo ->
+                      tiIndexInfo
+                          .getIndexColumns()
+                          .stream()
+                          .noneMatch(column -> column.getName().equals(autoIncrementColumn.get())))
+              .collect(Collectors.toList());
     }
     return uniqueIndexes;
   }
 
   public static String printColumnMapping(String[] columns1, String[] columns2) {
     return IntStream.range(0, Math.max(columns1.length, columns2.length))
-        .mapToObj(i -> String.format("`%s` -> `%s`",
-            i < columns1.length ? columns1[i] : "  ",
-            i < columns2.length ? columns2[i] : "  "))
+        .mapToObj(
+            i ->
+                String.format(
+                    "`%s` -> `%s`",
+                    i < columns1.length ? columns1[i] : "  ",
+                    i < columns2.length ? columns2[i] : "  "))
         .collect(Collectors.joining(",\n"));
   }
-
-
 }

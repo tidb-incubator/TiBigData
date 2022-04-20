@@ -17,14 +17,14 @@
 
 package io.tidb.bigdata.tidb.expression;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import io.tidb.bigdata.tidb.meta.TiPartitionDef;
 import io.tidb.bigdata.tidb.meta.TiPartitionInfo;
 import io.tidb.bigdata.tidb.meta.TiPartitionInfo.PartitionType;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
-import  io.tidb.bigdata.tidb.parser.TiParser;
+import io.tidb.bigdata.tidb.parser.TiParser;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class PartitionPruner {
   public static List<Expression> extractLogicalOrComparisonExpr(List<Expression> filters) {

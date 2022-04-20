@@ -19,11 +19,11 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import org.tikv.common.row.Row;
 
 @Category(IntegrationTest.class)
 public class FilterPushDownNotComparisonTest extends FilterPushDownTestBase {
@@ -43,9 +43,7 @@ public class FilterPushDownNotComparisonTest extends FilterPushDownTestBase {
   Expression c6_equal_chartype = Expressions.equal(c6, constant_string);
   Expression c1_equal_c2 = Expressions.equal(c1, c2);
 
-  /**
-   * Filters shot will return correct rows, and filters missed will return empty row list.
-   */
+  /** Filters shot will return correct rows, and filters missed will return empty row list. */
   @Test
   public void testSupportedFilter() {
     List<Row> rows = validator.rows();
@@ -77,20 +75,19 @@ public class FilterPushDownNotComparisonTest extends FilterPushDownTestBase {
 
     // or & and
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 1";
-    expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_1),
-        Expressions.or(c2_equal_2, c1_equal_1));
+    expression =
+        Expressions.and(
+            Expressions.or(c1_equal_2, c1_equal_1), Expressions.or(c2_equal_2, c1_equal_1));
     validator.doTestFilter(rows, expression, whereCondition);
 
     whereCondition = "(`c1` = 2 AND `c2` = 2) OR `c1` = 3";
-    expression = Expressions.and(Expressions.or(c1_equal_2, c1_equal_3),
-        Expressions.or(c2_equal_2, c1_equal_3));
+    expression =
+        Expressions.and(
+            Expressions.or(c1_equal_2, c1_equal_3), Expressions.or(c2_equal_2, c1_equal_3));
     validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
-
   }
 
-  /**
-   * Expression for not supported filter will be null and return all rows.
-   */
+  /** Expression for not supported filter will be null and return all rows. */
   @Test
   public void testNotSupportedFilter() {
     List<Row> rows = validator.rows();
@@ -108,5 +105,4 @@ public class FilterPushDownNotComparisonTest extends FilterPushDownTestBase {
     expression = Expressions.and(ImmutableList.of(c1_equal_2, c2_equal_1));
     validator.doTestFilter(ImmutableList.of(), expression, whereCondition);
   }
-
 }

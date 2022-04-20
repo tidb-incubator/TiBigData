@@ -17,9 +17,9 @@
 package io.tidb.bigdata.tidb.key;
 
 import com.google.common.base.Joiner;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import java.util.ArrayList;
 import java.util.List;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
 
 public class CompoundKey extends Key {
 

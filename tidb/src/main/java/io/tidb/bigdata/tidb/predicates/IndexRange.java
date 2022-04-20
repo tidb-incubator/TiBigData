@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.predicates;
 
-
 import com.google.common.collect.Range;
 import io.tidb.bigdata.tidb.key.Key;
 import io.tidb.bigdata.tidb.key.TypedKey;

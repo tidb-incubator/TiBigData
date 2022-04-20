@@ -23,8 +23,10 @@ import org.apache.flink.table.types.DataType;
 
 public class TiDBRowDataInputFormat extends TiDBBaseRowDataInputFormat {
 
-  public TiDBRowDataInputFormat(Map<String, String> properties,
-      String[] fieldNames, DataType[] fieldTypes,
+  public TiDBRowDataInputFormat(
+      Map<String, String> properties,
+      String[] fieldNames,
+      DataType[] fieldTypes,
       TypeInformation<RowData> typeInformation) {
     super(properties, fieldNames, fieldTypes, typeInformation);
   }

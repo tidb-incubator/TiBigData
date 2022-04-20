@@ -22,9 +22,10 @@ import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.row.ObjectRowImpl;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,35 +34,42 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.ObjectRowImpl;
 
 @Category(IntegrationTest.class)
 public class TiDBWriteHelperTest extends FlinkTestBase {
 
   @Test
   public void testWrite() {
-    ClientSession clientSession = ClientSession.create(
-        new ClientConfig(ConfigUtils.defaultProperties()));
+    ClientSession clientSession =
+        ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
     String tableName = RandomUtils.randomString();
-    clientSession.sqlUpdate(String.format(
-        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    UNIQUE KEY(c1)"
-            + ")", DATABASE_NAME, tableName));
+    clientSession.sqlUpdate(
+        String.format(
+            "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+                + "(\n"
+                + "    c1  bigint,\n"
+                + "    UNIQUE KEY(c1)"
+                + ")",
+            DATABASE_NAME, tableName));
     writeData(clientSession, tableName);
     writeData(clientSession, tableName);
   }
 
   private void writeData(ClientSession clientSession, String tableName) {
     TiTimestamp timestamp = clientSession.getSnapshotVersion();
-    DynamicRowIDAllocator rowIDAllocator = new DynamicRowIDAllocator(clientSession, DATABASE_NAME,
-        tableName, 100);
-    TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(clientSession, timestamp, DATABASE_NAME,
-        tableName, false, true, rowIDAllocator);
-    TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(clientSession.getTiSession(),
-        timestamp.getVersion());
-    List<BytePairWrapper> pairs = LongStream.range(0, 1000)
-        .mapToObj(i -> ObjectRowImpl.create(new Long[]{i}))
-        .map(tiDBEncodeHelper::generateKeyValuesByRow).flatMap(Collection::stream)
-        .collect(Collectors.toList());
+    DynamicRowIDAllocator rowIDAllocator =
+        new DynamicRowIDAllocator(clientSession, DATABASE_NAME, tableName, 100);
+    TiDBEncodeHelper tiDBEncodeHelper =
+        new TiDBEncodeHelper(
+            clientSession, timestamp, DATABASE_NAME, tableName, false, true, rowIDAllocator);
+    TiDBWriteHelper tiDBWriteHelper =
+        new TiDBWriteHelper(clientSession.getTiSession(), timestamp.getVersion());
+    List<BytePairWrapper> pairs =
+        LongStream.range(0, 1000)
+            .mapToObj(i -> ObjectRowImpl.create(new Long[] {i}))
+            .map(tiDBEncodeHelper::generateKeyValuesByRow)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
     tiDBWriteHelper.preWriteFirst(pairs);
     tiDBWriteHelper.commitPrimaryKey();
     tiDBWriteHelper.close();

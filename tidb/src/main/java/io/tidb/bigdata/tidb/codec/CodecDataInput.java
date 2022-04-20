@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.codec;
 
-
 import static io.tidb.bigdata.tidb.codec.Codec.BYTES_FLAG;
 import static io.tidb.bigdata.tidb.codec.Codec.COMPACT_BYTES_FLAG;
 import static io.tidb.bigdata.tidb.codec.Codec.DECIMAL_FLAG;
@@ -44,6 +43,10 @@ public class CodecDataInput implements DataInput {
   protected final byte[] backingBuffer;
 
   public CodecDataInput(ByteString data) {
+    this(data.toByteArray());
+  }
+
+  public CodecDataInput(com.google.protobuf.ByteString data) {
     this(data.toByteArray());
   }
 

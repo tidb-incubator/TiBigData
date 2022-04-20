@@ -41,13 +41,17 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   private FutureTask<Long> futureTask;
   private int index;
 
-  public DynamicRowIDAllocator(ClientSession session, String databaseName, String tableName,
-      int step) {
+  public DynamicRowIDAllocator(
+      ClientSession session, String databaseName, String tableName, int step) {
     this(session, databaseName, tableName, step, null);
   }
 
-  public DynamicRowIDAllocator(ClientSession session, String databaseName, String tableName,
-      int step, @Nullable Long start) {
+  public DynamicRowIDAllocator(
+      ClientSession session,
+      String databaseName,
+      String tableName,
+      int step,
+      @Nullable Long start) {
     this.session = session;
     this.databaseName = databaseName;
     this.tableName = tableName;
@@ -62,18 +66,20 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     }
     if (index == (int) (step * 0.8)) {
       if (threadPool == null) {
-        this.threadPool = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS,
-            new LinkedBlockingQueue<>(1));
+        this.threadPool =
+            new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(1));
       }
       // async get next row id allocator
       LOG.info("Get next row id range asynchronously...");
 
-      /** TODO: enhancement. Every workNode in Flink has its own row id allocator
-       *  and every time allocator will get current row id range, so each allocator
-       *  will query for the same range which cause a lot of data race.
+      /**
+       * TODO: enhancement. Every workNode in Flink has its own row id allocator and every time
+       * allocator will get current row id range, so each allocator will query for the same range
+       * which cause a lot of data race.
        */
-      futureTask = new FutureTask<>(
-          () -> session.createRowIdAllocator(databaseName, tableName, step, 3).getStart());
+      futureTask =
+          new FutureTask<>(
+              () -> session.createRowIdAllocator(databaseName, tableName, step, 3).getStart());
       threadPool.submit(futureTask);
     }
     if (index >= step) {
@@ -103,5 +109,4 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   public void close() {
     Optional.ofNullable(threadPool).ifPresent(ThreadPoolExecutor::shutdownNow);
   }
-
 }

@@ -18,7 +18,6 @@
 
 package io.tidb.bigdata.tidb.types;
 
-
 import static io.tidb.bigdata.tidb.types.TimeType.HOUR;
 import static io.tidb.bigdata.tidb.types.TimeType.MICROSECOND;
 import static io.tidb.bigdata.tidb.types.TimeType.MINUTE;
@@ -364,9 +363,9 @@ public class Converter {
         frac = 0;
       }
       return ((long) hour * HOUR
-          + (long) minute * MINUTE
-          + (long) second * SECOND
-          + (long) frac * MICROSECOND)
+              + (long) minute * MINUTE
+              + (long) second * SECOND
+              + (long) frac * MICROSECOND)
           * sign;
     } catch (Exception e) {
       throw new IllegalArgumentException(

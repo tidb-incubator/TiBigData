@@ -17,11 +17,9 @@
 
 package io.tidb.bigdata.tidb.catalog;
 
-
 import static io.tidb.bigdata.tidb.codec.MetaCodec.KEY_DBs;
 
 import com.google.common.collect.ImmutableList;
-import org.tikv.shade.com.google.protobuf.ByteString;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
 import io.tidb.bigdata.tidb.codec.KeyUtils;
 import io.tidb.bigdata.tidb.codec.MetaCodec;
@@ -38,6 +36,7 @@ import org.tikv.common.util.Pair;
 import org.tikv.shade.com.fasterxml.jackson.core.JsonParseException;
 import org.tikv.shade.com.fasterxml.jackson.databind.JsonMappingException;
 import org.tikv.shade.com.fasterxml.jackson.databind.ObjectMapper;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 public class CatalogTransaction {
 
@@ -73,8 +72,7 @@ public class CatalogTransaction {
   }
 
   public List<TiDBInfo> getDatabases() {
-    List<Pair<ByteString, ByteString>> fields =
-        MetaCodec.hashGetFields(KEY_DBs, this.snapshot);
+    List<Pair<ByteString, ByteString>> fields = MetaCodec.hashGetFields(KEY_DBs, this.snapshot);
     ImmutableList.Builder<TiDBInfo> builder = ImmutableList.builder();
     for (Pair<ByteString, ByteString> pair : fields) {
       builder.add(parseFromJson(pair.second, TiDBInfo.class));

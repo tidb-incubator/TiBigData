@@ -17,9 +17,9 @@
 
 package io.tidb.bigdata.tidb.expression;
 
+import io.tidb.bigdata.tidb.types.DataType;
 import java.io.Serializable;
 import java.util.List;
-import io.tidb.bigdata.tidb.types.DataType;
 
 public abstract class Expression implements Serializable {
   protected DataType dataType;

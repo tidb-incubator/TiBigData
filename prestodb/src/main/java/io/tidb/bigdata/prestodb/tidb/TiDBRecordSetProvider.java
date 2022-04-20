@@ -46,15 +46,22 @@ public final class TiDBRecordSetProvider implements ConnectorRecordSetProvider {
   }
 
   @Override
-  public RecordSet getRecordSet(ConnectorTransactionHandle transactionHandle,
-      ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns) {
+  public RecordSet getRecordSet(
+      ConnectorTransactionHandle transactionHandle,
+      ConnectorSession session,
+      ConnectorSplit split,
+      List<? extends ColumnHandle> columns) {
     requireNonNull(split, "split is null");
-    Optional<TiTimestamp> timestamp = Optional
-        .ofNullable(session.getProperty(SESSION_SNAPSHOT_TIMESTAMP, String.class))
-        .filter(StringUtils::isNoneEmpty)
-        .map(s -> new TiTimestamp(
-            Timestamp.from(ZonedDateTime.parse(decode(s)).toInstant()).getTime(), 0));
-    return new TiDBRecordSet(this.session, (TiDBSplit) split,
+    Optional<TiTimestamp> timestamp =
+        Optional.ofNullable(session.getProperty(SESSION_SNAPSHOT_TIMESTAMP, String.class))
+            .filter(StringUtils::isNoneEmpty)
+            .map(
+                s ->
+                    new TiTimestamp(
+                        Timestamp.from(ZonedDateTime.parse(decode(s)).toInstant()).getTime(), 0));
+    return new TiDBRecordSet(
+        this.session,
+        (TiDBSplit) split,
         columns.stream().map(handle -> (TiDBColumnHandle) handle).collect(toImmutableList()),
         timestamp);
   }

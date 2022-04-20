@@ -24,11 +24,11 @@ import static io.tidb.bigdata.tidb.expression.StringRegExpression.Type.STARTS_WI
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
-import java.util.List;
-import java.util.Objects;
 import io.tidb.bigdata.tidb.key.TypedKey;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.IntegerType;
+import java.util.List;
+import java.util.Objects;
 
 public class StringRegExpression extends Expression {
   private final Expression left;

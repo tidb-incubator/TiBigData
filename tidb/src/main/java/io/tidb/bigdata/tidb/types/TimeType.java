@@ -22,12 +22,12 @@ import com.pingcap.tidb.tipb.ExprType;
 import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.Collation;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo.InternalTypeHolder;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.TypeException;
-import io.tidb.bigdata.tidb.meta.Collation;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo.InternalTypeHolder;
 
 // https://dev.mysql.com/doc/refman/8.0/en/time.html
 

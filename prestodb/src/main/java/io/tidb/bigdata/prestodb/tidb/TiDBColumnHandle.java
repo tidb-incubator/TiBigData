@@ -25,13 +25,13 @@ import com.facebook.presto.spi.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.tidb.bigdata.prestodb.tidb.TypeHelper.RecordCursorReader;
-import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.DataTypes;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Objects;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import org.tikv.common.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {
 
@@ -45,8 +45,11 @@ public final class TiDBColumnHandle implements ColumnHandle {
       @JsonProperty("name") String name,
       @JsonProperty("type") String type,
       @JsonProperty("ordinalPosition") int ordinalPosition) {
-    this(requireNonNull(name, "name is null"), requireNonNull(type, "type is null"),
-        DataTypes.deserialize(type), ordinalPosition);
+    this(
+        requireNonNull(name, "name is null"),
+        requireNonNull(type, "type is null"),
+        DataTypes.deserialize(type),
+        ordinalPosition);
   }
 
   private TiDBColumnHandle(String name, String type, DataType dataType, int ordinalPosition) {
@@ -57,8 +60,11 @@ public final class TiDBColumnHandle implements ColumnHandle {
   }
 
   public TiDBColumnHandle(ColumnHandleInternal handle) {
-    this(requireNonNull(handle, "handle is null").getName(), DataTypes.serialize(handle.getType()),
-        handle.getType(), handle.getOrdinalPosition());
+    this(
+        requireNonNull(handle, "handle is null").getName(),
+        DataTypes.serialize(handle.getType()),
+        handle.getType(),
+        handle.getOrdinalPosition());
   }
 
   static List<ColumnHandleInternal> internalHandles(List<TiDBColumnHandle> columns) {

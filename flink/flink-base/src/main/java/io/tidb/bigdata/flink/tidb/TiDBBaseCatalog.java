@@ -78,8 +78,9 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   public TiDBBaseCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
-    this.catalogLoadMode = CatalogLoadMode.fromString(
-        properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
+    this.catalogLoadMode =
+        CatalogLoadMode.fromString(
+            properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
   }
 
   public TiDBBaseCatalog(String name, Map<String, String> properties) {
@@ -112,14 +113,15 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
 
   @Override
   public synchronized void close() throws CatalogException {
-    clientSession.ifPresent(session -> {
-      try {
-        session.close();
-      } catch (Exception e) {
-        LOG.warn("Can not close clientSession", e);
-      }
-      clientSession = Optional.empty();
-    });
+    clientSession.ifPresent(
+        session -> {
+          try {
+            session.close();
+          } catch (Exception e) {
+            LOG.warn("Can not close clientSession", e);
+          }
+          clientSession = Optional.empty();
+        });
   }
 
   @Override
@@ -238,15 +240,15 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   @Override
-  public List<CatalogPartitionSpec> listPartitions(ObjectPath tablePath,
-      CatalogPartitionSpec partitionSpec)
+  public List<CatalogPartitionSpec> listPartitions(
+      ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
       throws TableNotExistException, TableNotPartitionedException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public List<CatalogPartitionSpec> listPartitionsByFilter(ObjectPath tablePath,
-      List<Expression> filters)
+  public List<CatalogPartitionSpec> listPartitionsByFilter(
+      ObjectPath tablePath, List<Expression> filters)
       throws TableNotExistException, TableNotPartitionedException, CatalogException {
     throw new UnsupportedOperationException();
   }
@@ -264,22 +266,29 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   @Override
-  public void createPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-      CatalogPartition partition, boolean ignoreIfExists)
+  public void createPartition(
+      ObjectPath tablePath,
+      CatalogPartitionSpec partitionSpec,
+      CatalogPartition partition,
+      boolean ignoreIfExists)
       throws TableNotExistException, TableNotPartitionedException, PartitionSpecInvalidException,
-      PartitionAlreadyExistsException, CatalogException {
+          PartitionAlreadyExistsException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void dropPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-      boolean ignoreIfNotExists) throws PartitionNotExistException, CatalogException {
+  public void dropPartition(
+      ObjectPath tablePath, CatalogPartitionSpec partitionSpec, boolean ignoreIfNotExists)
+      throws PartitionNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void alterPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-      CatalogPartition newPartition, boolean ignoreIfNotExists)
+  public void alterPartition(
+      ObjectPath tablePath,
+      CatalogPartitionSpec partitionSpec,
+      CatalogPartition newPartition,
+      boolean ignoreIfNotExists)
       throws PartitionNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
@@ -302,15 +311,16 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   @Override
-  public void createFunction(ObjectPath functionPath, CatalogFunction function,
-      boolean ignoreIfExists)
+  public void createFunction(
+      ObjectPath functionPath, CatalogFunction function, boolean ignoreIfExists)
       throws FunctionAlreadyExistException, DatabaseNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void alterFunction(ObjectPath functionPath, CatalogFunction newFunction,
-      boolean ignoreIfNotExists) throws FunctionNotExistException, CatalogException {
+  public void alterFunction(
+      ObjectPath functionPath, CatalogFunction newFunction, boolean ignoreIfNotExists)
+      throws FunctionNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
@@ -333,41 +343,50 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   @Override
-  public CatalogTableStatistics getPartitionStatistics(ObjectPath tablePath,
-      CatalogPartitionSpec partitionSpec) throws PartitionNotExistException, CatalogException {
+  public CatalogTableStatistics getPartitionStatistics(
+      ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
+      throws PartitionNotExistException, CatalogException {
     return null;
   }
 
   @Override
-  public CatalogColumnStatistics getPartitionColumnStatistics(ObjectPath tablePath,
-      CatalogPartitionSpec partitionSpec) throws PartitionNotExistException, CatalogException {
+  public CatalogColumnStatistics getPartitionColumnStatistics(
+      ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
+      throws PartitionNotExistException, CatalogException {
     return null;
   }
 
   @Override
-  public void alterTableStatistics(ObjectPath tablePath, CatalogTableStatistics tableStatistics,
-      boolean ignoreIfNotExists) throws TableNotExistException, CatalogException {
+  public void alterTableStatistics(
+      ObjectPath tablePath, CatalogTableStatistics tableStatistics, boolean ignoreIfNotExists)
+      throws TableNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void alterTableColumnStatistics(ObjectPath tablePath,
-      CatalogColumnStatistics columnStatistics, boolean ignoreIfNotExists)
+  public void alterTableColumnStatistics(
+      ObjectPath tablePath, CatalogColumnStatistics columnStatistics, boolean ignoreIfNotExists)
       throws TableNotExistException, CatalogException, TablePartitionedException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void alterPartitionStatistics(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-      CatalogTableStatistics partitionStatistics, boolean ignoreIfNotExists)
+  public void alterPartitionStatistics(
+      ObjectPath tablePath,
+      CatalogPartitionSpec partitionSpec,
+      CatalogTableStatistics partitionStatistics,
+      boolean ignoreIfNotExists)
       throws PartitionNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void alterPartitionColumnStatistics(ObjectPath tablePath,
-      CatalogPartitionSpec partitionSpec, CatalogColumnStatistics columnStatistics,
-      boolean ignoreIfNotExists) throws PartitionNotExistException, CatalogException {
+  public void alterPartitionColumnStatistics(
+      ObjectPath tablePath,
+      CatalogPartitionSpec partitionSpec,
+      CatalogColumnStatistics columnStatistics,
+      boolean ignoreIfNotExists)
+      throws PartitionNotExistException, CatalogException {
     throw new UnsupportedOperationException();
   }
 
@@ -376,8 +395,11 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
         .getTableMust(databaseName, tableName)
         .getColumns()
         .stream()
-        .reduce(TableSchema.builder(), (builder, c) -> builder.field(c.getName(),
-            TypeUtils.getFlinkType(c.getType())), (builder1, builder2) -> null).build();
+        .reduce(
+            TableSchema.builder(),
+            (builder, c) -> builder.field(c.getName(), TypeUtils.getFlinkType(c.getType())),
+            (builder1, builder2) -> null)
+        .build();
   }
 
   @Override
@@ -399,12 +421,17 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   public enum CatalogLoadMode {
-    LAZY, EAGER;
+    LAZY,
+    EAGER;
 
     public static CatalogLoadMode fromString(String s) {
-      return Arrays.stream(values()).filter(mode -> mode.name().equalsIgnoreCase(s)).findFirst()
-          .orElseThrow(() -> new IllegalArgumentException(
-              "Catalog load mode must be one of: " + Arrays.toString(values())));
+      return Arrays.stream(values())
+          .filter(mode -> mode.name().equalsIgnoreCase(s))
+          .findFirst()
+          .orElseThrow(
+              () ->
+                  new IllegalArgumentException(
+                      "Catalog load mode must be one of: " + Arrays.toString(values())));
     }
   }
 }

@@ -24,8 +24,8 @@ import org.apache.flink.api.common.typeutils.base.TypeSerializerSingleton;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputView;
 
-public class TiDBTransactionContextSerializer extends
-    TypeSerializerSingleton<TiDBTransactionContext> {
+public class TiDBTransactionContextSerializer
+    extends TypeSerializerSingleton<TiDBTransactionContext> {
 
   @Override
   public boolean isImmutableType() {
@@ -48,9 +48,7 @@ public class TiDBTransactionContextSerializer extends
   }
 
   @Override
-  public void copy(DataInputView source, DataOutputView target) throws IOException {
-
-  }
+  public void copy(DataInputView source, DataOutputView target) throws IOException {}
 
   @Override
   public int getLength() {
@@ -58,9 +56,7 @@ public class TiDBTransactionContextSerializer extends
   }
 
   @Override
-  public void serialize(TiDBTransactionContext record, DataOutputView target) throws IOException {
-
-  }
+  public void serialize(TiDBTransactionContext record, DataOutputView target) throws IOException {}
 
   @Override
   public TiDBTransactionContext deserialize(DataInputView source) throws IOException {

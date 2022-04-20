@@ -122,9 +122,11 @@ public class TiDBCatalogTest extends FlinkTestBase {
     Map<String, String> properties = defaultProperties();
     properties.put(SINK_BUFFER_FLUSH_MAX_ROWS.key(), "1");
 
-    Row row = runByCatalog(properties,
-        format("SELECT * FROM `%s`.`%s`.`%s` LIMIT 1", CATALOG_NAME, DATABASE_NAME, tableName),
-        tableName);
+    Row row =
+        runByCatalog(
+            properties,
+            format("SELECT * FROM `%s`.`%s`.`%s` LIMIT 1", CATALOG_NAME, DATABASE_NAME, tableName),
+            tableName);
     // replica read
     Assert.assertEquals(row, replicaRead());
     // upsert and read
@@ -134,17 +136,29 @@ public class TiDBCatalogTest extends FlinkTestBase {
     Assert.assertEquals(row1, upsertAndRead());
     // filter push down
     tableName = RandomUtils.randomString();
-    Assert.assertEquals(row, runByCatalog(properties,
-        format("SELECT * FROM `%s`.`%s`.`%s` WHERE (c1 = 1 OR c3 = 1) AND c2 = 1", CATALOG_NAME,
-            DATABASE_NAME, tableName), tableName));
+    Assert.assertEquals(
+        row,
+        runByCatalog(
+            properties,
+            format(
+                "SELECT * FROM `%s`.`%s`.`%s` WHERE (c1 = 1 OR c3 = 1) AND c2 = 1",
+                CATALOG_NAME, DATABASE_NAME, tableName),
+            tableName));
     // column pruner
     tableName = RandomUtils.randomString();
     // select 10 column randomly
     Random random = new Random();
     int[] ints = IntStream.range(0, 10).map(i -> random.nextInt(29)).toArray();
-    row1 = runByCatalog(properties, format("SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
-        Arrays.stream(ints).mapToObj(i -> "c" + (i + 1)).collect(Collectors.joining(",")),
-        CATALOG_NAME, DATABASE_NAME, tableName), tableName);
+    row1 =
+        runByCatalog(
+            properties,
+            format(
+                "SELECT %s FROM `%s`.`%s`.`%s` LIMIT 1",
+                Arrays.stream(ints).mapToObj(i -> "c" + (i + 1)).collect(Collectors.joining(",")),
+                CATALOG_NAME,
+                DATABASE_NAME,
+                tableName),
+            tableName);
     Assert.assertEquals(row1, copyRow(row, ints));
   }
 

@@ -16,9 +16,9 @@
 
 package io.tidb.bigdata.tidb.meta;
 
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.io.Serializable;
 import java.util.List;
-import  io.tidb.bigdata.tidb.expression.Expression;
 
 public class TiPartitionExpr implements Serializable {
   private final List<Expression> ranges;

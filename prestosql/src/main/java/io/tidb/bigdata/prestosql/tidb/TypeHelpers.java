@@ -62,46 +62,52 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
-import org.tikv.common.types.BytesType;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.EnumType;
-import org.tikv.common.types.SetType;
-import org.tikv.common.types.StringType;
+import io.tidb.bigdata.tidb.types.BytesType;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.EnumType;
+import io.tidb.bigdata.tidb.types.SetType;
+import io.tidb.bigdata.tidb.types.StringType;
 
 public final class TypeHelpers {
 
-  private static final Map<Type, String> SQL_TYPES = ImmutableMap.<Type, String>builder()
-      .put(BOOLEAN, "boolean")
-      .put(BIGINT, "bigint")
-      .put(INTEGER, "integer")
-      .put(SMALLINT, "smallint")
-      .put(TINYINT, "tinyint")
-      .put(DOUBLE, "double")
-      .put(REAL, "float")
-      .put(VARBINARY, "mediumblob")
-      .put(DATE, "date")
-      .build();
+  private static final Map<Type, String> SQL_TYPES =
+      ImmutableMap.<Type, String>builder()
+          .put(BOOLEAN, "boolean")
+          .put(BIGINT, "bigint")
+          .put(INTEGER, "integer")
+          .put(SMALLINT, "smallint")
+          .put(TINYINT, "tinyint")
+          .put(DOUBLE, "double")
+          .put(REAL, "float")
+          .put(VARBINARY, "mediumblob")
+          .put(DATE, "date")
+          .build();
 
-  private static final ConcurrentHashMap<DataType, Optional<TypeHelper>> TYPE_HELPERS
-      = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<DataType, Optional<TypeHelper>> TYPE_HELPERS =
+      new ConcurrentHashMap<>();
 
-  public static TypeHelper decimalHelper(DataType tidbType,
-      io.prestosql.spi.type.DecimalType decimalType) {
+  public static TypeHelper decimalHelper(
+      DataType tidbType, io.prestosql.spi.type.DecimalType decimalType) {
     int scale = decimalType.getScale();
     if (decimalType.isShort()) {
-      return longHelper(tidbType, decimalType,
-          (cursor, columnIndex) -> encodeShortScaledValue(cursor.getBigDecimal(columnIndex),
-              scale));
+      return longHelper(
+          tidbType,
+          decimalType,
+          (cursor, columnIndex) ->
+              encodeShortScaledValue(cursor.getBigDecimal(columnIndex), scale));
     }
-    return sliceHelper(tidbType, decimalType,
+    return sliceHelper(
+        tidbType,
+        decimalType,
         (cursor, columnIndex) -> encodeScaledValue(cursor.getBigDecimal(columnIndex), scale),
-        s -> new BigDecimal(decodeUnscaledValue(s), scale,
-            new MathContext(decimalType.getPrecision())));
+        s ->
+            new BigDecimal(
+                decodeUnscaledValue(s), scale, new MathContext(decimalType.getPrecision())));
   }
 
   public static TypeHelper varcharHelper(DataType tidbType, VarcharType varcharType) {
-    return sliceHelper(tidbType, varcharType,
-        (cursor, columnIndex) -> utf8Slice(cursor.getString(columnIndex)));
+    return sliceHelper(
+        tidbType, varcharType, (cursor, columnIndex) -> utf8Slice(cursor.getString(columnIndex)));
   }
 
   private static TypeHelper getHelperInternal(DataType type) {
@@ -112,19 +118,24 @@ public final class TypeHelpers {
       case TypeBit:
         return longHelper(type, TINYINT, RecordCursorInternal::getByte);
       case TypeTiny:
-        return unsigned ? longHelper(type, SMALLINT, RecordCursorInternal::getShort)
+        return unsigned
+            ? longHelper(type, SMALLINT, RecordCursorInternal::getShort)
             : longHelper(type, TINYINT, RecordCursorInternal::getByte);
       case TypeYear:
       case TypeShort:
-        return unsigned ? longHelper(type, INTEGER, RecordCursorInternal::getInteger)
+        return unsigned
+            ? longHelper(type, INTEGER, RecordCursorInternal::getInteger)
             : longHelper(type, SMALLINT, RecordCursorInternal::getShort);
       case TypeInt24:
         // FALLTHROUGH
       case TypeLong:
-        return unsigned ? longHelper(type, BIGINT, RecordCursorInternal::getLong)
+        return unsigned
+            ? longHelper(type, BIGINT, RecordCursorInternal::getLong)
             : longHelper(type, INTEGER, RecordCursorInternal::getInteger);
       case TypeFloat:
-        return longHelper(type, REAL,
+        return longHelper(
+            type,
+            REAL,
             (cursor, column) -> floatToRawIntBits(cursor.getFloat(column)),
             l -> intBitsToFloat(l.intValue()));
       case TypeDouble:
@@ -134,19 +145,28 @@ public final class TypeHelpers {
       case TypeDatetime:
         // FALLTHROUGH
       case TypeTimestamp:
-        return longHelper(type, TimestampType.createTimestampType(decimal),
-            (recordCursorInternal, field) -> recordCursorInternal.getLong(field)
-                + TimeZone.getDefault().getRawOffset() * 1000L, Timestamp::new);
+        return longHelper(
+            type,
+            TimestampType.createTimestampType(decimal),
+            (recordCursorInternal, field) ->
+                recordCursorInternal.getLong(field) + TimeZone.getDefault().getRawOffset() * 1000L,
+            Timestamp::new);
       case TypeLonglong:
-        return unsigned ? decimalHelper(type, createDecimalType((int) length, 0))
+        return unsigned
+            ? decimalHelper(type, createDecimalType((int) length, 0))
             : longHelper(type, BIGINT, RecordCursorInternal::getLong);
       case TypeDate:
         // FALLTHROUGH
       case TypeNewDate:
-        return longHelper(type, DATE, RecordCursorInternal::getLong,
+        return longHelper(
+            type,
+            DATE,
+            RecordCursorInternal::getLong,
             days -> Date.valueOf(LocalDate.ofEpochDay(days)));
       case TypeDuration:
-        return longHelper(type, TimeType.createTimeType(decimal),
+        return longHelper(
+            type,
+            TimeType.createTimeType(decimal),
             (recordCursorInternal, field) -> recordCursorInternal.getLong(field) * 1000);
       case TypeJSON:
         return varcharHelper(type, VarcharType.createUnboundedVarcharType());
@@ -174,7 +194,9 @@ public final class TypeHelpers {
           }
           return varcharHelper(type, VarcharType.createVarcharType((int) length));
         } else if (type instanceof BytesType) {
-          return sliceHelper(type, VARBINARY,
+          return sliceHelper(
+              type,
+              VARBINARY,
               (cursor, columnIndex) -> wrappedBuffer(cursor.getBytes(columnIndex)),
               Slice::getBytes);
         } else {
@@ -242,8 +264,8 @@ public final class TypeHelpers {
       return "text";
     }
     if (type instanceof DecimalType) {
-      return format("decimal(%s, %s)", ((DecimalType) type).getPrecision(),
-          ((DecimalType) type).getScale());
+      return format(
+          "decimal(%s, %s)", ((DecimalType) type).getPrecision(), ((DecimalType) type).getScale());
     }
     if (type instanceof TimeType) {
       return format("time(%s)", ((TimeType) type).getPrecision());

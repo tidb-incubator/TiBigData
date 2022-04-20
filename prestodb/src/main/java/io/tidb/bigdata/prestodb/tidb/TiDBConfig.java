@@ -130,8 +130,8 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   }
 
   public String getReplicaReadLabel() {
-    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_LABEL,
-        TIDB_REPLICA_READ_LABEL_DEFAULT);
+    return this.replicaReadProperties.getOrDefault(
+        TIDB_REPLICA_READ_LABEL, TIDB_REPLICA_READ_LABEL_DEFAULT);
   }
 
   @Config(TIDB_REPLICA_READ_ADDRESS_WHITELIST)
@@ -142,8 +142,8 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   }
 
   public String getReplicaReadAddressWhitelist() {
-    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_ADDRESS_WHITELIST,
-        TIDB_REPLICA_READ_ADDRESS_DEFAULT);
+    return this.replicaReadProperties.getOrDefault(
+        TIDB_REPLICA_READ_ADDRESS_WHITELIST, TIDB_REPLICA_READ_ADDRESS_DEFAULT);
   }
 
   @Config(TIDB_REPLICA_READ_ADDRESS_BLACKLIST)
@@ -154,7 +154,7 @@ public final class TiDBConfig extends Wrapper<ClientConfig> {
   }
 
   public String getReplicaReadAddressBlacklist() {
-    return this.replicaReadProperties.getOrDefault(TIDB_REPLICA_READ_ADDRESS_BLACKLIST,
-        TIDB_REPLICA_READ_ADDRESS_DEFAULT);
+    return this.replicaReadProperties.getOrDefault(
+        TIDB_REPLICA_READ_ADDRESS_BLACKLIST, TIDB_REPLICA_READ_ADDRESS_DEFAULT);
   }
 }

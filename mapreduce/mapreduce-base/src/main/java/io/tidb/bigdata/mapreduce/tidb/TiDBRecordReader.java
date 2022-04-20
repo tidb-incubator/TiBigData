@@ -42,11 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
-/**
- * A RecordReader that reads records from a TiDB table.
- */
-public class TiDBRecordReader<T extends TiDBWritable> extends
-    RecordReader<LongWritable, T> {
+/** A RecordReader that reads records from a TiDB table. */
+public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongWritable, T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBRecordReader.class);
 
@@ -78,24 +75,33 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
 
   private TiDBResultSet tiDBResultSet;
 
-  public TiDBRecordReader(TiDBInputSplit split, Configuration conf,
-      ClientSession clientSession, List<ColumnHandleInternal> columnHandleInternals,
+  public TiDBRecordReader(
+      TiDBInputSplit split,
+      Configuration conf,
+      ClientSession clientSession,
+      List<ColumnHandleInternal> columnHandleInternals,
       ResultSetMetaData resultSetMetaData) {
 
     this.dfConf = new TiDBConfiguration(conf);
     this.inputClass = (Class<T>) dfConf.getInputClass();
     this.columnHandleInternals = columnHandleInternals;
-    this.splitInternal = new SplitInternal(
-        new TableHandleInternal(split.getConnectorId(), split.getSchemaName(),
-            split.getTableName()), split.getStartKey(), split.getEndKey(),
-        clientSession.getSnapshotVersion());
+    this.splitInternal =
+        new SplitInternal(
+            new TableHandleInternal(
+                split.getConnectorId(), split.getSchemaName(), split.getTableName()),
+            split.getStartKey(),
+            split.getEndKey(),
+            clientSession.getSnapshotVersion());
     this.clientSession = clientSession;
     this.projectedFieldIndexes = IntStream.range(0, dfConf.getInputFieldNames().length).toArray();
-    this.timestamp = Optional
-        .ofNullable(dfConf.getSnapshot())
-        .filter(StringUtils::isNoneEmpty)
-        .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0))
-        .orElse(null);
+    this.timestamp =
+        Optional.ofNullable(dfConf.getSnapshot())
+            .filter(StringUtils::isNoneEmpty)
+            .map(
+                s ->
+                    new TiTimestamp(
+                        Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0))
+            .orElse(null);
     this.limit = dfConf.getMapperRecordLimit();
     this.recordCount = 0;
     this.resultSetMetaData = resultSetMetaData;
@@ -113,12 +119,16 @@ public class TiDBRecordReader<T extends TiDBWritable> extends
     }
 
     if (value == null) {
-      RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
-          Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
-              .collect(Collectors.toList()),
-          Optional.empty(),
-          Optional.ofNullable(timestamp),
-          Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
+      RecordSetInternal recordSetInternal =
+          new RecordSetInternal(
+              clientSession,
+              splitInternal,
+              Arrays.stream(projectedFieldIndexes)
+                  .mapToObj(columnHandleInternals::get)
+                  .collect(Collectors.toList()),
+              Optional.empty(),
+              Optional.ofNullable(timestamp),
+              Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
       cursor = recordSetInternal.cursor();
       if (!cursor.advanceNextPosition()) {
         return false;

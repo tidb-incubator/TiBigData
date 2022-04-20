@@ -19,13 +19,13 @@ package io.tidb.bigdata.tidb.key;
 import static java.util.Objects.requireNonNull;
 
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.KeyUtils;
 import io.tidb.bigdata.tidb.types.BytesType;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.IntegerType;
 import io.tidb.bigdata.tidb.types.StringType;
 import io.tidb.bigdata.tidb.util.LogDesensitization;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
-import  io.tidb.bigdata.tidb.codec.KeyUtils;
 import org.tikv.common.exception.TypeException;
 
 public class TypedKey extends Key {

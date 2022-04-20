@@ -22,15 +22,14 @@ import org.junit.ClassRule;
 
 public abstract class FlinkTestBase {
 
-  @ClassRule
-  public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
+  @ClassRule public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
 
   public static final String CATALOG_NAME = "tidb";
 
   public static final String DATABASE_NAME = "tiflink_test";
 
-  public static final String CREATE_DATABASE_SQL = String.format(
-      "CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME);
+  public static final String CREATE_DATABASE_SQL =
+      String.format("CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME);
 
   protected TableEnvironment getTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();

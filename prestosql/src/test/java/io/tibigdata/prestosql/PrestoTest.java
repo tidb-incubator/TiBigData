@@ -45,19 +45,20 @@ public class PrestoTest {
     preCommand();
     try {
       String sql = "SELECT * FROM sample_table";
-      List<MaterializedRow> targetRows = ImmutableList
-          .of(new MaterializedRow(DEFAULT_PRECISION, 1, "zs"),
+      List<MaterializedRow> targetRows =
+          ImmutableList.of(
+              new MaterializedRow(DEFAULT_PRECISION, 1, "zs"),
               new MaterializedRow(DEFAULT_PRECISION, 2, "ls"));
       tiDBQueryRunner.verifySqlResult(sql, targetRows);
 
       sql = "SELECT c1,c2 FROM sample_table WHERE c1 = 1";
-      targetRows = ImmutableList
-          .of(new MaterializedRow(DEFAULT_PRECISION, 1, "zs"));
+      targetRows = ImmutableList.of(new MaterializedRow(DEFAULT_PRECISION, 1, "zs"));
       tiDBQueryRunner.verifySqlResult(sql, targetRows);
 
       sql = "SELECT * FROM sample_table WHERE c1 = 1 OR c1 = 2";
-      targetRows = ImmutableList
-          .of(new MaterializedRow(DEFAULT_PRECISION, 1, "zs"),
+      targetRows =
+          ImmutableList.of(
+              new MaterializedRow(DEFAULT_PRECISION, 1, "zs"),
               new MaterializedRow(DEFAULT_PRECISION, 2, "ls"));
       tiDBQueryRunner.verifySqlResult(sql, targetRows);
     } catch (Exception e) {
@@ -66,5 +67,4 @@ public class PrestoTest {
       afterCommand();
     }
   }
-
 }

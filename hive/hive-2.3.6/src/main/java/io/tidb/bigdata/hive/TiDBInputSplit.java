@@ -33,8 +33,7 @@ public class TiDBInputSplit extends FileSplit {
   private Path path;
   private List<SplitInternal> splitInternals;
 
-  public TiDBInputSplit() {
-  }
+  public TiDBInputSplit() {}
 
   public TiDBInputSplit(Path path, List<SplitInternal> splitInternals) {
     this.path = path;
@@ -44,7 +43,6 @@ public class TiDBInputSplit extends FileSplit {
   public List<SplitInternal> getSplitInternals() {
     return splitInternals;
   }
-
 
   @Override
   public Path getPath() {
@@ -88,11 +86,12 @@ public class TiDBInputSplit extends FileSplit {
       Long physicalTimestamp = dataInput.readLong();
       Long logicalTimestamp = dataInput.readLong();
 
-      SplitInternal splitInternal = new SplitInternal(
-          new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
-          startKey,
-          endKey,
-          new TiTimestamp(physicalTimestamp, logicalTimestamp));
+      SplitInternal splitInternal =
+          new SplitInternal(
+              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              startKey,
+              endKey,
+              new TiTimestamp(physicalTimestamp, logicalTimestamp));
       splitInternalList.add(splitInternal);
     }
     this.splitInternals = splitInternalList;

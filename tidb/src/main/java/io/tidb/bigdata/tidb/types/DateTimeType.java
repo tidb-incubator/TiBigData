@@ -19,12 +19,12 @@
 package io.tidb.bigdata.tidb.types;
 
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.sql.Timestamp;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 /**
  * Datetime is a timezone neutral version of timestamp While most of decoding logic is the same it

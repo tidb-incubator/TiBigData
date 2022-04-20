@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.codec;
 
-
 import io.tidb.bigdata.tidb.handle.CommonHandle;
 import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;

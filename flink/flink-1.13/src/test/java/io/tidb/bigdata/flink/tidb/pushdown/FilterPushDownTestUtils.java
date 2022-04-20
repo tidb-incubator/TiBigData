@@ -76,8 +76,8 @@ public class FilterPushDownTestUtils {
   private static final TableEnvironment tableEnvironment;
 
   static {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance()
-        .useBlinkPlanner().inBatchMode().build();
+    EnvironmentSettings settings =
+        EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build();
     tableEnvironment = TableEnvironment.create(settings);
     TestCatalog testCatalog = new TestCatalog();
     tableEnvironment.registerCatalog(testCatalog.getName(), testCatalog);
@@ -108,38 +108,38 @@ public class FilterPushDownTestUtils {
      * All types for tidb: {@link io.tidb.bigdata.test.TableUtils#getTableSqlWithAllTypes(String,
      * String)}
      */
-    public static final Schema SCHEMA = Schema.newBuilder()
-        .column("c1", DataTypes.TINYINT())
-        .column("c2", DataTypes.SMALLINT())
-        .column("c3", DataTypes.INT())
-        .column("c4", DataTypes.INT())
-        .column("c5", DataTypes.BIGINT())
-        .column("c6", DataTypes.STRING())
-        .column("c7", DataTypes.STRING())
-        .column("c8", DataTypes.STRING())
-        .column("c9", DataTypes.STRING())
-        .column("c10", DataTypes.STRING())
-        .column("c11", DataTypes.STRING())
-        .column("c12", DataTypes.BYTES())
-        .column("c13", DataTypes.BYTES())
-        .column("c14", DataTypes.BYTES())
-        .column("c15", DataTypes.BYTES())
-        .column("c16", DataTypes.BYTES())
-        .column("c17", DataTypes.BYTES())
-        .column("c18", DataTypes.FLOAT())
-        .column("c19", DataTypes.DOUBLE())
-        .column("c20", DataTypes.DECIMAL(6, 3))
-        .column("c21", DataTypes.DATE())
-        .column("c22", DataTypes.TIME(0))
-        .column("c23", DataTypes.TIMESTAMP(6))
-        .column("c24", DataTypes.TIMESTAMP(6))
-        .column("c25", DataTypes.INT())
-        .column("c26", DataTypes.TINYINT())
-        .column("c27", DataTypes.STRING())
-        .column("c28", DataTypes.STRING())
-        .column("c29", DataTypes.STRING())
-        .build();
-
+    public static final Schema SCHEMA =
+        Schema.newBuilder()
+            .column("c1", DataTypes.TINYINT())
+            .column("c2", DataTypes.SMALLINT())
+            .column("c3", DataTypes.INT())
+            .column("c4", DataTypes.INT())
+            .column("c5", DataTypes.BIGINT())
+            .column("c6", DataTypes.STRING())
+            .column("c7", DataTypes.STRING())
+            .column("c8", DataTypes.STRING())
+            .column("c9", DataTypes.STRING())
+            .column("c10", DataTypes.STRING())
+            .column("c11", DataTypes.STRING())
+            .column("c12", DataTypes.BYTES())
+            .column("c13", DataTypes.BYTES())
+            .column("c14", DataTypes.BYTES())
+            .column("c15", DataTypes.BYTES())
+            .column("c16", DataTypes.BYTES())
+            .column("c17", DataTypes.BYTES())
+            .column("c18", DataTypes.FLOAT())
+            .column("c19", DataTypes.DOUBLE())
+            .column("c20", DataTypes.DECIMAL(6, 3))
+            .column("c21", DataTypes.DATE())
+            .column("c22", DataTypes.TIME(0))
+            .column("c23", DataTypes.TIMESTAMP(6))
+            .column("c24", DataTypes.TIMESTAMP(6))
+            .column("c25", DataTypes.INT())
+            .column("c26", DataTypes.TINYINT())
+            .column("c27", DataTypes.STRING())
+            .column("c28", DataTypes.STRING())
+            .column("c29", DataTypes.STRING())
+            .build();
 
     public TestCatalog() {
       this("test_catalog", "default");
@@ -150,14 +150,10 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void open() throws CatalogException {
-
-    }
+    public void open() throws CatalogException {}
 
     @Override
-    public void close() throws CatalogException {
-
-    }
+    public void close() throws CatalogException {}
 
     @Override
     public List<String> listDatabases() throws CatalogException {
@@ -213,8 +209,8 @@ public class FilterPushDownTestUtils {
 
     @Override
     public boolean tableExists(ObjectPath tablePath) throws CatalogException {
-      return DATABASES.contains(tablePath.getDatabaseName()) && TABLES.contains(
-          tablePath.getObjectName());
+      return DATABASES.contains(tablePath.getDatabaseName())
+          && TABLES.contains(tablePath.getObjectName());
     }
 
     @Override
@@ -236,8 +232,9 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void alterTable(ObjectPath tablePath, CatalogBaseTable newTable,
-        boolean ignoreIfNotExists) throws TableNotExistException, CatalogException {
+    public void alterTable(
+        ObjectPath tablePath, CatalogBaseTable newTable, boolean ignoreIfNotExists)
+        throws TableNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
@@ -248,15 +245,16 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public List<CatalogPartitionSpec> listPartitions(ObjectPath tablePath,
-        CatalogPartitionSpec partitionSpec)
-        throws TableNotExistException, TableNotPartitionedException, PartitionSpecInvalidException, CatalogException {
+    public List<CatalogPartitionSpec> listPartitions(
+        ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
+        throws TableNotExistException, TableNotPartitionedException, PartitionSpecInvalidException,
+            CatalogException {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<CatalogPartitionSpec> listPartitionsByFilter(ObjectPath tablePath,
-        List<Expression> filters)
+    public List<CatalogPartitionSpec> listPartitionsByFilter(
+        ObjectPath tablePath, List<Expression> filters)
         throws TableNotExistException, TableNotPartitionedException, CatalogException {
       throw new UnsupportedOperationException();
     }
@@ -274,21 +272,29 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void createPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-        CatalogPartition partition, boolean ignoreIfExists)
-        throws TableNotExistException, TableNotPartitionedException, PartitionSpecInvalidException, PartitionAlreadyExistsException, CatalogException {
+    public void createPartition(
+        ObjectPath tablePath,
+        CatalogPartitionSpec partitionSpec,
+        CatalogPartition partition,
+        boolean ignoreIfExists)
+        throws TableNotExistException, TableNotPartitionedException, PartitionSpecInvalidException,
+            PartitionAlreadyExistsException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void dropPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-        boolean ignoreIfNotExists) throws PartitionNotExistException, CatalogException {
+    public void dropPartition(
+        ObjectPath tablePath, CatalogPartitionSpec partitionSpec, boolean ignoreIfNotExists)
+        throws PartitionNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void alterPartition(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-        CatalogPartition newPartition, boolean ignoreIfNotExists)
+    public void alterPartition(
+        ObjectPath tablePath,
+        CatalogPartitionSpec partitionSpec,
+        CatalogPartition newPartition,
+        boolean ignoreIfNotExists)
         throws PartitionNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
@@ -311,15 +317,16 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void createFunction(ObjectPath functionPath, CatalogFunction function,
-        boolean ignoreIfExists)
+    public void createFunction(
+        ObjectPath functionPath, CatalogFunction function, boolean ignoreIfExists)
         throws FunctionAlreadyExistException, DatabaseNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void alterFunction(ObjectPath functionPath, CatalogFunction newFunction,
-        boolean ignoreIfNotExists) throws FunctionNotExistException, CatalogException {
+    public void alterFunction(
+        ObjectPath functionPath, CatalogFunction newFunction, boolean ignoreIfNotExists)
+        throws FunctionNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
@@ -342,41 +349,50 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public CatalogTableStatistics getPartitionStatistics(ObjectPath tablePath,
-        CatalogPartitionSpec partitionSpec) throws PartitionNotExistException, CatalogException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public CatalogColumnStatistics getPartitionColumnStatistics(ObjectPath tablePath,
-        CatalogPartitionSpec partitionSpec) throws PartitionNotExistException, CatalogException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void alterTableStatistics(ObjectPath tablePath, CatalogTableStatistics tableStatistics,
-        boolean ignoreIfNotExists) throws TableNotExistException, CatalogException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void alterTableColumnStatistics(ObjectPath tablePath,
-        CatalogColumnStatistics columnStatistics, boolean ignoreIfNotExists)
-        throws TableNotExistException, CatalogException, TablePartitionedException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void alterPartitionStatistics(ObjectPath tablePath, CatalogPartitionSpec partitionSpec,
-        CatalogTableStatistics partitionStatistics, boolean ignoreIfNotExists)
+    public CatalogTableStatistics getPartitionStatistics(
+        ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
         throws PartitionNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void alterPartitionColumnStatistics(ObjectPath tablePath,
-        CatalogPartitionSpec partitionSpec, CatalogColumnStatistics columnStatistics,
-        boolean ignoreIfNotExists) throws PartitionNotExistException, CatalogException {
+    public CatalogColumnStatistics getPartitionColumnStatistics(
+        ObjectPath tablePath, CatalogPartitionSpec partitionSpec)
+        throws PartitionNotExistException, CatalogException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void alterTableStatistics(
+        ObjectPath tablePath, CatalogTableStatistics tableStatistics, boolean ignoreIfNotExists)
+        throws TableNotExistException, CatalogException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void alterTableColumnStatistics(
+        ObjectPath tablePath, CatalogColumnStatistics columnStatistics, boolean ignoreIfNotExists)
+        throws TableNotExistException, CatalogException, TablePartitionedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void alterPartitionStatistics(
+        ObjectPath tablePath,
+        CatalogPartitionSpec partitionSpec,
+        CatalogTableStatistics partitionStatistics,
+        boolean ignoreIfNotExists)
+        throws PartitionNotExistException, CatalogException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void alterPartitionColumnStatistics(
+        ObjectPath tablePath,
+        CatalogPartitionSpec partitionSpec,
+        CatalogColumnStatistics columnStatistics,
+        boolean ignoreIfNotExists)
+        throws PartitionNotExistException, CatalogException {
       throw new UnsupportedOperationException();
     }
 
@@ -411,8 +427,8 @@ public class FilterPushDownTestUtils {
     }
   }
 
-  public static class TestTableSource implements ScanTableSource, SupportsProjectionPushDown,
-      SupportsFilterPushDown {
+  public static class TestTableSource
+      implements ScanTableSource, SupportsProjectionPushDown, SupportsFilterPushDown {
 
     public static List<ResolvedExpression> FILTERS;
 
@@ -425,7 +441,6 @@ public class FilterPushDownTestUtils {
     public String asSummaryString() {
       return "";
     }
-
 
     @Override
     public ChangelogMode getChangelogMode() {
@@ -449,17 +464,13 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void applyProjection(int[][] projectedFields) {
-
-    }
+    public void applyProjection(int[][] projectedFields) {}
   }
 
   public static class TestInputFormat extends RichInputFormat<RowData, InputSplit> {
 
     @Override
-    public void configure(Configuration parameters) {
-
-    }
+    public void configure(Configuration parameters) {}
 
     @Override
     public BaseStatistics getStatistics(BaseStatistics cachedStatistics) throws IOException {
@@ -477,9 +488,7 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void open(InputSplit split) throws IOException {
-
-    }
+    public void open(InputSplit split) throws IOException {}
 
     @Override
     public boolean reachedEnd() throws IOException {
@@ -492,10 +501,6 @@ public class FilterPushDownTestUtils {
     }
 
     @Override
-    public void close() throws IOException {
-
-    }
+    public void close() throws IOException {}
   }
-
-
 }

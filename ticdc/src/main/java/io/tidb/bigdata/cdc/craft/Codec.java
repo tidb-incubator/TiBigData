@@ -248,15 +248,19 @@ public class Codec {
   }
 
   public byte[][] decodeBytesChunk(int size) {
-    return doDecodeBytesChunk(size, () -> {
-      return Misc.uncheckedRun(this::decodeUvarint).intValue();
-    });
+    return doDecodeBytesChunk(
+        size,
+        () -> {
+          return Misc.uncheckedRun(this::decodeUvarint).intValue();
+        });
   }
 
   public byte[][] decodeNullableBytesChunk(int size) {
-    return doDecodeBytesChunk(size, () -> {
-      return Misc.uncheckedRun(this::decodeVarint).intValue();
-    });
+    return doDecodeBytesChunk(
+        size,
+        () -> {
+          return Misc.uncheckedRun(this::decodeVarint).intValue();
+        });
   }
 
   public long[] decodeVarintChunk(int size) {
@@ -298,8 +302,12 @@ public class Codec {
   private int checkAvailableBytes(final int expecting) {
     final int available = bufferLimit - bufferPos;
     if (available < expecting) {
-      throw new IllegalStateException("Buffer underflow: expecting " + expecting
-          + " byte(s) when only " + available + " byte(s) are available");
+      throw new IllegalStateException(
+          "Buffer underflow: expecting "
+              + expecting
+              + " byte(s) when only "
+              + available
+              + " byte(s) are available");
     }
     return bufferPos;
   }

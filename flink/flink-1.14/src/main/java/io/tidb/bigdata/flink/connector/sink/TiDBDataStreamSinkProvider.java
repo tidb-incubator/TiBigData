@@ -34,6 +34,11 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SqlUtils;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +62,7 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiIndexColumn;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.Row;
 
 public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
@@ -77,8 +77,12 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
   private final TableSchema tableSchema;
   private final TiDBSinkOptions sinkOptions;
 
-  public TiDBDataStreamSinkProvider(String databaseName, String tableName,
-      ResolvedCatalogTable table, Context context, TiDBSinkOptions sinkOptions) {
+  public TiDBDataStreamSinkProvider(
+      String databaseName,
+      String tableName,
+      ResolvedCatalogTable table,
+      Context context,
+      TiDBSinkOptions sinkOptions) {
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.table = table;
@@ -93,40 +97,47 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
   }
 
   private DataStream<Row> deduplicate(DataStream<Row> tiRowDataStream, TiTableInfo tiTableInfo) {
-    List<TiIndexInfo> uniqueIndexes = SqlUtils.getUniqueIndexes(tiTableInfo,
-        sinkOptions.isIgnoreAutoincrementColumn());
+    List<TiIndexInfo> uniqueIndexes =
+        SqlUtils.getUniqueIndexes(tiTableInfo, sinkOptions.isIgnoreAutoincrementColumn());
     if (uniqueIndexes.size() == 0) {
       return tiRowDataStream;
     }
 
     for (TiIndexInfo uniqueIndex : uniqueIndexes) {
-      List<Integer> columnIndexes = uniqueIndex.getIndexColumns()
-          .stream()
-          .map(TiIndexColumn::getOffset)
-          .collect(Collectors.toList());
-      List<String> uniqueIndexColumnNames = uniqueIndex.getIndexColumns()
-          .stream()
-          .map(TiIndexColumn::getName)
-          .collect(Collectors.toList());
-
-      tiRowDataStream = tiRowDataStream.keyBy(new KeySelector<Row, List<Object>>() {
-        @Override
-        public List<Object> getKey(Row row) throws Exception {
-          return columnIndexes.stream()
-              .map(i -> row.get(i, null))
+      List<Integer> columnIndexes =
+          uniqueIndex
+              .getIndexColumns()
+              .stream()
+              .map(TiIndexColumn::getOffset)
               .collect(Collectors.toList());
-        }
-      }).process(
-          TiDBKeyedProcessFunctionFactory.createKeyedProcessFunction(
-              sinkOptions,
-              tiRowDataStream,
-              uniqueIndexColumnNames));
+      List<String> uniqueIndexColumnNames =
+          uniqueIndex
+              .getIndexColumns()
+              .stream()
+              .map(TiIndexColumn::getName)
+              .collect(Collectors.toList());
+
+      tiRowDataStream =
+          tiRowDataStream
+              .keyBy(
+                  new KeySelector<Row, List<Object>>() {
+                    @Override
+                    public List<Object> getKey(Row row) throws Exception {
+                      return columnIndexes
+                          .stream()
+                          .map(i -> row.get(i, null))
+                          .collect(Collectors.toList());
+                    }
+                  })
+              .process(
+                  TiDBKeyedProcessFunctionFactory.createKeyedProcessFunction(
+                      sinkOptions, tiRowDataStream, uniqueIndexColumnNames));
     }
     return tiRowDataStream;
   }
 
-  private DataStreamSink<?> doConsumeDataStream(DataStream<RowData> dataStream,
-      ClientSession clientSession) {
+  private DataStreamSink<?> doConsumeDataStream(
+      DataStream<RowData> dataStream, ClientSession clientSession) {
     final byte[] primaryKey;
     final int parallelism = dataStream.getParallelism();
     final TiTimestamp timestamp = clientSession.getSnapshotVersion();
@@ -134,28 +145,30 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
     TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
     // check if tidbColumns match flinkColumns
-    String[] tidbColumns = tiTableInfo.getColumns().stream().map(TiColumnInfo::getName)
-        .toArray(String[]::new);
+    String[] tidbColumns =
+        tiTableInfo.getColumns().stream().map(TiColumnInfo::getName).toArray(String[]::new);
     String[] flinkColumns = tableSchema.getFieldNames();
-    Preconditions.checkArgument(Arrays.equals(tidbColumns, flinkColumns),
-        String.format("Columns do not match:\n "
-            + "tidb -> flink: \n%s", SqlUtils.printColumnMapping(tidbColumns, flinkColumns)));
+    Preconditions.checkArgument(
+        Arrays.equals(tidbColumns, flinkColumns),
+        String.format(
+            "Columns do not match:\n " + "tidb -> flink: \n%s",
+            SqlUtils.printColumnMapping(tidbColumns, flinkColumns)));
 
     // add RowConvertMapFunction
     TiDBRowConverter tiDBRowConverter = new TiDBRowConverter(tiTableInfo);
-    DataStream<Row> tiRowDataStream = dataStream.map(new RowConvertMapFunction(tiDBRowConverter,
-        sinkOptions.isIgnoreAutoincrementColumn()));
+    DataStream<Row> tiRowDataStream =
+        dataStream.map(
+            new RowConvertMapFunction(tiDBRowConverter, sinkOptions.isIgnoreAutoincrementColumn()));
 
     if (sinkTransaction == MINIBATCH) {
       LOG.info("Flink sinkTransaction is working on mode miniBatch");
 
       // mini batch use row buffer deduplicate
-      TiDBWriteOperator tiDBWriteOperator = new TiDBMiniBatchWriteOperator(databaseName, tableName,
-          properties,
-          timestamp, sinkOptions);
-      SingleOutputStreamOperator<Void> transform = tiRowDataStream.transform("PRE_WRITE",
-          Types.VOID,
-          tiDBWriteOperator);
+      TiDBWriteOperator tiDBWriteOperator =
+          new TiDBMiniBatchWriteOperator(
+              databaseName, tableName, properties, timestamp, sinkOptions);
+      SingleOutputStreamOperator<Void> transform =
+          tiRowDataStream.transform("PRE_WRITE", Types.VOID, tiDBWriteOperator);
 
       // Since sink happens in operator, all we need is to discard stream.
       return transform
@@ -177,32 +190,29 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
       tiRowDataStream = deduplicate(tiRowDataStream, tiTableInfo);
 
       // preWrite primary key, use random uuid as primary key.
-      TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(clientSession.getTiSession(),
-          timestamp.getVersion());
+      TiDBWriteHelper tiDBWriteHelper =
+          new TiDBWriteHelper(clientSession.getTiSession(), timestamp.getVersion());
       tiDBWriteHelper.preWriteFirst(new BytePairWrapper(fakePrimaryKey(), new byte[0]));
       primaryKey = tiDBWriteHelper.getPrimaryKeyMust();
       tiDBWriteHelper.close();
 
       // add operator which preWrite secondary keys.
-      TiDBWriteOperator tiDBWriteOperator = new TiDBGlobalWriteOperator(databaseName, tableName,
-          properties,
-          timestamp, sinkOptions, primaryKey);
-      SingleOutputStreamOperator<Void> transform = tiRowDataStream.transform("PRE_WRITE",
-          Types.VOID,
-          tiDBWriteOperator);
+      TiDBWriteOperator tiDBWriteOperator =
+          new TiDBGlobalWriteOperator(
+              databaseName, tableName, properties, timestamp, sinkOptions, primaryKey);
+      SingleOutputStreamOperator<Void> transform =
+          tiRowDataStream.transform("PRE_WRITE", Types.VOID, tiDBWriteOperator);
 
       // add operator which commit primary keys.
-      TiDBCommitOperator tiDBCommitOperator = new TiDBCommitOperator(properties,
-          timestamp.getVersion(), primaryKey);
-      transform = transform
-          .transform("COMMIT", Types.VOID, tiDBCommitOperator)
-          .setParallelism(1);
+      TiDBCommitOperator tiDBCommitOperator =
+          new TiDBCommitOperator(properties, timestamp.getVersion(), primaryKey);
+      transform = transform.transform("COMMIT", Types.VOID, tiDBCommitOperator).setParallelism(1);
 
       /*
-        Since it's hard to get secondary keys after committing primary keys, we can't
-        explicitly commit secondary keys. Add according to Percolator, latter requests
-        can resolve locks on secondary keys.
-       */
+       Since it's hard to get secondary keys after committing primary keys, we can't
+       explicitly commit secondary keys. Add according to Percolator, latter requests
+       can resolve locks on secondary keys.
+      */
       return transform
           .addSink(new DiscardingSink<>())
           .setParallelism(1)
@@ -214,13 +224,12 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
     }
   }
 
-  private DataStreamSink<Row> generateCheckpointStream(DataStream<RowData> dataStream,
-      TiTableInfo tiTableInfo, DataStream<Row> tiRowDataStream) {
+  private DataStreamSink<Row> generateCheckpointStream(
+      DataStream<RowData> dataStream, TiTableInfo tiTableInfo, DataStream<Row> tiRowDataStream) {
     LOG.info("Flink sinkTransaction is working on mode checkpoint");
 
     // validate if CheckpointingEnabled.
-    CheckpointConfig checkpointConfig = dataStream.getExecutionEnvironment()
-        .getCheckpointConfig();
+    CheckpointConfig checkpointConfig = dataStream.getExecutionEnvironment().getCheckpointConfig();
     if (!checkpointConfig.isCheckpointingEnabled()) {
       throw new IllegalStateException(
           "Checkpoint transaction is invalid for stream without checkpoint");
@@ -228,20 +237,20 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
     tiRowDataStream = deduplicate(tiRowDataStream, tiTableInfo);
 
-    TiDBSinkFunction sinkFunction = new TiDBSinkFunction(
-        new TiDBTransactionStateSerializer(),
-        new TiDBTransactionContextSerializer(),
-        databaseName,
-        tableName,
-        properties,
-        sinkOptions);
+    TiDBSinkFunction sinkFunction =
+        new TiDBSinkFunction(
+            new TiDBTransactionStateSerializer(),
+            new TiDBTransactionContextSerializer(),
+            databaseName,
+            tableName,
+            properties,
+            sinkOptions);
     return tiRowDataStream.addSink(sinkFunction);
   }
 
   @Override
   public DataStreamSink<?> consumeDataStream(DataStream<RowData> dataStream) {
-    try (ClientSession clientSession = ClientSession.create(
-        new ClientConfig(properties))) {
+    try (ClientSession clientSession = ClientSession.create(new ClientConfig(properties))) {
       return doConsumeDataStream(dataStream, clientSession);
     } catch (Exception e) {
       throw new IllegalStateException(e);
@@ -253,8 +262,8 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
     private final TiDBRowConverter tiDBRowConverter;
     private final boolean ignoreAutoincrementColumn;
 
-    public RowConvertMapFunction(TiDBRowConverter tiDBRowConverter,
-        boolean ignoreAutoincrementColumn) {
+    public RowConvertMapFunction(
+        TiDBRowConverter tiDBRowConverter, boolean ignoreAutoincrementColumn) {
       this.tiDBRowConverter = tiDBRowConverter;
       this.ignoreAutoincrementColumn = ignoreAutoincrementColumn;
     }
@@ -264,5 +273,4 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
       return tiDBRowConverter.toTiRow(rowData, ignoreAutoincrementColumn);
     }
   }
-
 }

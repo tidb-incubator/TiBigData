@@ -16,20 +16,19 @@
 
 package io.tidb.bigdata.tidb.handle;
 
-
 import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import io.tidb.bigdata.tidb.key.Key;
+import io.tidb.bigdata.tidb.types.Converter;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.MySQLType;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import org.tikv.common.exception.CodecException;
-import io.tidb.bigdata.tidb.types.Converter;
-import io.tidb.bigdata.tidb.types.DataType;
-import io.tidb.bigdata.tidb.types.MySQLType;
 import org.tikv.common.util.FastByteComparisons;
 
 public class CommonHandle implements Handle {

@@ -17,9 +17,9 @@
 package io.tidb.bigdata.tidb.codec;
 
 import com.google.common.primitives.UnsignedBytes;
-import org.tikv.shade.com.google.protobuf.ByteString;
 import io.tidb.bigdata.tidb.key.Key;
 import org.tikv.kvproto.Coprocessor;
+import org.tikv.shade.com.google.protobuf.ByteString;
 import org.tikv.shade.com.google.protobuf.TextFormat;
 
 public class KeyUtils {

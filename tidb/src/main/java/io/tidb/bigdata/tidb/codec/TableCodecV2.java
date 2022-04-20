@@ -17,15 +17,15 @@
 package io.tidb.bigdata.tidb.codec;
 
 import io.tidb.bigdata.tidb.handle.Handle;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.ObjectRowImpl;
 import io.tidb.bigdata.tidb.row.Row;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class TableCodecV2 {
 

@@ -19,10 +19,10 @@
 package io.tidb.bigdata.tidb.types;
 
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.nio.charset.StandardCharsets;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 public class StringType extends BytesType {
 

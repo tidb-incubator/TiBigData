@@ -41,8 +41,8 @@ import javax.inject.Inject;
 
 public final class TiDBPlanOptimizerProvider implements ConnectorPlanOptimizerProvider {
 
-  private static final Set<Class<?>> functionTranslators = ImmutableSet
-      .of(OperatorTranslators.class);
+  private static final Set<Class<?>> functionTranslators =
+      ImmutableSet.of(OperatorTranslators.class);
   private final FunctionMetadataManager functionMetadataManager;
   private final StandardFunctionResolution standardFunctionResolution;
   private final RowExpressionService rowExpressionService;
@@ -61,23 +61,22 @@ public final class TiDBPlanOptimizerProvider implements ConnectorPlanOptimizerPr
   }
 
   public static boolean isPushdownType(Type type) {
-    return type.isOrderable() && (type.equals(BigintType.BIGINT)
-        || type.equals(TinyintType.TINYINT)
-        || type.equals(SmallintType.SMALLINT)
-        || type.equals(IntegerType.INTEGER)
-        || type.equals(DoubleType.DOUBLE)
-        || type.equals(RealType.REAL)
-        || type.equals(BooleanType.BOOLEAN)
-        || type.equals(DateType.DATE)
-        || type.equals(TimeType.TIME)
-        || type.equals(TimestampType.TIMESTAMP)
-        || type instanceof VarcharType
-        || type instanceof CharType);
+    return type.isOrderable()
+        && (type.equals(BigintType.BIGINT)
+            || type.equals(TinyintType.TINYINT)
+            || type.equals(SmallintType.SMALLINT)
+            || type.equals(IntegerType.INTEGER)
+            || type.equals(DoubleType.DOUBLE)
+            || type.equals(RealType.REAL)
+            || type.equals(BooleanType.BOOLEAN)
+            || type.equals(DateType.DATE)
+            || type.equals(TimeType.TIME)
+            || type.equals(TimestampType.TIMESTAMP)
+            || type instanceof VarcharType
+            || type instanceof CharType);
   }
 
-  /**
-   * The plan optimizers to be applied before having the notion of distribution.
-   */
+  /** The plan optimizers to be applied before having the notion of distribution. */
   public Set<ConnectorPlanOptimizer> getLogicalPlanOptimizers() {
     return ImmutableSet.of();
   }

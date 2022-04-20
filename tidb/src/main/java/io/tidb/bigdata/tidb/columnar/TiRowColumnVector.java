@@ -16,10 +16,9 @@
 
 package io.tidb.bigdata.tidb.columnar;
 
-
+import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import java.math.BigDecimal;
-import io.tidb.bigdata.tidb.row.Row;
 
 /**
  * An implementation of {@link TiColumnVector}. It is a faked column vector; the underlying data is

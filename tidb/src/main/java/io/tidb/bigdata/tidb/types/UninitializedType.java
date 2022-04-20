@@ -20,10 +20,10 @@ package io.tidb.bigdata.tidb.types;
 
 import com.pingcap.tidb.tipb.ExprType;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 /**
  * UninitializedType is created to deal with MySQLType being 0. In TiDB, when type is 0, it

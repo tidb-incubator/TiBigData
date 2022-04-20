@@ -18,6 +18,7 @@ package io.tidb.bigdata.tidb.key;
 
 import com.google.common.base.Joiner;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
@@ -25,9 +26,7 @@ import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.IntegerType;
 import java.util.List;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import org.tikv.common.exception.TypeException;
-
 
 public class IndexKey extends Key {
   private static final byte[] IDX_PREFIX_SEP = new byte[] {'_', 'i'};

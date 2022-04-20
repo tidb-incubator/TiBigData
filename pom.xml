@@ -249,29 +249,28 @@
           </execution>
         </executions>
       </plugin>
-<!--      <plugin>-->
-<!--        <groupId>org.apache.maven.plugins</groupId>-->
-<!--        <artifactId>maven-checkstyle-plugin</artifactId>-->
-<!--        <version>3.1.1</version>-->
-<!--        <configuration>-->
-<!--          <configLocation>check_style.xml</configLocation>-->
-<!--          <encoding>UTF-8</encoding>-->
-<!--          <consoleOutput>true</consoleOutput>-->
-<!--          <failsOnError>true</failsOnError>-->
-<!--          <linkXRef>false</linkXRef>-->
-<!--          <violationSeverity>warning</violationSeverity>-->
-<!--          <excludes>**/org/apache/flink/connector/base/source/hybrid/**/*</excludes>-->
-<!--        </configuration>-->
-<!--        <executions>-->
-<!--          <execution>-->
-<!--            <id>validate</id>-->
-<!--            <phase>validate</phase>-->
-<!--            <goals>-->
-<!--              <goal>check</goal>-->
-<!--            </goals>-->
-<!--          </execution>-->
-<!--        </executions>-->
-<!--      </plugin>-->
+      <plugin>
+        <groupId>com.coveo</groupId>
+        <artifactId>fmt-maven-plugin</artifactId>
+        <version>2.6.0</version>
+        <configuration>
+          <sourceDirectory>src/main/java</sourceDirectory>
+          <testSourceDirectory>src/test/java</testSourceDirectory>
+          <verbose>true</verbose>
+          <filesNamePattern>.*\.java</filesNamePattern>
+          <skip>false</skip>
+          <skipSortingImports>false</skipSortingImports>
+          <style>google</style>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <!-- Javadoc Plug-in -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

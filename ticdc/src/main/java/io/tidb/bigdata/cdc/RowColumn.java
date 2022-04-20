@@ -36,23 +36,20 @@ import java.util.function.Supplier;
 
 public class RowColumn {
 
-  /**
-   * Formatter for SQL string representation of a time value.
-   */
+  /** Formatter for SQL string representation of a time value. */
   static final DateTimeFormatter SQL_TIME_FORMAT =
       new DateTimeFormatterBuilder()
           .appendPattern("HH:mm:ss")
           .appendFraction(ChronoField.NANO_OF_SECOND, 0, 9, true)
           .toFormatter();
-  /**
-   * Formatter for SQL string representation of a timestamp value (without UTC timezone).
-   */
+  /** Formatter for SQL string representation of a timestamp value (without UTC timezone). */
   static final DateTimeFormatter SQL_TIMESTAMP_FORMAT =
       new DateTimeFormatterBuilder()
           .append(DateTimeFormatter.ISO_LOCAL_DATE)
           .appendLiteral(' ')
           .append(SQL_TIME_FORMAT)
           .toFormatter();
+
   private static final short MYSQL_TYPE_DECIMAL = 0;
   private static final short MYSQL_TYPE_TINY = 1;
   private static final short MYSQL_TYPE_SHORT = 2;
@@ -101,7 +98,11 @@ public class RowColumn {
   private final long flags;
   private Optional<Object> coerced; // Coerced value according to it's type
 
-  public RowColumn(final String name, final Object value, final boolean whereHandle, final int type,
+  public RowColumn(
+      final String name,
+      final Object value,
+      final boolean whereHandle,
+      final int type,
       final long flags) {
     this.name = name;
     this.whereHandle = whereHandle;
@@ -552,8 +553,8 @@ public class RowColumn {
     VARBINARY(MYSQL_TYPE_VARSTRING, byte[].class, Type::stringToBytes),
     CHAR(MYSQL_TYPE_STRING, String.class, Type::bytesToString),
     BINARY(MYSQL_TYPE_STRING, byte[].class, Type::stringToBytes),
-    GEOMETRY(MYSQL_TYPE_GEOMETRY, Void.class,
-        Type::toNull); /* Geometry is not supported at this time */
+    GEOMETRY(
+        MYSQL_TYPE_GEOMETRY, Void.class, Type::toNull); /* Geometry is not supported at this time */
 
     private static final Map<Integer, Type> byId = new HashMap<>();
 

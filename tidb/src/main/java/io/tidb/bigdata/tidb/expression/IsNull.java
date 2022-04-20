@@ -20,9 +20,9 @@ package io.tidb.bigdata.tidb.expression;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.tidb.types.IntegerType;
 import java.util.List;
 import java.util.Objects;
-import io.tidb.bigdata.tidb.types.IntegerType;
 
 public class IsNull extends Expression {
   private final Expression expression;

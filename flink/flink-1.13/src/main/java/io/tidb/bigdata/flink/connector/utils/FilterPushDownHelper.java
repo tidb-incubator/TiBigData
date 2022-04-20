@@ -27,6 +27,12 @@ import static io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper.FlinkEx
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.expression.visitor.SupportedExpressionValidator;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.types.MySQLType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -49,48 +55,37 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.types.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import  io.tidb.bigdata.tidb.expression.Expression;
-import  io.tidb.bigdata.tidb.expression.visitor.SupportedExpressionValidator;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.types.MySQLType;
-import org.tikv.common.types.StringType;
 
 public class FilterPushDownHelper {
 
   private static final Logger LOG = LoggerFactory.getLogger(FilterPushDownHelper.class);
 
-  private static final Set<FlinkExpression> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
-      greaterThan,
-      greaterThanOrEqual,
-      lessThan,
-      lessThanOrEqual,
-      equals,
-      notEquals,
-      like
-  );
+  private static final Set<FlinkExpression> COMPARISON_BINARY_FILTERS =
+      ImmutableSet.of(
+          greaterThan, greaterThanOrEqual, lessThan, lessThanOrEqual, equals, notEquals, like);
 
-  private static final Set<DataType> INTEGER_TYPES = ImmutableSet.of(
-      DataTypes.TINYINT(),
-      DataTypes.SMALLINT(),
-      DataTypes.INT(),
-      DataTypes.BIGINT()
-  );
+  private static final Set<DataType> INTEGER_TYPES =
+      ImmutableSet.of(
+          DataTypes.TINYINT(), DataTypes.SMALLINT(), DataTypes.INT(), DataTypes.BIGINT());
 
   private final TiTableInfo tiTableInfo;
-  private final Map<String, org.tikv.common.types.DataType> nameTypeMap;
+  private final Map<String, io.tidb.bigdata.tidb.types.DataType> nameTypeMap;
   private final Optional<StoreVersion> minimumTiKVVersion;
 
   public boolean isSupportEnumPushDown() {
     // enum push down is only supported when TiKV version >= 5.1.0
-    return this.minimumTiKVVersion.map(storeVersion -> storeVersion.greatThan(new StoreVersion("5.1.0")))
+    return this.minimumTiKVVersion
+        .map(storeVersion -> storeVersion.greatThan(new StoreVersion("5.1.0")))
         .orElse(false);
   }
 
   public FilterPushDownHelper(TiTableInfo tiTableInfo, List<StoreVersion> tiKVVersions) {
     this.tiTableInfo = tiTableInfo;
-    this.nameTypeMap = tiTableInfo.getColumns().stream()
-        .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
+    this.nameTypeMap =
+        tiTableInfo
+            .getColumns()
+            .stream()
+            .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
 
     this.minimumTiKVVersion = tiKVVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
   }
@@ -102,13 +97,12 @@ public class FilterPushDownHelper {
     return and(filters);
   }
 
-
   /**
    * Convert flink expression to tidb expression.
-   * <p>
-   * the BETWEEN, NOT_BETWEEN, IN expression will be converted by flink automatically. the BETWEEN
-   * will be converted to (GT_EQ AND LT_EQ), the NOT_BETWEEN will be converted to (LT_EQ OR GT_EQ),
-   * the IN will be converted to OR, so we do not add the conversion here
+   *
+   * <p>the BETWEEN, NOT_BETWEEN, IN expression will be converted by flink automatically. the
+   * BETWEEN will be converted to (GT_EQ AND LT_EQ), the NOT_BETWEEN will be converted to (LT_EQ OR
+   * GT_EQ), the IN will be converted to OR, so we do not add the conversion here
    *
    * @param resolvedExpression the flink expression
    * @return the tidb expression
@@ -147,7 +141,8 @@ public class FilterPushDownHelper {
   // So we need to use the Result.of(Collections.emptyList(), filters) to filter again by flink.
   private Optional<Expression> emptyIfNotSupported(Expression expression) {
     return SupportedExpressionValidator.isSupportedExpression(expression, null)
-        ? Optional.of(expression) : Optional.empty();
+        ? Optional.of(expression)
+        : Optional.empty();
   }
 
   private Optional<Expression> isNull(String name) {
@@ -159,18 +154,19 @@ public class FilterPushDownHelper {
         Expressions.not(Expressions.isNull(Expressions.column(name, nameTypeMap.get(name)))));
   }
 
-  private Optional<ComparisonElement> column(FieldReferenceExpression expression,
-      DataType castType) {
-    ColumnElement element = new ColumnElement(expression.getName(), expression.getOutputDataType(),
-        castType);
+  private Optional<ComparisonElement> column(
+      FieldReferenceExpression expression, DataType castType) {
+    ColumnElement element =
+        new ColumnElement(expression.getName(), expression.getOutputDataType(), castType);
     return Optional.of(element);
   }
 
   private Optional<ComparisonElement> value(ValueLiteralExpression expression) {
     DataType dataType = expression.getOutputDataType();
-    Object value = expression
-        .getValueAs(dataType.getConversionClass())
-        .orElseThrow(() -> new IllegalStateException("Can not get value"));
+    Object value =
+        expression
+            .getValueAs(dataType.getConversionClass())
+            .orElseThrow(() -> new IllegalStateException("Can not get value"));
     return Optional.of(new ValueElement(value, dataType));
   }
 
@@ -181,8 +177,8 @@ public class FilterPushDownHelper {
     if (expression instanceof CallExpression
         && FlinkExpression.from((CallExpression) expression) == cast) {
       List<ResolvedExpression> children = expression.getResolvedChildren();
-      return column((FieldReferenceExpression) children.get(0),
-          children.get(1).getOutputDataType());
+      return column(
+          (FieldReferenceExpression) children.get(0), children.get(1).getOutputDataType());
     }
     if (expression instanceof ValueLiteralExpression) {
       return value((ValueLiteralExpression) expression);
@@ -196,8 +192,8 @@ public class FilterPushDownHelper {
     if (INTEGER_TYPES.contains(type.nullable()) && INTEGER_TYPES.contains(type.nullable())) {
       return true;
     }
-    return type.getLogicalType().getDefaultConversion() == castType.getLogicalType()
-        .getDefaultConversion();
+    return type.getLogicalType().getDefaultConversion()
+        == castType.getLogicalType().getDefaultConversion();
   }
 
   private Optional<Expression> comparison(CallExpression callExpression) {
@@ -218,16 +214,18 @@ public class FilterPushDownHelper {
       return Optional.empty();
     }
     ValueElement valueElement =
-        leftElement instanceof ValueElement ? (ValueElement) leftElement
+        leftElement instanceof ValueElement
+            ? (ValueElement) leftElement
             : (ValueElement) rightElement;
     ColumnElement columnElement =
-        leftElement instanceof ColumnElement ? (ColumnElement) leftElement
+        leftElement instanceof ColumnElement
+            ? (ColumnElement) leftElement
             : (ColumnElement) rightElement;
 
     final String name = columnElement.getColumnName();
     final DataType type = columnElement.getType();
     final DataType castType = columnElement.getCastType();
-    final org.tikv.common.types.DataType tidbType = nameTypeMap.get(name);
+    final io.tidb.bigdata.tidb.types.DataType tidbType = nameTypeMap.get(name);
     final Object value = valueElement.getValue();
     final DataType valueType = valueElement.getType();
 
@@ -246,15 +244,15 @@ public class FilterPushDownHelper {
       resultValue = Timestamp.valueOf((LocalDateTime) value);
       if (tidbType.getType() == MySQLType.TypeTimestamp) {
         // to utc timestamp
-        ZonedDateTime zonedDateTime = ZonedDateTime.of((LocalDateTime) value,
-            ZoneId.systemDefault());
+        ZonedDateTime zonedDateTime =
+            ZonedDateTime.of((LocalDateTime) value, ZoneId.systemDefault());
         ZonedDateTime utc = zonedDateTime.withZoneSameInstant(ZoneId.of("UTC"));
         resultValue = Timestamp.valueOf(utc.toLocalDateTime());
       }
     }
 
     // Convert Type, TODO: json and set
-    org.tikv.common.types.DataType resultType = tidbType;
+    io.tidb.bigdata.tidb.types.DataType resultType = tidbType;
     if (tidbType.getType() == MySQLType.TypeEnum) {
       if (!isSupportEnumPushDown() || !(value instanceof String)) {
         return Optional.empty();
@@ -296,19 +294,24 @@ public class FilterPushDownHelper {
 
   private Optional<Expression> and(List<ResolvedExpression> resolvedExpressions) {
     // Ignore all empty expressions.
-    return Optional.ofNullable(Expressions.and(resolvedExpressions.stream()
-        .map(this::getExpression)
-        .filter(Optional::isPresent)
-        .map(Optional::get)));
+    return Optional.ofNullable(
+        Expressions.and(
+            resolvedExpressions
+                .stream()
+                .map(this::getExpression)
+                .filter(Optional::isPresent)
+                .map(Optional::get)));
   }
 
   private Optional<Expression> or(List<ResolvedExpression> resolvedExpressions) {
     // If there is any empty in child, the or expression is null.
-    List<Expression> expressions = resolvedExpressions.stream()
-        .map(this::getExpression)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(Collectors.toList());
+    List<Expression> expressions =
+        resolvedExpressions
+            .stream()
+            .map(this::getExpression)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
     if (expressions.size() == 0 || expressions.size() < resolvedExpressions.size()) {
       return Optional.empty();
     }
@@ -339,23 +342,21 @@ public class FilterPushDownHelper {
 
     public static FlinkExpression from(CallExpression callExpression) {
       return Arrays.stream(values())
-          .filter(flinkExpression -> flinkExpression.functionDefinition
-              == callExpression.getFunctionDefinition())
+          .filter(
+              flinkExpression ->
+                  flinkExpression.functionDefinition == callExpression.getFunctionDefinition())
           .findFirst()
           .orElse(unresolved);
     }
   }
 
-  interface ComparisonElement {
-
-  }
+  interface ComparisonElement {}
 
   public static class ColumnElement implements ComparisonElement {
 
     private final String columnName;
     private final DataType type;
     private final DataType castType;
-
 
     protected ColumnElement(String columnName, DataType type, DataType castType) {
       this.columnName = columnName;
@@ -394,5 +395,4 @@ public class FilterPushDownHelper {
       return type;
     }
   }
-
 }

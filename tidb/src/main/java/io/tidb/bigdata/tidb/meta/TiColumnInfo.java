@@ -37,8 +37,7 @@ import org.tikv.shade.com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TiColumnInfo implements Serializable {
 
-  @VisibleForTesting
-  private static final int PK_MASK = 0x2;
+  @VisibleForTesting private static final int PK_MASK = 0x2;
   private final long id;
   private final String name;
   private final int offset;

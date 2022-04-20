@@ -22,11 +22,11 @@ import com.pingcap.tidb.tipb.ExprType;
 import io.tidb.bigdata.tidb.codec.Codec;
 import io.tidb.bigdata.tidb.codec.Codec.BytesCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
-import  io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.InvalidCodecFormatException;
-import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 
 /**
  * TODO: if we need to unify string type and binary types? Indeed they are encoded as the same

@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.tidb.codec;
 
-
 import io.tidb.bigdata.tidb.codec.Codec.DateTimeCodec;
 import io.tidb.bigdata.tidb.codec.Codec.DecimalCodec;
 import io.tidb.bigdata.tidb.codec.Codec.EnumCodec;
