@@ -66,7 +66,12 @@ public class TiDBConfiguration {
   public static final String INPUT_FIELD_NAMES_PROPERTY = "mapreduce.jdbc.input.field.names";
 
   /** Class name implementing DBWritable which will hold input tuples */
-  public static final String INPUT_CLASS_PROPERTY = "mapreduce.jdbc.input.class";
+  public static final String INPUT_CLASS_PROPERTY =
+      "mapreduce.jdbc.input.class";
+
+  public static final String REGIONS_PER_SPLIT = "tidb.regions-per-split";
+  public static final int REGIONS_PER_SPLIT_DEFAULT = 5;
+
 
   /**
    * Sets the TiDB access related fields in the {@link Configuration}.
@@ -113,7 +118,10 @@ public class TiDBConfiguration {
 
   public ClientSession getTiDBConnection() {
 
-    Map<String, String> properties = new HashMap<>(3);
+    Map<String, String> properties = new HashMap<>();
+    // set all config to tidb
+    conf.iterator().forEachRemaining(e -> properties.put(e.getKey(), e.getValue()));
+    // mapreduce config overwrite tidb config
     properties.put(ClientConfig.DATABASE_URL, conf.get(URL_PROPERTY));
     properties.put(ClientConfig.USERNAME, conf.get(USERNAME_PROPERTY));
     properties.put(ClientConfig.PASSWORD, conf.get(PASSWORD_PROPERTY));

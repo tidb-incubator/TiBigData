@@ -20,8 +20,6 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
-import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -67,7 +65,9 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
 
   private TiTimestamp timestamp;
 
-  private SplitInternal splitInternal;
+  private List<SplitInternal> splitInternals;
+
+  private int currentSplitIndex = -1;
 
   private long recordCount;
 
@@ -85,13 +85,7 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
     this.dfConf = new TiDBConfiguration(conf);
     this.inputClass = (Class<T>) dfConf.getInputClass();
     this.columnHandleInternals = columnHandleInternals;
-    this.splitInternal =
-        new SplitInternal(
-            new TableHandleInternal(
-                split.getConnectorId(), split.getSchemaName(), split.getTableName()),
-            split.getStartKey(),
-            split.getEndKey(),
-            clientSession.getSnapshotVersion());
+    this.splitInternals = split.getSplitInternals();
     this.clientSession = clientSession;
     this.projectedFieldIndexes = IntStream.range(0, dfConf.getInputFieldNames().length).toArray();
     this.timestamp =
@@ -112,31 +106,36 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
     // do nothing
   }
 
+  private boolean tryNextSplit() {
+    while (true) {
+      currentSplitIndex++;
+      if (currentSplitIndex >= splitInternals.size()) {
+        return false;
+      }
+      RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession,
+          splitInternals.get(currentSplitIndex),
+          Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
+              .collect(Collectors.toList()),
+          Optional.empty(),
+          Optional.ofNullable(timestamp),
+          Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
+      cursor = recordSetInternal.cursor();
+      if (!cursor.advanceNextPosition()) {
+        continue;
+      }
+      tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), resultSetMetaData);
+      value = ReflectionUtils.newInstance(inputClass, dfConf.getConf());
+      return true;
+    }
+  }
+
   @Override
   public boolean nextKeyValue() {
     if (key == null) {
       key = new LongWritable();
     }
-
-    if (value == null) {
-      RecordSetInternal recordSetInternal =
-          new RecordSetInternal(
-              clientSession,
-              splitInternal,
-              Arrays.stream(projectedFieldIndexes)
-                  .mapToObj(columnHandleInternals::get)
-                  .collect(Collectors.toList()),
-              Optional.empty(),
-              Optional.ofNullable(timestamp),
-              Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
-      cursor = recordSetInternal.cursor();
-      if (!cursor.advanceNextPosition()) {
-        return false;
-      }
-      this.tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), resultSetMetaData);
-      value = ReflectionUtils.newInstance(inputClass, dfConf.getConf());
-    } else {
-      if (!cursor.advanceNextPosition()) {
+    if (cursor == null || !cursor.advanceNextPosition()) {
+      if (!tryNextSplit()) {
         return false;
       }
     }
