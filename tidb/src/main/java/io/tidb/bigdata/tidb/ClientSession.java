@@ -301,10 +301,11 @@ public final class ClientSession implements AutoCloseable {
           Statement statement = connection.createStatement();
           ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
       ) {
+        final String protocol = config.getClusterTlsEnabled() ? "https://" : "http://";
         while (resultSet.next()) {
-          String instance = resultSet.getString("INSTANCE");
-          URI mapped = hostMapping.getMappedURI(URI.create("grpc://" + instance));
-          pdAddressesList.add(mapped.getHost() + ":" + mapped.getPort());
+          final String instance = resultSet.getString("INSTANCE");
+          final URI mapped = hostMapping.getMappedURI(URI.create(protocol + instance));
+          pdAddressesList.add(mapped.toString());
         }
       } catch (Exception e) {
         throw new IllegalStateException("can not get pdAddresses", e);
