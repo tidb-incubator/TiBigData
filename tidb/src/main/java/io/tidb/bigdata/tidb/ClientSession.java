@@ -262,8 +262,7 @@ public final class ClientSession implements AutoCloseable {
                         .map(TiPartitionDef::getId)
                         .collect(Collectors.toList())
                     : ImmutableList.of(table.getId()))
-        .orElseGet(ImmutableList::of)
-        .stream()
+        .orElseGet(ImmutableList::of).stream()
         .map(
             tableId ->
                 getRangeRegionTasks(
