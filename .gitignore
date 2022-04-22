@@ -32,3 +32,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Proto ###
+tidb/proto/
+
+

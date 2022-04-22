@@ -19,7 +19,6 @@ package io.tidb.bigdata.tidb.meta;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.ByteString;
 import com.pingcap.tidb.tipb.ColumnInfo;
 import io.tidb.bigdata.tidb.codec.CodecDataOutput;
 import io.tidb.bigdata.tidb.types.DataType;
@@ -33,6 +32,7 @@ import java.util.Objects;
 import org.tikv.shade.com.fasterxml.jackson.annotation.JsonCreator;
 import org.tikv.shade.com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.tikv.shade.com.fasterxml.jackson.annotation.JsonProperty;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TiColumnInfo implements Serializable {
