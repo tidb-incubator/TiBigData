@@ -34,8 +34,7 @@ public class BatchedTiChunkColumnVector extends io.tidb.bigdata.tidb.columnar.Ti
     super(child.get(0).dataType(), numOfRows);
     this.childColumns = child;
     this.numOfNulls =
-        child
-            .stream()
+        child.stream()
             .reduce(
                 0,
                 (partialAgeResult, columnVector) -> partialAgeResult + columnVector.numNulls(),

@@ -61,8 +61,7 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
       List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
       List<List<SplitInternal>> splitPartition = Lists.partition(splits, regionNumPerSplit);
 
-      return splitPartition
-          .stream()
+      return splitPartition.stream()
           .map(splitInternals -> new TiDBInputSplit(path, splitInternals))
           .toArray(TiDBInputSplit[]::new);
     } catch (Exception e) {

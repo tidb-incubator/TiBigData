@@ -177,9 +177,10 @@ public class MapReduceTest {
         new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals = clientSession.getTableColumns(
-            tableHandleInternal)
-        .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    List<ColumnHandleInternal> columnHandleInternals =
+        clientSession
+            .getTableColumns(tableHandleInternal)
+            .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
       RecordSetInternal recordSetInternal =
@@ -264,8 +265,10 @@ public class MapReduceTest {
   }
 
   private long getMapInputRecords(Job job) throws IOException {
-    return job.getCounters().getGroup("org.apache.hadoop.mapreduce.TaskCounter")
-        .findCounter("MAP_INPUT_RECORDS").getValue();
+    return job.getCounters()
+        .getGroup("org.apache.hadoop.mapreduce.TaskCounter")
+        .findCounter("MAP_INPUT_RECORDS")
+        .getValue();
   }
 
   @Test
@@ -305,13 +308,14 @@ public class MapReduceTest {
     try (ClientSession clientSession = getSingleConnection()) {
       clientSession.sqlUpdate(
           "DROP TABLE IF EXISTS " + dbTable,
-          String.format("CREATE TABLE IF NOT EXISTS %s (`id` INT PRIMARY KEY AUTO_INCREMENT)",
-              dbTable),
-          String.format("INSERT INTO %s VALUES %s", dbTable,
-              StringUtils.join(",", Collections.nCopies(10000, "(null)"))),
-          String.format("SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (10000) REGIONS 10",
-              DATABASE_NAME, tableName)
-      );
+          String.format(
+              "CREATE TABLE IF NOT EXISTS %s (`id` INT PRIMARY KEY AUTO_INCREMENT)", dbTable),
+          String.format(
+              "INSERT INTO %s VALUES %s",
+              dbTable, StringUtils.join(",", Collections.nCopies(10000, "(null)"))),
+          String.format(
+              "SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (10000) REGIONS 10",
+              DATABASE_NAME, tableName));
     }
     List<String> options = new ArrayList<>();
     ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
@@ -338,5 +342,4 @@ public class MapReduceTest {
     Assert.assertTrue(job.waitForCompletion(true));
     Assert.assertEquals(10000, getMapInputRecords(job));
   }
-
 }

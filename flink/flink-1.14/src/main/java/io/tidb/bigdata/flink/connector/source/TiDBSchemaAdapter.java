@@ -75,9 +75,7 @@ public class TiDBSchemaAdapter implements Serializable {
     this.metadata = new LinkedHashMap<>();
     ResolvedSchema schema = table.getResolvedSchema();
     Field[] fields =
-        schema
-            .getColumns()
-            .stream()
+        schema.getColumns().stream()
             .filter(Column::isPhysical)
             .map(
                 c ->

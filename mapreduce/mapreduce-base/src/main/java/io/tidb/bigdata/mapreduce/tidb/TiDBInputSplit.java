@@ -34,9 +34,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  public TiDBInputSplit() {
-
-  }
+  public TiDBInputSplit() {}
 
   public TiDBInputSplit(List<SplitInternal> splitInternals) {
     this.splitInternals = splitInternals;
@@ -81,11 +79,12 @@ public class TiDBInputSplit extends InputSplit implements Writable {
       long physicalTimestamp = dataInput.readLong();
       long logicalTimestamp = dataInput.readLong();
 
-      SplitInternal splitInternal = new SplitInternal(
-          new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
-          startKey,
-          endKey,
-          new TiTimestamp(physicalTimestamp, logicalTimestamp));
+      SplitInternal splitInternal =
+          new SplitInternal(
+              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              startKey,
+              endKey,
+              new TiTimestamp(physicalTimestamp, logicalTimestamp));
       splitInternalList.add(splitInternal);
     }
     this.splitInternals = splitInternalList;

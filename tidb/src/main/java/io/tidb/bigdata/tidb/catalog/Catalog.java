@@ -74,9 +74,7 @@ public class Catalog implements AutoCloseable {
     Objects.requireNonNull(database, "database is null");
     reloadCache(true);
     if (showRowId) {
-      return metaCache
-          .listTables(database)
-          .stream()
+      return metaCache.listTables(database).stream()
           .map(TiTableInfo::copyTableWithRowId)
           .collect(Collectors.toList());
     } else {
@@ -165,8 +163,7 @@ public class Catalog implements AutoCloseable {
         tableMap = loadTables(db);
       }
       Collection<TiTableInfo> tables = tableMap.values();
-      return tables
-          .stream()
+      return tables.stream()
           .filter(tbl -> !tbl.isView() || !tbl.isSequence())
           .collect(Collectors.toList());
     }

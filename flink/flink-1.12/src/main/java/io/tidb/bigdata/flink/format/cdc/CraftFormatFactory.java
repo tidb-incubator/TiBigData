@@ -81,8 +81,7 @@ public class CraftFormatFactory
           DynamicTableSource.Context context, DataType physicalDataType) {
 
         final List<ReadableMetadata> readableMetadata =
-            metadataKeys
-                .stream()
+            metadataKeys.stream()
                 .map(
                     k ->
                         Stream.of(ReadableMetadata.values())
@@ -92,8 +91,7 @@ public class CraftFormatFactory
                 .collect(Collectors.toList());
 
         final List<DataTypes.Field> metadataFields =
-            readableMetadata
-                .stream()
+            readableMetadata.stream()
                 .map(m -> DataTypes.FIELD(m.key, m.type))
                 .collect(Collectors.toList());
 

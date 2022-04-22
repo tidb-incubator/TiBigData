@@ -51,8 +51,7 @@ public class SqlUtils {
       nameType.add(
           format(
               "PRIMARY KEY(%s)",
-              primaryKeyColumns
-                  .stream()
+              primaryKeyColumns.stream()
                   .map(pk -> "`" + pk + "`")
                   .collect(Collectors.joining(","))));
     }
@@ -60,8 +59,7 @@ public class SqlUtils {
       nameType.add(
           format(
               "UNIQUE KEY(%s)",
-              uniqueKeyColumns
-                  .stream()
+              uniqueKeyColumns.stream()
                   .map(uk -> "`" + uk + "`")
                   .collect(Collectors.joining(","))));
     }
@@ -100,8 +98,7 @@ public class SqlUtils {
     return format(
         "%s ON DUPLICATE KEY UPDATE %s",
         insertSql,
-        columnNames
-            .stream()
+        columnNames.stream()
             .map(columnName -> format("`%s`=VALUES(`%s`)", columnName, columnName))
             .collect(Collectors.joining(",")));
   }
@@ -109,22 +106,17 @@ public class SqlUtils {
   public static List<TiIndexInfo> getUniqueIndexes(
       TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn) {
     List<TiIndexInfo> uniqueIndexes =
-        tiTableInfo
-            .getIndices()
-            .stream()
+        tiTableInfo.getIndices().stream()
             .filter(TiIndexInfo::isUnique)
             .collect(Collectors.toList());
     Optional<String> autoIncrementColumn =
         Optional.ofNullable(tiTableInfo.getAutoIncrementColInfo()).map(TiColumnInfo::getName);
     if (autoIncrementColumn.isPresent() && ignoreAutoincrementColumn) {
       uniqueIndexes =
-          uniqueIndexes
-              .stream()
+          uniqueIndexes.stream()
               .filter(
                   tiIndexInfo ->
-                      tiIndexInfo
-                          .getIndexColumns()
-                          .stream()
+                      tiIndexInfo.getIndexColumns().stream()
                           .noneMatch(column -> column.getName().equals(autoIncrementColumn.get())))
               .collect(Collectors.toList());
     }

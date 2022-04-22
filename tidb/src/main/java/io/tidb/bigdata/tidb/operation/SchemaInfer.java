@@ -60,9 +60,7 @@ public class SchemaInfer {
       types.addAll(dagRequest.getIndexDataTypes());
     } else if (dagRequest.hasPushDownAggregate()) {
       types.addAll(
-          dagRequest
-              .getPushDownAggregates()
-              .stream()
+          dagRequest.getPushDownAggregates().stream()
               .map(Expression::getDataType)
               .collect(Collectors.toList()));
       // In DAG mode, if there is any group by statement in a request, all the columns specified

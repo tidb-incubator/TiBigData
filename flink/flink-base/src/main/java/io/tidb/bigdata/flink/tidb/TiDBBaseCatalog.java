@@ -391,10 +391,7 @@ public abstract class TiDBBaseCatalog extends AbstractCatalog {
   }
 
   public TableSchema getTableSchema(String databaseName, String tableName) {
-    return getClientSession()
-        .getTableMust(databaseName, tableName)
-        .getColumns()
-        .stream()
+    return getClientSession().getTableMust(databaseName, tableName).getColumns().stream()
         .reduce(
             TableSchema.builder(),
             (builder, c) -> builder.field(c.getName(), TypeUtils.getFlinkType(c.getType())),

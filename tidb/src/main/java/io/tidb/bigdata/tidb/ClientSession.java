@@ -191,8 +191,7 @@ public final class ClientSession implements AutoCloseable {
   private List<ColumnHandleInternal> selectColumns(
       List<ColumnHandleInternal> allColumns, Stream<String> columns) {
     final Map<String, ColumnHandleInternal> columnsMap =
-        allColumns
-            .stream()
+        allColumns.stream()
             .collect(Collectors.toMap(ColumnHandleInternal::getName, Function.identity()));
     return columns
         .map(
@@ -259,10 +258,7 @@ public final class ClientSession implements AutoCloseable {
         .map(
             table ->
                 table.isPartitionEnabled()
-                    ? table
-                        .getPartitionInfo()
-                        .getDefs()
-                        .stream()
+                    ? table.getPartitionInfo().getDefs().stream()
                         .map(TiPartitionDef::getId)
                         .collect(Collectors.toList())
                     : ImmutableList.of(table.getId()))
@@ -279,12 +275,10 @@ public final class ClientSession implements AutoCloseable {
 
   public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle) {
     Base64.Encoder encoder = Base64.getEncoder();
-    return getTableRegionTasks(tableHandle)
-        .stream()
+    return getTableRegionTasks(tableHandle).stream()
         .flatMap(
             task ->
-                task.getRanges()
-                    .stream()
+                task.getRanges().stream()
                     .map(
                         range -> {
                           String taskStart = encoder.encodeToString(range.getStart().toByteArray());
@@ -456,9 +450,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
-    return getTableMust(databaseName, tableName)
-        .getColumns()
-        .stream()
+    return getTableMust(databaseName, tableName).getColumns().stream()
         .filter(TiColumnInfo::isPrimaryKey)
         .map(TiColumnInfo::getName)
         .collect(Collectors.toList());
@@ -466,9 +458,7 @@ public final class ClientSession implements AutoCloseable {
 
   public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
     List<String> primaryKeyColumns = getPrimaryKeyColumns(databaseName, tableName);
-    return getTableMust(databaseName, tableName)
-        .getIndices()
-        .stream()
+    return getTableMust(databaseName, tableName).getIndices().stream()
         .filter(TiIndexInfo::isUnique)
         .map(TiIndexInfo::getIndexColumns)
         .flatMap(Collection::stream)

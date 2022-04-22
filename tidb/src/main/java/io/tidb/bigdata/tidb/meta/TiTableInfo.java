@@ -115,8 +115,7 @@ public class TiTableInfo implements Serializable {
     this.isCommonHandle = isCommonHandle;
     this.indices = indices != null ? ImmutableList.copyOf(indices) : ImmutableList.of();
     this.indicesWithoutHiddenAndInvisible =
-        this.indices
-            .stream()
+        this.indices.stream()
             .filter(
                 idx -> {
                   if (idx.isInvisible()) {

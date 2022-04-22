@@ -61,9 +61,7 @@ public class TableUtils {
   }
 
   public static String toSqlProperties(Map<String, String> properties) {
-    return properties
-        .entrySet()
-        .stream()
+    return properties.entrySet().stream()
         .map(e -> String.format("'%s' = '%s'", e.getKey(), e.getValue()))
         .collect(Collectors.joining(","));
   }

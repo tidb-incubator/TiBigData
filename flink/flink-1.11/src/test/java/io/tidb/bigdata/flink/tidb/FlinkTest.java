@@ -277,9 +277,7 @@ public class FlinkTest {
         "CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
         "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
     String propertiesString =
-        properties
-            .entrySet()
-            .stream()
+        properties.entrySet().stream()
             .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue()))
             .collect(Collectors.joining(",\n"));
     String createTableSql =

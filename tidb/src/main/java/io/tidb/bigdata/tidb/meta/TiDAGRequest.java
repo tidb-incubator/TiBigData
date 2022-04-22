@@ -263,9 +263,7 @@ public class TiDAGRequest implements Serializable {
       boolean hasPk = false;
       // We extract index column info
       List<Integer> indexColOffsets =
-          indexInfo
-              .getIndexColumns()
-              .stream()
+          indexInfo.getIndexColumns().stream()
               .map(TiIndexColumn::getOffset)
               .collect(Collectors.toList());
 
@@ -516,15 +514,12 @@ public class TiDAGRequest implements Serializable {
 
   private boolean isExpressionCoveredByIndex(Expression expr) {
     Set<String> indexColumnRefSet =
-        indexInfo
-            .getIndexColumns()
-            .stream()
+        indexInfo.getIndexColumns().stream()
             .filter(x -> !x.isPrefixIndex())
             .map(TiIndexColumn::getName)
             .collect(Collectors.toSet());
     return !isDoubleRead()
-        && PredicateUtils.extractColumnRefFromExpression(expr)
-            .stream()
+        && PredicateUtils.extractColumnRefFromExpression(expr).stream()
             .map(ColumnRef::getName)
             .allMatch(indexColumnRefSet::contains);
   }

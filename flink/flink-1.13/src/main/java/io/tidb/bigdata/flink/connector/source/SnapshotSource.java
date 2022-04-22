@@ -94,9 +94,7 @@ public class SnapshotSource
           new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
       this.splits =
-          splitManagerInternal
-              .getSplits(tableHandleInternal, timestamp)
-              .stream()
+          splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
               .map(split -> new TiDBSourceSplit(split, 0))
               .collect(Collectors.toList());
     } catch (Exception e) {

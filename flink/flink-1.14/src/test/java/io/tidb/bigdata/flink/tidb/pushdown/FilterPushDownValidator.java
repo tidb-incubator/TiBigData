@@ -113,9 +113,7 @@ public class FilterPushDownValidator extends ExternalResource {
     this.tiTableInfo = clientSession.getTableMust(DATABASE, TABLE);
     this.rows = ImmutableList.copyOf(scanRows(DATABASE, TABLE, Optional.empty()));
     this.nameTypeMap =
-        tiTableInfo
-            .getColumns()
-            .stream()
+        tiTableInfo.getColumns().stream()
             .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     List<io.tidb.bigdata.flink.connector.utils.StoreVersion> tiKVVersions =
         StoreVersion.fetchTiKVVersions(clientSession.getTiSession().getPDClient());

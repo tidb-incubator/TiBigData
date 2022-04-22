@@ -126,10 +126,7 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
 
   @Override
   public List<SchemaTableName> listTables(ConnectorSession session, String schemaName) {
-    return getInternal()
-        .listTables(Optional.ofNullable(schemaName))
-        .entrySet()
-        .stream()
+    return getInternal().listTables(Optional.ofNullable(schemaName)).entrySet().stream()
         .flatMap(
             entry -> {
               String schema = entry.getKey();
@@ -142,8 +139,7 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     List<SchemaTableName> tables = listTables(session, prefix.getSchemaName());
     String tablePrefix = prefix.getTableName();
     if (tablePrefix != null) {
-      return tables
-          .stream()
+      return tables.stream()
           .filter(t -> t.getTableName().startsWith(tablePrefix))
           .collect(toImmutableList());
     }
@@ -155,8 +151,7 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
         .getColumnHandles(schemaName, tableName)
         .map(
             handles ->
-                handles
-                    .stream()
+                handles.stream()
                     .filter(TiDBMetadata::isColumnTypeSupported)
                     .map(TiDBColumnHandle::new))
         .orElseGet(Stream::empty);
@@ -205,8 +200,7 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     List<String> columnNames =
         columns.stream().map(ColumnMetadata::getName).collect(toImmutableList());
     List<String> columnTypes =
-        columns
-            .stream()
+        columns.stream()
             .map(column -> TypeHelpers.toSqlString(column.getType()))
             .collect(toImmutableList());
     List<String> primaryKeyColumns =

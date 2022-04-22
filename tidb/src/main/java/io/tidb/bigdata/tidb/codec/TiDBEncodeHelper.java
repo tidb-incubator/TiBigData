@@ -88,9 +88,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     this.autoIncrementColumnIndex =
         Optional.ofNullable(tiTableInfo.getAutoIncrementColInfo()).map(TiColumnInfo::getOffset);
     this.uniqueIndices =
-        tiTableInfo
-            .getIndices()
-            .stream()
+        tiTableInfo.getIndices().stream()
             .filter(TiIndexInfo::isUnique)
             .collect(Collectors.toList());
     this.handleCol = tiTableInfo.getPKIsHandleColumn();
@@ -200,9 +198,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, Handle handle, boolean remove) {
-    return tiTableInfo
-        .getIndices()
-        .stream()
+    return tiTableInfo.getIndices().stream()
         .filter(tiIndexInfo -> !(isCommonHandle && tiIndexInfo.isPrimary()))
         .map(
             tiIndexInfo -> {

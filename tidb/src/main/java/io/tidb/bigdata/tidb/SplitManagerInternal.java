@@ -44,9 +44,7 @@ public final class SplitManagerInternal {
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
     List<SplitInternal> splits =
-        session
-            .getTableRanges(tableHandle)
-            .stream()
+        session.getTableRanges(tableHandle).stream()
             .map(range -> new SplitInternal(tableHandle, range, timestamp))
             .collect(toCollection(ArrayList::new));
     Collections.shuffle(splits);

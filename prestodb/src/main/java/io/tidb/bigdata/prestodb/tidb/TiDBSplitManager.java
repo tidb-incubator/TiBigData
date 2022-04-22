@@ -48,8 +48,7 @@ public final class TiDBSplitManager extends Wrapper<SplitManagerInternal>
     TiDBTableHandle tableHandle = layoutHandle.getTable();
     List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
     return new FixedSplitSource(
-        splits
-            .stream()
+        splits.stream()
             .map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate()))
             .collect(toImmutableList()));
   }

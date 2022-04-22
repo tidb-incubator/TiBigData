@@ -99,10 +99,7 @@ public abstract class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource
     String tableName = getRequiredProperties(TABLE_NAME.key());
     try (ClientSession clientSession = ClientSession.create(config)) {
       this.nameTypeMap =
-          clientSession
-              .getTableMust(databaseName, tableName)
-              .getColumns()
-              .stream()
+          clientSession.getTableMust(databaseName, tableName).getColumns().stream()
               .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     } catch (Exception e) {
       throw new IllegalStateException("can not get columns", e);
@@ -121,8 +118,7 @@ public abstract class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource
 
   protected Expression getExpression(List<ResolvedExpression> resolvedExpressions) {
     return Expressions.and(
-        resolvedExpressions
-            .stream()
+        resolvedExpressions.stream()
             .map(this::getExpression)
             .filter(exp -> exp != Expressions.alwaysTrue()));
   }
@@ -148,8 +144,7 @@ public abstract class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource
         case "or":
           // ignore always true expression
           return Expressions.or(
-              resolvedChildren
-                  .stream()
+              resolvedChildren.stream()
                   .map(this::getExpression)
                   .filter(exp -> exp != Expressions.alwaysTrue()));
         case "not":

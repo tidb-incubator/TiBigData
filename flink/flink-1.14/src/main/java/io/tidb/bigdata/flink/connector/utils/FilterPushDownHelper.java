@@ -82,9 +82,7 @@ public class FilterPushDownHelper {
   public FilterPushDownHelper(TiTableInfo tiTableInfo, List<StoreVersion> tiKVVersions) {
     this.tiTableInfo = tiTableInfo;
     this.nameTypeMap =
-        tiTableInfo
-            .getColumns()
-            .stream()
+        tiTableInfo.getColumns().stream()
             .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
 
     this.minimumTiKVVersion = tiKVVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
@@ -297,8 +295,7 @@ public class FilterPushDownHelper {
     // Ignore all empty expressions.
     return Optional.ofNullable(
         Expressions.and(
-            resolvedExpressions
-                .stream()
+            resolvedExpressions.stream()
                 .map(this::getExpression)
                 .filter(Optional::isPresent)
                 .map(Optional::get)));
@@ -307,8 +304,7 @@ public class FilterPushDownHelper {
   private Optional<Expression> or(List<ResolvedExpression> resolvedExpressions) {
     // If there is any empty in child, the or expression is null.
     List<Expression> expressions =
-        resolvedExpressions
-            .stream()
+        resolvedExpressions.stream()
             .map(this::getExpression)
             .filter(Optional::isPresent)
             .map(Optional::get)

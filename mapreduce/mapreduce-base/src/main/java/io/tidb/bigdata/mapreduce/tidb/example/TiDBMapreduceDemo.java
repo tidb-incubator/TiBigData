@@ -50,8 +50,7 @@ public class TiDBMapreduceDemo {
     }
   }
 
-  public static Job createJob(String[] args)
-      throws IOException {
+  public static Job createJob(String[] args) throws IOException {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
@@ -85,8 +84,8 @@ public class TiDBMapreduceDemo {
     return job;
   }
 
-  public static class TiDBMapper extends
-      Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
+  public static class TiDBMapper
+      extends Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
 
     @Override
     protected void setup(Context context) {
@@ -122,9 +121,7 @@ public class TiDBMapreduceDemo {
     private String[] fieldNames;
     private Object[] values;
 
-    public TiDBRowData() {
-
-    }
+    public TiDBRowData() {}
 
     @Override
     public void readFields(ResultSet resultSet) throws SQLException {
@@ -195,7 +192,6 @@ public class TiDBMapreduceDemo {
   }
 
   public enum TiDBJdbcClassName {
-
     BOOLEAN(Boolean.class.getName()),
     BYTE(Byte.class.getName()),
     SHORT(Short.class.getName()),
@@ -213,12 +209,10 @@ public class TiDBMapreduceDemo {
     ARRAY(Array.class.getName()),
     MAP(Map.class.getName());
 
-
     private final String className;
 
     TiDBJdbcClassName(String className) {
       this.className = className;
-
     }
 
     public static TiDBJdbcClassName fromClassName(String className) {

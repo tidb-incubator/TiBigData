@@ -78,8 +78,7 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
     long commitTs = tiDBWriteHelper.commitPrimaryKey();
 
     Iterator<ByteWrapper> secondaryKeys =
-        pairs
-            .stream()
+        pairs.stream()
             .map(bytePairWrapper -> new ByteWrapper(bytePairWrapper.getKey()))
             .collect(Collectors.toList())
             .iterator();

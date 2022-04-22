@@ -105,15 +105,11 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
     for (TiIndexInfo uniqueIndex : uniqueIndexes) {
       List<Integer> columnIndexes =
-          uniqueIndex
-              .getIndexColumns()
-              .stream()
+          uniqueIndex.getIndexColumns().stream()
               .map(TiIndexColumn::getOffset)
               .collect(Collectors.toList());
       List<String> uniqueIndexColumnNames =
-          uniqueIndex
-              .getIndexColumns()
-              .stream()
+          uniqueIndex.getIndexColumns().stream()
               .map(TiIndexColumn::getName)
               .collect(Collectors.toList());
 
@@ -123,8 +119,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
                   new KeySelector<Row, List<Object>>() {
                     @Override
                     public List<Object> getKey(Row row) throws Exception {
-                      return columnIndexes
-                          .stream()
+                      return columnIndexes.stream()
                           .map(i -> row.get(i, null))
                           .collect(Collectors.toList());
                     }

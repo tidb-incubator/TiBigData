@@ -162,8 +162,7 @@ public final class PredicateTranslator
       RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
           rowExpressionTreeTranslator) {
     List<TranslatedExpression<Expression>> translatedExpressions =
-        call.getArguments()
-            .stream()
+        call.getArguments().stream()
             .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
             .collect(toImmutableList());
 
@@ -185,15 +184,12 @@ public final class PredicateTranslator
       RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
           rowExpressionTreeTranslator) {
     List<TranslatedExpression<Expression>> translatedExpressions =
-        specialForm
-            .getArguments()
-            .stream()
+        specialForm.getArguments().stream()
             .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
             .collect(toImmutableList());
 
     List<Expression> expressions =
-        translatedExpressions
-            .stream()
+        translatedExpressions.stream()
             .map(TranslatedExpression::getTranslated)
             .filter(Optional::isPresent)
             .map(Optional::get)

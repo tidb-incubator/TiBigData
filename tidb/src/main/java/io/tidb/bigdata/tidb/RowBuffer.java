@@ -100,9 +100,7 @@ public abstract class RowBuffer {
       this.uniqueIndexValues = new ArrayList<>(uniqueIndexes.size());
       for (TiIndexInfo uniqueIndex : uniqueIndexes) {
         List<Integer> columnIndex =
-            uniqueIndex
-                .getIndexColumns()
-                .stream()
+            uniqueIndex.getIndexColumns().stream()
                 .map(TiIndexColumn::getOffset)
                 .collect(Collectors.toList());
         uniqueIndexValues.add(new Pair<>(columnIndex, new HashSet<>()));

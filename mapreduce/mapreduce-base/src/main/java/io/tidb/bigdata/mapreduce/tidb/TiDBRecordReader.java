@@ -113,13 +113,16 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
       if (currentSplitIndex >= splitInternals.size()) {
         return false;
       }
-      RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession,
-          splitInternals.get(currentSplitIndex),
-          Arrays.stream(projectedFieldIndexes).mapToObj(columnHandleInternals::get)
-              .collect(Collectors.toList()),
-          Optional.empty(),
-          Optional.ofNullable(timestamp),
-          Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
+      RecordSetInternal recordSetInternal =
+          new RecordSetInternal(
+              clientSession,
+              splitInternals.get(currentSplitIndex),
+              Arrays.stream(projectedFieldIndexes)
+                  .mapToObj(columnHandleInternals::get)
+                  .collect(Collectors.toList()),
+              Optional.empty(),
+              Optional.ofNullable(timestamp),
+              Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
       cursor = recordSetInternal.cursor();
       if (!cursor.advanceNextPosition()) {
         continue;

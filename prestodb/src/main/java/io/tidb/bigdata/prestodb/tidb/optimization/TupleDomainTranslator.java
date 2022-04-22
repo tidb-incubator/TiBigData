@@ -121,9 +121,7 @@ public final class TupleDomainTranslator {
 
   private static Map<TiDBColumnHandle, Domain> translatableDomains(
       Map<ColumnHandle, Domain> domains) {
-    return domains
-        .entrySet()
-        .stream()
+    return domains.entrySet().stream()
         .filter(e -> isPushdownType(((TiDBColumnHandle) e.getKey()).getPrestoType()))
         .collect(toImmutableMap(e -> (TiDBColumnHandle) e.getKey(), Map.Entry::getValue));
   }
@@ -137,9 +135,7 @@ public final class TupleDomainTranslator {
               Expression expression = null;
               Map<TiDBColumnHandle, Domain> translatable = translatableDomains(domains);
               List<String> translatableColumns =
-                  translatable
-                      .keySet()
-                      .stream()
+                  translatable.keySet().stream()
                       .map(TiDBColumnHandle::getName)
                       .collect(toImmutableList());
               for (Map.Entry<TiDBColumnHandle, Domain> entry : translatable.entrySet()) {

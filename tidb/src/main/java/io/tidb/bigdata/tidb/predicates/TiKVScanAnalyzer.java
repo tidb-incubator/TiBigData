@@ -425,9 +425,7 @@ public class TiKVScanAnalyzer {
     }
 
     Map<String, TiIndexColumn> colInIndex =
-        indexColumns
-            .getIndexColumns()
-            .stream()
+        indexColumns.getIndexColumns().stream()
             .collect(Collectors.toMap(TiIndexColumn::getName, col -> col));
     for (TiColumnInfo colInfo : columns) {
       if (pkIsHandle && colInfo.isPrimaryKey()) {
