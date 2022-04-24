@@ -18,33 +18,26 @@ package io.tidb.bigdata.flink.connector.catalog;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
-import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.factories.CatalogFactory;
-import org.apache.flink.table.factories.FactoryUtil;
 
-/**
- * Factory for {@link TiDBCatalog}
- */
+/** Factory for {@link TiDBCatalog} */
 public class TiDBCatalogFactory implements CatalogFactory {
-  
+
   public static final String IDENTIFIER = "tidb";
-  
+
   @Override
   public String factoryIdentifier() {
     return IDENTIFIER;
   }
-  
+
   @Override
   public Set<ConfigOption<?>> requiredOptions() {
-    return ImmutableSet.of(
-        TiDBOptions.DATABASE_URL,
-        TiDBOptions.USERNAME
-    );
+    return ImmutableSet.of(TiDBOptions.DATABASE_URL, TiDBOptions.USERNAME);
   }
-  
+
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
     // The options may less than real properties which tidb supported,
@@ -59,13 +52,11 @@ public class TiDBCatalogFactory implements CatalogFactory {
         TiDBOptions.DNS_SEARCH,
         TiDBOptions.SNAPSHOT_TIMESTAMP,
         TiDBOptions.SNAPSHOT_VERSION,
-        TiDBOptions.SOURCE_FAILOVER
-    );
+        TiDBOptions.SOURCE_FAILOVER);
   }
-  
+
   @Override
   public Catalog createCatalog(Context context) {
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
-  
 }

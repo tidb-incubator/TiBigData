@@ -40,6 +40,7 @@ public class TiDBConfiguration {
 
   /** Cluster TLS configuration */
   public static final String CLUSTER_TLS_ENABLE = "tidb.cluster-tls-enable";
+
   public static final String CLUSTER_TLS_CA = "tidb.cluster-tls-ca";
   public static final String CLUSTER_TLS_KEY = "tidb.cluster-tls-key";
   public static final String CLUSTER_TLS_CERT = "tidb.cluster-tls-cert";
@@ -62,43 +63,43 @@ public class TiDBConfiguration {
   public static final String TIMESTAMP_FORMAT_PREFIX = "timestamp-format";
 
   /** Field names in the Input table */
-  public static final String INPUT_FIELD_NAMES_PROPERTY =
-      "mapreduce.jdbc.input.field.names";
+  public static final String INPUT_FIELD_NAMES_PROPERTY = "mapreduce.jdbc.input.field.names";
 
   /** Class name implementing DBWritable which will hold input tuples */
-  public static final String INPUT_CLASS_PROPERTY =
-      "mapreduce.jdbc.input.class";
+  public static final String INPUT_CLASS_PROPERTY = "mapreduce.jdbc.input.class";
 
   public static final String REGIONS_PER_SPLIT = "tidb.regions-per-split";
   public static final int REGIONS_PER_SPLIT_DEFAULT = 5;
 
-
   /**
    * Sets the TiDB access related fields in the {@link Configuration}.
+   *
    * @param conf the configuration
    * @param dbUrl JDBC DB access URL.
    * @param userName DB access username
    * @param password DB access passwd
    */
-  public static void configureDB(Configuration conf,
-      String dbUrl, String databaseName, String userName, String password) {
+  public static void configureDB(
+      Configuration conf, String dbUrl, String databaseName, String userName, String password) {
     conf.set(URL_PROPERTY, dbUrl);
     conf.set(DATABASE_NAME, databaseName);
     conf.set(USERNAME_PROPERTY, userName);
     conf.set(PASSWORD_PROPERTY, password);
   }
 
-  public static void clusterTls(Configuration conf,
-      String ca, String cert, String key) {
+  public static void clusterTls(Configuration conf, String ca, String cert, String key) {
     conf.set(CLUSTER_TLS_ENABLE, "true");
     conf.set(CLUSTER_TLS_CA, ca);
     conf.set(CLUSTER_TLS_CERT, cert);
     conf.set(CLUSTER_TLS_KEY, key);
   }
 
-  public static void clusterTlsJks(Configuration conf,
-                                   String keyPath, String keyPassword, String trustPath,
-                                   String trustPassword) {
+  public static void clusterTlsJks(
+      Configuration conf,
+      String keyPath,
+      String keyPassword,
+      String trustPath,
+      String trustPassword) {
     conf.set(CLUSTER_TLS_ENABLE, "true");
     conf.set(CLUSTER_JKS_ENABLE, "true");
     conf.set(CLUSTER_JKS_KEY_PATH, keyPath);
@@ -136,8 +137,8 @@ public class TiDBConfiguration {
   }
 
   public Connection getJdbcConnection() throws SQLException {
-    return DriverManager.getConnection(conf.get(URL_PROPERTY), conf.get(USERNAME_PROPERTY),
-        conf.get(PASSWORD_PROPERTY));
+    return DriverManager.getConnection(
+        conf.get(URL_PROPERTY), conf.get(USERNAME_PROPERTY), conf.get(PASSWORD_PROPERTY));
   }
 
   public Configuration getConf() {
@@ -164,15 +165,12 @@ public class TiDBConfiguration {
     conf.set(TiDBConfiguration.SNAPSHOT, snapshot);
   }
 
-
   public Class<?> getInputClass() {
-    return conf.getClass(TiDBConfiguration.INPUT_CLASS_PROPERTY,
-        NullDBWritable.class);
+    return conf.getClass(TiDBConfiguration.INPUT_CLASS_PROPERTY, NullDBWritable.class);
   }
 
   public void setInputClass(Class<? extends TiDBWritable> inputClass) {
-    conf.setClass(TiDBConfiguration.INPUT_CLASS_PROPERTY, inputClass,
-        TiDBWritable.class);
+    conf.setClass(TiDBConfiguration.INPUT_CLASS_PROPERTY, inputClass, TiDBWritable.class);
   }
 
   public String getInputTableName() {
@@ -190,6 +188,4 @@ public class TiDBConfiguration {
   public String getSnapshot() {
     return conf.get(TiDBConfiguration.SNAPSHOT);
   }
-
 }
-

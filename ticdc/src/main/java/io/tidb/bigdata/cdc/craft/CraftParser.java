@@ -33,8 +33,7 @@ public class CraftParser implements Parser<CraftParserState> {
   private static final int CURRENT_VERSION = 1;
   private static final CraftParser INSTANCE = new CraftParser();
 
-  private CraftParser() {
-  }
+  private CraftParser() {}
 
   public static CraftParser getInstance() {
     return INSTANCE;
@@ -48,18 +47,20 @@ public class CraftParser implements Parser<CraftParserState> {
     final int[] metaSizeTable = sizeTables[META_SIZE_TABLE_INDEX];
     int numOfPairs = sizeTables[VALUE_SIZE_TABLE_INDEX].length;
     int keyBytes = metaSizeTable[KEY_SIZE_INDEX];
-    int keyAndValueBytes =
-        Arrays.stream(sizeTables[VALUE_SIZE_TABLE_INDEX]).sum() + keyBytes;
+    int keyAndValueBytes = Arrays.stream(sizeTables[VALUE_SIZE_TABLE_INDEX]).sum() + keyBytes;
     Codec headerAndBodyCodec = codec.truncateHeading(keyAndValueBytes);
     int termDictionarySize = metaSizeTable[TERM_DICTIONARY_SIZE_INDEX];
-    CraftTermDictionary termDictionary = termDictionarySize == 0 ? CraftTermDictionary.empty()
-        : new CraftTermDictionary(codec.truncateHeading(metaSizeTable[TERM_DICTIONARY_SIZE_INDEX]));
+    CraftTermDictionary termDictionary =
+        termDictionarySize == 0
+            ? CraftTermDictionary.empty()
+            : new CraftTermDictionary(
+                codec.truncateHeading(metaSizeTable[TERM_DICTIONARY_SIZE_INDEX]));
     Key[] keys = parseKeys(headerAndBodyCodec, numOfPairs, keyBytes, termDictionary);
     return new CraftParserState(headerAndBodyCodec, keys, sizeTables, termDictionary);
   }
 
-  private static Key[] parseKeys(Codec codec, int numOfKeys, int keyBytes,
-      CraftTermDictionary termDictionary) {
+  private static Key[] parseKeys(
+      Codec codec, int numOfKeys, int keyBytes, CraftTermDictionary termDictionary) {
     Codec keysCodec = codec.truncateHeading(keyBytes);
     long[] ts = keysCodec.decodeDeltaUvarintChunk(numOfKeys);
     long[] type = keysCodec.decodeUvarintChunk(numOfKeys);

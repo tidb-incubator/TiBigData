@@ -69,13 +69,21 @@ public class CDCDeserializationSchemaBuilder {
   public CraftDeserializationSchema craft() {
     return new CraftDeserializationSchema(
         new CDCSchemaAdapter(physicalDataType, metadata),
-        eventTypes, schemas, tables, startTs, ignoreParseErrors);
+        eventTypes,
+        schemas,
+        tables,
+        startTs,
+        ignoreParseErrors);
   }
 
   public JsonDeserializationSchema json() {
     return new JsonDeserializationSchema(
         new CDCSchemaAdapter(physicalDataType, metadata),
-        eventTypes, schemas, tables, startTs, ignoreParseErrors);
+        eventTypes,
+        schemas,
+        tables,
+        startTs,
+        ignoreParseErrors);
   }
 
   // We use a new decoder, since canal does not follow TiCDC open protocol.

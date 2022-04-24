@@ -37,8 +37,7 @@ public class TiDBTestDatabase extends ExternalResource {
 
   @Override
   protected void before() throws Throwable {
-    this.clientSession = ClientSession.create(
-        new ClientConfig(ConfigUtils.defaultProperties()));
+    this.clientSession = ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
     clientSession.sqlUpdate(String.format("CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME));
     logger.info("Create database {}", DATABASE_NAME);
   }

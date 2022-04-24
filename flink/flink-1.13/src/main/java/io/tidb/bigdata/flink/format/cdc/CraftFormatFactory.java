@@ -72,13 +72,14 @@ public class CraftFormatFactory
       @Override
       public DeserializationSchema<RowData> createRuntimeDecoder(
           DynamicTableSource.Context context, DataType physicalDataType) {
-        return new CDCDeserializationSchemaBuilder(physicalDataType,
-            CDCMetadata.toMetadata(metadataKeys))
+        return new CDCDeserializationSchemaBuilder(
+                physicalDataType, CDCMetadata.toMetadata(metadataKeys))
             .startTs(earliestTs)
             .types(types)
             .schemas(schemas)
             .tables(tables)
-            .ignoreParseErrors(ignoreParseErrors).craft();
+            .ignoreParseErrors(ignoreParseErrors)
+            .craft();
       }
 
       @Override
@@ -108,8 +109,8 @@ public class CraftFormatFactory
   }
 
   @Override
-  public EncodingFormat<SerializationSchema<RowData>> createEncodingFormat(Context context,
-      ReadableConfig readableConfig) {
+  public EncodingFormat<SerializationSchema<RowData>> createEncodingFormat(
+      Context context, ReadableConfig readableConfig) {
     return null;
   }
 

@@ -29,9 +29,7 @@ import org.tikv.common.types.DataType;
 @Category(IntegrationTest.class)
 public class FilterPushDownNullTest extends FilterPushDownTestBase {
 
-  /**
-   * Filters shot will return correct rows, and filters missed will return empty row list.
-   */
+  /** Filters shot will return correct rows, and filters missed will return empty row list. */
   @Test
   public void testSupportedFilter() {
     List<Row> rows = validator.rows();
@@ -45,7 +43,5 @@ public class FilterPushDownNullTest extends FilterPushDownTestBase {
     // NOT NULL
     expression = Expressions.not(Expressions.isNull(Expressions.column(column, type)));
     validator.doTestFilter(rows, expression, String.format("`%s` IS NOT NULL", column));
-
   }
-
 }

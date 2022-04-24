@@ -30,50 +30,54 @@ import org.tikv.common.expression.ComparisonBinaryExpression;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.expression.Not;
 
-
 public final class OperatorTranslators {
 
-  private OperatorTranslators() {
-  }
+  private OperatorTranslators() {}
 
   @ScalarOperator(ADD)
   @SqlType(StandardTypes.BIGINT)
-  public static Expression add(@SqlType(StandardTypes.BIGINT) Expression left,
+  public static Expression add(
+      @SqlType(StandardTypes.BIGINT) Expression left,
       @SqlType(StandardTypes.BIGINT) Expression right) {
     return ArithmeticBinaryExpression.plus(left, right);
   }
 
   @ScalarOperator(SUBTRACT)
   @SqlType(StandardTypes.BIGINT)
-  public static Expression subtract(@SqlType(StandardTypes.BIGINT) Expression left,
+  public static Expression subtract(
+      @SqlType(StandardTypes.BIGINT) Expression left,
       @SqlType(StandardTypes.BIGINT) Expression right) {
     return ArithmeticBinaryExpression.minus(left, right);
   }
 
   @ScalarOperator(EQUAL)
   @SqlType(StandardTypes.BOOLEAN)
-  public static Expression varcharEqual(@SqlType(StandardTypes.VARCHAR) Expression left,
+  public static Expression varcharEqual(
+      @SqlType(StandardTypes.VARCHAR) Expression left,
       @SqlType(StandardTypes.VARCHAR) Expression right) {
     return ComparisonBinaryExpression.equal(left, right);
   }
 
   @ScalarOperator(EQUAL)
   @SqlType(StandardTypes.BOOLEAN)
-  public static Expression bigintEqual(@SqlType(StandardTypes.BIGINT) Expression left,
+  public static Expression bigintEqual(
+      @SqlType(StandardTypes.BIGINT) Expression left,
       @SqlType(StandardTypes.BIGINT) Expression right) {
     return ComparisonBinaryExpression.equal(left, right);
   }
 
   @ScalarOperator(NOT_EQUAL)
   @SqlType(StandardTypes.BOOLEAN)
-  public static Expression bigintNotEqual(@SqlType(StandardTypes.VARCHAR) Expression left,
+  public static Expression bigintNotEqual(
+      @SqlType(StandardTypes.VARCHAR) Expression left,
       @SqlType(StandardTypes.VARCHAR) Expression right) {
     return ComparisonBinaryExpression.notEqual(left, right);
   }
 
   @ScalarOperator(NOT_EQUAL)
   @SqlType(StandardTypes.BOOLEAN)
-  public static Expression varcharNotEqual(@SqlType(StandardTypes.BIGINT) Expression left,
+  public static Expression varcharNotEqual(
+      @SqlType(StandardTypes.BIGINT) Expression left,
       @SqlType(StandardTypes.BIGINT) Expression right) {
     return ComparisonBinaryExpression.notEqual(left, right);
   }
@@ -84,4 +88,3 @@ public final class OperatorTranslators {
     return new Not(expression);
   }
 }
-

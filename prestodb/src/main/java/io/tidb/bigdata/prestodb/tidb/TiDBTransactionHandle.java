@@ -25,8 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.UUID;
 
-public final class TiDBTransactionHandle
-    implements ConnectorTransactionHandle {
+public final class TiDBTransactionHandle implements ConnectorTransactionHandle {
 
   private final UUID uuid;
 
@@ -63,8 +62,6 @@ public final class TiDBTransactionHandle
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("uuid", uuid)
-        .toString();
+    return toStringHelper(this).add("uuid", uuid).toString();
   }
 }

@@ -23,9 +23,7 @@ import io.tidb.bigdata.cdc.KeyDecoder;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 
-/**
- * TiCDC open protocol json format event key decoder, parse bits into event key instances.
- */
+/** TiCDC open protocol json format event key decoder, parse bits into event key instances. */
 public class JsonKeyDecoder implements KeyDecoder {
 
   private static final long CURRENT_VERSION = 1;

@@ -30,18 +30,23 @@ public class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource {
 
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
-  public TiDBDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
-      JdbcLookupOptions lookupOptions) {
+  public TiDBDynamicTableSource(
+      TableSchema tableSchema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
     super(tableSchema, properties, lookupOptions);
   }
 
   @Override
   @SuppressWarnings("unchecked")
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext runtimeProviderContext) {
-    TypeInformation<RowData> typeInformation = (TypeInformation<RowData>) runtimeProviderContext
-        .createTypeInformation(tableSchema.toRowDataType());
-    TiDBRowDataInputFormat tidbRowDataInputFormat = new TiDBRowDataInputFormat(properties,
-        tableSchema.getFieldNames(), tableSchema.getFieldDataTypes(), typeInformation);
+    TypeInformation<RowData> typeInformation =
+        (TypeInformation<RowData>)
+            runtimeProviderContext.createTypeInformation(tableSchema.toRowDataType());
+    TiDBRowDataInputFormat tidbRowDataInputFormat =
+        new TiDBRowDataInputFormat(
+            properties,
+            tableSchema.getFieldNames(),
+            tableSchema.getFieldDataTypes(),
+            typeInformation);
     return InputFormatProvider.of(tidbRowDataInputFormat);
   }
 

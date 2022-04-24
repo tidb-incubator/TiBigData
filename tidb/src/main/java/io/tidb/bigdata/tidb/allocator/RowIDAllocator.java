@@ -108,18 +108,12 @@ public final class RowIDAllocator implements Serializable {
 
   private static RowIDAllocator doCreate(
       long dbId, TiTableInfo table, TiSession session, boolean unsigned, long step) {
-    RowIDAllocator allocator = new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step,
-        session);
+    RowIDAllocator allocator =
+        new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session);
     if (unsigned) {
-      allocator.initUnsigned(
-          session.createSnapshot(),
-          table.getId(),
-          table.getMaxShardRowIDBits());
+      allocator.initUnsigned(session.createSnapshot(), table.getId(), table.getMaxShardRowIDBits());
     } else {
-      allocator.initSigned(
-          session.createSnapshot(),
-          table.getId(),
-          table.getMaxShardRowIDBits());
+      allocator.initSigned(session.createSnapshot(), table.getId(), table.getMaxShardRowIDBits());
     }
 
     return allocator;
@@ -139,13 +133,10 @@ public final class RowIDAllocator implements Serializable {
     if (!iterator.hasNext()) {
       return;
     }
-    TwoPhaseCommitter twoPhaseCommitter =
-        new TwoPhaseCommitter(session, timestamp.getVersion());
+    TwoPhaseCommitter twoPhaseCommitter = new TwoPhaseCommitter(session, timestamp.getVersion());
     BytePairWrapper primaryPair = pairs.get(0);
     twoPhaseCommitter.prewritePrimaryKey(
-        ConcreteBackOffer.newCustomBackOff(2000),
-        primaryPair.getKey(),
-        primaryPair.getValue());
+        ConcreteBackOffer.newCustomBackOff(2000), primaryPair.getKey(), primaryPair.getValue());
 
     if (!iterator.hasNext()) {
       twoPhaseCommitter.prewriteSecondaryKeys(primaryPair.getKey(), iterator, 20000);
@@ -163,8 +154,8 @@ public final class RowIDAllocator implements Serializable {
     }
   }
 
-  private Optional<BytePairWrapper> getMetaToUpdate(ByteString key, byte[] oldVal,
-      Snapshot snapshot) {
+  private Optional<BytePairWrapper> getMetaToUpdate(
+      ByteString key, byte[] oldVal, Snapshot snapshot) {
     // 1. encode hash meta key
     // 2. load meta via hash meta key from TiKV
     // 3. update meta's filed count and set it back to TiKV
@@ -275,9 +266,7 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
-  /**
-   * read current row id from TiKV according to database id and table id.
-   */
+  /** read current row id from TiKV according to database id and table id. */
   public static long getAllocateId(long dbId, long tableId, Snapshot snapshot) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       ByteString dbKey = MetaCodec.encodeDatabaseID(dbId);

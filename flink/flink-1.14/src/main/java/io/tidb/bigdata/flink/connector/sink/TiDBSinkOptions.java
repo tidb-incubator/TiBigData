@@ -40,7 +40,7 @@ public class TiDBSinkOptions implements Serializable {
   private final boolean ignoreAutoincrementColumn;
   private final boolean deduplicate;
   private final TiDBWriteMode writeMode;
-  private final long taskStartInterval;// set interval in order to avoid allocate rowId conflict.
+  private final long taskStartInterval; // set interval in order to avoid allocate rowId conflict.
 
   public TiDBSinkOptions(ReadableConfig config) {
     this.sinkImpl = config.get(SINK_IMPL);

@@ -48,8 +48,9 @@ import org.apache.flink.table.data.RowData;
 import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
-public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
-    ResultTypeQueryable<RowData> {
+public class SnapshotSource
+    implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
+        ResultTypeQueryable<RowData> {
 
   private final String databaseName;
   private final String tableName;
@@ -61,9 +62,13 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   private final TiTimestamp timestamp;
   private final List<TiDBSourceSplit> splits;
 
-  public SnapshotSource(String databaseName, String tableName,
-      Map<String, String> properties, TiDBSchemaAdapter schema,
-      Expression expression, Integer limit) {
+  public SnapshotSource(
+      String databaseName,
+      String tableName,
+      Map<String, String> properties,
+      TiDBSchemaAdapter schema,
+      Expression expression,
+      Integer limit) {
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.properties = properties;
@@ -72,19 +77,26 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
     this.limit = limit;
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
       this.columns =
-          session.getTableColumns(databaseName, tableName,
-                  schema.getPhysicalFieldNamesWithoutMeta())
-              .orElseThrow(() -> new NullPointerException("Could not get columns for TiDB table:"
-                  + databaseName + "." + tableName));
-      this.timestamp = getOptionalVersion().orElseGet(
-          () -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
+          session
+              .getTableColumns(databaseName, tableName, schema.getPhysicalFieldNamesWithoutMeta())
+              .orElseThrow(
+                  () ->
+                      new NullPointerException(
+                          "Could not get columns for TiDB table:"
+                              + databaseName
+                              + "."
+                              + tableName));
+      this.timestamp =
+          getOptionalVersion()
+              .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
       session.getTableMust(databaseName, tableName);
-      TableHandleInternal tableHandleInternal = new TableHandleInternal(
-          UUID.randomUUID().toString(), this.databaseName, this.tableName);
+      TableHandleInternal tableHandleInternal =
+          new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
-      this.splits = splitManagerInternal.getSplits(tableHandleInternal, timestamp)
-          .stream().map(split -> new TiDBSourceSplit(split, 0))
-          .collect(Collectors.toList());
+      this.splits =
+          splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
+              .map(split -> new TiDBSourceSplit(split, 0))
+              .collect(Collectors.toList());
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -109,8 +121,7 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
 
   @Override
   public SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> restoreEnumerator(
-      SplitEnumeratorContext<TiDBSourceSplit> context,
-      TiDBSourceSplitEnumState state) {
+      SplitEnumeratorContext<TiDBSourceSplit> context, TiDBSourceSplitEnumState state) {
     return new TiDBSourceSplitEnumerator(state.getSplits(), timestamp, context);
   }
 
@@ -130,15 +141,13 @@ public class SnapshotSource implements Source<RowData, TiDBSourceSplit, TiDBSour
   }
 
   private Optional<TiTimestamp> getOptionalTimestamp() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNoneEmpty)
         .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
   }
 
   private Optional<TiTimestamp> getOptionalVersion() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
         .filter(StringUtils::isNoneEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));

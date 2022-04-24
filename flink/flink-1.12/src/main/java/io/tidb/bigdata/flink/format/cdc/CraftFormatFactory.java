@@ -95,13 +95,20 @@ public class CraftFormatFactory
                 .map(m -> DataTypes.FIELD(m.key, m.type))
                 .collect(Collectors.toList());
 
-        final DataType producedDataType = DataTypeUtils
-            .appendRowFields(physicalDataType, metadataFields);
+        final DataType producedDataType =
+            DataTypeUtils.appendRowFields(physicalDataType, metadataFields);
         final RowType rowType = (RowType) physicalDataType.getLogicalType();
         final TypeInformation<RowData> resultTypeInfo =
             context.createTypeInformation(producedDataType);
-        return new CraftDeserializationSchema(rowType, readableMetadata,
-            resultTypeInfo, earliestTs, types, schemas, tables, ignoreParseErrors);
+        return new CraftDeserializationSchema(
+            rowType,
+            readableMetadata,
+            resultTypeInfo,
+            earliestTs,
+            types,
+            schemas,
+            tables,
+            ignoreParseErrors);
       }
 
       @Override
@@ -112,8 +119,7 @@ public class CraftFormatFactory
       @Override
       public Map<String, DataType> listReadableMetadata() {
         final Map<String, DataType> metadataMap = new LinkedHashMap<>();
-        Stream.of(ReadableMetadata.values())
-            .forEachOrdered(m -> metadataMap.put(m.key, m.type));
+        Stream.of(ReadableMetadata.values()).forEachOrdered(m -> metadataMap.put(m.key, m.type));
         return metadataMap;
       }
 
@@ -134,8 +140,8 @@ public class CraftFormatFactory
   }
 
   @Override
-  public EncodingFormat<SerializationSchema<RowData>> createEncodingFormat(Context context,
-      ReadableConfig readableConfig) {
+  public EncodingFormat<SerializationSchema<RowData>> createEncodingFormat(
+      Context context, ReadableConfig readableConfig) {
     return null;
   }
 

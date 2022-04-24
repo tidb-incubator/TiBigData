@@ -38,8 +38,8 @@ public class TiDBTransactionStateSerializer extends TypeSerializerSingleton<TiDB
 
   @Override
   public TiDBTransactionState copy(TiDBTransactionState from) {
-    return new TiDBTransactionState(from.getTransactionId(), from.getPhysicalTs(),
-        from.getLogicalTs());
+    return new TiDBTransactionState(
+        from.getTransactionId(), from.getPhysicalTs(), from.getLogicalTs());
   }
 
   @Override

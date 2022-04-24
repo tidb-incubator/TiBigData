@@ -53,7 +53,6 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   private RecordCursorInternal currentCursor;
   private List<ColumnHandleInternal> columns;
 
-
   public TiDBRecordReader(InputSplit split, Map<String, String> properties) {
     this.currentSplitIndex = 0;
     this.tidbInputSplit = (TiDBInputSplit) split;
@@ -76,16 +75,19 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   private void initCurrentCursor() {
     SplitInternal splitInternal = splitInternals.get(currentSplitIndex);
 
-    columns = clientSession.getTableColumnsMust(splitInternal.getTable().getSchemaName(),
-        splitInternal.getTable().getTableName());
-    TiTimestamp timestamp = getOptionalVersion().orElseGet(
-        () -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
-    RecordSetInternal recordSetInternal = new RecordSetInternal(
-        clientSession,
-        splitInternal,
-        columns,
-        Optional.empty(),
-        Optional.ofNullable(timestamp));
+    columns =
+        clientSession.getTableColumnsMust(
+            splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
+    TiTimestamp timestamp =
+        getOptionalVersion()
+            .orElseGet(() -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
+    RecordSetInternal recordSetInternal =
+        new RecordSetInternal(
+            clientSession,
+            splitInternal,
+            columns,
+            Optional.empty(),
+            Optional.ofNullable(timestamp));
     currentCursor = recordSetInternal.cursor();
   }
 
@@ -148,15 +150,13 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   }
 
   private Optional<TiTimestamp> getOptionalTimestamp() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNotEmpty)
         .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
   }
 
   private Optional<TiTimestamp> getOptionalVersion() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
         .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));

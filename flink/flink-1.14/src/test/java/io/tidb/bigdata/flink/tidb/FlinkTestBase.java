@@ -36,31 +36,59 @@ import org.junit.ClassRule;
 
 public abstract class FlinkTestBase {
 
-  @ClassRule
-  public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
+  @ClassRule public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
 
   public static final String CATALOG_NAME = "tidb";
 
   public static final String DATABASE_NAME = "tiflink_test";
 
-  public static final String CREATE_DATABASE_SQL = String.format(
-      "CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME);
+  public static final String CREATE_DATABASE_SQL =
+      String.format("CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME);
 
   protected static final String TABLE_WITHOUT_INDEX =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    c2  bigint,\n"
-          + "    c3  bigint,\n" + "    c4  bigint,\n" + "    c5  bigint,\n" + "    c6  longtext,\n"
-          + "    c7  longtext,\n" + "    c8  longtext,\n" + "    c9  longtext,\n"
-          + "    c10 longtext,\n" + "    c11 longtext,\n" + "    c12 float,\n" + "    c13 double,\n"
-          + "    c14 date,\n" + "    c15 time,\n" + "    c16 datetime,\n" + "    c17 timestamp\n"
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint,\n"
+          + "    c2  bigint,\n"
+          + "    c3  bigint,\n"
+          + "    c4  bigint,\n"
+          + "    c5  bigint,\n"
+          + "    c6  longtext,\n"
+          + "    c7  longtext,\n"
+          + "    c8  longtext,\n"
+          + "    c9  longtext,\n"
+          + "    c10 longtext,\n"
+          + "    c11 longtext,\n"
+          + "    c12 float,\n"
+          + "    c13 double,\n"
+          + "    c14 date,\n"
+          + "    c15 time,\n"
+          + "    c16 datetime,\n"
+          + "    c17 timestamp\n"
           + ")";
 
   protected static final String TABLE_WITH_INDEX =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    c2  bigint,\n"
-          + "    c3  bigint,\n" + "    c4  bigint,\n" + "    c5  bigint,\n" + "    c6  longtext,\n"
-          + "    c7  longtext,\n" + "    c8  longtext,\n" + "    c9  longtext,\n"
-          + "    c10 longtext,\n" + "    c11 longtext,\n" + "    c12 float,\n" + "    c13 double,\n"
-          + "    c14 date,\n" + "    c15 time,\n" + "    c16 datetime,\n" + "    c17 timestamp,\n"
-          + "    unique key(c1)\n" + ")";
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint,\n"
+          + "    c2  bigint,\n"
+          + "    c3  bigint,\n"
+          + "    c4  bigint,\n"
+          + "    c5  bigint,\n"
+          + "    c6  longtext,\n"
+          + "    c7  longtext,\n"
+          + "    c8  longtext,\n"
+          + "    c9  longtext,\n"
+          + "    c10 longtext,\n"
+          + "    c11 longtext,\n"
+          + "    c12 float,\n"
+          + "    c13 double,\n"
+          + "    c14 date,\n"
+          + "    c15 time,\n"
+          + "    c16 datetime,\n"
+          + "    c17 timestamp,\n"
+          + "    unique key(c1)\n"
+          + ")";
 
   protected TableEnvironment getTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
@@ -74,8 +102,11 @@ public abstract class FlinkTestBase {
     return tableEnvironment;
   }
 
-  protected TiDBCatalog initTiDBCatalog(String dstTable, String createTableSql,
-      TableEnvironment tableEnvironment, Map<String, String> properties) {
+  protected TiDBCatalog initTiDBCatalog(
+      String dstTable,
+      String createTableSql,
+      TableEnvironment tableEnvironment,
+      Map<String, String> properties) {
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
     String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable);
@@ -95,30 +126,52 @@ public abstract class FlinkTestBase {
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
     String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, tableName);
-    String createTiDBSql = String.format(
-        "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n" + "    c2  bigint,\n"
-            + "    c3  bigint,\n" + "    c4  bigint,\n" + "    c5  bigint,\n"
-            + "    c6  longtext,\n" + "    c7  longtext,\n" + "    c8  longtext,\n"
-            + "    c9  longtext,\n" + "    c10 longtext,\n" + "    c11 longtext,\n"
-            + "    c12 float,\n" + "    c13 double,\n" + "    c14 date,\n" + "    c15 time,\n"
-            + "    c16 datetime,\n" + "    c17 timestamp\n" + ")", DATABASE_NAME, tableName);
+    String createTiDBSql =
+        String.format(
+            "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+                + "(\n"
+                + "    c1  bigint,\n"
+                + "    c2  bigint,\n"
+                + "    c3  bigint,\n"
+                + "    c4  bigint,\n"
+                + "    c5  bigint,\n"
+                + "    c6  longtext,\n"
+                + "    c7  longtext,\n"
+                + "    c8  longtext,\n"
+                + "    c9  longtext,\n"
+                + "    c10 longtext,\n"
+                + "    c11 longtext,\n"
+                + "    c12 float,\n"
+                + "    c13 double,\n"
+                + "    c14 date,\n"
+                + "    c15 time,\n"
+                + "    c16 datetime,\n"
+                + "    c17 timestamp\n"
+                + ")",
+            DATABASE_NAME, tableName);
     tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
     CatalogBaseTable table = tiDBCatalog.getTable(DATABASE_NAME, tableName);
-    String createDatagenSql = format(
-        "CREATE TABLE datagen \n%s\n WITH (\n" + " 'connector' = 'datagen',\n"
-            + " 'number-of-rows'='%s',\n" + " 'fields.c1.kind'='sequence',\n"
-            + " 'fields.c1.start'='1',\n" + " 'fields.c1.end'='%s'\n" + ")",
-        table.getUnresolvedSchema().toString(), rowCount, rowCount);
+    String createDatagenSql =
+        format(
+            "CREATE TABLE datagen \n%s\n WITH (\n"
+                + " 'connector' = 'datagen',\n"
+                + " 'number-of-rows'='%s',\n"
+                + " 'fields.c1.kind'='sequence',\n"
+                + " 'fields.c1.start'='1',\n"
+                + " 'fields.c1.end'='%s'\n"
+                + ")",
+            table.getUnresolvedSchema().toString(), rowCount, rowCount);
     tableEnvironment.executeSql(createDatagenSql);
-    String sql = format("INSERT INTO `tidb`.`%s`.`%s` SELECT * FROM datagen", DATABASE_NAME,
-        tableName);
+    String sql =
+        format("INSERT INTO `tidb`.`%s`.`%s` SELECT * FROM datagen", DATABASE_NAME, tableName);
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
     // splits
-    String splitRegionSql = format("SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (%s) REGIONS %s",
-        DATABASE_NAME, tableName,
-        rowCount * 8, 100);
+    String splitRegionSql =
+        format(
+            "SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (%s) REGIONS %s",
+            DATABASE_NAME, tableName, rowCount * 8, 100);
     tiDBCatalog.sqlUpdate(splitRegionSql);
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, tableName));
   }

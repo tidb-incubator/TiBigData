@@ -49,41 +49,33 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
   private static final String OP_DELETE = "DELETE";
   private static final String OP_CREATE = "CREATE";
 
-
   private final Set<String> schemas;
   private final Set<String> tables;
   private final CDCMetadata[] metadata;
   private final long startTs;
 
-  /**
-   * The deserializer to deserialize Canal JSON data.
-   */
+  /** The deserializer to deserialize Canal JSON data. */
   private final JsonRowDataDeserializationSchema jsonDeserializer;
 
-  /**
-   * {@link TypeInformation} of the produced {@link RowData} (physical + meta data).
-   */
+  /** {@link TypeInformation} of the produced {@link RowData} (physical + meta data). */
   private final TypeInformation<RowData> producedTypeInfo;
 
-  /**
-   * Flag indicating whether to ignore invalid fields/rows (default: throw an exception).
-   */
+  /** Flag indicating whether to ignore invalid fields/rows (default: throw an exception). */
   private final boolean ignoreParseErrors;
 
-  /**
-   * Names of fields.
-   */
+  /** Names of fields. */
   private final List<String> fieldNames;
 
-  /**
-   * Number of fields.
-   */
+  /** Number of fields. */
   private final int fieldCount;
 
   public TiDBCanalJsonDeserializationSchema(
-      DataType physicalDataType, Set<String> schemas,
-      Set<String> tables, CDCMetadata[] metadata,
-      long startTs, TypeInformation<RowData> producedTypeInfo,
+      DataType physicalDataType,
+      Set<String> schemas,
+      Set<String> tables,
+      CDCMetadata[] metadata,
+      long startTs,
+      TypeInformation<RowData> producedTypeInfo,
       boolean ignoreParseErrors,
       TimestampFormat timestampFormat) {
     this.schemas = schemas;
@@ -122,8 +114,8 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     }
     try {
       final JsonNode root = jsonDeserializer.deserializeToJsonNode(message);
-      Optional<JsonNode> commitTs = Optional.ofNullable(root.get(_TIDB))
-          .map(tidbExtension -> tidbExtension.get(COMMIT_TS));
+      Optional<JsonNode> commitTs =
+          Optional.ofNullable(root.get(_TIDB)).map(tidbExtension -> tidbExtension.get(COMMIT_TS));
       if (!commitTs.isPresent()) {
         return;
       }
@@ -199,8 +191,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     } catch (Throwable t) {
       // a big try catch to protect the processing.
       if (!ignoreParseErrors) {
-        throw new IOException(
-            format("Corrupt Canal JSON message '%s'.", new String(message)), t);
+        throw new IOException(format("Corrupt Canal JSON message '%s'.", new String(message)), t);
       }
     }
   }
@@ -218,8 +209,11 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     }
     while (i <= physicalRow.getArity() + metadata.length - 1) {
       CDCMetadata cdcMetadata = metadata[i - physicalRow.getArity()];
-      TiDBMetadata tiDBMetadata = cdcMetadata.toTiDBMetadata()
-          .orElseThrow(() -> new IllegalArgumentException("Unsupported metadata: " + cdcMetadata));
+      TiDBMetadata tiDBMetadata =
+          cdcMetadata
+              .toTiDBMetadata()
+              .orElseThrow(
+                  () -> new IllegalArgumentException("Unsupported metadata: " + cdcMetadata));
       rowData.setField(i, tiDBMetadata.extract(timestamp));
       i++;
     }

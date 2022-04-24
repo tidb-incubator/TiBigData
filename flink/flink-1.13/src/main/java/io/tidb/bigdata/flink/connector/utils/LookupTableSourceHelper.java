@@ -32,8 +32,7 @@ import org.apache.flink.util.Preconditions;
 public class LookupTableSourceHelper {
   private final JdbcLookupOptions lookupOptions;
 
-  public LookupTableSourceHelper(
-      JdbcLookupOptions lookupOptions) {
+  public LookupTableSourceHelper(JdbcLookupOptions lookupOptions) {
     this.lookupOptions = lookupOptions;
   }
 
@@ -41,8 +40,8 @@ public class LookupTableSourceHelper {
       ResolvedCatalogTable table, LookupContext context) {
     String[] keyNames = new String[context.getKeys().length];
     ResolvedSchema schema = table.getResolvedSchema();
-    Column[] columns = schema.getColumns().stream()
-        .filter(Column::isPhysical).toArray(Column[]::new);
+    Column[] columns =
+        schema.getColumns().stream().filter(Column::isPhysical).toArray(Column[]::new);
     Map<String, String> properties = table.getOptions();
     for (int i = 0; i < keyNames.length; i++) {
       int[] innerKeyArr = context.getKeys()[i];
@@ -57,8 +56,9 @@ public class LookupTableSourceHelper {
             JdbcUtils.getJdbcOptions(properties),
             lookupOptions,
             Arrays.stream(columns).map(Column::getName).toArray(String[]::new),
-            Arrays.stream(columns).map(Column::getDataType).toArray(
-                org.apache.flink.table.types.DataType[]::new),
+            Arrays.stream(columns)
+                .map(Column::getDataType)
+                .toArray(org.apache.flink.table.types.DataType[]::new),
             keyNames,
             rowType));
   }

@@ -20,10 +20,11 @@ import org.apache.flink.table.connector.source.DynamicTableSource;
 
 public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
 
-
   @Override
   public DynamicTableSource createDynamicTableSource(Context context) {
-    return new TiDBDynamicTableSource(context.getCatalogTable().getSchema(),
-        context.getCatalogTable().toProperties(), getLookupOptions(context));
+    return new TiDBDynamicTableSource(
+        context.getCatalogTable().getSchema(),
+        context.getCatalogTable().toProperties(),
+        getLookupOptions(context));
   }
 }

@@ -25,8 +25,7 @@ public class MockConfig {
   public int[] port;
   private boolean blocked;
 
-  public MockConfig() {
-  }
+  public MockConfig() {}
 
   public MockConfig(String[] backends, String[] ip, int[] port) {
     this.backends = backends;

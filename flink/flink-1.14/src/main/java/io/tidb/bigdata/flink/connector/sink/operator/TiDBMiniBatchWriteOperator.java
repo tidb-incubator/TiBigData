@@ -32,21 +32,25 @@ import org.tikv.common.ByteWrapper;
 import org.tikv.common.meta.TiTimestamp;
 
 /**
- * The operator for flushing rows to TiDB on mode MiniBatch.
- * During each flush, the rows are committed to TiDB in a transaction.
+ * The operator for flushing rows to TiDB on mode MiniBatch. During each flush, the rows are
+ * committed to TiDB in a transaction.
  */
 public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
 
-  public TiDBMiniBatchWriteOperator(String databaseName, String tableName,
-      Map<String, String> properties, TiTimestamp tiTimestamp,
+  public TiDBMiniBatchWriteOperator(
+      String databaseName,
+      String tableName,
+      Map<String, String> properties,
+      TiTimestamp tiTimestamp,
       TiDBSinkOptions sinkOption) {
     super(databaseName, tableName, properties, tiTimestamp, sinkOption, null);
   }
 
   @Override
   protected void openInternal() {
-    this.buffer = RowBuffer.createDeduplicateRowBuffer(tiTableInfo,
-        sinkOptions.isIgnoreAutoincrementColumn(), sinkOptions.getBufferSize());
+    this.buffer =
+        RowBuffer.createDeduplicateRowBuffer(
+            tiTableInfo, sinkOptions.isIgnoreAutoincrementColumn(), sinkOptions.getBufferSize());
   }
 
   @Override
@@ -58,23 +62,26 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
 
     // start a new transaction
     TiTimestamp timestamp = session.getSnapshotVersion();
-    tiDBEncodeHelper = new TiDBEncodeHelper(
-        session,
-        timestamp,
-        databaseName,
-        tableName,
-        sinkOptions.isIgnoreAutoincrementColumn(),
-        sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
-        rowIDAllocator);
-    TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(session.getTiSession(),
-        timestamp.getVersion());
+    tiDBEncodeHelper =
+        new TiDBEncodeHelper(
+            session,
+            timestamp,
+            databaseName,
+            tableName,
+            sinkOptions.isIgnoreAutoincrementColumn(),
+            sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+            rowIDAllocator);
+    TiDBWriteHelper tiDBWriteHelper =
+        new TiDBWriteHelper(session.getTiSession(), timestamp.getVersion());
     buffer.getRows().forEach(row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesByRow(row)));
     tiDBWriteHelper.preWriteFirst(pairs);
     long commitTs = tiDBWriteHelper.commitPrimaryKey();
 
-    Iterator<ByteWrapper> secondaryKeys = pairs.stream()
-        .map(bytePairWrapper -> new ByteWrapper(bytePairWrapper.getKey()))
-        .collect(Collectors.toList()).iterator();
+    Iterator<ByteWrapper> secondaryKeys =
+        pairs.stream()
+            .map(bytePairWrapper -> new ByteWrapper(bytePairWrapper.getKey()))
+            .collect(Collectors.toList())
+            .iterator();
     secondaryKeys.next();
 
     tiDBWriteHelper.commitSecondaryKeys(secondaryKeys, commitTs);
@@ -84,9 +91,7 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
     buffer.clear();
   }
 
-  /**
-   * We need to flush the buffer before checkpointing in case of data loss.
-   */
+  /** We need to flush the buffer before checkpointing in case of data loss. */
   @Override
   public void snapshotState(StateSnapshotContext context) {
     flushRows();

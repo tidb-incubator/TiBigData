@@ -24,8 +24,8 @@ import io.prestosql.spi.connector.ConnectorTableHandle;
 import io.tidb.bigdata.tidb.TableHandleInternal;
 import io.tidb.bigdata.tidb.Wrapper;
 
-public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
-    ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
+public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
+    implements ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
 
   @JsonCreator
   public TiDBTableHandle(

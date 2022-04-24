@@ -20,9 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import org.tikv.common.HostMapping;
 
-/**
- * Host mapping implementation that add extra dns search suffix
- */
+/** Host mapping implementation that add extra dns search suffix */
 public class DnsSearchHostMapping implements HostMapping {
   private final String dnsSearch;
 
@@ -38,8 +36,14 @@ public class DnsSearchHostMapping implements HostMapping {
   public URI getMappedURI(URI uri) {
     if (!uri.getHost().endsWith(dnsSearch)) {
       try {
-        return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost() + dnsSearch,
-            uri.getPort(), uri.getPath(), uri.getQuery(), uri.getFragment());
+        return new URI(
+            uri.getScheme(),
+            uri.getUserInfo(),
+            uri.getHost() + dnsSearch,
+            uri.getPort(),
+            uri.getPath(),
+            uri.getQuery(),
+            uri.getFragment());
       } catch (URISyntaxException ex) {
         throw new IllegalArgumentException(ex);
       }

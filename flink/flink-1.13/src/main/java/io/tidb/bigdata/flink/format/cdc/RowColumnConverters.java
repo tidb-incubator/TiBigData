@@ -66,8 +66,8 @@ public final class RowColumnConverters {
           final TemporalAccessor parsedTimestamp = column.asDateTime();
           final LocalTime localTime = parsedTimestamp.query(TemporalQueries.localTime());
           final LocalDate localDate = parsedTimestamp.query(TemporalQueries.localDate());
-          return TimestampData.fromInstant(LocalDateTime.of(localDate, localTime)
-              .toInstant(ZoneOffset.UTC));
+          return TimestampData.fromInstant(
+              LocalDateTime.of(localDate, localTime).toInstant(ZoneOffset.UTC));
         };
       case FLOAT:
         return RowColumn::asFloat;
@@ -97,8 +97,8 @@ public final class RowColumnConverters {
       try {
         return converter.convert(column);
       } catch (Exception ex) {
-        throw new IllegalStateException("Failed to convert cdc data for column:" + column.getName(),
-            ex);
+        throw new IllegalStateException(
+            "Failed to convert cdc data for column:" + column.getName(), ex);
       }
     };
   }

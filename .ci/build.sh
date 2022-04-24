@@ -21,4 +21,4 @@ export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
 mvn clean compile test -am -pl prestosql
 mvn clean compile test -am -pl trino
 
-mvn checkstyle:check
+mvn com.coveo:fmt-maven-plugin:check

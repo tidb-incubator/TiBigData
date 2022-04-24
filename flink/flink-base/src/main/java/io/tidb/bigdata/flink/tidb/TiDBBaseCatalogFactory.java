@@ -40,10 +40,7 @@ public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
 
   @Override
   public Map<String, String> requiredContext() {
-    return ImmutableMap.of(
-        CATALOG_TYPE, CATALOG_TYPE_VALUE_TIDB,
-        CATALOG_PROPERTY_VERSION, "1"
-    );
+    return ImmutableMap.of(CATALOG_TYPE, CATALOG_TYPE_VALUE_TIDB, CATALOG_PROPERTY_VERSION, "1");
   }
 
   @Override
@@ -57,7 +54,6 @@ public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
         TIDB_WRITE_MODE,
         TIDB_REPLICA_READ,
         TIDB_FILTER_PUSH_DOWN,
-        TIDB_DNS_SEARCH
-    );
+        TIDB_DNS_SEARCH);
   }
 }

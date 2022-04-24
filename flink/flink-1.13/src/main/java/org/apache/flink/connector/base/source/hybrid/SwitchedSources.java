@@ -25,21 +25,20 @@ import org.apache.flink.util.Preconditions;
 
 /** Sources that participated in switching with cached serializers. */
 class SwitchedSources {
-    private final Map<Integer, Source> sources = new HashMap<>();
-    private final Map<Integer, SimpleVersionedSerializer<SourceSplit>> cachedSerializers =
-            new HashMap<>();
+  private final Map<Integer, Source> sources = new HashMap<>();
+  private final Map<Integer, SimpleVersionedSerializer<SourceSplit>> cachedSerializers =
+      new HashMap<>();
 
-    public Source sourceOf(int sourceIndex) {
-        return Preconditions.checkNotNull(
-                sources.get(sourceIndex), "Source for index=%s not available", sourceIndex);
-    }
+  public Source sourceOf(int sourceIndex) {
+    return Preconditions.checkNotNull(
+        sources.get(sourceIndex), "Source for index=%s not available", sourceIndex);
+  }
 
-    public SimpleVersionedSerializer<SourceSplit> serializerOf(int sourceIndex) {
-        return cachedSerializers.computeIfAbsent(
-                sourceIndex, (k -> sourceOf(k).getSplitSerializer()));
-    }
+  public SimpleVersionedSerializer<SourceSplit> serializerOf(int sourceIndex) {
+    return cachedSerializers.computeIfAbsent(sourceIndex, (k -> sourceOf(k).getSplitSerializer()));
+  }
 
-    public void put(int sourceIndex, Source source) {
-        sources.put(sourceIndex, Preconditions.checkNotNull(source));
-    }
+  public void put(int sourceIndex, Source source) {
+    sources.put(sourceIndex, Preconditions.checkNotNull(source));
+  }
 }

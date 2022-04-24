@@ -44,34 +44,32 @@ import org.tikv.common.expression.visitor.SupportedExpressionValidator;
 import org.tikv.common.meta.TiColumnInfo;
 import org.tikv.common.types.DataType;
 
-public abstract class TiDBDynamicTableSource
-    extends TiDBBaseDynamicTableSource implements SupportsFilterPushDown {
+public abstract class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource
+    implements SupportsFilterPushDown {
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
 
-  protected static final Set<String> COMPARISON_BINARY_FILTERS = ImmutableSet.of(
-      "greaterThan",
-      "greaterThanOrEqual",
-      "lessThan",
-      "lessThanOrEqual",
-      "equals",
-      "notEquals",
-      "like"
-  );
+  protected static final Set<String> COMPARISON_BINARY_FILTERS =
+      ImmutableSet.of(
+          "greaterThan",
+          "greaterThanOrEqual",
+          "lessThan",
+          "lessThanOrEqual",
+          "equals",
+          "notEquals",
+          "like");
 
   protected Expression expression;
 
   protected Map<String, DataType> nameTypeMap;
 
   public TiDBDynamicTableSource(
-      TableSchema tableSchema,
-      Map<String, String> properties,
-      JdbcLookupOptions lookupOptions) {
+      TableSchema tableSchema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
     super(tableSchema, properties, lookupOptions);
   }
 
   protected TiDBRowDataInputFormat getInputFormat(ScanContext context, int numMetaFields) {
-    TypeInformation<RowData> typeInformation = context
-        .createTypeInformation(tableSchema.toRowDataType());
+    TypeInformation<RowData> typeInformation =
+        context.createTypeInformation(tableSchema.toRowDataType());
     String[] fieldNames = tableSchema.getFieldNames();
     org.apache.flink.table.types.DataType[] fieldTypes = tableSchema.getFieldDataTypes();
     if (numMetaFields > 0) {
@@ -100,8 +98,9 @@ public abstract class TiDBDynamicTableSource
     String databaseName = getRequiredProperties(DATABASE_NAME.key());
     String tableName = getRequiredProperties(TABLE_NAME.key());
     try (ClientSession clientSession = ClientSession.create(config)) {
-      this.nameTypeMap = clientSession.getTableMust(databaseName, tableName).getColumns()
-          .stream().collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
+      this.nameTypeMap =
+          clientSession.getTableMust(databaseName, tableName).getColumns().stream()
+              .collect(Collectors.toMap(TiColumnInfo::getName, TiColumnInfo::getType));
     } catch (Exception e) {
       throw new IllegalStateException("can not get columns", e);
     }
@@ -118,8 +117,10 @@ public abstract class TiDBDynamicTableSource
   }
 
   protected Expression getExpression(List<ResolvedExpression> resolvedExpressions) {
-    return Expressions.and(resolvedExpressions.stream().map(this::getExpression)
-        .filter(exp -> exp != Expressions.alwaysTrue()));
+    return Expressions.and(
+        resolvedExpressions.stream()
+            .map(this::getExpression)
+            .filter(exp -> exp != Expressions.alwaysTrue()));
   }
 
   protected Expression getExpression(ResolvedExpression resolvedExpression) {
@@ -142,8 +143,10 @@ public abstract class TiDBDynamicTableSource
           return getExpression(resolvedChildren.get(0));
         case "or":
           // ignore always true expression
-          return Expressions.or(resolvedChildren.stream().map(this::getExpression)
-              .filter(exp -> exp != Expressions.alwaysTrue()));
+          return Expressions.or(
+              resolvedChildren.stream()
+                  .map(this::getExpression)
+                  .filter(exp -> exp != Expressions.alwaysTrue()));
         case "not":
           if (left == Expressions.alwaysTrue()) {
             return Expressions.alwaysTrue();
@@ -173,9 +176,10 @@ public abstract class TiDBDynamicTableSource
     }
     if (resolvedExpression instanceof ValueLiteralExpression) {
       ValueLiteralExpression valueLiteralExpression = (ValueLiteralExpression) resolvedExpression;
-      Object value = valueLiteralExpression
-          .getValueAs(valueLiteralExpression.getOutputDataType().getConversionClass())
-          .orElseThrow(() -> new IllegalStateException("can not get value"));
+      Object value =
+          valueLiteralExpression
+              .getValueAs(valueLiteralExpression.getOutputDataType().getConversionClass())
+              .orElseThrow(() -> new IllegalStateException("can not get value"));
       return Expressions.constant(value, null);
     }
     return Expressions.alwaysTrue();
@@ -183,7 +187,8 @@ public abstract class TiDBDynamicTableSource
 
   protected Expression alwaysTrueIfNotSupported(Expression expression) {
     return SupportedExpressionValidator.isSupportedExpression(expression, null)
-        ? expression : Expressions.alwaysTrue();
+        ? expression
+        : Expressions.alwaysTrue();
   }
 
   protected void copyTo(TiDBDynamicTableSource other) {

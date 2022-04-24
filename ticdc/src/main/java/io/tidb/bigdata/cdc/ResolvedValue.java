@@ -26,8 +26,7 @@ public final class ResolvedValue implements Value {
 
   private static final ResolvedValue INSTANCE = new ResolvedValue();
 
-  private ResolvedValue() {
-  }
+  private ResolvedValue() {}
 
   public static ResolvedValue getInstance() {
     return INSTANCE;

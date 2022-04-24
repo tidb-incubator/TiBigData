@@ -46,18 +46,21 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
 
   @Parameters(name = "{index}: Transaction={0}, WriteMode={1}, Deduplicate={2}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{SinkTransaction.GLOBAL, TiDBWriteMode.APPEND, false},
-        {SinkTransaction.GLOBAL, TiDBWriteMode.UPSERT, true},
-        {SinkTransaction.MINIBATCH, TiDBWriteMode.APPEND, false},
-        {SinkTransaction.MINIBATCH, TiDBWriteMode.UPSERT, true}});
+    return Arrays.asList(
+        new Object[][] {
+          {SinkTransaction.GLOBAL, TiDBWriteMode.APPEND, false},
+          {SinkTransaction.GLOBAL, TiDBWriteMode.UPSERT, true},
+          {SinkTransaction.MINIBATCH, TiDBWriteMode.APPEND, false},
+          {SinkTransaction.MINIBATCH, TiDBWriteMode.UPSERT, true}
+        });
   }
 
   private final SinkTransaction transaction;
   private final TiDBWriteMode writeMode;
   private final boolean deduplicate;
 
-  public TiKVSinkBatchModeTest(SinkTransaction transaction, TiDBWriteMode writeMode,
-      boolean deduplicate) {
+  public TiKVSinkBatchModeTest(
+      SinkTransaction transaction, TiDBWriteMode writeMode, boolean deduplicate) {
     this.transaction = transaction;
     this.writeMode = writeMode;
     this.deduplicate = deduplicate;
@@ -81,19 +84,30 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
     properties.put(DEDUPLICATE.key(), Boolean.toString(deduplicate));
     properties.put(WRITE_MODE.key(), writeMode.name());
 
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable,
-        deduplicate ? TABLE_WITH_INDEX : TABLE_WITHOUT_INDEX, tableEnvironment, properties);
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(
+            dstTable,
+            deduplicate ? TABLE_WITH_INDEX : TABLE_WITHOUT_INDEX,
+            tableEnvironment,
+            properties);
 
-    tableEnvironment.sqlUpdate(String.format("INSERT INTO `tidb`.`%s`.`%s` "
-        + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
-        + "FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO `tidb`.`%s`.`%s` "
+                + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
+                + "FROM `tidb`.`%s`.`%s`",
+            DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
     tableEnvironment.execute("test");
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
   @After
   public void teardown() {
-    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
-    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
 }

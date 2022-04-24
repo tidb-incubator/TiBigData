@@ -49,47 +49,47 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   public static final String IDENTIFIER = "tidb";
 
-  /**
-   * see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory}
-   */
-  public static final ConfigOption<Integer> SINK_BUFFER_FLUSH_MAX_ROWS = ConfigOptions
-      .key("sink.buffer-flush.max-rows")
-      .intType()
-      .defaultValue(100)
-      .withDescription(
-          "the flush max size (includes all append, upsert and delete records), over this number"
-              + " of records, will flush data. The default value is 100.");
-  private static final ConfigOption<Duration> SINK_BUFFER_FLUSH_INTERVAL = ConfigOptions
-      .key("sink.buffer-flush.interval")
-      .durationType()
-      .defaultValue(Duration.ofSeconds(1))
-      .withDescription(
-          "the flush interval mills, over this time, asynchronous threads will flush data. The "
-              + "default value is 1s.");
-  public static final ConfigOption<Integer> SINK_MAX_RETRIES = ConfigOptions
-      .key("sink.max-retries")
-      .intType()
-      .defaultValue(3)
-      .withDescription("the max retry times if writing records to database failed.");
+  /** see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory} */
+  public static final ConfigOption<Integer> SINK_BUFFER_FLUSH_MAX_ROWS =
+      ConfigOptions.key("sink.buffer-flush.max-rows")
+          .intType()
+          .defaultValue(100)
+          .withDescription(
+              "the flush max size (includes all append, upsert and delete records), over this number"
+                  + " of records, will flush data. The default value is 100.");
+
+  private static final ConfigOption<Duration> SINK_BUFFER_FLUSH_INTERVAL =
+      ConfigOptions.key("sink.buffer-flush.interval")
+          .durationType()
+          .defaultValue(Duration.ofSeconds(1))
+          .withDescription(
+              "the flush interval mills, over this time, asynchronous threads will flush data. The "
+                  + "default value is 1s.");
+  public static final ConfigOption<Integer> SINK_MAX_RETRIES =
+      ConfigOptions.key("sink.max-retries")
+          .intType()
+          .defaultValue(3)
+          .withDescription("the max retry times if writing records to database failed.");
   // look up config options
-  public static final ConfigOption<Long> LOOKUP_CACHE_MAX_ROWS = ConfigOptions
-      .key("lookup.cache.max-rows")
-      .longType()
-      .defaultValue(-1L)
-      .withDescription("the max number of rows of lookup cache, over this value, "
-          + "the oldest rows will be eliminated. \"cache.max-rows\" and \"cache.ttl\" options "
-          + "must all be specified if any of them is specified. "
-          + "Cache is not enabled as default.");
-  public static final ConfigOption<Duration> LOOKUP_CACHE_TTL = ConfigOptions
-      .key("lookup.cache.ttl")
-      .durationType()
-      .defaultValue(Duration.ofSeconds(10))
-      .withDescription("the cache time to live.");
-  public static final ConfigOption<Integer> LOOKUP_MAX_RETRIES = ConfigOptions
-      .key("lookup.max-retries")
-      .intType()
-      .defaultValue(3)
-      .withDescription("the max retry times if lookup database failed.");
+  public static final ConfigOption<Long> LOOKUP_CACHE_MAX_ROWS =
+      ConfigOptions.key("lookup.cache.max-rows")
+          .longType()
+          .defaultValue(-1L)
+          .withDescription(
+              "the max number of rows of lookup cache, over this value, "
+                  + "the oldest rows will be eliminated. \"cache.max-rows\" and \"cache.ttl\" options "
+                  + "must all be specified if any of them is specified. "
+                  + "Cache is not enabled as default.");
+  public static final ConfigOption<Duration> LOOKUP_CACHE_TTL =
+      ConfigOptions.key("lookup.cache.ttl")
+          .durationType()
+          .defaultValue(Duration.ofSeconds(10))
+          .withDescription("the cache time to live.");
+  public static final ConfigOption<Integer> LOOKUP_MAX_RETRIES =
+      ConfigOptions.key("lookup.max-retries")
+          .intType()
+          .defaultValue(3)
+          .withDescription("the max retry times if lookup database failed.");
 
   @Override
   public String factoryIdentifier() {
@@ -105,9 +105,11 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
   public DynamicTableSource createDynamicTableSource(Context context) {
     FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    return new TiDBDynamicTableSource(context.getCatalogTable(),
+    return new TiDBDynamicTableSource(
+        context.getCatalogTable(),
         config.getOptional(STREAMING_SOURCE).isPresent()
-            ? ChangelogMode.all() : ChangelogMode.insertOnly(),
+            ? ChangelogMode.all()
+            : ChangelogMode.insertOnly(),
         new JdbcLookupOptions(
             config.get(LOOKUP_CACHE_MAX_ROWS),
             config.get(LOOKUP_CACHE_TTL).toMillis(),
@@ -117,9 +119,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
     return TiDBOptions.withMoreOptionalOptions(
-        SINK_BUFFER_FLUSH_INTERVAL,
-        SINK_BUFFER_FLUSH_MAX_ROWS,
-        SINK_MAX_RETRIES);
+        SINK_BUFFER_FLUSH_INTERVAL, SINK_BUFFER_FLUSH_MAX_ROWS, SINK_MAX_RETRIES);
   }
 
   @Override
@@ -129,41 +129,43 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     if (schema.getTableColumns().stream().anyMatch(column -> column instanceof MetadataColumn)) {
       throw new IllegalStateException("Metadata columns is not supported for sink");
     }
-    FactoryUtil.TableFactoryHelper helper = FactoryUtil
-        .createTableFactoryHelper(this, context);
+    FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
     String databaseName = config.get(DATABASE_NAME);
     // jdbc options
     JdbcOptions jdbcOptions = JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
     // execution options
-    JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
-        .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
-        .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
-        .withMaxRetries(config.get(SINK_MAX_RETRIES))
-        .build();
+    JdbcExecutionOptions jdbcExecutionOptions =
+        JdbcExecutionOptions.builder()
+            .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+            .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+            .withMaxRetries(config.get(SINK_MAX_RETRIES))
+            .build();
     // dml options
-    JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
-        .withTableName(jdbcOptions.getTableName())
-        .withDialect(jdbcOptions.getDialect())
-        .withFieldNames(schema.getFieldNames())
-        .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
-        .build();
+    JdbcDmlOptions jdbcDmlOptions =
+        JdbcDmlOptions.builder()
+            .withTableName(jdbcOptions.getTableName())
+            .withDialect(jdbcOptions.getDialect())
+            .withFieldNames(schema.getFieldNames())
+            .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+            .build();
 
     return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
   }
 
-  private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
-      String tableName) {
+  private String[] getKeyFields(
+      Context context, ReadableConfig config, String databaseName, String tableName) {
     // check write mode
     TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     String[] keyFields = null;
     if (writeMode == TiDBWriteMode.UPSERT) {
-      try (ClientSession clientSession = ClientSession.create(
-          new ClientConfig(context.getCatalogTable().toProperties()))) {
-        Set<String> set = ImmutableSet.<String>builder()
-            .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
-            .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
-            .build();
+      try (ClientSession clientSession =
+          ClientSession.create(new ClientConfig(context.getCatalogTable().toProperties()))) {
+        Set<String> set =
+            ImmutableSet.<String>builder()
+                .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
+                .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
+                .build();
         keyFields = set.size() == 0 ? null : set.toArray(new String[0]);
       } catch (Exception e) {
         throw new IllegalStateException(e);

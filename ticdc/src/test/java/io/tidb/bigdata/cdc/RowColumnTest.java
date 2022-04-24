@@ -43,11 +43,18 @@ import org.junit.Test;
 @SuppressWarnings("unchecked")
 public class RowColumnTest extends TestCase {
 
-  private static final Expect.ColumnData[] expectedRowData = new Expect.ColumnData[]{
-      new Expect.ColumnData("c1", (byte) 1, Type.TINYINT, Byte.class, 0,
-          Expect.ColumnData::asSmallIntTest, Expect.ColumnData::asIntTest,
-          Expect.ColumnData::asBigIntTest),
-  };
+  private static final Expect.ColumnData[] expectedRowData =
+      new Expect.ColumnData[] {
+        new Expect.ColumnData(
+            "c1",
+            (byte) 1,
+            Type.TINYINT,
+            Byte.class,
+            0,
+            Expect.ColumnData::asSmallIntTest,
+            Expect.ColumnData::asIntTest,
+            Expect.ColumnData::asBigIntTest),
+      };
   private byte[] value;
 
   private static byte[] encodeValue(final byte[] json) throws IOException {
@@ -59,22 +66,33 @@ public class RowColumnTest extends TestCase {
     return baos.toByteArray();
   }
 
-  private static CoercionTest createNumberCoercionTest(final String input, final Class<?> from,
-      final Type type) {
-    return Misc.uncheckedRun(() -> {
-      Method fromValueOf = from.getMethod("valueOf", String.class);
-      Method toValueOf = type.getJavaType().getMethod("valueOf", String.class);
-      return new CoercionTest(fromValueOf.invoke(null, input), toValueOf.invoke(null, input),
-          type);
-    });
+  private static CoercionTest createNumberCoercionTest(
+      final String input, final Class<?> from, final Type type) {
+    return Misc.uncheckedRun(
+        () -> {
+          Method fromValueOf = from.getMethod("valueOf", String.class);
+          Method toValueOf = type.getJavaType().getMethod("valueOf", String.class);
+          return new CoercionTest(
+              fromValueOf.invoke(null, input), toValueOf.invoke(null, input), type);
+        });
   }
 
   private static CoercionTest[] createNumberCoercionTests() {
-    final Class<?>[] numberJavaTypes = new Class<?>[]{Long.class, Integer.class, Short.class, Byte.class,
-        Float.class, Double.class};
-    final Type[] numberTypes = new Type[]{Type.TINYINT, Type.SMALLINT, Type.INT, Type.BIGINT,
-        Type.FLOAT,
-        Type.DOUBLE, Type.YEAR, Type.BIT};
+    final Class<?>[] numberJavaTypes =
+        new Class<?>[] {
+          Long.class, Integer.class, Short.class, Byte.class, Float.class, Double.class
+        };
+    final Type[] numberTypes =
+        new Type[] {
+          Type.TINYINT,
+          Type.SMALLINT,
+          Type.INT,
+          Type.BIGINT,
+          Type.FLOAT,
+          Type.DOUBLE,
+          Type.YEAR,
+          Type.BIT
+        };
     final ArrayList<CoercionTest> tests = new ArrayList<>();
     for (final Class<?> javaType : numberJavaTypes) {
       for (final Type type : numberTypes) {
@@ -85,19 +103,21 @@ public class RowColumnTest extends TestCase {
   }
 
   private static CoercionTest[] createToNullCoercionTests() {
-    return new CoercionTest[]{
-        new CoercionTest("1", null, Type.NULL),
-        new CoercionTest(1, null, Type.NULL),
-        new CoercionTest(1.0, null, Type.NULL),
-        new CoercionTest(true, null, Type.NULL),
+    return new CoercionTest[] {
+      new CoercionTest("1", null, Type.NULL),
+      new CoercionTest(1, null, Type.NULL),
+      new CoercionTest(1.0, null, Type.NULL),
+      new CoercionTest(true, null, Type.NULL),
     };
   }
 
   private static CoercionTest[] createBinaryCoercionTests() {
     final String encoded = "5rWL6K+VdGV4dA==";
     final byte[] decoded = "测试text".getBytes(StandardCharsets.UTF_8);
-    return Arrays.stream(new Type[]{Type.BINARY, Type.VARBINARY,
-        Type.BLOB, Type.TINYBLOB, Type.MEDIUMBLOB, Type.LONGBLOB})
+    return Arrays.stream(
+            new Type[] {
+              Type.BINARY, Type.VARBINARY, Type.BLOB, Type.TINYBLOB, Type.MEDIUMBLOB, Type.LONGBLOB
+            })
         .map(t -> new CoercionTest(Base64.getDecoder().decode(encoded), decoded, t))
         .toArray(CoercionTest[]::new);
   }
@@ -105,8 +125,9 @@ public class RowColumnTest extends TestCase {
   private static CoercionTest[] createStringCoercionTests() {
     final String from = "test";
     final String to = "test";
-    return Arrays.stream(new Type[]{Type.VARCHAR, Type.JSON})
-        .map(t -> new CoercionTest(from, to, t)).toArray(CoercionTest[]::new);
+    return Arrays.stream(new Type[] {Type.VARCHAR, Type.JSON})
+        .map(t -> new CoercionTest(from, to, t))
+        .toArray(CoercionTest[]::new);
   }
 
   private static LocalDate toLocalDate(final Object o) {
@@ -119,42 +140,49 @@ public class RowColumnTest extends TestCase {
 
   private static LocalDateTime toLocalDateTime(final Object o) {
     final TemporalAccessor accessor = (TemporalAccessor) o;
-    return LocalDateTime.of(accessor.query(TemporalQueries.localDate()),
-        accessor.query(TemporalQueries.localTime()));
+    return LocalDateTime.of(
+        accessor.query(TemporalQueries.localDate()), accessor.query(TemporalQueries.localTime()));
   }
 
   private static CoercionTest[] createFromStringCoercionTests() {
-    return new CoercionTest[]{
-        new CoercionTest("1973-12-30 15:30:00",
-            LocalDateTime.of(1973, 12, 30, 15, 30),
-            Type.TIMESTAMP, (l, r) -> Assert.assertEquals(toLocalDateTime(l), toLocalDateTime(r))
-        ),
-        new CoercionTest("2015-12-20 23:58:58",
-            LocalDateTime.of(2015, 12, 20, 23, 58, 58),
-            Type.DATETIME, (l, r) -> Assert.assertEquals(toLocalDateTime(l), toLocalDateTime(r))
-        ),
-        new CoercionTest("2000-01-01", LocalDate.of(2000, 1, 1),
-            Type.DATE, (l, r) -> Assert.assertEquals(toLocalDate(l), toLocalDate(r))
-        ),
-        new CoercionTest("23:59:59", LocalTime.of(23, 59, 59),
-            Type.TIME, (l, r) -> Assert.assertEquals(toLocalTime(l), toLocalTime(r))
-        ),
+    return new CoercionTest[] {
+      new CoercionTest(
+          "1973-12-30 15:30:00",
+          LocalDateTime.of(1973, 12, 30, 15, 30),
+          Type.TIMESTAMP,
+          (l, r) -> Assert.assertEquals(toLocalDateTime(l), toLocalDateTime(r))),
+      new CoercionTest(
+          "2015-12-20 23:58:58",
+          LocalDateTime.of(2015, 12, 20, 23, 58, 58),
+          Type.DATETIME,
+          (l, r) -> Assert.assertEquals(toLocalDateTime(l), toLocalDateTime(r))),
+      new CoercionTest(
+          "2000-01-01",
+          LocalDate.of(2000, 1, 1),
+          Type.DATE,
+          (l, r) -> Assert.assertEquals(toLocalDate(l), toLocalDate(r))),
+      new CoercionTest(
+          "23:59:59",
+          LocalTime.of(23, 59, 59),
+          Type.TIME,
+          (l, r) -> Assert.assertEquals(toLocalTime(l), toLocalTime(r))),
     };
   }
 
   @Override
   public void setUp() {
-    value = Misc.uncheckedRun(() -> encodeValue(getFileContent(getFile(Codec.json(), "row.json", true))));
+    value =
+        Misc.uncheckedRun(
+            () -> encodeValue(getFileContent(getFile(Codec.json(), "row.json", true))));
   }
 
   @Override
-  public void tearDown() {
-  }
+  public void tearDown() {}
 
   @Test
   public void testDecode() {
-    for (final JsonValueDecoder it = new JsonValueDecoder(value,
-        ParserFactory.json().createParser());
+    for (final JsonValueDecoder it =
+            new JsonValueDecoder(value, ParserFactory.json().createParser());
         it.hasNext(); ) {
       final RowInsertedValue insert = (RowInsertedValue) it.next();
       Assert.assertEquals(insert.getNewValue().length, 27);
@@ -191,7 +219,10 @@ public class RowColumnTest extends TestCase {
       this(from, to, type, CoercionTest::verify);
     }
 
-    public CoercionTest(final Object from, final Object to, final Type type,
+    public CoercionTest(
+        final Object from,
+        final Object to,
+        final Type type,
         final BiConsumer<Object, Object> verify) {
       this.from = from;
       this.to = to;

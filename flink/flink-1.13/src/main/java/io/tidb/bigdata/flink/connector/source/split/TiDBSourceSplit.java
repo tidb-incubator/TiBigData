@@ -84,8 +84,12 @@ public class TiDBSourceSplit implements Serializable, SourceSplit {
     String endKey = dis.readUTF();
     long physical = dis.readLong();
     long logical = dis.readLong();
-    return new TiDBSourceSplit(new SplitInternal(
-        new TableHandleInternal(connectorId, schemaName, tableName),
-        startKey, endKey, new TiTimestamp(physical, logical)), offset);
+    return new TiDBSourceSplit(
+        new SplitInternal(
+            new TableHandleInternal(connectorId, schemaName, tableName),
+            startKey,
+            endKey,
+            new TiTimestamp(physical, logical)),
+        offset);
   }
 }

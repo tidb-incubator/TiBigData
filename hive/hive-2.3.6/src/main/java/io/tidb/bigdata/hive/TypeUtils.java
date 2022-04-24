@@ -134,10 +134,12 @@ public class TypeUtils {
       case TypeInt24:
         return new IntWritable(Integer.parseInt(object.toString()));
       case TypeLong:
-        return unsigned ? new LongWritable((long) object)
+        return unsigned
+            ? new LongWritable((long) object)
             : new IntWritable(Integer.parseInt(object.toString()));
       case TypeLonglong:
-        return unsigned ? new HiveDecimalWritable(HiveDecimal.create((BigDecimal) object))
+        return unsigned
+            ? new HiveDecimalWritable(HiveDecimal.create((BigDecimal) object))
             : new LongWritable((long) object);
       case TypeFloat:
         return new FloatWritable((float) (double) object);
@@ -175,9 +177,9 @@ public class TypeUtils {
       case TypeGeometry:
       default:
         throw new IllegalArgumentException(
-            format("Can not covert tikv type to writable type, object = %s, type = %s", object,
-                dataType));
+            format(
+                "Can not covert tikv type to writable type, object = %s, type = %s",
+                object, dataType));
     }
   }
-
 }

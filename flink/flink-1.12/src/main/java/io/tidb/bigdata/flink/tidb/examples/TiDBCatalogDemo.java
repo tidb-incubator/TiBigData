@@ -32,8 +32,8 @@ public class TiDBCatalogDemo {
     final String databaseName = parameterTool.getRequired("tidb.database.name");
     final String tableName = parameterTool.getRequired("tidb.table.name");
     // env
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inBatchMode().build();
+    EnvironmentSettings settings =
+        EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build();
     TableEnvironment tableEnvironment = TableEnvironment.create(settings);
     // register TiDBCatalog
     TiDBCatalog catalog = new TiDBCatalog(properties);

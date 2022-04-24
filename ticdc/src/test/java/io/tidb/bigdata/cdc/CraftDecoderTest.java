@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.cdc;
 
-
 import static io.tidb.bigdata.cdc.FileLoader.decode;
 
 import io.tidb.bigdata.cdc.Key.Type;
@@ -39,9 +38,8 @@ public class CraftDecoderTest {
     return lastTs;
   }
 
-  private static long verifyRowChange(final String fileName, long lastTs,
-      final Expect.RowChange[] expected)
-      throws IOException {
+  private static long verifyRowChange(
+      final String fileName, long lastTs, final Expect.RowChange[] expected) throws IOException {
     final EventDecoder decoder = decode(CODEC, fileName);
     int idx = 0;
     for (Event evt : decoder) {
@@ -81,46 +79,57 @@ public class CraftDecoderTest {
 
   @Test
   public void testRowChanged() throws IOException {
-    long lastTs = verifyRowChange("row_0", -1, new Expect.RowChange[]{
-        new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
-    });
-    lastTs = verifyRowChange("row_1", lastTs, new Expect.RowChange[]{
-        new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
-    });
-    verifyRowChange("row_2", lastTs, new Expect.RowChange[]{
-        new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
-    });
+    long lastTs =
+        verifyRowChange(
+            "row_0",
+            -1,
+            new Expect.RowChange[] {
+              new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
+            });
+    lastTs =
+        verifyRowChange(
+            "row_1",
+            lastTs,
+            new Expect.RowChange[] {
+              new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
+            });
+    verifyRowChange(
+        "row_2",
+        lastTs,
+        new Expect.RowChange[] {
+          new Expect.RowChange(RowChangedValue.Type.INSERT, "test", "test"),
+        });
   }
 
   @Test
   public void testDDL() throws IOException {
-    long lastTs = verifyDDL("ddl_0", -1,
-        new Expect.DDL[]{
-            new Expect.DDL(
-                DDLValue.Type.CREATE_SCHEMA,
-                "a",
-                null,
-                "create database a;")});
-    lastTs = verifyDDL("ddl_1", lastTs,
-        new Expect.DDL[]{
-            new Expect.DDL(
-                DDLValue.Type.DROP_SCHEMA,
-                "a",
-                null,
-                "drop database a;")});
-    lastTs = verifyDDL("ddl_2", lastTs,
-        new Expect.DDL[]{
-            new Expect.DDL(
-                DDLValue.Type.CREATE_SCHEMA,
-                "a",
-                null,
-                "create database a;")});
-    verifyDDL("ddl_3", lastTs,
-        new Expect.DDL[]{
-            new Expect.DDL(
-                DDLValue.Type.CREATE_TABLE,
-                "a",
-                "c",
-                "create table c(id int primary key);")});
+    long lastTs =
+        verifyDDL(
+            "ddl_0",
+            -1,
+            new Expect.DDL[] {
+              new Expect.DDL(DDLValue.Type.CREATE_SCHEMA, "a", null, "create database a;")
+            });
+    lastTs =
+        verifyDDL(
+            "ddl_1",
+            lastTs,
+            new Expect.DDL[] {
+              new Expect.DDL(DDLValue.Type.DROP_SCHEMA, "a", null, "drop database a;")
+            });
+    lastTs =
+        verifyDDL(
+            "ddl_2",
+            lastTs,
+            new Expect.DDL[] {
+              new Expect.DDL(DDLValue.Type.CREATE_SCHEMA, "a", null, "create database a;")
+            });
+    verifyDDL(
+        "ddl_3",
+        lastTs,
+        new Expect.DDL[] {
+          new Expect.DDL(
+              DDLValue.Type.CREATE_TABLE, "a", "c", "create table c(id int primary key);")
+        });
   }
 }

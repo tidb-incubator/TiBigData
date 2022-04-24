@@ -40,7 +40,9 @@ public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implem
 
   private TiDBColumnHandle[] columnHandles;
 
-  public TiDBRecordCursor(List<TiDBColumnHandle> columnHandles, List<DataType> columnTypes,
+  public TiDBRecordCursor(
+      List<TiDBColumnHandle> columnHandles,
+      List<DataType> columnTypes,
       RecordCursorInternal internal) {
     super(internal);
     int numColumns = columnHandles.size();
@@ -120,6 +122,5 @@ public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implem
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 }
