@@ -29,8 +29,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
-public class TiDBSourceSplitEnumerator implements
-    SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> {
+public class TiDBSourceSplitEnumerator
+    implements SplitEnumerator<TiDBSourceSplit, TiDBSourceSplitEnumState> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBSourceSplitEnumerator.class);
 
@@ -47,11 +47,8 @@ public class TiDBSourceSplitEnumerator implements
     this.timestamp = timestamp;
   }
 
-
   @Override
-  public void start() {
-
-  }
+  public void start() {}
 
   @Override
   public void handleSplitRequest(int subtaskId, @Nullable String requesterHostname) {
@@ -69,9 +66,7 @@ public class TiDBSourceSplitEnumerator implements
   }
 
   @Override
-  public void addReader(int subtaskId) {
-
-  }
+  public void addReader(int subtaskId) {}
 
   @Override
   public TiDBSourceSplitEnumState snapshotState(long checkpointId) throws Exception {
@@ -79,9 +74,7 @@ public class TiDBSourceSplitEnumerator implements
   }
 
   @Override
-  public void close() throws IOException {
-
-  }
+  public void close() throws IOException {}
 
   public TiTimestamp getTimestamp() {
     return timestamp;

@@ -30,8 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.tikv.common.meta.TiTimestamp;
 
-public final class TiDBSplit
-    implements ConnectorSplit {
+public final class TiDBSplit implements ConnectorSplit {
 
   private String pdAddresses;
   private TiDBTableHandle table;
@@ -58,8 +57,13 @@ public final class TiDBSplit
   }
 
   TiDBSplit(SplitInternal from, Optional<String> additionalPredicate) {
-    this(new TiDBTableHandle(from.getTable()), from.getStartKey(), from.getEndKey(),
-        from.getTimestamp().getPhysical(), from.getTimestamp().getLogical(), additionalPredicate);
+    this(
+        new TiDBTableHandle(from.getTable()),
+        from.getStartKey(),
+        from.getEndKey(),
+        from.getTimestamp().getPhysical(),
+        from.getTimestamp().getLogical(),
+        additionalPredicate);
   }
 
   @Override

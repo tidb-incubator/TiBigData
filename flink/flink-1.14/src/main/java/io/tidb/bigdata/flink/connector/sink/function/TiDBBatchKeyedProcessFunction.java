@@ -29,8 +29,8 @@ import org.apache.flink.util.Collector;
 import org.tikv.common.row.Row;
 
 /**
- * A keyed function that deduplicates elements of a bounded stream.
- * Boolean stored in ValueState is used for marking if the same element has been processed.
+ * A keyed function that deduplicates elements of a bounded stream. Boolean stored in ValueState is
+ * used for marking if the same element has been processed.
  */
 public class TiDBBatchKeyedProcessFunction extends KeyedProcessFunction<List<Object>, Row, Row> {
 
@@ -39,8 +39,8 @@ public class TiDBBatchKeyedProcessFunction extends KeyedProcessFunction<List<Obj
 
   private ValueState<Boolean> existState;
 
-  public TiDBBatchKeyedProcessFunction(TiDBSinkOptions sinkOptions,
-      List<String> uniqueIndexColumnNames) {
+  public TiDBBatchKeyedProcessFunction(
+      TiDBSinkOptions sinkOptions, List<String> uniqueIndexColumnNames) {
     this.sinkOptions = sinkOptions;
     this.uniqueIndexColumnNames = uniqueIndexColumnNames;
   }
@@ -48,32 +48,34 @@ public class TiDBBatchKeyedProcessFunction extends KeyedProcessFunction<List<Obj
   @Override
   public void open(Configuration parameters) throws Exception {
 
-    StateTtlConfig stateTtlConfig = StateTtlConfig.newBuilder(Time.days(1))
-        .updateTtlOnCreateAndWrite()
-        .disableCleanupInBackground()
-        .build();
+    StateTtlConfig stateTtlConfig =
+        StateTtlConfig.newBuilder(Time.days(1))
+            .updateTtlOnCreateAndWrite()
+            .disableCleanupInBackground()
+            .build();
 
-    ValueStateDescriptor<Boolean> existStateDesc = new ValueStateDescriptor<>(
-        "exist-state-" + String.join("-", uniqueIndexColumnNames),
-        Boolean.class
-    );
+    ValueStateDescriptor<Boolean> existStateDesc =
+        new ValueStateDescriptor<>(
+            "exist-state-" + String.join("-", uniqueIndexColumnNames), Boolean.class);
     existStateDesc.enableTimeToLive(stateTtlConfig);
     existState = this.getRuntimeContext().getState(existStateDesc);
   }
 
   @Override
-  public void processElement(Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx,
-      Collector<Row> out) throws Exception {
+  public void processElement(
+      Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx, Collector<Row> out)
+      throws Exception {
     if (existState.value() == null) {
       existState.update(true);
       out.collect(row);
     } else if (!sinkOptions.isDeduplicate()) {
       String names = String.join(", ", uniqueIndexColumnNames);
-      String values = ctx.getCurrentKey().stream().map(Object::toString)
-          .collect(Collectors.joining(", "));
-      throw new IllegalStateException(String.format(
-          "Duplicate index in one batch, please enable deduplicate, index: [%s] = [%s]", names,
-          values));
+      String values =
+          ctx.getCurrentKey().stream().map(Object::toString).collect(Collectors.joining(", "));
+      throw new IllegalStateException(
+          String.format(
+              "Duplicate index in one batch, please enable deduplicate, index: [%s] = [%s]",
+              names, values));
     }
   }
 }

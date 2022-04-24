@@ -30,16 +30,17 @@ public class TiDBTableFactoryTest extends FlinkTestBase {
 
     TableEnvironment tableEnvironment = getTableEnvironment();
 
-    tableEnvironment.executeSql("CREATE TABLE `people`(\n"
-        + "  `id` INT,\n"
-        + "  `name` STRING\n"
-        + ") WITH (\n"
-        + "  'connector' = 'tidb',\n"
-        + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',\n"
-        + "  'tidb.username' = 'root',\n"
-        + "  'tidb.password' = '',\n"
-        + "  'tidb.database.name' = 'test',\n"
-        + "  'tidb.table.name' = 'people'\n"
-        + ")");
+    tableEnvironment.executeSql(
+        "CREATE TABLE `people`(\n"
+            + "  `id` INT,\n"
+            + "  `name` STRING\n"
+            + ") WITH (\n"
+            + "  'connector' = 'tidb',\n"
+            + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',\n"
+            + "  'tidb.username' = 'root',\n"
+            + "  'tidb.password' = '',\n"
+            + "  'tidb.database.name' = 'test',\n"
+            + "  'tidb.table.name' = 'people'\n"
+            + ")");
   }
 }

@@ -56,7 +56,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   @Override
   public String factoryIdentifier() {
-    throw new UnsupportedOperationException("TiDB table factory is not supported anymore, please use catalog.");
+    throw new UnsupportedOperationException(
+        "TiDB table factory is not supported anymore, please use catalog.");
   }
 
   @Override
@@ -73,9 +74,11 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
   public DynamicTableSource createDynamicTableSource(Context context) {
     FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
-    return new TiDBDynamicTableSource(context.getCatalogTable(),
+    return new TiDBDynamicTableSource(
+        context.getCatalogTable(),
         config.getOptional(STREAMING_SOURCE).isPresent()
-            ? ChangelogMode.all() : ChangelogMode.insertOnly(),
+            ? ChangelogMode.all()
+            : ChangelogMode.insertOnly(),
         new JdbcLookupOptions(
             config.get(LOOKUP_CACHE_MAX_ROWS),
             config.get(LOOKUP_CACHE_TTL).toMillis(),
@@ -89,55 +92,62 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         .anyMatch(column -> column instanceof MetadataColumn)) {
       throw new IllegalStateException("Metadata columns is not supported for sink");
     }
-    FactoryUtil.TableFactoryHelper helper = FactoryUtil
-        .createTableFactoryHelper(this, context);
+    FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
     ReadableConfig config = helper.getOptions();
     TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
 
     if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
-      return new TiDBDynamicTableSink(config.get(DATABASE_NAME), config.get(TABLE_NAME),
-          context.getCatalogTable(), tiDBSinkOptions);
+      return new TiDBDynamicTableSink(
+          config.get(DATABASE_NAME),
+          config.get(TABLE_NAME),
+          context.getCatalogTable(),
+          tiDBSinkOptions);
 
     } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
-      TableSchema schema = TableSchemaUtils.getPhysicalSchema(
-          context.getCatalogTable().getSchema());
+      TableSchema schema =
+          TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
       String databaseName = config.get(DATABASE_NAME);
       // jdbc options
-      JdbcConnectorOptions jdbcOptions = JdbcUtils.getJdbcOptions(
-          context.getCatalogTable().toProperties());
+      JdbcConnectorOptions jdbcOptions =
+          JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
       // execution options
-      JdbcExecutionOptions jdbcExecutionOptions = JdbcExecutionOptions.builder()
-          .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
-          .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
-          .withMaxRetries(config.get(SINK_MAX_RETRIES))
-          .build();
+      JdbcExecutionOptions jdbcExecutionOptions =
+          JdbcExecutionOptions.builder()
+              .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+              .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+              .withMaxRetries(config.get(SINK_MAX_RETRIES))
+              .build();
       // dml options
-      JdbcDmlOptions jdbcDmlOptions = JdbcDmlOptions.builder()
-          .withTableName(jdbcOptions.getTableName())
-          .withDialect(jdbcOptions.getDialect())
-          .withFieldNames(schema.getFieldNames())
-          .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
-          .build();
+      JdbcDmlOptions jdbcDmlOptions =
+          JdbcDmlOptions.builder()
+              .withTableName(jdbcOptions.getTableName())
+              .withDialect(jdbcOptions.getDialect())
+              .withFieldNames(schema.getFieldNames())
+              .withKeyFields(
+                  getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+              .build();
 
       return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
 
     } else {
-      throw new UnsupportedOperationException("Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
+      throw new UnsupportedOperationException(
+          "Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
     }
   }
 
-  private String[] getKeyFields(Context context, ReadableConfig config, String databaseName,
-      String tableName) {
+  private String[] getKeyFields(
+      Context context, ReadableConfig config, String databaseName, String tableName) {
     // check write mode
     TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     String[] keyFields = null;
     if (writeMode == TiDBWriteMode.UPSERT) {
-      try (ClientSession clientSession = ClientSession.create(
-          new ClientConfig(context.getCatalogTable().toProperties()))) {
-        Set<String> set = ImmutableSet.<String>builder()
-            .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
-            .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
-            .build();
+      try (ClientSession clientSession =
+          ClientSession.create(new ClientConfig(context.getCatalogTable().toProperties()))) {
+        Set<String> set =
+            ImmutableSet.<String>builder()
+                .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
+                .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
+                .build();
         keyFields = set.size() == 0 ? null : set.toArray(new String[0]);
       } catch (Exception e) {
         throw new IllegalStateException(e);

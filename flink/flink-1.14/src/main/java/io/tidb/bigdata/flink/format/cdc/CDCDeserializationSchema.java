@@ -36,37 +36,22 @@ public abstract class CDCDeserializationSchema
 
   private static final long serialVersionUID = 1L;
 
-  /**
-   * Only read changelogs of some specific types.
-   */
-  @Nullable
-  private final Set<Type> eventTypes;
+  /** Only read changelogs of some specific types. */
+  @Nullable private final Set<Type> eventTypes;
 
-  /**
-   * Only read changelogs from the specific schemas.
-   */
-  @Nullable
-  private final Set<String> schemas;
+  /** Only read changelogs from the specific schemas. */
+  @Nullable private final Set<String> schemas;
 
-  /**
-   * Only read changelogs from the specific tables.
-   */
-  @Nullable
-  private final Set<String> tables;
+  /** Only read changelogs from the specific tables. */
+  @Nullable private final Set<String> tables;
 
-  /**
-   * Only read changelogs with commit ts equals or greater than this
-   */
+  /** Only read changelogs with commit ts equals or greater than this */
   private final long startTs;
 
-  /**
-   * Flag indicating whether to ignore invalid fields/rows (default: throw an exception).
-   */
+  /** Flag indicating whether to ignore invalid fields/rows (default: throw an exception). */
   private final boolean ignoreParseErrors;
 
-  /**
-   * Adapter for CDC data model and Flink Schema
-   */
+  /** Adapter for CDC data model and Flink Schema */
   private final CDCSchemaAdapter schema;
 
   private final Codec codec;
@@ -172,8 +157,8 @@ public abstract class CDCDeserializationSchema
     }
   }
 
-  public void deserialize(
-      final byte[] key, final byte[] value, final Collector<RowData> out) throws IOException {
+  public void deserialize(final byte[] key, final byte[] value, final Collector<RowData> out)
+      throws IOException {
     try {
       for (final Event event : codec.decode(key, value)) {
         collectEvent(event, out);

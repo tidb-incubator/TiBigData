@@ -35,15 +35,16 @@ public enum CDCMetadata {
   SCHEMA("schema", DataTypes.STRING().nullable(), CDCMetadata::schema),
   TABLE("table", DataTypes.STRING().nullable(), CDCMetadata::table),
   COMMIT_VERSION("commit_version", DataTypes.BIGINT().notNull(), Event::getTs),
-  COMMIT_TIMESTAMP("commit_timestamp",
+  COMMIT_TIMESTAMP(
+      "commit_timestamp",
       DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull(),
       CDCMetadata::commitMs),
   TYPE("type", DataTypes.STRING().notNull(), CDCMetadata::typeName),
   TYPE_CODE("type_code", DataTypes.INT().notNull(), CDCMetadata::typeCode),
   KEY("key", DataTypes.STRING().nullable(), CDCMetadata::key),
   VALUE("value", DataTypes.STRING().nullable(), CDCMetadata::value),
-  SOURCE_EVENT("source_event", DataTypes.STRING().notNull(),
-      event -> StringData.fromString("STREAMING"));
+  SOURCE_EVENT(
+      "source_event", DataTypes.STRING().notNull(), event -> StringData.fromString("STREAMING"));
 
   private static final CDCMetadata[] EMPTY = new CDCMetadata[0];
   private static final JacksonFactory flinkShadedJackson =

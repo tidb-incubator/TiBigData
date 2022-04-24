@@ -33,38 +33,37 @@ import org.junit.rules.ExpectedException;
 @Category(IntegrationTest.class)
 public class TiDBTableFactoryTest extends FlinkTestBase {
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
+  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void testUnsupportedTableFactory() throws Exception {
-    exceptionRule.expect(allOf(
-        isA(ValidationException.class),
-        hasProperty("message",
-            containsString("Unable to create a source for reading table"))
-    ));
+    exceptionRule.expect(
+        allOf(
+            isA(ValidationException.class),
+            hasProperty("message", containsString("Unable to create a source for reading table"))));
 
-    exceptionRule.expectCause(allOf(
-        isA(ValidationException.class),
-        hasProperty("message",
-            containsString("Cannot discover a connector using option: 'connector'='tidb'"))
-    ));
+    exceptionRule.expectCause(
+        allOf(
+            isA(ValidationException.class),
+            hasProperty(
+                "message",
+                containsString("Cannot discover a connector using option: 'connector'='tidb'"))));
 
     StreamTableEnvironment tableEnvironment = getBatchModeStreamTableEnvironment();
-    tableEnvironment.sqlUpdate("CREATE TABLE `people`(\n"
-        + "  `id` INT,\n"
-        + "  `name` STRING\n"
-        + ") WITH (\n"
-        + "  'connector' = 'tidb',\n"
-        + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',\n"
-        + "  'tidb.username' = 'root',\n"
-        + "  'tidb.password' = '',\n"
-        + "  'tidb.database.name' = 'test',\n"
-        + "  'tidb.table.name' = 'people'\n"
-        + ")");
-
     tableEnvironment.sqlUpdate(
-        "SELECT * FROM people");
+        "CREATE TABLE `people`(\n"
+            + "  `id` INT,\n"
+            + "  `name` STRING\n"
+            + ") WITH (\n"
+            + "  'connector' = 'tidb',\n"
+            + "  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',\n"
+            + "  'tidb.username' = 'root',\n"
+            + "  'tidb.password' = '',\n"
+            + "  'tidb.database.name' = 'test',\n"
+            + "  'tidb.table.name' = 'people'\n"
+            + ")");
+
+    tableEnvironment.sqlUpdate("SELECT * FROM people");
     tableEnvironment.execute("test");
   }
 }

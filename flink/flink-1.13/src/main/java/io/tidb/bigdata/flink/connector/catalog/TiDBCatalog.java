@@ -72,21 +72,20 @@ public class TiDBCatalog extends TiDBBaseCatalog {
 
   public Schema getSchema(String databaseName, String tableName) {
     Schema.Builder builder = Schema.newBuilder();
-    List<TiColumnInfo> columns = getClientSession()
-        .getTableMust(databaseName, tableName)
-        .getColumns();
+    List<TiColumnInfo> columns =
+        getClientSession().getTableMust(databaseName, tableName).getColumns();
     columns.forEach(
         column -> {
           DataType flinkType = TypeUtils.getFlinkType(column.getType());
           flinkType = column.getType().isNotNull() ? flinkType.notNull() : flinkType.nullable();
           builder.column(column.getName(), flinkType);
         });
-    LinkedHashMap<String, TiDBMetadata> metadata = TiDBSchemaAdapter.parseMetadataColumns(
-        properties);
+    LinkedHashMap<String, TiDBMetadata> metadata =
+        TiDBSchemaAdapter.parseMetadataColumns(properties);
     metadata.forEach(
         (name, meta) -> builder.columnByMetadata(name, meta.getType(), meta.getKey(), false));
-    List<String> primaryKeyColumns = getClientSession().getPrimaryKeyColumns(databaseName,
-        tableName);
+    List<String> primaryKeyColumns =
+        getClientSession().getPrimaryKeyColumns(databaseName, tableName);
     if (primaryKeyColumns.size() > 0) {
       builder.primaryKey(primaryKeyColumns);
     }

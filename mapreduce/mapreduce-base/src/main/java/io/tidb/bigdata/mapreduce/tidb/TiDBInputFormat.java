@@ -45,13 +45,14 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 /**
  * A InputFormat that reads input data from an TiDB table.
- * <p>
- * DBInputFormat emits LongWritables containing the record number as key and TiDBWritables as
+ *
+ * <p>DBInputFormat emits LongWritables containing the record number as key and TiDBWritables as
  * value.
+ *
  * <p>
  */
-public class TiDBInputFormat<T extends TiDBWritable>
-    extends InputFormat<LongWritable, T> implements Configurable {
+public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWritable, T>
+    implements Configurable {
 
   private List<ColumnHandleInternal> columnHandleInternals;
 
@@ -63,9 +64,7 @@ public class TiDBInputFormat<T extends TiDBWritable>
 
   private ResultSetMetaData resultSetMetaData;
 
-  public TiDBInputFormat() {
-
-  }
+  public TiDBInputFormat() {}
 
   /**
    * {@inheritDoc}
@@ -76,19 +75,23 @@ public class TiDBInputFormat<T extends TiDBWritable>
   public List<InputSplit> getSplits(JobContext job) {
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    int regionsPerSplit = job.getConfiguration()
-        .getInt(REGIONS_PER_SPLIT, REGIONS_PER_SPLIT_DEFAULT);
+    int regionsPerSplit =
+        job.getConfiguration().getInt(REGIONS_PER_SPLIT, REGIONS_PER_SPLIT_DEFAULT);
     return Lists.partition(splitInternals, regionsPerSplit).stream()
         .map(TiDBInputSplit::new)
         .collect(Collectors.toList());
   }
 
   @Override
-  public RecordReader<LongWritable, T> createRecordReader(InputSplit inputSplit,
-      TaskAttemptContext taskAttemptContext) {
+  public RecordReader<LongWritable, T> createRecordReader(
+      InputSplit inputSplit, TaskAttemptContext taskAttemptContext) {
 
-    return new TiDBRecordReader((TiDBInputSplit) inputSplit, getConf(), getClientSession(),
-        columnHandleInternals, resultSetMetaData);
+    return new TiDBRecordReader(
+        (TiDBInputSplit) inputSplit,
+        getConf(),
+        getClientSession(),
+        columnHandleInternals,
+        resultSetMetaData);
   }
 
   @Override
@@ -103,35 +106,43 @@ public class TiDBInputFormat<T extends TiDBWritable>
     // check database and table
     clientSession.getTableMust(databaseName, tableName);
 
-    this.tableHandleInternal = new TableHandleInternal(
-        UUID.randomUUID().toString(), databaseName, tableName);
+    this.tableHandleInternal =
+        new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName);
 
     String[] fieldNames =
         Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
 
     if (1 == fieldNames.length && "*".equals(fieldNames[0])) {
       this.columnHandleInternals = clientSession.getTableColumnsMust(databaseName, tableName);
-      fieldNames = columnHandleInternals.stream().map(ColumnHandleInternal::getName).collect(
-          Collectors.toList()).toArray(new String[columnHandleInternals.size()]);
+      fieldNames =
+          columnHandleInternals.stream()
+              .map(ColumnHandleInternal::getName)
+              .collect(Collectors.toList())
+              .toArray(new String[columnHandleInternals.size()]);
       dbConf.setInputFieldNames(fieldNames);
     } else {
-      this.columnHandleInternals = clientSession.getTableColumns(
-              tableHandleInternal, Arrays.asList(fieldNames))
-          .orElseThrow(() -> new IllegalStateException("Can not get columns"));
+      this.columnHandleInternals =
+          clientSession
+              .getTableColumns(tableHandleInternal, Arrays.asList(fieldNames))
+              .orElseThrow(() -> new IllegalStateException("Can not get columns"));
     }
 
-    conf.setStrings("tidb.field.names",
-        columnHandleInternals.stream().map(ColumnHandleInternal::getName).collect(
-            Collectors.toList()).toArray(new String[columnHandleInternals.size()]));
+    conf.setStrings(
+        "tidb.field.names",
+        columnHandleInternals.stream()
+            .map(ColumnHandleInternal::getName)
+            .collect(Collectors.toList())
+            .toArray(new String[columnHandleInternals.size()]));
 
     try (Connection con = dbConf.getJdbcConnection()) {
-      String sql = "SELECT "
-          + Arrays.stream(fieldNames).map(this::quote).collect(Collectors.joining(","))
-          + " FROM "
-          + quote(databaseName)
-          + "."
-          + quote(tableName)
-          + " LIMIT 1";
+      String sql =
+          "SELECT "
+              + Arrays.stream(fieldNames).map(this::quote).collect(Collectors.joining(","))
+              + " FROM "
+              + quote(databaseName)
+              + "."
+              + quote(tableName)
+              + " LIMIT 1";
       try (PreparedStatement ps = con.prepareStatement(sql)) {
         this.resultSetMetaData = ps.executeQuery().getMetaData();
       }
@@ -153,27 +164,30 @@ public class TiDBInputFormat<T extends TiDBWritable>
     return dbConf;
   }
 
-
   /**
    * Initializes the map-part of the job with the appropriate input settings.
    *
-   * @param job        The map-reduce job
+   * @param job The map-reduce job
    * @param inputClass the class object implementing TiDBWritable, which is the Java object holding
-   *                   tuple fields.
-   * @param tableName  The table to read data from
+   *     tuple fields.
+   * @param tableName The table to read data from
    * @param fieldNames The field names in the table
-   * @param limit      the limit of per mapper read record
-   * @param snapshot   snapshot time
+   * @param limit the limit of per mapper read record
+   * @param snapshot snapshot time
    * @see #setInput(Job, Class, String, String[], java.lang.Integer, String)
    */
-  public static void setInput(Job job,
+  public static void setInput(
+      Job job,
       Class<? extends TiDBWritable> inputClass,
-      String tableName, String[] fieldNames, Integer limit, String snapshot) {
+      String tableName,
+      String[] fieldNames,
+      Integer limit,
+      String snapshot) {
     TiDBConfiguration dbConf = new TiDBConfiguration(job.getConfiguration());
     dbConf.setInputClass(inputClass);
     dbConf.setInputTableName(tableName);
     if (null == fieldNames || 0 == fieldNames.length) {
-      dbConf.setInputFieldNames(new String[]{"*"});
+      dbConf.setInputFieldNames(new String[] {"*"});
     } else {
       dbConf.setInputFieldNames(fieldNames);
     }

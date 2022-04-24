@@ -40,8 +40,8 @@ final class Serialization {
 
   static <T extends Serializable> T deserialize(String base64) {
     try {
-      ObjectInputStream ois = new ObjectInputStream(
-          new ByteArrayInputStream(Base64.getDecoder().decode(base64)));
+      ObjectInputStream ois =
+          new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(base64)));
       return (T) ois.readObject();
     } catch (IOException | ClassNotFoundException ex) {
       throw new RuntimeException(ex);

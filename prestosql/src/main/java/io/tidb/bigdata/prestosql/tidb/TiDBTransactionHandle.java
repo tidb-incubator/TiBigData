@@ -62,8 +62,6 @@ public final class TiDBTransactionHandle implements ConnectorTransactionHandle {
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("uuid", uuid)
-        .toString();
+    return toStringHelper(this).add("uuid", uuid).toString();
   }
 }

@@ -29,8 +29,8 @@ public class Expect {
     public final String table;
     public final String query;
 
-    public DDL(final DDLValue.Type type, final String schema, final String table,
-        final String query) {
+    public DDL(
+        final DDLValue.Type type, final String schema, final String table, final String query) {
       this.type = type;
       this.schema = schema;
       this.table = table;
@@ -44,8 +44,7 @@ public class Expect {
     public final String schema;
     public final String table;
 
-    public RowChange(final RowChangedValue.Type type, final String schema,
-        final String table) {
+    public RowChange(final RowChangedValue.Type type, final String schema, final String table) {
       this.type = type;
       this.schema = schema;
       this.table = table;
@@ -62,8 +61,12 @@ public class Expect {
     public final BiConsumer<RowColumn, Object>[] asTests;
 
     @SuppressWarnings("unchecked")
-    public ColumnData(final String name, final Object value, final Type type,
-        final Class<?> javaType, final long flags,
+    public ColumnData(
+        final String name,
+        final Object value,
+        final Type type,
+        final Class<?> javaType,
+        final long flags,
         final BiConsumer<RowColumn, Object>... asTests) {
       this.name = name;
       this.value = value;

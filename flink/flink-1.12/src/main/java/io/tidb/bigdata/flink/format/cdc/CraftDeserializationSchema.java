@@ -48,34 +48,21 @@ import org.apache.flink.util.Collector;
 public class CraftDeserializationSchema implements DeserializationSchema<RowData> {
 
   private static final long serialVersionUID = 1L;
-  /**
-   * Flag indicating whether to ignore invalid fields/rows (default: throw an exception).
-   */
+  /** Flag indicating whether to ignore invalid fields/rows (default: throw an exception). */
   private final boolean ignoreParseErrors;
-  /**
-   * TypeInformation of the produced {@link RowData}.
-   */
+  /** TypeInformation of the produced {@link RowData}. */
   private final TypeInformation<RowData> resultTypeInfo;
-  /**
-   * Only read changelogs from the specific schemas.
-   */
-  @Nullable
-  private final Set<String> schemas;
-  /**
-   * Only read changelogs from the specific tables.
-   */
-  @Nullable
-  private final Set<String> tables;
-  /**
-   * Only read changelogs of some specific types.
-   */
-  @Nullable
-  private final Set<Type> types;
+  /** Only read changelogs from the specific schemas. */
+  @Nullable private final Set<String> schemas;
+  /** Only read changelogs from the specific tables. */
+  @Nullable private final Set<String> tables;
+  /** Only read changelogs of some specific types. */
+  @Nullable private final Set<Type> types;
+
   private final long earliestTs;
-  /**
-   * Number of fields.
-   */
+  /** Number of fields. */
   private final int physicalFieldCount;
+
   private final int producedFieldCount;
   private final ParserFactory<CraftParser, CraftParserState> parserFactory;
   private final Map<String, ColumnContext> columns;
@@ -182,13 +169,13 @@ public class CraftDeserializationSchema implements DeserializationSchema<RowData
   }
 
   private void collectDDL(final Event event, final Collector<RowData> out) {
-    out.collect(GenericRowData.ofKind(
-        RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
+    out.collect(
+        GenericRowData.ofKind(RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
   }
 
   private void collectResolved(final Event event, final Collector<RowData> out) {
-    out.collect(GenericRowData.ofKind(
-        RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
+    out.collect(
+        GenericRowData.ofKind(RowKind.INSERT, convertMeta(event, new Object[producedFieldCount])));
   }
 
   // ------------------------------------------------------------------------------------------

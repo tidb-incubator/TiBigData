@@ -43,8 +43,11 @@ public class ReplicaReadPolicy implements ReplicaSelector {
   private final Set<String> blacklist;
   private final List<Role> roles;
 
-  private ReplicaReadPolicy(final Map<String, String> labels, final Set<String> whitelist,
-      final Set<String> blacklist, final List<Role> roles) {
+  private ReplicaReadPolicy(
+      final Map<String, String> labels,
+      final Set<String> whitelist,
+      final Set<String> blacklist,
+      final List<Role> roles) {
     this.labels = labels;
     this.whitelist = whitelist;
     this.blacklist = blacklist;
@@ -55,12 +58,14 @@ public class ReplicaReadPolicy implements ReplicaSelector {
   public List<Store> select(Region region) {
     Store leader = region.getLeader();
     Store[] stores = region.getStores();
-    List<Store> followers = Arrays.stream(stores)
-        .filter(store -> store.isFollower() && accept(store))
-        .collect(Collectors.toList());
-    List<Store> learners = Arrays.stream(stores)
-        .filter(store -> store.isLearner() && accept(store))
-        .collect(Collectors.toList());
+    List<Store> followers =
+        Arrays.stream(stores)
+            .filter(store -> store.isFollower() && accept(store))
+            .collect(Collectors.toList());
+    List<Store> learners =
+        Arrays.stream(stores)
+            .filter(store -> store.isLearner() && accept(store))
+            .collect(Collectors.toList());
     Collections.shuffle(followers);
     Collections.shuffle(learners);
     List<Store> candidates = new ArrayList<>(stores.length);
@@ -89,8 +94,11 @@ public class ReplicaReadPolicy implements ReplicaSelector {
   }
 
   private static Map<String, String> extractLabels(final Map<String, String> properties) {
-    String[] labels = properties.getOrDefault(ClientConfig.TIDB_REPLICA_READ_LABEL,
-        ClientConfig.TIDB_REPLICA_READ_LABEL_DEFAULT).split(",");
+    String[] labels =
+        properties
+            .getOrDefault(
+                ClientConfig.TIDB_REPLICA_READ_LABEL, ClientConfig.TIDB_REPLICA_READ_LABEL_DEFAULT)
+            .split(",");
     Map<String, String> map = new HashMap<>(labels.length);
     String key;
     String value;
@@ -99,33 +107,45 @@ public class ReplicaReadPolicy implements ReplicaSelector {
         continue;
       }
       String[] pairs = pair.trim().split("=");
-      if (pairs.length != 2 || (key = pairs[0].trim()).isEmpty()
+      if (pairs.length != 2
+          || (key = pairs[0].trim()).isEmpty()
           || (value = pairs[1].trim()).isEmpty()) {
-        throw new IllegalArgumentException("Invalid replica read labels: "
-            + Arrays.toString(labels));
+        throw new IllegalArgumentException(
+            "Invalid replica read labels: " + Arrays.toString(labels));
       }
       map.put(key, value);
     }
     return map;
   }
 
-  private static Set<String> extractList(final Map<String, String> properties,
-      final String key, final String defaultValue) {
+  private static Set<String> extractList(
+      final Map<String, String> properties, final String key, final String defaultValue) {
     return Arrays.stream(properties.getOrDefault(key, defaultValue).split(","))
-        .map(String::trim).filter(s -> !s.isEmpty()).collect(Collectors.toSet());
+        .map(String::trim)
+        .filter(s -> !s.isEmpty())
+        .collect(Collectors.toSet());
   }
 
   public static ReplicaReadPolicy create(final Map<String, String> properties) {
     Map<String, String> labels = extractLabels(properties);
-    Set<String> whitelist = extractList(properties,
-        ClientConfig.TIDB_REPLICA_READ_ADDRESS_WHITELIST,
-        ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT);
-    Set<String> blacklist = extractList(properties,
-        ClientConfig.TIDB_REPLICA_READ_ADDRESS_BLACKLIST,
-        ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT);
-    List<Role> roles = Arrays.stream(properties.getOrDefault(ClientConfig.TIDB_REPLICA_READ,
-            ClientConfig.TIDB_REPLICA_READ_DEFAULT).split(","))
-        .map(Role::fromString).collect(Collectors.toList());
+    Set<String> whitelist =
+        extractList(
+            properties,
+            ClientConfig.TIDB_REPLICA_READ_ADDRESS_WHITELIST,
+            ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT);
+    Set<String> blacklist =
+        extractList(
+            properties,
+            ClientConfig.TIDB_REPLICA_READ_ADDRESS_BLACKLIST,
+            ClientConfig.TIDB_REPLICA_READ_ADDRESS_DEFAULT);
+    List<Role> roles =
+        Arrays.stream(
+                properties
+                    .getOrDefault(
+                        ClientConfig.TIDB_REPLICA_READ, ClientConfig.TIDB_REPLICA_READ_DEFAULT)
+                    .split(","))
+            .map(Role::fromString)
+            .collect(Collectors.toList());
     return new ReplicaReadPolicy(labels, whitelist, blacklist, roles);
   }
 
@@ -161,7 +181,9 @@ public class ReplicaReadPolicy implements ReplicaSelector {
   }
 
   enum Role {
-    LEADER, FOLLOWER, LEARNER;
+    LEADER,
+    FOLLOWER,
+    LEARNER;
 
     public static Role fromString(String role) {
       for (Role value : values()) {

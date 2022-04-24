@@ -58,17 +58,17 @@ public class StoreVersion {
   public static List<StoreVersion> fetchTiKVVersions(PDClient pdClient) {
     BackOffer bo = ConcreteBackOffer.newCustomBackOff(BackOffer.PD_INFO_BACKOFF);
     List<Metapb.Store> storeList =
-        pdClient
-            .getAllStores(bo)
-            .stream()
+        pdClient.getAllStores(bo).stream()
             .filter(
                 store ->
                     !isTiFlash(store)
                         && (store.getState() == Metapb.StoreState.Up
-                        || store.getState() == Metapb.StoreState.Offline))
+                            || store.getState() == Metapb.StoreState.Offline))
             .collect(Collectors.toList());
 
-    return storeList.stream().map(store -> new StoreVersion(store.getVersion())).collect(Collectors.toList());
+    return storeList.stream()
+        .map(store -> new StoreVersion(store.getVersion()))
+        .collect(Collectors.toList());
   }
 
   private static boolean isTiFlash(Metapb.Store store) {

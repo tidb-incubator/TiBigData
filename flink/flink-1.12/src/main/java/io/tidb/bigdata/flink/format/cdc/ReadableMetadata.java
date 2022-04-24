@@ -28,7 +28,8 @@ public enum ReadableMetadata {
   SCHEMA("schema", DataTypes.STRING().nullable(), ReadableMetadata::schema),
   TABLE("table", DataTypes.STRING().nullable(), ReadableMetadata::table),
   COMMIT_VERSION("commit_version", DataTypes.BIGINT().notNull(), Event::getTs),
-  COMMIT_TIMESTAMP("commit_timestamp",
+  COMMIT_TIMESTAMP(
+      "commit_timestamp",
       DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull(),
       ReadableMetadata::commitMs),
   TYPE("type", DataTypes.STRING().notNull(), ReadableMetadata::typeName),

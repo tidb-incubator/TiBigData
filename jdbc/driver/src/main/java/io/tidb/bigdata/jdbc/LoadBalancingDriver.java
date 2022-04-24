@@ -46,23 +46,17 @@ public class LoadBalancingDriver implements Driver {
   private static final Logger logger = Logger.getLogger(LoadBalancingDriver.class.getName());
 
   private static final String MYSQL_URL_PREFIX = "jdbc:mysql://";
-  /**
-   * The value is set by {@link System#setProperty(String, String)}
-   */
+  /** The value is set by {@link System#setProperty(String, String)} */
   private static final String TIDB_URL_MAPPER = "tidb.jdbc.url-mapper";
-  /**
-   * The value is set by {@link System#setProperty(String, String)}
-   */
+  /** The value is set by {@link System#setProperty(String, String)} */
   private static final String URL_PROVIDER = "url.provider";
-  /**
-   * The value is set by {@link System#setProperty(String, String)}
-   */
+  /** The value is set by {@link System#setProperty(String, String)} */
   private static final String TIDB_MIN_DISCOVER_INTERVAL_KEY = "tidb.jdbc.min-discovery-interval";
+
   private static final long TIDB_MIN_DISCOVER_INTERVAL = 10000;
-  /**
-   * The value is set by {@link System#setProperty(String, String)}
-   */
+  /** The value is set by {@link System#setProperty(String, String)} */
   private static final String TIDB_MAX_DISCOVER_INTERVAL_KEY = "tidb.jdbc.max-discovery-interval";
+
   private static final long TIDB_MAX_DISCOVER_INTERVAL = 3600000;
   private static final String MYSQL_DRIVER_NAME;
   private static final String NEW_MYSQL_DRIVER_NAME = "com.mysql.cj.jdbc.Driver";
@@ -82,17 +76,17 @@ public class LoadBalancingDriver implements Driver {
   private final long minReloadInterval;
   private final ConcurrentHashMap<String, Discoverer> discoverers = new ConcurrentHashMap<>();
   private final ScheduledThreadPoolExecutor executor;
-  /**
-   * implements {@link java.util.function.Function}, Default: {@link RandomShuffleUrlMapper}
-   */
+  /** implements {@link java.util.function.Function}, Default: {@link RandomShuffleUrlMapper} */
   private final Function<String[], String[]> urlMapper;
+
   private final DiscovererFactory discovererFactory;
 
   public LoadBalancingDriver(final String wrapperUrlPrefix) {
     this(wrapperUrlPrefix, createUrlMapper(), createDriver(), DiscovererImpl::new);
   }
 
-  LoadBalancingDriver(final String wrapperUrlPrefix,
+  LoadBalancingDriver(
+      final String wrapperUrlPrefix,
       final Function<String[], String[]> mapper,
       final Driver driver,
       final DiscovererFactory discovererFactory) {
@@ -100,22 +94,31 @@ public class LoadBalancingDriver implements Driver {
     this.urlMapper = mapper;
     this.driver = driver;
     this.discovererFactory = discovererFactory;
-    this.minReloadInterval = getLongProperty(TIDB_MIN_DISCOVER_INTERVAL_KEY,
-        TIDB_MIN_DISCOVER_INTERVAL, TIDB_MIN_DISCOVER_INTERVAL, TIDB_MAX_DISCOVER_INTERVAL);
-    final long maxReloadInterval = getLongProperty(TIDB_MAX_DISCOVER_INTERVAL_KEY,
-        TIDB_MAX_DISCOVER_INTERVAL, TIDB_MIN_DISCOVER_INTERVAL, TIDB_MAX_DISCOVER_INTERVAL);
-    this.executor = new ScheduledThreadPoolExecutor(
-        Runtime.getRuntime().availableProcessors(),
-        (runnable) -> {
-          Thread newThread = new Thread(runnable);
-          newThread.setName("TiDB JDBC Driver Executor Thread - " + threadId.getAndIncrement());
-          newThread.setDaemon(true);
-          return newThread;
-        });
+    this.minReloadInterval =
+        getLongProperty(
+            TIDB_MIN_DISCOVER_INTERVAL_KEY,
+            TIDB_MIN_DISCOVER_INTERVAL,
+            TIDB_MIN_DISCOVER_INTERVAL,
+            TIDB_MAX_DISCOVER_INTERVAL);
+    final long maxReloadInterval =
+        getLongProperty(
+            TIDB_MAX_DISCOVER_INTERVAL_KEY,
+            TIDB_MAX_DISCOVER_INTERVAL,
+            TIDB_MIN_DISCOVER_INTERVAL,
+            TIDB_MAX_DISCOVER_INTERVAL);
+    this.executor =
+        new ScheduledThreadPoolExecutor(
+            Runtime.getRuntime().availableProcessors(),
+            (runnable) -> {
+              Thread newThread = new Thread(runnable);
+              newThread.setName("TiDB JDBC Driver Executor Thread - " + threadId.getAndIncrement());
+              newThread.setDaemon(true);
+              return newThread;
+            });
     this.executor.setKeepAliveTime(minReloadInterval * 2, TimeUnit.MILLISECONDS);
     this.executor.allowCoreThreadTimeOut(true);
-    this.executor.scheduleWithFixedDelay(this::reloadAll,
-        0, maxReloadInterval, TimeUnit.MILLISECONDS);
+    this.executor.scheduleWithFixedDelay(
+        this::reloadAll, 0, maxReloadInterval, TimeUnit.MILLISECONDS);
   }
 
   private static String determineDriverName() {
@@ -135,15 +138,19 @@ public class LoadBalancingDriver implements Driver {
       type = RandomShuffleUrlMapper.class.getName();
     }
     final String finalType = type;
-    return uncheckedCall(() ->
-        (Function<String[], String[]>) Class.forName(finalType)
-            .getDeclaredConstructor().newInstance());
+    return uncheckedCall(
+        () ->
+            (Function<String[], String[]>)
+                Class.forName(finalType).getDeclaredConstructor().newInstance());
   }
 
   private static Function<String[], String[]> createUrlMapper() {
-    final String provider = Optional.ofNullable(System.getProperty(TIDB_URL_MAPPER))
-        .orElseGet(() -> Optional.ofNullable(System.getProperty(URL_PROVIDER))
-            .orElseGet(RoundRobinUrlMapper.class::getName));
+    final String provider =
+        Optional.ofNullable(System.getProperty(TIDB_URL_MAPPER))
+            .orElseGet(
+                () ->
+                    Optional.ofNullable(System.getProperty(URL_PROVIDER))
+                        .orElseGet(RoundRobinUrlMapper.class::getName));
     return createUrlMapper(provider);
   }
 
@@ -163,8 +170,8 @@ public class LoadBalancingDriver implements Driver {
   }
 
   private static Driver createDriver() {
-    return uncheckedCall(() ->
-        (Driver) Class.forName(MYSQL_DRIVER_NAME).getDeclaredConstructor().newInstance());
+    return uncheckedCall(
+        () -> (Driver) Class.forName(MYSQL_DRIVER_NAME).getDeclaredConstructor().newInstance());
   }
 
   public static String getMySqlDriverName() {
@@ -193,8 +200,10 @@ public class LoadBalancingDriver implements Driver {
         return connection.unwrap();
       } else {
         discoverer.failed(url);
-        logger.fine(() ->
-            String.format("Failed to connect to %s. %s", url, stringify(connection.unwrapErr())));
+        logger.fine(
+            () ->
+                String.format(
+                    "Failed to connect to %s. %s", url, stringify(connection.unwrapErr())));
       }
     }
     throw new SQLException("can not get connection");
@@ -221,8 +230,8 @@ public class LoadBalancingDriver implements Driver {
   }
 
   private Discoverer checkAndCreateDiscoverer(final String tidbUrl, final Properties info) {
-    return discoverers.computeIfAbsent(signature(tidbUrl, info),
-        (k) -> discovererFactory.create(driver, tidbUrl, info, executor));
+    return discoverers.computeIfAbsent(
+        signature(tidbUrl, info), (k) -> discovererFactory.create(driver, tidbUrl, info, executor));
   }
 
   @Override

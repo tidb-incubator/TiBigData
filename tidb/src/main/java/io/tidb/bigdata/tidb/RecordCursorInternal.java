@@ -34,8 +34,8 @@ public class RecordCursorInternal {
   private final CoprocessorIterator<Row> iterator;
   private Row row = null;
 
-  public RecordCursorInternal(List<ColumnHandleInternal> columnHandles,
-      CoprocessorIterator<Row> iterator) {
+  public RecordCursorInternal(
+      List<ColumnHandleInternal> columnHandles, CoprocessorIterator<Row> iterator) {
     this.columnHandles = columnHandles;
     this.iterator = iterator;
   }
@@ -54,8 +54,7 @@ public class RecordCursorInternal {
     }
   }
 
-  public void close() {
-  }
+  public void close() {}
 
   public Object getObject(int field) {
     return row.get(field, null);
@@ -131,8 +130,6 @@ public class RecordCursorInternal {
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("columns", columnHandles)
-        .toString();
+    return toStringHelper(this).add("columns", columnHandles).toString();
   }
 }

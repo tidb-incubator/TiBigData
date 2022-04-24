@@ -45,8 +45,11 @@ public final class TiDBColumnHandle implements ColumnHandle {
       @JsonProperty("name") String name,
       @JsonProperty("type") String type,
       @JsonProperty("ordinalPosition") int ordinalPosition) {
-    this(requireNonNull(name, "name is null"), requireNonNull(type, "type is null"),
-        DataTypes.deserialize(type), ordinalPosition);
+    this(
+        requireNonNull(name, "name is null"),
+        requireNonNull(type, "type is null"),
+        DataTypes.deserialize(type),
+        ordinalPosition);
   }
 
   private TiDBColumnHandle(String name, String type, DataType dataType, int ordinalPosition) {
@@ -57,8 +60,11 @@ public final class TiDBColumnHandle implements ColumnHandle {
   }
 
   public TiDBColumnHandle(ColumnHandleInternal handle) {
-    this(requireNonNull(handle, "handle is null").getName(), DataTypes.serialize(handle.getType()),
-        handle.getType(), handle.getOrdinalPosition());
+    this(
+        requireNonNull(handle, "handle is null").getName(),
+        DataTypes.serialize(handle.getType()),
+        handle.getType(),
+        handle.getOrdinalPosition());
   }
 
   static List<ColumnHandleInternal> internalHandles(List<TiDBColumnHandle> columns) {

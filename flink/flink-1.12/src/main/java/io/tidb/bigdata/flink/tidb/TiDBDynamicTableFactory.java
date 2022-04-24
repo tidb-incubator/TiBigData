@@ -48,8 +48,8 @@ import org.slf4j.LoggerFactory;
 public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
   static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableFactory.class);
 
-  public static final ConfigOption<String> STREAMING_SOURCE = ConfigOptions
-      .key("tidb.streaming.source").stringType().noDefaultValue();
+  public static final ConfigOption<String> STREAMING_SOURCE =
+      ConfigOptions.key("tidb.streaming.source").stringType().noDefaultValue();
 
   private static final String STREAMING_SOURCE_KAFKA = "kafka";
   private static final String STREAMING_SOURCE_PULSAR = "pulsar";
@@ -73,10 +73,10 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     final Map<String, String> properties = context.getCatalogTable().toProperties();
     final TableSchema schema = context.getCatalogTable().getSchema();
     final JdbcLookupOptions lookupOptions = getLookupOptions(context);
-    return options.getOptional(STREAMING_SOURCE)
+    return options
+        .getOptional(STREAMING_SOURCE)
         .map(s -> createStreamingTableSource(context, s, schema, properties, lookupOptions))
         .orElseGet(() -> new TiDBBatchDynamicTableSource(schema, properties, lookupOptions));
-
   }
 
   @Override
@@ -99,8 +99,12 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     return props;
   }
 
-  private DynamicTableSource createStreamingTableSource(Context context, String source,
-      TableSchema schema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
+  private DynamicTableSource createStreamingTableSource(
+      Context context,
+      String source,
+      TableSchema schema,
+      Map<String, String> properties,
+      JdbcLookupOptions lookupOptions) {
     final Function<Map<String, String>, Map<String, String>> populateDefault;
     switch (source) {
       case STREAMING_SOURCE_KAFKA:
@@ -115,9 +119,13 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     final long version = getSnapshotTimestamp(properties);
     properties = new HashMap<>(properties);
     properties.put(ClientConfig.SNAPSHOT_VERSION, Long.toString(version));
-    return new TiDBStreamingDynamicTableSource(schema, properties, lookupOptions,
+    return new TiDBStreamingDynamicTableSource(
+        schema,
+        properties,
+        lookupOptions,
         createStreamingSource(
-            new StreamingSourceContext(source, context, version, populateDefault)), version);
+            new StreamingSourceContext(source, context, version, populateDefault)),
+        version);
   }
 
   private static Context wrapContext(final StreamingSourceContext context) {
@@ -163,8 +171,8 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
             return convertProperties(table.getProperties());
           }
 
-          private void populateDefault(Map<String, String> src, String srcKey,
-              Map<String, String> dest, String destKey) {
+          private void populateDefault(
+              Map<String, String> src, String srcKey, Map<String, String> dest, String destKey) {
             if (src.containsKey(srcKey)) {
               dest.put(destKey, src.get(srcKey));
             }
@@ -173,10 +181,16 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
           private Map<String, String> newDefaultProperties(Map<String, String> src) {
             HashMap<String, String> newProperties = new HashMap<>();
             String formatKeyPrefix = "value." + CraftFormatFactory.IDENTIFIER + ".";
-            populateDefault(src, DATABASE_NAME.key(),
-                newProperties, formatKeyPrefix + FormatOptions.SCHEMA_INCLUDE.key());
-            populateDefault(src, TABLE_NAME.key(),
-                newProperties, formatKeyPrefix + FormatOptions.TABLE_INCLUDE.key());
+            populateDefault(
+                src,
+                DATABASE_NAME.key(),
+                newProperties,
+                formatKeyPrefix + FormatOptions.SCHEMA_INCLUDE.key());
+            populateDefault(
+                src,
+                TABLE_NAME.key(),
+                newProperties,
+                formatKeyPrefix + FormatOptions.TABLE_INCLUDE.key());
             newProperties.put("value.format", CraftFormatFactory.IDENTIFIER);
             newProperties.put(
                 formatKeyPrefix + FormatOptions.TYPE_INCLUDE.key(), Type.ROW_CHANGED.name());
@@ -237,11 +251,12 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
   }
 
   private static ScanTableSource createStreamingSource(final StreamingSourceContext context) {
-    return (ScanTableSource) FactoryUtil.discoverFactory(
-        Thread.currentThread().getContextClassLoader(),
-        DynamicTableSourceFactory.class,
-        context.source)
-        .createDynamicTableSource(wrapContext(context));
+    return (ScanTableSource)
+        FactoryUtil.discoverFactory(
+                Thread.currentThread().getContextClassLoader(),
+                DynamicTableSourceFactory.class,
+                context.source)
+            .createDynamicTableSource(wrapContext(context));
   }
 
   private static class StreamingSourceContext {
@@ -250,7 +265,10 @@ public class TiDBDynamicTableFactory extends TiDBBaseDynamicTableFactory {
     final long version;
     final Function<Map<String, String>, Map<String, String>> populateDefault;
 
-    private StreamingSourceContext(final String source, final Context context, final long version,
+    private StreamingSourceContext(
+        final String source,
+        final Context context,
+        final long version,
         final Function<Map<String, String>, Map<String, String>> populateDefault) {
       this.source = source;
       this.context = context;

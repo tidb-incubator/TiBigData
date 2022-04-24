@@ -57,7 +57,8 @@ public class TiDBResultSet implements ResultSet {
   public String getString(int columnIndex) {
     if (null == values[columnIndex]) {
       return null;
-    } else if (values[columnIndex] instanceof Date || values[columnIndex] instanceof Time
+    } else if (values[columnIndex] instanceof Date
+        || values[columnIndex] instanceof Time
         || values[columnIndex] instanceof Timestamp) {
       return values[columnIndex].toString();
     }
@@ -320,9 +321,7 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void clearWarnings() {
-
-  }
+  public void clearWarnings() {}
 
   @Override
   public String getCursorName() {
@@ -365,14 +364,10 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void beforeFirst() {
-
-  }
+  public void beforeFirst() {}
 
   @Override
-  public void afterLast() {
-
-  }
+  public void afterLast() {}
 
   @Override
   public boolean first() {
@@ -405,9 +400,7 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void setFetchDirection(int direction) {
-
-  }
+  public void setFetchDirection(int direction) {}
 
   @Override
   public int getFetchDirection() {
@@ -415,9 +408,7 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void setFetchSize(int rows) {
-
-  }
+  public void setFetchSize(int rows) {}
 
   @Override
   public int getFetchSize() {
@@ -450,279 +441,170 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateBoolean(int columnIndex, boolean x) {
-
-  }
+  public void updateBoolean(int columnIndex, boolean x) {}
 
   @Override
-  public void updateBoolean(String columnLabel, boolean x) {
-
-  }
+  public void updateBoolean(String columnLabel, boolean x) {}
 
   @Override
-  public void updateByte(int columnIndex, byte x) {
-
-  }
+  public void updateByte(int columnIndex, byte x) {}
 
   @Override
-  public void updateByte(String columnLabel, byte x) {
-
-  }
+  public void updateByte(String columnLabel, byte x) {}
 
   @Override
-  public void updateShort(int columnIndex, short x) {
-
-  }
+  public void updateShort(int columnIndex, short x) {}
 
   @Override
-  public void updateShort(String columnLabel, short x) {
-
-  }
+  public void updateShort(String columnLabel, short x) {}
 
   @Override
-  public void updateInt(int columnIndex, int x) {
-
-  }
+  public void updateInt(int columnIndex, int x) {}
 
   @Override
-  public void updateInt(String columnLabel, int x) {
-
-  }
+  public void updateInt(String columnLabel, int x) {}
 
   @Override
-  public void updateLong(int columnIndex, long x) {
-
-  }
+  public void updateLong(int columnIndex, long x) {}
 
   @Override
-  public void updateLong(String columnLabel, long x) {
-
-  }
+  public void updateLong(String columnLabel, long x) {}
 
   @Override
-  public void updateFloat(int columnIndex, float x) {
-
-  }
+  public void updateFloat(int columnIndex, float x) {}
 
   @Override
-  public void updateFloat(String columnLabel, float x) {
-
-  }
+  public void updateFloat(String columnLabel, float x) {}
 
   @Override
-  public void updateDouble(int columnIndex, double x) {
-
-  }
+  public void updateDouble(int columnIndex, double x) {}
 
   @Override
-  public void updateDouble(String columnLabel, double x) {
-
-  }
+  public void updateDouble(String columnLabel, double x) {}
 
   @Override
-  public void updateBigDecimal(int columnIndex, BigDecimal x) {
-
-  }
+  public void updateBigDecimal(int columnIndex, BigDecimal x) {}
 
   @Override
-  public void updateBigDecimal(String columnLabel, BigDecimal x) {
-
-  }
+  public void updateBigDecimal(String columnLabel, BigDecimal x) {}
 
   @Override
-  public void updateString(int columnIndex, String x) {
-
-  }
+  public void updateString(int columnIndex, String x) {}
 
   @Override
-  public void updateString(String columnLabel, String x) {
-
-  }
+  public void updateString(String columnLabel, String x) {}
 
   @Override
-  public void updateBytes(int columnIndex, byte[] x) {
-
-  }
+  public void updateBytes(int columnIndex, byte[] x) {}
 
   @Override
-  public void updateBytes(String columnLabel, byte[] x) {
-
-  }
+  public void updateBytes(String columnLabel, byte[] x) {}
 
   @Override
-  public void updateDate(int columnIndex, Date x) {
-
-  }
+  public void updateDate(int columnIndex, Date x) {}
 
   @Override
-  public void updateDate(String columnLabel, Date x) {
-
-  }
+  public void updateDate(String columnLabel, Date x) {}
 
   @Override
-  public void updateTime(int columnIndex, Time x) {
-
-  }
+  public void updateTime(int columnIndex, Time x) {}
 
   @Override
-  public void updateTime(String columnLabel, Time x) {
-
-  }
+  public void updateTime(String columnLabel, Time x) {}
 
   @Override
-  public void updateTimestamp(int columnIndex, Timestamp x) {
-
-  }
+  public void updateTimestamp(int columnIndex, Timestamp x) {}
 
   @Override
-  public void updateTimestamp(String columnLabel, Timestamp x) {
-
-  }
+  public void updateTimestamp(String columnLabel, Timestamp x) {}
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x, int length) {
-
-  }
+  public void updateBinaryStream(int columnIndex, InputStream x, int length) {}
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x, int length) {
-
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x, int length) {}
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x, long length) {
-
-  }
+  public void updateBinaryStream(int columnIndex, InputStream x, long length) {}
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x, long length) {
-
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x, long length) {}
 
   @Override
-  public void updateBinaryStream(int columnIndex, InputStream x) {
-
-  }
+  public void updateBinaryStream(int columnIndex, InputStream x) {}
 
   @Override
-  public void updateBinaryStream(String columnLabel, InputStream x) {
-
-  }
+  public void updateBinaryStream(String columnLabel, InputStream x) {}
 
   @Override
-  public void updateNull(String columnLabel) {
-
-  }
+  public void updateNull(String columnLabel) {}
 
   @Override
-  public void updateNull(int columnIndex) {
-
-  }
+  public void updateNull(int columnIndex) {}
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader, int length) {
-
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader, int length) {}
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x, int length) {
-
-  }
+  public void updateCharacterStream(int columnIndex, Reader x, int length) {}
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x, long length) {
-
-  }
+  public void updateCharacterStream(int columnIndex, Reader x, long length) {}
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader, long length) {
-
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader, long length) {}
 
   @Override
-  public void updateCharacterStream(int columnIndex, Reader x) {
-
-  }
+  public void updateCharacterStream(int columnIndex, Reader x) {}
 
   @Override
-  public void updateCharacterStream(String columnLabel, Reader reader) {
-
-  }
+  public void updateCharacterStream(String columnLabel, Reader reader) {}
 
   @Override
-  public void updateObject(int columnIndex, Object x, int scaleOrLength) {
-
-  }
+  public void updateObject(int columnIndex, Object x, int scaleOrLength) {}
 
   @Override
-  public void updateObject(int columnIndex, Object x) {
-
-  }
+  public void updateObject(int columnIndex, Object x) {}
 
   @Override
-  public void updateObject(String columnLabel, Object x, int scaleOrLength) {
-
-  }
+  public void updateObject(String columnLabel, Object x, int scaleOrLength) {}
 
   @Override
-  public void updateObject(String columnLabel, Object x) {
-
-  }
+  public void updateObject(String columnLabel, Object x) {}
 
   @Override
-  public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) {
-
-  }
+  public void updateObject(int columnIndex, Object x, SQLType targetSqlType, int scaleOrLength) {}
 
   @Override
-  public void updateObject(String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) {
-
-  }
-
-  @Override
-  public void updateObject(int columnIndex, Object x, SQLType targetSqlType) {
-
-  }
+  public void updateObject(
+      String columnLabel, Object x, SQLType targetSqlType, int scaleOrLength) {}
 
   @Override
-  public void updateObject(String columnLabel, Object x, SQLType targetSqlType) {
-
-  }
+  public void updateObject(int columnIndex, Object x, SQLType targetSqlType) {}
 
   @Override
-  public void insertRow() {
-
-  }
+  public void updateObject(String columnLabel, Object x, SQLType targetSqlType) {}
 
   @Override
-  public void updateRow() {
-
-  }
+  public void insertRow() {}
 
   @Override
-  public void deleteRow() {
-
-  }
+  public void updateRow() {}
 
   @Override
-  public void refreshRow() {
-
-  }
+  public void deleteRow() {}
 
   @Override
-  public void cancelRowUpdates() {
-
-  }
+  public void refreshRow() {}
 
   @Override
-  public void moveToInsertRow() {
-
-  }
+  public void cancelRowUpdates() {}
 
   @Override
-  public void moveToCurrentRow() {
+  public void moveToInsertRow() {}
 
-  }
+  @Override
+  public void moveToCurrentRow() {}
 
   @Override
   public Statement getStatement() {
@@ -810,84 +692,52 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateRef(int columnIndex, Ref x) {
-
-  }
+  public void updateRef(int columnIndex, Ref x) {}
 
   @Override
-  public void updateRef(String columnLabel, Ref x) {
-
-  }
+  public void updateRef(String columnLabel, Ref x) {}
 
   @Override
-  public void updateBlob(int columnIndex, Blob x) {
-
-  }
+  public void updateBlob(int columnIndex, Blob x) {}
 
   @Override
-  public void updateBlob(String columnLabel, Blob x) {
-
-  }
+  public void updateBlob(String columnLabel, Blob x) {}
 
   @Override
-  public void updateBlob(int columnIndex, InputStream inputStream, long length) {
-
-  }
+  public void updateBlob(int columnIndex, InputStream inputStream, long length) {}
 
   @Override
-  public void updateBlob(String columnLabel, InputStream inputStream, long length) {
-
-  }
+  public void updateBlob(String columnLabel, InputStream inputStream, long length) {}
 
   @Override
-  public void updateBlob(int columnIndex, InputStream inputStream) {
-
-  }
+  public void updateBlob(int columnIndex, InputStream inputStream) {}
 
   @Override
-  public void updateBlob(String columnLabel, InputStream inputStream) {
-
-  }
+  public void updateBlob(String columnLabel, InputStream inputStream) {}
 
   @Override
-  public void updateClob(int columnIndex, Clob x) {
-
-  }
+  public void updateClob(int columnIndex, Clob x) {}
 
   @Override
-  public void updateClob(String columnLabel, Clob x) {
-
-  }
+  public void updateClob(String columnLabel, Clob x) {}
 
   @Override
-  public void updateClob(int columnIndex, Reader reader, long length) {
-
-  }
+  public void updateClob(int columnIndex, Reader reader, long length) {}
 
   @Override
-  public void updateClob(String columnLabel, Reader reader, long length) {
-
-  }
+  public void updateClob(String columnLabel, Reader reader, long length) {}
 
   @Override
-  public void updateClob(int columnIndex, Reader reader) {
-
-  }
+  public void updateClob(int columnIndex, Reader reader) {}
 
   @Override
-  public void updateClob(String columnLabel, Reader reader) {
-
-  }
+  public void updateClob(String columnLabel, Reader reader) {}
 
   @Override
-  public void updateArray(int columnIndex, Array x) {
-
-  }
+  public void updateArray(int columnIndex, Array x) {}
 
   @Override
-  public void updateArray(String columnLabel, Array x) {
-
-  }
+  public void updateArray(String columnLabel, Array x) {}
 
   @Override
   public RowId getRowId(int columnIndex) {
@@ -900,14 +750,10 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateRowId(int columnIndex, RowId x) {
-
-  }
+  public void updateRowId(int columnIndex, RowId x) {}
 
   @Override
-  public void updateRowId(String columnLabel, RowId x) {
-
-  }
+  public void updateRowId(String columnLabel, RowId x) {}
 
   @Override
   public int getHoldability() {
@@ -920,44 +766,28 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateNString(int columnIndex, String nstring) {
-
-  }
+  public void updateNString(int columnIndex, String nstring) {}
 
   @Override
-  public void updateNString(String columnLabel, String nstring) {
-
-  }
+  public void updateNString(String columnLabel, String nstring) {}
 
   @Override
-  public void updateNClob(int columnIndex, NClob nclob) {
-
-  }
+  public void updateNClob(int columnIndex, NClob nclob) {}
 
   @Override
-  public void updateNClob(String columnLabel, NClob nclob) {
-
-  }
+  public void updateNClob(String columnLabel, NClob nclob) {}
 
   @Override
-  public void updateNClob(int columnIndex, Reader reader, long length) {
-
-  }
+  public void updateNClob(int columnIndex, Reader reader, long length) {}
 
   @Override
-  public void updateNClob(String columnLabel, Reader reader, long length) {
-
-  }
+  public void updateNClob(String columnLabel, Reader reader, long length) {}
 
   @Override
-  public void updateNClob(int columnIndex, Reader reader) {
-
-  }
+  public void updateNClob(int columnIndex, Reader reader) {}
 
   @Override
-  public void updateNClob(String columnLabel, Reader reader) {
-
-  }
+  public void updateNClob(String columnLabel, Reader reader) {}
 
   @Override
   public NClob getNClob(int columnIndex) {
@@ -980,14 +810,10 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateSQLXML(int columnIndex, SQLXML xmlObject) {
-
-  }
+  public void updateSQLXML(int columnIndex, SQLXML xmlObject) {}
 
   @Override
-  public void updateSQLXML(String columnLabel, SQLXML xmlObject) {
-
-  }
+  public void updateSQLXML(String columnLabel, SQLXML xmlObject) {}
 
   @Override
   public String getNString(int columnIndex) {
@@ -1010,54 +836,34 @@ public class TiDBResultSet implements ResultSet {
   }
 
   @Override
-  public void updateNCharacterStream(int columnIndex, Reader x, long length) {
-
-  }
+  public void updateNCharacterStream(int columnIndex, Reader x, long length) {}
 
   @Override
-  public void updateNCharacterStream(String columnLabel, Reader reader, long length) {
-
-  }
+  public void updateNCharacterStream(String columnLabel, Reader reader, long length) {}
 
   @Override
-  public void updateNCharacterStream(int columnIndex, Reader x) {
-
-  }
+  public void updateNCharacterStream(int columnIndex, Reader x) {}
 
   @Override
-  public void updateNCharacterStream(String columnLabel, Reader reader) {
-
-  }
+  public void updateNCharacterStream(String columnLabel, Reader reader) {}
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x) {
-
-  }
+  public void updateAsciiStream(int columnIndex, InputStream x) {}
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x) {
-
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x) {}
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x, int length) {
-
-  }
+  public void updateAsciiStream(int columnIndex, InputStream x, int length) {}
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x, int length) {
-
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x, int length) {}
 
   @Override
-  public void updateAsciiStream(int columnIndex, InputStream x, long length) {
-
-  }
+  public void updateAsciiStream(int columnIndex, InputStream x, long length) {}
 
   @Override
-  public void updateAsciiStream(String columnLabel, InputStream x, long length) {
-
-  }
+  public void updateAsciiStream(String columnLabel, InputStream x, long length) {}
 
   @Override
   public <T> T unwrap(Class<T> iface) {

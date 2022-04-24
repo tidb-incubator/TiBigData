@@ -53,8 +53,11 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
   private final StreamingReadableMetadata[] metadata;
   private final long version;
 
-  public TiDBStreamingSourceFunction(TiDBRowDataInputFormat inputFormat,
-      StreamingReadableMetadata[] metadata, long version, ScanRuntimeProvider streamingProvider) {
+  public TiDBStreamingSourceFunction(
+      TiDBRowDataInputFormat inputFormat,
+      StreamingReadableMetadata[] metadata,
+      long version,
+      ScanRuntimeProvider streamingProvider) {
     this.inputFormat = inputFormat;
     this.metadata = metadata;
     this.version = version;
@@ -128,11 +131,11 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
     checkpointedFunction.initializeState(functionInitializationContext);
   }
 
-  private void runBatchSplitWithMetadata(SourceContext<RowData> sourceContext,
-      Object[] realMetadata) throws IOException  {
+  private void runBatchSplitWithMetadata(
+      SourceContext<RowData> sourceContext, Object[] realMetadata) throws IOException {
     while (!inputFormat.reachedEnd()) {
-      GenericRowData row = inputFormat.nextRecordWithFactory(
-          s -> new GenericRowData(s + realMetadata.length));
+      GenericRowData row =
+          inputFormat.nextRecordWithFactory(s -> new GenericRowData(s + realMetadata.length));
       int field = row.getArity() - realMetadata.length;
       for (Object meta : realMetadata) {
         row.setField(field++, meta);
@@ -141,7 +144,7 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
     }
   }
 
-  private void runBatchSplit(SourceContext<RowData> sourceContext) throws IOException  {
+  private void runBatchSplit(SourceContext<RowData> sourceContext) throws IOException {
     while (!inputFormat.reachedEnd()) {
       sourceContext.collect(inputFormat.nextRecord(null));
     }

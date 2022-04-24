@@ -33,13 +33,11 @@ import org.apache.flink.util.Collector;
 import org.tikv.common.row.Row;
 
 /**
- * A keyed function that deduplicates elements of an unbounded stream.
- * CheckpointEntry stored in ValueState is used for marking if the same element has been 
- * processed during the same checkpoint.
+ * A keyed function that deduplicates elements of an unbounded stream. CheckpointEntry stored in
+ * ValueState is used for marking if the same element has been processed during the same checkpoint.
  */
-public class TiDBStreamKeyedProcessFunction extends
-    KeyedProcessFunction<List<Object>, Row, Row> implements
-    CheckpointListener {
+public class TiDBStreamKeyedProcessFunction extends KeyedProcessFunction<List<Object>, Row, Row>
+    implements CheckpointListener {
 
   private final CheckpointConfig checkpointConfig;
   private final TiDBSinkOptions sinkOptions;
@@ -48,8 +46,10 @@ public class TiDBStreamKeyedProcessFunction extends
   private ValueState<CheckpointEntry> checkpointEntryValueState;
   private CheckpointEntry checkpointEntry;
 
-  public TiDBStreamKeyedProcessFunction(CheckpointConfig checkpointConfig,
-      TiDBSinkOptions sinkOptions, List<String> uniqueIndexColumnNames) {
+  public TiDBStreamKeyedProcessFunction(
+      CheckpointConfig checkpointConfig,
+      TiDBSinkOptions sinkOptions,
+      List<String> uniqueIndexColumnNames) {
     this.checkpointConfig = checkpointConfig;
     this.sinkOptions = sinkOptions;
     this.uniqueIndexColumnNames = uniqueIndexColumnNames;
@@ -60,33 +60,37 @@ public class TiDBStreamKeyedProcessFunction extends
     this.checkpointEntry = new CheckpointEntry(-1 * System.currentTimeMillis(), 0);
     long checkpointInterval = checkpointConfig.getCheckpointInterval();
     long checkpointTimeout = checkpointConfig.getCheckpointTimeout();
-    StateTtlConfig stateTtlConfig = StateTtlConfig.newBuilder(
-            Time.milliseconds(2 * (checkpointInterval + checkpointTimeout)))
-        .neverReturnExpired()
-        .updateTtlOnCreateAndWrite()
-        .cleanupInRocksdbCompactFilter(10000)
-        .build();
+    StateTtlConfig stateTtlConfig =
+        StateTtlConfig.newBuilder(Time.milliseconds(2 * (checkpointInterval + checkpointTimeout)))
+            .neverReturnExpired()
+            .updateTtlOnCreateAndWrite()
+            .cleanupInRocksdbCompactFilter(10000)
+            .build();
 
-    ValueStateDescriptor<CheckpointEntry> valueStateDescriptor = new ValueStateDescriptor<>(
-        "checkpoint-entry-state" + String.join("-", uniqueIndexColumnNames), CheckpointEntry.class);
+    ValueStateDescriptor<CheckpointEntry> valueStateDescriptor =
+        new ValueStateDescriptor<>(
+            "checkpoint-entry-state" + String.join("-", uniqueIndexColumnNames),
+            CheckpointEntry.class);
     valueStateDescriptor.enableTimeToLive(stateTtlConfig);
     this.checkpointEntryValueState = this.getRuntimeContext().getState(valueStateDescriptor);
   }
 
   @Override
-  public void processElement(Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx,
-      Collector<Row> out) throws Exception {
+  public void processElement(
+      Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx, Collector<Row> out)
+      throws Exception {
     CheckpointEntry value = checkpointEntryValueState.value();
     if (value == null || !value.equals(checkpointEntry)) {
       checkpointEntryValueState.update(checkpointEntry.copy());
       out.collect(row);
     } else if (!sinkOptions.isDeduplicate()) {
       String names = String.join(", ", uniqueIndexColumnNames);
-      String values = ctx.getCurrentKey().stream().map(Object::toString)
-          .collect(Collectors.joining(", "));
-      throw new IllegalStateException(String.format(
-          "Duplicate index in one batch, please enable deduplicate, index: [%s] = [%s]", names,
-          values));
+      String values =
+          ctx.getCurrentKey().stream().map(Object::toString).collect(Collectors.joining(", "));
+      throw new IllegalStateException(
+          String.format(
+              "Duplicate index in one batch, please enable deduplicate, index: [%s] = [%s]",
+              names, values));
     }
   }
 
@@ -155,8 +159,10 @@ public class TiDBStreamKeyedProcessFunction extends
     @Override
     public String toString() {
       return "CheckpointEntry{"
-          + "checkpointId=" + checkpointId
-          + ", abortCount=" + abortCount
+          + "checkpointId="
+          + checkpointId
+          + ", abortCount="
+          + abortCount
           + '}';
     }
   }

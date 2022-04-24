@@ -67,13 +67,13 @@ public final class TiDBConnector implements Connector {
     this.splitManager = requireNonNull(splitManager, "splitManager is null");
     this.recordSetProvider = requireNonNull(recordSetProvider, "recordSetProvider is null");
     this.pageSinkProvider = requireNonNull(pageSinkProvider, "pageSinkProvider is null");
-    this.planOptimizerProvider = requireNonNull(planOptimizerProvider,
-        "planOptimizerProvider is null");
+    this.planOptimizerProvider =
+        requireNonNull(planOptimizerProvider, "planOptimizerProvider is null");
   }
 
   @Override
-  public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel,
-      boolean readOnly) {
+  public ConnectorTransactionHandle beginTransaction(
+      IsolationLevel isolationLevel, boolean readOnly) {
     checkConnectorSupports(REPEATABLE_READ, isolationLevel);
     return new TiDBTransactionHandle();
   }
@@ -107,19 +107,19 @@ public final class TiDBConnector implements Connector {
   public List<PropertyMetadata<?>> getTableProperties() {
     return ImmutableList.of(
         PropertyMetadata.stringProperty(PRIMARY_KEY, "tidb table primary key", "", false),
-        PropertyMetadata.stringProperty(UNIQUE_KEY, "tidb table unique key", "", false)
-    );
+        PropertyMetadata.stringProperty(UNIQUE_KEY, "tidb table unique key", "", false));
   }
 
   @Override
   public List<PropertyMetadata<?>> getSessionProperties() {
-    return ImmutableList.of(PropertyMetadata
-            .stringProperty(SESSION_WRITE_MODE, "tidb sink write mode: append or upsert",
-                config.getWriteMode(), false),
-        PropertyMetadata
-            .stringProperty(SESSION_SNAPSHOT_TIMESTAMP, "timestamp for snapshot read",
-                null, false)
-    );
+    return ImmutableList.of(
+        PropertyMetadata.stringProperty(
+            SESSION_WRITE_MODE,
+            "tidb sink write mode: append or upsert",
+            config.getWriteMode(),
+            false),
+        PropertyMetadata.stringProperty(
+            SESSION_SNAPSHOT_TIMESTAMP, "timestamp for snapshot read", null, false));
   }
 
   @Override

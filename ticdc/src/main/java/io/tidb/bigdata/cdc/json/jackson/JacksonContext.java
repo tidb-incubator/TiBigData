@@ -107,28 +107,28 @@ public class JacksonContext implements Serializable {
   }
 
   private void load() {
-    final Class<Object> objectMapperClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.ObjectMapper"));
+    final Class<Object> objectMapperClass =
+        uncheckedLoadClass(className(shadePrefix, "com.fasterxml.jackson.databind.ObjectMapper"));
     objectMapperConstructor = uncheckedGetConstructor(objectMapperClass);
     createReader = uncheckedGetMethod(objectMapperClass, "reader");
     createWriter = uncheckedGetMethod(objectMapperClass, "writer");
 
-    final Class<Object> objectWriterClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.ObjectWriter"));
-    writeValueAsString = uncheckedGetMethod(objectWriterClass,
-        "writeValueAsString", Object.class);
+    final Class<Object> objectWriterClass =
+        uncheckedLoadClass(className(shadePrefix, "com.fasterxml.jackson.databind.ObjectWriter"));
+    writeValueAsString = uncheckedGetMethod(objectWriterClass, "writeValueAsString", Object.class);
 
-    final Class<Object> objectReaderClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.ObjectReader"));
+    final Class<Object> objectReaderClass =
+        uncheckedLoadClass(className(shadePrefix, "com.fasterxml.jackson.databind.ObjectReader"));
     readTree = uncheckedGetMethod(objectReaderClass, "readTree", InputStream.class);
 
-    final Class<Object> jsonNodeFactoryClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeFactory"));
+    final Class<Object> jsonNodeFactoryClass =
+        uncheckedLoadClass(
+            className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeFactory"));
     jsonNodeFactory = uncheckedRun(() -> jsonNodeFactoryClass.getField("instance").get(null));
     jsonNodeFactoryObjectNode = uncheckedGetMethod(jsonNodeFactoryClass, "objectNode");
 
-    final Class<Object> jsonNodeClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.JsonNode"));
+    final Class<Object> jsonNodeClass =
+        uncheckedLoadClass(className(shadePrefix, "com.fasterxml.jackson.databind.JsonNode"));
     has = uncheckedGetMethod(jsonNodeClass, "has", String.class);
     get = uncheckedGetMethod(jsonNodeClass, "get", String.class);
     binaryValue = uncheckedGetMethod(jsonNodeClass, "binaryValue");
@@ -142,48 +142,37 @@ public class JacksonContext implements Serializable {
     getNodeType = uncheckedGetMethod(jsonNodeClass, "getNodeType");
     fields = uncheckedGetMethod(jsonNodeClass, "fields");
 
-    final Class<Object> objectNodeClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.node.ObjectNode"));
+    final Class<Object> objectNodeClass =
+        uncheckedLoadClass(
+            className(shadePrefix, "com.fasterxml.jackson.databind.node.ObjectNode"));
 
-    objectNodePutBigDecimal = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, BigDecimal.class);
-    objectNodePutBoolean = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Boolean.class);
-    objectNodePutByteArray = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, byte[].class);
-    objectNodePutDouble = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Double.class);
-    objectNodePutFloat = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Float.class);
-    objectNodePutShort = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Short.class);
-    objectNodePutInteger = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Integer.class);
-    objectNodePutLong = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, Long.class);
-    objectNodePutString = uncheckedGetMethod(objectNodeClass,
-        "put", String.class, String.class);
-    objectNodePutNull = uncheckedGetMethod(objectNodeClass,
-        "putNull", String.class);
-    objectNodePutObject = uncheckedGetMethod(objectNodeClass,
-        "putObject", String.class);
+    objectNodePutBigDecimal =
+        uncheckedGetMethod(objectNodeClass, "put", String.class, BigDecimal.class);
+    objectNodePutBoolean = uncheckedGetMethod(objectNodeClass, "put", String.class, Boolean.class);
+    objectNodePutByteArray = uncheckedGetMethod(objectNodeClass, "put", String.class, byte[].class);
+    objectNodePutDouble = uncheckedGetMethod(objectNodeClass, "put", String.class, Double.class);
+    objectNodePutFloat = uncheckedGetMethod(objectNodeClass, "put", String.class, Float.class);
+    objectNodePutShort = uncheckedGetMethod(objectNodeClass, "put", String.class, Short.class);
+    objectNodePutInteger = uncheckedGetMethod(objectNodeClass, "put", String.class, Integer.class);
+    objectNodePutLong = uncheckedGetMethod(objectNodeClass, "put", String.class, Long.class);
+    objectNodePutString = uncheckedGetMethod(objectNodeClass, "put", String.class, String.class);
+    objectNodePutNull = uncheckedGetMethod(objectNodeClass, "putNull", String.class);
+    objectNodePutObject = uncheckedGetMethod(objectNodeClass, "putObject", String.class);
 
-    final Class<Object> jsonNodeTypeClass = uncheckedLoadClass(
-        className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeType"));
+    final Class<Object> jsonNodeTypeClass =
+        uncheckedLoadClass(
+            className(shadePrefix, "com.fasterxml.jackson.databind.node.JsonNodeType"));
     valueOf = uncheckedGetMethod(jsonNodeTypeClass, "valueOf", String.class);
     nodeTypesMapping = new HashMap<>();
-    nodeTypesMapping
-        .put(uncheckedRun(() -> valueOf.invoke(null, "BOOLEAN")), JsonNode.Type.BOOLEAN);
+    nodeTypesMapping.put(
+        uncheckedRun(() -> valueOf.invoke(null, "BOOLEAN")), JsonNode.Type.BOOLEAN);
     nodeTypesMapping.put(uncheckedRun(() -> valueOf.invoke(null, "NULL")), JsonNode.Type.NULL);
-    nodeTypesMapping
-        .put(uncheckedRun(() -> valueOf.invoke(null, "NUMBER")), JsonNode.Type.NUMBER);
-    nodeTypesMapping
-        .put(uncheckedRun(() -> valueOf.invoke(null, "OBJECT")), JsonNode.Type.OBJECT);
+    nodeTypesMapping.put(uncheckedRun(() -> valueOf.invoke(null, "NUMBER")), JsonNode.Type.NUMBER);
+    nodeTypesMapping.put(uncheckedRun(() -> valueOf.invoke(null, "OBJECT")), JsonNode.Type.OBJECT);
     nodeTypesMapping.put(uncheckedRun(() -> valueOf.invoke(null, "ARRAY")), JsonNode.Type.ARRAY);
-    nodeTypesMapping
-        .put(uncheckedRun(() -> valueOf.invoke(null, "STRING")), JsonNode.Type.STRING);
-    nodeTypesMapping
-        .put(uncheckedRun(() -> valueOf.invoke(null, "MISSING")), JsonNode.Type.MISSING);
+    nodeTypesMapping.put(uncheckedRun(() -> valueOf.invoke(null, "STRING")), JsonNode.Type.STRING);
+    nodeTypesMapping.put(
+        uncheckedRun(() -> valueOf.invoke(null, "MISSING")), JsonNode.Type.MISSING);
   }
 
   private void readObject(final ObjectInputStream ois) throws ClassNotFoundException, IOException {

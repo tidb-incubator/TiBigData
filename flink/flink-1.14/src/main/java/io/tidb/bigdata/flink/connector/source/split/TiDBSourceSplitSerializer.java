@@ -43,7 +43,7 @@ public class TiDBSourceSplitSerializer implements SimpleVersionedSerializer<TiDB
   @Override
   public TiDBSourceSplit deserialize(int version, byte[] bytes) throws IOException {
     try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-         DataInputStream dis = new DataInputStream(bais)) {
+        DataInputStream dis = new DataInputStream(bais)) {
       return TiDBSourceSplit.deserialize(dis);
     }
   }

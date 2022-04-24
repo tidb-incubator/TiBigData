@@ -73,12 +73,8 @@ import org.tikv.shade.com.google.protobuf.ByteString;
 
 public final class ClientSession implements AutoCloseable {
 
-  private static final Set<String> BUILD_IN_DATABASES = ImmutableSet.of(
-      "information_schema",
-      "metrics_schema",
-      "performance_schema",
-      "mysql"
-  );
+  private static final Set<String> BUILD_IN_DATABASES =
+      ImmutableSet.of("information_schema", "metrics_schema", "performance_schema", "mysql");
 
   static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
   private static final int ROW_ID_STEP = 30000;
@@ -97,8 +93,8 @@ public final class ClientSession implements AutoCloseable {
 
   private ClientSession(ClientConfig config) {
     this.config = requireNonNull(config, "config is null");
-    this.jdbcConnectionProvider = JdbcConnectionProviderFactory.createJdbcConnectionProvider(
-        config);
+    this.jdbcConnectionProvider =
+        JdbcConnectionProviderFactory.createJdbcConnectionProvider(config);
     hostMapping = new DnsSearchHostMapping(config.getDnsSearch());
     loadPdAddresses();
     TiConfiguration tiConfiguration = TiConfiguration.createDefault(config.getPdAddresses());
@@ -123,10 +119,8 @@ public final class ClientSession implements AutoCloseable {
 
   public List<String> getSchemaNames() {
     String sql = "SHOW DATABASES";
-    try (
-        Connection connection = jdbcConnectionProvider.getConnection();
-        Statement statement = connection.createStatement()
-    ) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement()) {
       ResultSet resultSet = statement.executeQuery(sql);
       List<String> databaseNames = new ArrayList<>();
       while (resultSet.next()) {
@@ -146,10 +140,8 @@ public final class ClientSession implements AutoCloseable {
   public List<String> getTableNames(String schema) {
     String sql = "SHOW TABLES";
     requireNonNull(schema, "schema is null");
-    try (
-        Connection connection = jdbcConnectionProvider.getConnection();
-        Statement statement = connection.createStatement()
-    ) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement()) {
       statement.execute("USE " + schema);
       ResultSet resultSet = statement.executeQuery(sql);
       List<String> tableNames = new ArrayList<>();
@@ -178,51 +170,55 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public TiTableInfo getTableMust(String schema, String tableName) {
-    return getTable(schema, tableName).orElseThrow(
-        () -> new IllegalStateException(
-            String.format("Table `%s`.`%s` no longer exists in TiDB", schema, tableName)));
+    return getTable(schema, tableName)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    String.format("Table `%s`.`%s` no longer exists in TiDB", schema, tableName)));
   }
 
   public Map<String, List<String>> listTables(Optional<String> schemaName) {
-    List<String> schemaNames = schemaName
-        .map(s -> (List<String>) ImmutableList.of(s))
-        .orElseGet(this::getSchemaNames);
+    List<String> schemaNames =
+        schemaName.map(s -> (List<String>) ImmutableList.of(s)).orElseGet(this::getSchemaNames);
     return schemaNames.stream().collect(toImmutableMap(identity(), this::getTableNames));
   }
 
   private List<ColumnHandleInternal> selectColumns(
       List<ColumnHandleInternal> allColumns, Stream<String> columns) {
     final Map<String, ColumnHandleInternal> columnsMap =
-        allColumns.stream().collect(
-            Collectors.toMap(ColumnHandleInternal::getName, Function.identity()));
-    return columns.map(column -> Objects.requireNonNull(columnsMap.get(column),
-            "Column `" + column + "` does not exist"))
+        allColumns.stream()
+            .collect(Collectors.toMap(ColumnHandleInternal::getName, Function.identity()));
+    return columns
+        .map(
+            column ->
+                Objects.requireNonNull(
+                    columnsMap.get(column), "Column `" + column + "` does not exist"))
         .collect(Collectors.toList());
   }
 
   private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
     return Streams.mapWithIndex(
-        table.getColumns().stream(),
-        (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i)
-    ).collect(toImmutableList());
+            table.getColumns().stream(),
+            (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i))
+        .collect(toImmutableList());
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName) {
     return getTable(schema, tableName).map(ClientSession::getTableColumns);
   }
 
-  private Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
-      Stream<String> columns) {
+  private Optional<List<ColumnHandleInternal>> getTableColumns(
+      String schema, String tableName, Stream<String> columns) {
     return getTableColumns(schema, tableName).map(r -> selectColumns(r, columns));
   }
 
-  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
-      List<String> columns) {
+  public Optional<List<ColumnHandleInternal>> getTableColumns(
+      String schema, String tableName, List<String> columns) {
     return getTableColumns(schema, tableName, columns.stream());
   }
 
-  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName,
-      String[] columns) {
+  public Optional<List<ColumnHandleInternal>> getTableColumns(
+      String schema, String tableName, String[] columns) {
     return getTableColumns(schema, tableName, Arrays.stream(columns));
   }
 
@@ -230,8 +226,8 @@ public final class ClientSession implements AutoCloseable {
     return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName());
   }
 
-  public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle,
-      List<String> columns) {
+  public Optional<List<ColumnHandleInternal>> getTableColumns(
+      TableHandleInternal tableHandle, List<String> columns) {
     return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
   }
 
@@ -239,8 +235,8 @@ public final class ClientSession implements AutoCloseable {
     return getTableColumns(getTableMust(schema, tableName));
   }
 
-  private List<RangeSplitter.RegionTask> getRangeRegionTasks(ByteString startKey,
-      ByteString endKey) {
+  private List<RangeSplitter.RegionTask> getRangeRegionTasks(
+      ByteString startKey, ByteString endKey) {
     List<Coprocessor.KeyRange> keyRanges =
         ImmutableList.of(KeyRangeUtils.makeCoprocRange(startKey, endKey));
     return RangeSplitter.newSplitter(session.getRegionManager()).splitRangeByRegion(keyRanges);
@@ -254,13 +250,19 @@ public final class ClientSession implements AutoCloseable {
 
   private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
     return getTable(tableHandle)
-        .map(table -> table.isPartitionEnabled()
-            ? table.getPartitionInfo().getDefs().stream().map(TiPartitionDef::getId)
-            .collect(Collectors.toList()) : ImmutableList.of(table.getId()))
-        .orElseGet(ImmutableList::of)
-        .stream()
-        .map(tableId -> getRangeRegionTasks(RowKey.createMin(tableId).toByteString(),
-            RowKey.createBeyondMax(tableId).toByteString()))
+        .map(
+            table ->
+                table.isPartitionEnabled()
+                    ? table.getPartitionInfo().getDefs().stream()
+                        .map(TiPartitionDef::getId)
+                        .collect(Collectors.toList())
+                    : ImmutableList.of(table.getId()))
+        .orElseGet(ImmutableList::of).stream()
+        .map(
+            tableId ->
+                getRangeRegionTasks(
+                    RowKey.createMin(tableId).toByteString(),
+                    RowKey.createBeyondMax(tableId).toByteString()))
         .flatMap(Collection::stream)
         .collect(Collectors.toList());
   }
@@ -268,11 +270,16 @@ public final class ClientSession implements AutoCloseable {
   public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle) {
     Base64.Encoder encoder = Base64.getEncoder();
     return getTableRegionTasks(tableHandle).stream()
-        .flatMap(task -> task.getRanges().stream().map(range -> {
-          String taskStart = encoder.encodeToString(range.getStart().toByteArray());
-          String taskEnd = encoder.encodeToString(range.getEnd().toByteArray());
-          return new Base64KeyRange(taskStart, taskEnd);
-        })).collect(toImmutableList());
+        .flatMap(
+            task ->
+                task.getRanges().stream()
+                    .map(
+                        range -> {
+                          String taskStart = encoder.encodeToString(range.getStart().toByteArray());
+                          String taskEnd = encoder.encodeToString(range.getEnd().toByteArray());
+                          return new Base64KeyRange(taskStart, taskEnd);
+                        }))
+        .collect(toImmutableList());
   }
 
   public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns) {
@@ -280,27 +287,23 @@ public final class ClientSession implements AutoCloseable {
     if (columns.isEmpty()) {
       columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
     }
-    return TiDAGRequest.Builder
-        .newBuilder()
+    return TiDAGRequest.Builder.newBuilder()
         .setFullTableScan(tableInfo)
         .addRequiredCols(columns)
         .setStartTs(session.getTimestamp());
   }
 
   public CoprocessorIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
-    return CoprocessorIterator
-        .getRowIterator(request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range),
-            session);
+    return CoprocessorIterator.getRowIterator(
+        request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
   }
 
   private void loadPdAddresses() {
     if (config.getPdAddresses() == null) {
       List<String> pdAddressesList = new ArrayList<>();
-      try (
-          Connection connection = jdbcConnectionProvider.getConnection();
+      try (Connection connection = jdbcConnectionProvider.getConnection();
           Statement statement = connection.createStatement();
-          ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)
-      ) {
+          ResultSet resultSet = statement.executeQuery(QUERY_PD_SQL)) {
         while (resultSet.next()) {
           String instance = resultSet.getString("INSTANCE");
           URI mapped = hostMapping.getMappedURI(URI.create("grpc://" + instance));
@@ -314,10 +317,8 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public void sqlUpdate(String... sqls) {
-    try (
-        Connection connection = jdbcConnectionProvider.getConnection();
-        Statement statement = connection.createStatement()
-    ) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement()) {
       for (String sql : sqls) {
         LOG.info("Sql update: " + sql);
         statement.executeUpdate(sql);
@@ -328,12 +329,12 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
-  public int queryTableCount(String databaseName,
-      String tableName) {
+  public int queryTableCount(String databaseName, String tableName) {
     try (Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery(
-            format("SELECT COUNT(*) as c FROM `%s`.`%s`", databaseName, tableName))) {
+        ResultSet resultSet =
+            statement.executeQuery(
+                format("SELECT COUNT(*) as c FROM `%s`.`%s`", databaseName, tableName))) {
       resultSet.next();
       return resultSet.getInt("c");
     } catch (SQLException e) {
@@ -341,27 +342,46 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
-  public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeyColumns, List<String> uniqueKeyColumns,
+  public void createTable(
+      String databaseName,
+      String tableName,
+      List<String> columnNames,
+      List<String> columnTypes,
+      List<String> primaryKeyColumns,
+      List<String> uniqueKeyColumns,
       boolean ignoreIfExists) {
-    sqlUpdate(getCreateTableSql(requireNonNull(databaseName), requireNonNull(tableName),
-        requireNonNull(columnNames), requireNonNull(columnTypes), primaryKeyColumns,
-        uniqueKeyColumns, ignoreIfExists));
+    sqlUpdate(
+        getCreateTableSql(
+            requireNonNull(databaseName),
+            requireNonNull(tableName),
+            requireNonNull(columnNames),
+            requireNonNull(columnTypes),
+            primaryKeyColumns,
+            uniqueKeyColumns,
+            ignoreIfExists));
   }
 
   public void dropTable(String databaseName, String tableName, boolean ignoreIfNotExists) {
-    sqlUpdate(String.format("DROP TABLE %s `%s`.`%s`", ignoreIfNotExists ? "IF EXISTS" : "",
-        requireNonNull(databaseName), requireNonNull(tableName)));
+    sqlUpdate(
+        String.format(
+            "DROP TABLE %s `%s`.`%s`",
+            ignoreIfNotExists ? "IF EXISTS" : "",
+            requireNonNull(databaseName),
+            requireNonNull(tableName)));
   }
 
   public void createDatabase(String databaseName, boolean ignoreIfExists) {
-    sqlUpdate(String.format("CREATE DATABASE %s `%s`", ignoreIfExists ? "IF NOT EXISTS" : "",
-        requireNonNull(databaseName)));
+    sqlUpdate(
+        String.format(
+            "CREATE DATABASE %s `%s`",
+            ignoreIfExists ? "IF NOT EXISTS" : "", requireNonNull(databaseName)));
   }
 
   public void dropDatabase(String databaseName, boolean ignoreIfNotExists) {
-    sqlUpdate(String.format("DROP DATABASE %s `%s`", ignoreIfNotExists ? "IF EXISTS" : "",
-        requireNonNull(databaseName)));
+    sqlUpdate(
+        String.format(
+            "DROP DATABASE %s `%s`",
+            ignoreIfNotExists ? "IF EXISTS" : "", requireNonNull(databaseName)));
   }
 
   public boolean databaseExists(String databaseName) {
@@ -373,39 +393,45 @@ public final class ClientSession implements AutoCloseable {
         && getTableNames(databaseName).contains(requireNonNull(tableName));
   }
 
-  public void renameTable(String oldDatabaseName, String newDatabaseName, String oldTableName,
-      String newTableName) {
-    sqlUpdate(String.format("RENAME TABLE `%s`.`%s` TO `%s`.`%s` ",
-        requireNonNull(oldDatabaseName),
-        requireNonNull(oldTableName),
-        requireNonNull(newDatabaseName),
-        requireNonNull(newTableName)));
+  public void renameTable(
+      String oldDatabaseName, String newDatabaseName, String oldTableName, String newTableName) {
+    sqlUpdate(
+        String.format(
+            "RENAME TABLE `%s`.`%s` TO `%s`.`%s` ",
+            requireNonNull(oldDatabaseName),
+            requireNonNull(oldTableName),
+            requireNonNull(newDatabaseName),
+            requireNonNull(newTableName)));
   }
 
-  public void addColumn(String databaseName, String tableName, String columnName,
-      String columnType) {
-    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` ADD COLUMN `%s` %s",
-        requireNonNull(databaseName),
-        requireNonNull(tableName),
-        requireNonNull(columnName),
-        requireNonNull(columnType)));
+  public void addColumn(
+      String databaseName, String tableName, String columnName, String columnType) {
+    sqlUpdate(
+        String.format(
+            "ALTER TABLE `%s`.`%s` ADD COLUMN `%s` %s",
+            requireNonNull(databaseName),
+            requireNonNull(tableName),
+            requireNonNull(columnName),
+            requireNonNull(columnType)));
   }
 
-  public void renameColumn(String databaseName, String tableName, String oldName, String newName,
-      String newType) {
-    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` CHANGE `%s` `%s` %s",
-        requireNonNull(databaseName),
-        requireNonNull(tableName),
-        requireNonNull(oldName),
-        requireNonNull(newName),
-        requireNonNull(newType)));
+  public void renameColumn(
+      String databaseName, String tableName, String oldName, String newName, String newType) {
+    sqlUpdate(
+        String.format(
+            "ALTER TABLE `%s`.`%s` CHANGE `%s` `%s` %s",
+            requireNonNull(databaseName),
+            requireNonNull(tableName),
+            requireNonNull(oldName),
+            requireNonNull(newName),
+            requireNonNull(newType)));
   }
 
   public void dropColumn(String databaseName, String tableName, String columnName) {
-    sqlUpdate(String.format("ALTER TABLE `%s`.`%s` DROP COLUMN `%s`",
-        requireNonNull(databaseName),
-        requireNonNull(tableName),
-        requireNonNull(columnName)));
+    sqlUpdate(
+        String.format(
+            "ALTER TABLE `%s`.`%s` DROP COLUMN `%s`",
+            requireNonNull(databaseName), requireNonNull(tableName), requireNonNull(columnName)));
   }
 
   public Connection getJdbcConnection() throws SQLException {
@@ -414,14 +440,14 @@ public final class ClientSession implements AutoCloseable {
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("config", config)
-        .toString();
+    return toStringHelper(this).add("config", config).toString();
   }
 
   public List<String> getPrimaryKeyColumns(String databaseName, String tableName) {
     return getTableMust(databaseName, tableName).getColumns().stream()
-        .filter(TiColumnInfo::isPrimaryKey).map(TiColumnInfo::getName).collect(Collectors.toList());
+        .filter(TiColumnInfo::isPrimaryKey)
+        .map(TiColumnInfo::getName)
+        .collect(Collectors.toList());
   }
 
   public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
@@ -429,8 +455,10 @@ public final class ClientSession implements AutoCloseable {
     return getTableMust(databaseName, tableName).getIndices().stream()
         .filter(TiIndexInfo::isUnique)
         .map(TiIndexInfo::getIndexColumns)
-        .flatMap(Collection::stream).map(TiIndexColumn::getName)
-        .filter(name -> !primaryKeyColumns.contains(name)).collect(Collectors.toList());
+        .flatMap(Collection::stream)
+        .map(TiIndexColumn::getName)
+        .filter(name -> !primaryKeyColumns.contains(name))
+        .collect(Collectors.toList());
   }
 
   public TiTimestamp getSnapshotVersion() {
@@ -441,8 +469,13 @@ public final class ClientSession implements AutoCloseable {
     return session;
   }
 
-  private RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
-      int retry, int maxRetry, long randomSleepUpperBound) {
+  private RowIDAllocator createRowIdAllocator(
+      String databaseName,
+      String tableName,
+      int step,
+      int retry,
+      int maxRetry,
+      long randomSleepUpperBound) {
     long dbId = catalog.getDatabase(databaseName).getId();
     TiTableInfo table = getTableMust(databaseName, tableName);
     try {
@@ -451,9 +484,11 @@ public final class ClientSession implements AutoCloseable {
         long time = Math.abs(new Random().nextLong()) % randomSleepUpperBound + 1;
         LOG.warn("Random sleep: {}ms to avoid tikv lock conflicts", time);
       }
-      RowIDAllocator rowIDAllocator = RowIDAllocator.create(dbId, table, session,
-          table.isAutoIncColUnsigned(), step);
-      LOG.info("Create row id allocator success: start = {}, end = {}", rowIDAllocator.getStart(),
+      RowIDAllocator rowIDAllocator =
+          RowIDAllocator.create(dbId, table, session, table.isAutoIncColUnsigned(), step);
+      LOG.info(
+          "Create row id allocator success: start = {}, end = {}",
+          rowIDAllocator.getStart(),
           rowIDAllocator.getEnd());
       return rowIDAllocator;
     } catch (Exception e) {
@@ -461,28 +496,30 @@ public final class ClientSession implements AutoCloseable {
         throw new IllegalStateException("Maximum number of retries exceeded.", e);
       } else {
         LOG.warn("Create RowIdAllocator failed, retry, current retry count is " + retry, e);
-        return createRowIdAllocator(databaseName, tableName, step, ++retry, maxRetry,
-            randomSleepUpperBound);
+        return createRowIdAllocator(
+            databaseName, tableName, step, ++retry, maxRetry, randomSleepUpperBound);
       }
     }
   }
 
-  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
-      int maxRetry, long randomSleepUpperBound) {
-    return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, maxRetry, randomSleepUpperBound);
+  public RowIDAllocator createRowIdAllocator(
+      String databaseName, String tableName, int step, int maxRetry, long randomSleepUpperBound) {
+    return createRowIdAllocator(
+        databaseName, tableName, step, MAX_RETRY, maxRetry, randomSleepUpperBound);
   }
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step) {
     return createRowIdAllocator(databaseName, tableName, step, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
   }
 
-  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step,
-      int maxRetry) {
+  public RowIDAllocator createRowIdAllocator(
+      String databaseName, String tableName, int step, int maxRetry) {
     return createRowIdAllocator(databaseName, tableName, step, maxRetry, RANDOM_SLEEP_UPPER_BOUND);
   }
 
   public RowIDAllocator createRowIdAllocator(String databaseName, String tableName) {
-    return createRowIdAllocator(databaseName, tableName, ROW_ID_STEP, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
+    return createRowIdAllocator(
+        databaseName, tableName, ROW_ID_STEP, MAX_RETRY, RANDOM_SLEEP_UPPER_BOUND);
   }
 
   public boolean isClusteredIndex(String databaseName, String tableName) {
@@ -497,8 +534,9 @@ public final class ClientSession implements AutoCloseable {
           return false;
         }
       }
-      try (ResultSet resultSet = statement.executeQuery(
-          String.format(QUERY_CLUSTERED_INDEX_SQL_FORMAT, databaseName, tableName))) {
+      try (ResultSet resultSet =
+          statement.executeQuery(
+              String.format(QUERY_CLUSTERED_INDEX_SQL_FORMAT, databaseName, tableName))) {
         if (!resultSet.next()) {
           return false;
         }

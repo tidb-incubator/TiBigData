@@ -74,20 +74,21 @@ public class TiDBSchemaAdapter implements Serializable {
     this.properties = table.getOptions();
     this.metadata = new LinkedHashMap<>();
     ResolvedSchema schema = table.getResolvedSchema();
-    Field[] fields = schema.getColumns()
-        .stream()
-        .filter(Column::isPhysical)
-        .map(c -> DataTypes.FIELD(c.getName(), DataTypeUtils.removeTimeAttribute(c.getDataType())))
-        .toArray(Field[]::new);
+    Field[] fields =
+        schema.getColumns().stream()
+            .filter(Column::isPhysical)
+            .map(
+                c ->
+                    DataTypes.FIELD(
+                        c.getName(), DataTypeUtils.removeTimeAttribute(c.getDataType())))
+            .toArray(Field[]::new);
     buildFields(fields);
   }
 
   private void buildFields(Field[] fields) {
     this.rowDataType = DataTypes.ROW(fields).notNull();
-    this.fieldNames = Arrays.stream(fields)
-        .map(Field::getName).collect(Collectors.toList());
-    this.fieldTypes = Arrays.stream(fields)
-        .map(Field::getDataType).collect(Collectors.toList());
+    this.fieldNames = Arrays.stream(fields).map(Field::getName).collect(Collectors.toList());
+    this.fieldTypes = Arrays.stream(fields).map(Field::getDataType).collect(Collectors.toList());
   }
 
   public void applyProjectedFields(int[] projectedFields) {
@@ -135,9 +136,10 @@ public class TiDBSchemaAdapter implements Serializable {
   public GenericRowData convert(final TiTimestamp timestamp, RecordCursorInternal cursor) {
     Object[] objects = makeRow(timestamp);
     for (int idx = 0; idx < fieldNames.size() - metadata.size(); idx++) {
-      objects[idx] = toRowDataType(
-          getObjectWithDataType(cursor.getObject(idx), fieldTypes.get(idx),
-              cursor.getType(idx)).orElse(null));
+      objects[idx] =
+          toRowDataType(
+              getObjectWithDataType(cursor.getObject(idx), fieldTypes.get(idx), cursor.getType(idx))
+                  .orElse(null));
     }
     return GenericRowData.ofKind(RowKind.INSERT, objects);
   }
@@ -173,12 +175,9 @@ public class TiDBSchemaAdapter implements Serializable {
           BigDecimal.class, TiDBSchemaAdapter::bigDecimalToFlink,
           LocalDate.class, TiDBSchemaAdapter::localDateToFlink,
           LocalDateTime.class, TiDBSchemaAdapter::localDateTimeToFlink,
-          LocalTime.class, TiDBSchemaAdapter::localTimeToFlink
-      );
+          LocalTime.class, TiDBSchemaAdapter::localTimeToFlink);
 
-  /**
-   * transform Row type to RowData type
-   */
+  /** transform Row type to RowData type */
   public static Object toRowDataType(Object object) {
     if (object == null) {
       return null;
@@ -195,12 +194,12 @@ public class TiDBSchemaAdapter implements Serializable {
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
-   * @param object    TiKV java object
+   * @param object TiKV java object
    * @param flinkType Flink datatype
-   * @param tidbType  TiDB datatype
+   * @param tidbType TiDB datatype
    */
-  public static Optional<Object> getObjectWithDataType(@Nullable Object object, DataType flinkType,
-      org.tikv.common.types.DataType tidbType) {
+  public static Optional<Object> getObjectWithDataType(
+      @Nullable Object object, DataType flinkType, org.tikv.common.types.DataType tidbType) {
     if (object == null) {
       return Optional.empty();
     }
@@ -225,9 +224,12 @@ public class TiDBSchemaAdapter implements Serializable {
         }
         break;
       case "Integer":
-        object = (int) (long)
-            getObjectWithDataType(object, DataTypes.BIGINT(), tidbType)
-                .orElseThrow(() -> new IllegalArgumentException("Failed to convert integer"));
+        object =
+            (int)
+                (long)
+                    getObjectWithDataType(object, DataTypes.BIGINT(), tidbType)
+                        .orElseThrow(
+                            () -> new IllegalArgumentException("Failed to convert integer"));
         break;
       case "Long":
         if (object instanceof LocalDate) {
@@ -273,17 +275,18 @@ public class TiDBSchemaAdapter implements Serializable {
   }
 
   public DataType getPhysicalRowDataType() {
-    Field[] fields = IntStream.range(0, fieldNames.size())
-        .filter(i -> !metadata.containsKey(fieldNames.get(i)))
-        .mapToObj(i -> DataTypes.FIELD(fieldNames.get(i), fieldTypes.get(i)))
-        .toArray(Field[]::new);
+    Field[] fields =
+        IntStream.range(0, fieldNames.size())
+            .filter(i -> !metadata.containsKey(fieldNames.get(i)))
+            .mapToObj(i -> DataTypes.FIELD(fieldNames.get(i), fieldTypes.get(i)))
+            .toArray(Field[]::new);
     return DataTypes.ROW(fields);
   }
 
   @SuppressWarnings("unchecked")
   public TypeInformation<RowData> getProducedType() {
-    return (TypeInformation<RowData>) ScanRuntimeProviderContext.INSTANCE.createTypeInformation(
-        rowDataType);
+    return (TypeInformation<RowData>)
+        ScanRuntimeProviderContext.INSTANCE.createTypeInformation(rowDataType);
   }
 
   public TiDBMetadata[] getMetadata() {
@@ -291,10 +294,7 @@ public class TiDBSchemaAdapter implements Serializable {
   }
 
   public CDCMetadata[] getCDCMetadata() {
-    return metadata.values()
-        .stream()
-        .map(TiDBMetadata::toCraft)
-        .toArray(CDCMetadata[]::new);
+    return metadata.values().stream().map(TiDBMetadata::toCraft).toArray(CDCMetadata[]::new);
   }
 
   public CDCSchemaAdapter toCDCSchemaAdapter() {

@@ -50,28 +50,32 @@ public class TiDBMapreduceDemo {
     }
   }
 
-  public static Job createJob(String[] args)
-      throws IOException {
+  public static Job createJob(String[] args) throws IOException {
     MapreduceCmd cmd = new MapreduceCmd(args);
 
     Configuration conf = new Configuration();
-    TiDBConfiguration.configureDB(conf,
-        cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
+    TiDBConfiguration.configureDB(
+        conf, cmd.databaseUrl, cmd.databaseName, cmd.username, cmd.password);
     if (cmd.clusterTlsEnabled) {
       if (cmd.clusterUseJks) {
-        TiDBConfiguration.clusterTlsJks(conf,
+        TiDBConfiguration.clusterTlsJks(
+            conf,
             cmd.clusterJksKeyPath,
             cmd.clusterJksKeyPassword,
             cmd.clusterJksTrustPath,
             cmd.clusterJksTrustPassword);
       } else {
-        TiDBConfiguration.clusterTls(conf,
-            cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
+        TiDBConfiguration.clusterTls(conf, cmd.clusterTlsCA, cmd.clusterTlsCert, cmd.clusterTlsKey);
       }
     }
     Job job = Job.getInstance(conf, "MRFormTiDB");
-    TiDBInputFormat.setInput(job, TiDBRowData.class, cmd.tableName,
-        cmd.fields.isEmpty() ? null : cmd.fields.toArray(new String[0]), cmd.limit, cmd.timestamp);
+    TiDBInputFormat.setInput(
+        job,
+        TiDBRowData.class,
+        cmd.tableName,
+        cmd.fields.isEmpty() ? null : cmd.fields.toArray(new String[0]),
+        cmd.limit,
+        cmd.timestamp);
     job.setJarByClass(TiDBMapreduceDemo.class);
     job.setInputFormatClass(TiDBInputFormat.class);
     job.setMapperClass(TiDBMapper.class);
@@ -80,8 +84,8 @@ public class TiDBMapreduceDemo {
     return job;
   }
 
-  public static class TiDBMapper extends
-      Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
+  public static class TiDBMapper
+      extends Mapper<LongWritable, TiDBRowData, NullWritable, NullWritable> {
 
     @Override
     protected void setup(Context context) {
@@ -112,15 +116,12 @@ public class TiDBMapreduceDemo {
     }
   }
 
-
   public static class TiDBRowData implements TiDBWritable {
 
     private String[] fieldNames;
     private Object[] values;
 
-    public TiDBRowData() {
-
-    }
+    public TiDBRowData() {}
 
     @Override
     public void readFields(ResultSet resultSet) throws SQLException {
@@ -191,7 +192,6 @@ public class TiDBMapreduceDemo {
   }
 
   public enum TiDBJdbcClassName {
-
     BOOLEAN(Boolean.class.getName()),
     BYTE(Byte.class.getName()),
     SHORT(Short.class.getName()),
@@ -209,12 +209,10 @@ public class TiDBMapreduceDemo {
     ARRAY(Array.class.getName()),
     MAP(Map.class.getName());
 
-
     private final String className;
 
     TiDBJdbcClassName(String className) {
       this.className = className;
-
     }
 
     public static TiDBJdbcClassName fromClassName(String className) {

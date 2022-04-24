@@ -57,10 +57,13 @@ public class ConfigUtils {
 
   public static Map<String, String> getProperties() {
     return ImmutableMap.<String, String>builder()
-        .put(DATABASE_URL, String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort))
+        .put(
+            DATABASE_URL,
+            String.format(
+                "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
+                tidbHost, tidbPort))
         .put(USERNAME, tidbUser)
         .put(PASSWORD, tidbPassword)
         .build();
   }
-
 }

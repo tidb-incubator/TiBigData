@@ -41,9 +41,7 @@ import org.apache.flink.types.RowKind;
 
 public class CDCSchemaAdapter implements Serializable {
 
-  /**
-   * Readable metadata
-   */
+  /** Readable metadata */
   private final CDCMetadata[] metadata;
 
   private static class ColumnContext implements Serializable {
@@ -104,10 +102,9 @@ public class CDCSchemaAdapter implements Serializable {
 
   private final Map<String, ColumnContext> physicalFields;
 
-  /**
-   * Number of physical fields.
-   */
+  /** Number of physical fields. */
   private final int physicalFieldCount;
+
   private final DataType physicalDataType;
 
   public CDCSchemaAdapter(final DataType physicalDataType, CDCMetadata[] metadata) {
@@ -151,12 +148,14 @@ public class CDCSchemaAdapter implements Serializable {
   }
 
   @SuppressWarnings("unchecked")
-  public static TypeInformation<RowData> getProducedType(DataType physicalDataType,
-      CDCMetadata[] metadata) {
-    List<Field> fields = Arrays.stream(metadata)
-        .map(meta -> DataTypes.FIELD(meta.getKey(), meta.getType())).collect(Collectors.toList());
+  public static TypeInformation<RowData> getProducedType(
+      DataType physicalDataType, CDCMetadata[] metadata) {
+    List<Field> fields =
+        Arrays.stream(metadata)
+            .map(meta -> DataTypes.FIELD(meta.getKey(), meta.getType()))
+            .collect(Collectors.toList());
     DataType dataType = DataTypeUtils.appendRowFields(physicalDataType, fields);
-    return (TypeInformation<RowData>) ScanRuntimeProviderContext.INSTANCE.createTypeInformation(
-        dataType);
+    return (TypeInformation<RowData>)
+        ScanRuntimeProviderContext.INSTANCE.createTypeInformation(dataType);
   }
 }

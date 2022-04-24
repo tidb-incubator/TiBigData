@@ -40,9 +40,7 @@ import org.apache.flink.table.data.RowData;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;
 
-/**
- * @see KafkaSourceBuilder
- */
+/** @see KafkaSourceBuilder */
 public class KafkaCDCSourceBuilder
     extends CDCSourceBuilder<KafkaPartitionSplit, KafkaSourceEnumState> {
 
@@ -102,8 +100,7 @@ public class KafkaCDCSourceBuilder
     return this;
   }
 
-  public KafkaCDCSourceBuilder setStartingOffsets(
-      OffsetsInitializer startingOffsetsInitializer) {
+  public KafkaCDCSourceBuilder setStartingOffsets(OffsetsInitializer startingOffsetsInitializer) {
     builder.setStartingOffsets(startingOffsetsInitializer);
     return this;
   }
