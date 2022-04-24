@@ -117,6 +117,7 @@ public final class ClientSession implements AutoCloseable {
     tiConfiguration.setReplicaSelector(policy);
     tiConfiguration.setHostMapping(hostMapping);
     session = TiSession.create(tiConfiguration);
+    // TODO: enhancement to make catalog singleton
     catalog =
         new Catalog(
             session::createSnapshot, tiConfiguration.ifShowRowId(), tiConfiguration.getDBPrefix());

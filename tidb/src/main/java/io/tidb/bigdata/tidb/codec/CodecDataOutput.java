@@ -167,12 +167,8 @@ public class CodecDataOutput implements DataOutput {
     return byteArray.toByteArray();
   }
 
-  public ByteString toShadeByteString() {
+  public ByteString toByteString() {
     return ByteString.copyFrom(byteArray.toByteArray());
-  }
-
-  public org.tikv.shade.com.google.protobuf.ByteString toByteString() {
-    return org.tikv.shade.com.google.protobuf.ByteString.copyFrom(byteArray.toByteArray());
   }
 
   public int size() {

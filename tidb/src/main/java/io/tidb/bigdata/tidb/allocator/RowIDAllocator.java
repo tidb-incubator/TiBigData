@@ -200,7 +200,7 @@ public final class RowIDAllocator implements Serializable {
 
     CodecDataOutput cdo = new CodecDataOutput();
     MetaCodec.encodeHashDataKey(cdo, key.toByteArray(), field.toByteArray());
-    ByteString dataKey = cdo.toShadeByteString();
+    ByteString dataKey = cdo.toByteString();
     byte[] oldVal = snapshot.get(dataKey.toByteArray());
 
     byte[] newVal = calculateNewVal.apply(oldVal);
