@@ -114,7 +114,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (tiTableInfo.isPkHandle()) {
       return new IntHandle((long) tiRow.get(handleCol.getOffset(), handleCol.getType()));
     } else if (isCommonHandle) {
-      throw new TiBatchWriteException("Cannot extract handle non pk is handle table");
+      throw new TiBatchWriteException("Clustered index does not supported now");
     } else {
       throw new TiBatchWriteException("Cannot extract handle non pk is handle table");
     }
