@@ -67,16 +67,17 @@ import java.util.Map;
 import java.util.Optional;
 import org.tikv.common.expression.Expression;
 
-public final class PredicateTranslator extends
-    RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {
+public final class PredicateTranslator
+    extends RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {
 
   private final FunctionMetadataManager functionMetadataManager;
   private final FunctionTranslator<Expression> functionTranslator;
 
-  public PredicateTranslator(FunctionMetadataManager functionMetadataManager,
+  public PredicateTranslator(
+      FunctionMetadataManager functionMetadataManager,
       FunctionTranslator<Expression> functionTranslator) {
-    this.functionMetadataManager = requireNonNull(functionMetadataManager,
-        "functionMetadataManager is null");
+    this.functionMetadataManager =
+        requireNonNull(functionMetadataManager, "functionMetadataManager is null");
     this.functionTranslator = requireNonNull(functionTranslator, "functionTranslator is null");
   }
 
@@ -118,10 +119,11 @@ public final class PredicateTranslator extends
   }
 
   @Override
-  public TranslatedExpression<Expression> translateConstant(ConstantExpression literal,
+  public TranslatedExpression<Expression> translateConstant(
+      ConstantExpression literal,
       Map<VariableReferenceExpression, ColumnHandle> context,
-      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression,
-          ColumnHandle>> rowExpressionTreeTranslator) {
+      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
+          rowExpressionTreeTranslator) {
     Expression exp = tryConvert(literal);
     if (exp != null) {
       return new TranslatedExpression<>(Optional.of(exp), literal, ImmutableList.of());
@@ -131,10 +133,11 @@ public final class PredicateTranslator extends
   }
 
   @Override
-  public TranslatedExpression<Expression> translateVariable(VariableReferenceExpression variable,
+  public TranslatedExpression<Expression> translateVariable(
+      VariableReferenceExpression variable,
       Map<VariableReferenceExpression, ColumnHandle> context,
-      RowExpressionTreeTranslator<Expression,
-          Map<VariableReferenceExpression, ColumnHandle>> rowExpressionTreeTranslator) {
+      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
+          rowExpressionTreeTranslator) {
     TiDBColumnHandle columnHandle = (TiDBColumnHandle) context.get(variable);
     requireNonNull(columnHandle, format("Unrecognized variable %s", variable));
     return new TranslatedExpression<>(
@@ -144,24 +147,27 @@ public final class PredicateTranslator extends
   }
 
   @Override
-  public TranslatedExpression<Expression> translateLambda(LambdaDefinitionExpression lambda,
+  public TranslatedExpression<Expression> translateLambda(
+      LambdaDefinitionExpression lambda,
       Map<VariableReferenceExpression, ColumnHandle> context,
-      RowExpressionTreeTranslator<Expression,
-          Map<VariableReferenceExpression, ColumnHandle>> rowExpressionTreeTranslator) {
+      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
+          rowExpressionTreeTranslator) {
     return untranslated(lambda);
   }
 
   @Override
-  public TranslatedExpression<Expression> translateCall(CallExpression call,
+  public TranslatedExpression<Expression> translateCall(
+      CallExpression call,
       Map<VariableReferenceExpression, ColumnHandle> context,
-      RowExpressionTreeTranslator<Expression,
-          Map<VariableReferenceExpression, ColumnHandle>> rowExpressionTreeTranslator) {
-    List<TranslatedExpression<Expression>> translatedExpressions = call.getArguments().stream()
-        .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
-        .collect(toImmutableList());
+      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
+          rowExpressionTreeTranslator) {
+    List<TranslatedExpression<Expression>> translatedExpressions =
+        call.getArguments().stream()
+            .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
+            .collect(toImmutableList());
 
-    FunctionMetadata functionMetadata = functionMetadataManager
-        .getFunctionMetadata(call.getFunctionHandle());
+    FunctionMetadata functionMetadata =
+        functionMetadataManager.getFunctionMetadata(call.getFunctionHandle());
 
     try {
       return functionTranslator.translate(functionMetadata, call, translatedExpressions);
@@ -172,20 +178,22 @@ public final class PredicateTranslator extends
   }
 
   @Override
-  public TranslatedExpression<Expression> translateSpecialForm(SpecialFormExpression specialForm,
+  public TranslatedExpression<Expression> translateSpecialForm(
+      SpecialFormExpression specialForm,
       Map<VariableReferenceExpression, ColumnHandle> context,
-      RowExpressionTreeTranslator<Expression,
-          Map<VariableReferenceExpression, ColumnHandle>> rowExpressionTreeTranslator) {
-    List<TranslatedExpression<Expression>> translatedExpressions = specialForm.getArguments()
-        .stream()
-        .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
-        .collect(toImmutableList());
+      RowExpressionTreeTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>>
+          rowExpressionTreeTranslator) {
+    List<TranslatedExpression<Expression>> translatedExpressions =
+        specialForm.getArguments().stream()
+            .map(expression -> rowExpressionTreeTranslator.rewrite(expression, context))
+            .collect(toImmutableList());
 
-    List<Expression> expressions = translatedExpressions.stream()
-        .map(TranslatedExpression::getTranslated)
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .collect(toImmutableList());
+    List<Expression> expressions =
+        translatedExpressions.stream()
+            .map(TranslatedExpression::getTranslated)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(toImmutableList());
 
     if (expressions.size() < translatedExpressions.size()) {
       return untranslated(specialForm, translatedExpressions);
@@ -194,19 +202,13 @@ public final class PredicateTranslator extends
     switch (specialForm.getForm()) {
       case AND:
         return new TranslatedExpression<>(
-            Optional.of(Expressions.and(expressions)),
-            specialForm,
-            translatedExpressions);
+            Optional.of(Expressions.and(expressions)), specialForm, translatedExpressions);
       case OR:
         return new TranslatedExpression<>(
-            Optional.of(Expressions.or(expressions)),
-            specialForm,
-            translatedExpressions);
+            Optional.of(Expressions.or(expressions)), specialForm, translatedExpressions);
       case IN:
         return new TranslatedExpression<>(
-            Optional.of(Expressions.in(expressions)),
-            specialForm,
-            translatedExpressions);
+            Optional.of(Expressions.in(expressions)), specialForm, translatedExpressions);
       default:
         break;
     }

@@ -40,7 +40,8 @@ public final class MetadataInternal {
   }
 
   public Optional<TableHandleInternal> getTableHandle(String schemaName, String tableName) {
-    return session.getTable(schemaName, tableName)
+    return session
+        .getTable(schemaName, tableName)
         .map(t -> new TableHandleInternal(connectorId, schemaName, tableName));
   }
 
@@ -52,8 +53,8 @@ public final class MetadataInternal {
     return session.getTableColumns(tableHandle);
   }
 
-  public Optional<List<ColumnHandleInternal>> getColumnHandles(String schemaName,
-      String tableName) {
+  public Optional<List<ColumnHandleInternal>> getColumnHandles(
+      String schemaName, String tableName) {
     return session.getTableColumns(schemaName, tableName);
   }
 
@@ -61,11 +62,22 @@ public final class MetadataInternal {
     return session.tableExists(databaseName, tableName);
   }
 
-  public void createTable(String databaseName, String tableName, List<String> columnNames,
-      List<String> columnTypes, List<String> primaryKeyColumns, List<String> uniqueKeyColumns,
+  public void createTable(
+      String databaseName,
+      String tableName,
+      List<String> columnNames,
+      List<String> columnTypes,
+      List<String> primaryKeyColumns,
+      List<String> uniqueKeyColumns,
       boolean ignoreExisting) {
-    session.createTable(databaseName, tableName, columnNames, columnTypes, primaryKeyColumns,
-        uniqueKeyColumns, ignoreExisting);
+    session.createTable(
+        databaseName,
+        tableName,
+        columnNames,
+        columnTypes,
+        primaryKeyColumns,
+        uniqueKeyColumns,
+        ignoreExisting);
   }
 
   public void dropTable(String schemaName, String tableName, boolean ignoreIfNotExists) {
@@ -84,18 +96,18 @@ public final class MetadataInternal {
     session.dropDatabase(schemaName, ignoreIfNotExists);
   }
 
-  public void renameTable(String oldDatabaseName, String newDatabaseName, String oldTableName,
-      String newTableName) {
+  public void renameTable(
+      String oldDatabaseName, String newDatabaseName, String oldTableName, String newTableName) {
     session.renameTable(oldDatabaseName, newDatabaseName, oldTableName, newTableName);
   }
 
-  public void addColumn(String databaseName, String tableName, String columnName,
-      String columnType) {
+  public void addColumn(
+      String databaseName, String tableName, String columnName, String columnType) {
     session.addColumn(databaseName, tableName, columnName, columnType);
   }
 
-  public void renameColumn(String databaseName, String tableName, String oldName, String newName,
-      String newType) {
+  public void renameColumn(
+      String databaseName, String tableName, String oldName, String newName, String newType) {
     session.renameColumn(databaseName, tableName, oldName, newName, newType);
   }
 
@@ -121,9 +133,6 @@ public final class MetadataInternal {
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("connectorId", connectorId)
-        .add("session", session)
-        .toString();
+    return toStringHelper(this).add("connectorId", connectorId).add("session", session).toString();
   }
 }

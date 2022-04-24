@@ -37,8 +37,10 @@ final class PartitionedStream {
   private long maxTs = -1;
 
   protected PartitionedStream(final int capacity) {
-    this.queue = capacity == Integer.MAX_VALUE ? new LinkedBlockingQueue<>()
-        : new ArrayBlockingQueue<>(capacity);
+    this.queue =
+        capacity == Integer.MAX_VALUE
+            ? new LinkedBlockingQueue<>()
+            : new ArrayBlockingQueue<>(capacity);
   }
 
   public int put(final Event[] events) throws InterruptedException {

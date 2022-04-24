@@ -53,13 +53,15 @@ public class SqlHintTest extends FlinkTestBase {
     properties.put(SINK_IMPL.key(), TIKV.name());
     properties.put(SINK_TRANSACTION.key(), CHECKPOINT.name());
 
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable, TABLE_WITH_INDEX, tableEnvironment,
-        properties);
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(dstTable, TABLE_WITH_INDEX, tableEnvironment, properties);
 
-    String sql = format(
-        "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tikv.sink.transaction'='global') */"
-            + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
-            + "FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable, DATABASE_NAME, srcTable);
+    String sql =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tikv.sink.transaction'='global') */"
+                + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
+                + "FROM `tidb`.`%s`.`%s`",
+            DATABASE_NAME, dstTable, DATABASE_NAME, srcTable);
     System.out.println(sql);
     tableEnvironment.sqlUpdate(sql);
     tableEnvironment.execute("test");
@@ -69,7 +71,11 @@ public class SqlHintTest extends FlinkTestBase {
 
   @After
   public void teardown() {
-    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
-    testDatabase.getClientSession().sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
 }

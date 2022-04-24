@@ -27,10 +27,10 @@ public final class EventStream {
   private final PartitionedStream[] partitionedStreams;
 
   public EventStream(final int partitions, final int capacity) {
-    this.partitionedStreams = IntStream
-        .range(0, partitions)
-        .mapToObj(p -> new PartitionedStream(capacity))
-        .toArray(PartitionedStream[]::new);
+    this.partitionedStreams =
+        IntStream.range(0, partitions)
+            .mapToObj(p -> new PartitionedStream(capacity))
+            .toArray(PartitionedStream[]::new);
   }
 
   public EventStream() {

@@ -25,11 +25,9 @@ import org.apache.flink.streaming.api.operators.BoundedOneInput;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
 
-/**
- * An operator to commit the primary key after the prewrite of secondary keys has been done.
- */
-public class TiDBCommitOperator extends AbstractStreamOperator<Void> implements
-    OneInputStreamOperator<Void, Void>, BoundedOneInput {
+/** An operator to commit the primary key after the prewrite of secondary keys has been done. */
+public class TiDBCommitOperator extends AbstractStreamOperator<Void>
+    implements OneInputStreamOperator<Void, Void>, BoundedOneInput {
 
   private final Map<String, String> properties;
   private final long startTs;
@@ -61,7 +59,5 @@ public class TiDBCommitOperator extends AbstractStreamOperator<Void> implements
   }
 
   @Override
-  public void processElement(StreamRecord<Void> streamRecord) throws Exception {
-
-  }
+  public void processElement(StreamRecord<Void> streamRecord) throws Exception {}
 }

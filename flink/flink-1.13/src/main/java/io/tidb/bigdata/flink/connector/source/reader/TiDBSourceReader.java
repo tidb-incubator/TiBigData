@@ -55,9 +55,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
 
   private ClientSession session;
 
-  /**
-   * The availability future. This reader is available as soon as a split is assigned.
-   */
+  /** The availability future. This reader is available as soon as a split is assigned. */
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
@@ -81,10 +79,10 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     this.limit = limit;
     this.availability = new CompletableFuture<>();
     this.remainingSplits = new ArrayDeque<>();
-    this.failoverType = FailoverType.fromString(
-        properties.getOrDefault(SOURCE_FAILOVER.key(), SOURCE_FAILOVER.defaultValue()));
+    this.failoverType =
+        FailoverType.fromString(
+            properties.getOrDefault(SOURCE_FAILOVER.key(), SOURCE_FAILOVER.defaultValue()));
   }
-
 
   @Override
   public void start() {
@@ -114,8 +112,15 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     if (currentSplit != null) {
       SplitInternal split = currentSplit.getSplit();
       offset = currentSplit.getOffset();
-      cursor = new RecordSetInternal(session, split, columns, Optional.ofNullable(expression),
-          Optional.ofNullable(split.getTimestamp()), Optional.ofNullable(limit)).cursor();
+      cursor =
+          new RecordSetInternal(
+                  session,
+                  split,
+                  columns,
+                  Optional.ofNullable(expression),
+                  Optional.ofNullable(split.getTimestamp()),
+                  Optional.ofNullable(limit))
+              .cursor();
       // skip offset
       for (int i = 0; i < offset; i++) {
         if (!cursor.advanceNextPosition()) {
@@ -194,7 +199,8 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   }
 
   public enum FailoverType {
-    SPLIT, OFFSET;
+    SPLIT,
+    OFFSET;
 
     public static FailoverType fromString(String s) {
       return Arrays.stream(values())

@@ -46,24 +46,22 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int i) throws IOException {
-    try (ClientSession clientSession = ClientSession.create(
-        new ClientConfig(getProperties(jobConf)))) {
-      String tableName = Objects.requireNonNull(jobConf.get(TABLE_NAME),
-          TABLE_NAME + " can not be null");
-      String databaseName = Objects.requireNonNull(jobConf.get(DATABASE_NAME),
-          DATABASE_NAME + " can not be null");
+    try (ClientSession clientSession =
+        ClientSession.create(new ClientConfig(getProperties(jobConf)))) {
+      String tableName =
+          Objects.requireNonNull(jobConf.get(TABLE_NAME), TABLE_NAME + " can not be null");
+      String databaseName =
+          Objects.requireNonNull(jobConf.get(DATABASE_NAME), DATABASE_NAME + " can not be null");
       Integer regionNumPerSplit = jobConf.getInt(REGIONS_PER_SPLIT, 1);
 
-      TableHandleInternal tableHandle = new TableHandleInternal(EMPTY_STRING, databaseName,
-          tableName);
+      TableHandleInternal tableHandle =
+          new TableHandleInternal(EMPTY_STRING, databaseName, tableName);
       Path path = FileInputFormat.getInputPaths(jobConf)[0];
 
-      List<SplitInternal> splits = new SplitManagerInternal(clientSession)
-          .getSplits(tableHandle);
+      List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
       List<List<SplitInternal>> splitPartition = Lists.partition(splits, regionNumPerSplit);
 
-      return splitPartition
-          .stream()
+      return splitPartition.stream()
           .map(splitInternals -> new TiDBInputSplit(path, splitInternals))
           .toArray(TiDBInputSplit[]::new);
     } catch (Exception e) {
@@ -72,8 +70,8 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
   }
 
   @Override
-  public RecordReader<LongWritable, MapWritable> getRecordReader(InputSplit inputSplit,
-      JobConf jobConf, Reporter reporter) throws IOException {
+  public RecordReader<LongWritable, MapWritable> getRecordReader(
+      InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
     return new TiDBRecordReader(inputSplit, getProperties(jobConf));
   }
 

@@ -16,6 +16,4 @@
 
 package io.tidb.bigdata.test;
 
-public interface IntegrationTest {
-
-}
+public interface IntegrationTest {}

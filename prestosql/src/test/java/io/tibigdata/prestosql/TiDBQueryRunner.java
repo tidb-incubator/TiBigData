@@ -30,8 +30,7 @@ import org.junit.Assert;
 
 public class TiDBQueryRunner {
 
-  private final Session session = testSessionBuilder().setCatalog("tidb").setSchema("test")
-      .build();
+  private final Session session = testSessionBuilder().setCatalog("tidb").setSchema("test").build();
 
   private final QueryRunner queryRunner;
 
@@ -55,6 +54,4 @@ public class TiDBQueryRunner {
     List<MaterializedRow> queryRows = materializedResult.getMaterializedRows();
     Assert.assertEquals(targetRows, queryRows);
   }
-
-
 }

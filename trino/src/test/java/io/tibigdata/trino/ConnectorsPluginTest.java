@@ -35,5 +35,4 @@ public class ConnectorsPluginTest {
     ConnectorFactory factory = getOnlyElement(plugin.getConnectorFactories());
     factory.create("tidb", ConfigUtils.getProperties(), new TestingConnectorContext());
   }
-
 }

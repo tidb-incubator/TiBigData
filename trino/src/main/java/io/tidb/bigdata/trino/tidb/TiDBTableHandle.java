@@ -24,8 +24,8 @@ import io.trino.spi.connector.ConnectorInsertTableHandle;
 import io.trino.spi.connector.ConnectorOutputTableHandle;
 import io.trino.spi.connector.ConnectorTableHandle;
 
-public final class TiDBTableHandle extends Wrapper<TableHandleInternal> implements
-    ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
+public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
+    implements ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {
 
   @JsonCreator
   public TiDBTableHandle(

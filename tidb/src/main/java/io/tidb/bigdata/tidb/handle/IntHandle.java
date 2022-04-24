@@ -124,7 +124,7 @@ public class IntHandle implements Handle {
 
   @Override
   public Object[] data() {
-    return new Object[]{handle};
+    return new Object[] {handle};
   }
 
   @Override

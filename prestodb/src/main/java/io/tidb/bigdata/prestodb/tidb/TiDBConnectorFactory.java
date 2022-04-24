@@ -41,23 +41,26 @@ public final class TiDBConnectorFactory implements ConnectorFactory {
   }
 
   @Override
-  public Connector create(String catalogName, Map<String, String> config,
-      ConnectorContext context) {
+  public Connector create(
+      String catalogName, Map<String, String> config, ConnectorContext context) {
     requireNonNull(config, "config is null");
 
     try {
-      Bootstrap app = new Bootstrap(
-          new JsonModule(),
-          new TiDBModule(catalogName, context.getTypeManager(),
-              context.getFunctionMetadataManager(),
-              context.getStandardFunctionResolution(),
-              context.getRowExpressionService()));
+      Bootstrap app =
+          new Bootstrap(
+              new JsonModule(),
+              new TiDBModule(
+                  catalogName,
+                  context.getTypeManager(),
+                  context.getFunctionMetadataManager(),
+                  context.getStandardFunctionResolution(),
+                  context.getRowExpressionService()));
 
-      Injector injector = app
-          .strictConfig()
-          .doNotInitializeLogging()
-          .setRequiredConfigurationProperties(config)
-          .initialize();
+      Injector injector =
+          app.strictConfig()
+              .doNotInitializeLogging()
+              .setRequiredConfigurationProperties(config)
+              .initialize();
 
       return injector.getInstance(TiDBConnector.class);
     } catch (Exception e) {

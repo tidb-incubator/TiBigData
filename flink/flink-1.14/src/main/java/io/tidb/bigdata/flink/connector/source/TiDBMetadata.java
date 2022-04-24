@@ -30,15 +30,18 @@ import org.apache.flink.table.types.DataType;
 import org.tikv.common.meta.TiTimestamp;
 
 public enum TiDBMetadata {
-  COMMIT_VERSION("commit_version",
+  COMMIT_VERSION(
+      "commit_version",
       DataTypes.BIGINT().notNull(),
       TiDBMetadata::commitVersion,
       CDCMetadata.COMMIT_VERSION),
-  COMMIT_TIMESTAMP("commit_timestamp",
+  COMMIT_TIMESTAMP(
+      "commit_timestamp",
       DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull(),
       TiDBMetadata::commitMs,
       CDCMetadata.COMMIT_TIMESTAMP),
-  SOURCE_EVENT("source_event",
+  SOURCE_EVENT(
+      "source_event",
       DataTypes.STRING().notNull(),
       tiTimestamp -> StringData.fromString("SNAPSHOT"),
       CDCMetadata.SOURCE_EVENT);
@@ -50,7 +53,9 @@ public enum TiDBMetadata {
   private final Function<TiTimestamp, Object> extractor;
   private final CDCMetadata craft;
 
-  TiDBMetadata(final String key, final DataType type,
+  TiDBMetadata(
+      final String key,
+      final DataType type,
       Function<TiTimestamp, Object> extractor,
       CDCMetadata craft) {
     this.key = key;

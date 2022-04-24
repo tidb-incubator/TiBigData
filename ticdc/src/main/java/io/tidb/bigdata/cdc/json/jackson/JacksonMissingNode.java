@@ -27,8 +27,7 @@ public class JacksonMissingNode implements JsonNode {
 
   private static final JacksonMissingNode INSTANCE = new JacksonMissingNode();
 
-  private JacksonMissingNode() {
-  }
+  private JacksonMissingNode() {}
 
   public static JacksonMissingNode getInstance() {
     return INSTANCE;

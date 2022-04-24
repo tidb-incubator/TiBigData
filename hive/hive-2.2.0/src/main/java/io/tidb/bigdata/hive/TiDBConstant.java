@@ -28,10 +28,6 @@ public class TiDBConstant {
   public static final String REGIONS_PER_SPLIT = "tidb.regions-per-split";
 
   // configurations that do not take effect within session
-  public static final Set<String> IMMUTABLE_CONFIG = ImmutableSet.of(
-      ClientConfig.DATABASE_URL,
-      ClientConfig.USERNAME,
-      ClientConfig.PASSWORD);
-
-
+  public static final Set<String> IMMUTABLE_CONFIG =
+      ImmutableSet.of(ClientConfig.DATABASE_URL, ClientConfig.USERNAME, ClientConfig.PASSWORD);
 }

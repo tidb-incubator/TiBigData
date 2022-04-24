@@ -27,8 +27,6 @@ import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.TableHandleInternal;
-import org.junit.Assert;
-import org.junit.Test;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
@@ -45,6 +43,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.junit.Assert;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
@@ -174,8 +174,7 @@ public class MapReduceTest {
   }
 
   private static void doUpdateSql(Connection con, String updateSql) throws SQLException {
-    try (PreparedStatement ps = con.prepareStatement(
-        updateSql)) {
+    try (PreparedStatement ps = con.prepareStatement(updateSql)) {
       ps.executeUpdate();
     }
   }
@@ -183,7 +182,11 @@ public class MapReduceTest {
   public ClientSession getSingleConnection() {
 
     Map<String, String> properties = new HashMap<>();
-    properties.put(ClientConfig.DATABASE_URL, String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort));
+    properties.put(
+        ClientConfig.DATABASE_URL,
+        String.format(
+            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
+            tidbHost, tidbPort));
     properties.put(ClientConfig.USERNAME, tidbUser);
     properties.put(ClientConfig.PASSWORD, tidbPassword);
 
@@ -193,8 +196,13 @@ public class MapReduceTest {
   @Test
   public void testReadRecords() throws Exception {
 
-    try (Connection connection = DriverManager.getConnection(
-        String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort), tidbUser, tidbPassword)) {
+    try (Connection connection =
+        DriverManager.getConnection(
+            String.format(
+                "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
+                tidbHost, tidbPort),
+            tidbUser,
+            tidbPassword)) {
       doUpdateSql(connection, getCreateDatabaseSql(DATABASE_NAME));
       doUpdateSql(connection, getDropTableSql(TABLE_NAME));
       doUpdateSql(connection, getCreateTableSql(TABLE_NAME));
@@ -202,20 +210,26 @@ public class MapReduceTest {
     }
 
     ClientSession clientSession = getSingleConnection();
-    TableHandleInternal tableHandleInternal = new TableHandleInternal(
-        UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
+    TableHandleInternal tableHandleInternal =
+        new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals = clientSession.getTableColumns(tableHandleInternal)
-        .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    List<ColumnHandleInternal> columnHandleInternals =
+        clientSession
+            .getTableColumns(tableHandleInternal)
+            .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
-      RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
-          Arrays.stream(IntStream.range(0, 29).toArray()).mapToObj(columnHandleInternals::get)
-              .collect(Collectors.toList()),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.of(Integer.MAX_VALUE));
+      RecordSetInternal recordSetInternal =
+          new RecordSetInternal(
+              clientSession,
+              splitInternal,
+              Arrays.stream(IntStream.range(0, 29).toArray())
+                  .mapToObj(columnHandleInternals::get)
+                  .collect(Collectors.toList()),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.of(Integer.MAX_VALUE));
       RecordCursorInternal cursor = recordSetInternal.cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);

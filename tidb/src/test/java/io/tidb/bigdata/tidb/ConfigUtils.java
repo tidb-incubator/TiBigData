@@ -59,7 +59,8 @@ public class ConfigUtils {
 
   public static Map<String, String> defaultProperties() {
     Map<String, String> properties = new HashMap<>();
-    properties.put(DATABASE_URL,
+    properties.put(
+        DATABASE_URL,
         String.format(
             "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
             tidbHost, tidbPort));
@@ -68,7 +69,5 @@ public class ConfigUtils {
     properties.put(MAX_POOL_SIZE, "1");
     properties.put(MIN_IDLE_SIZE, "1");
     return properties;
-
   }
-
 }

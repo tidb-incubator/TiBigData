@@ -54,15 +54,12 @@ public final class Base64KeyRange {
     }
 
     Base64KeyRange other = (Base64KeyRange) obj;
-    return Objects.equals(this.startKey, other.startKey) && Objects
-        .equals(this.endKey, other.endKey);
+    return Objects.equals(this.startKey, other.startKey)
+        && Objects.equals(this.endKey, other.endKey);
   }
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("startKey", startKey)
-        .add("endKey", endKey)
-        .toString();
+    return toStringHelper(this).add("startKey", startKey).add("endKey", endKey).toString();
   }
 }

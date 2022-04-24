@@ -36,7 +36,8 @@ public final class TiDBModule implements Module {
   private final StandardFunctionResolution standardFunctionResolution;
   private final RowExpressionService rowExpressionService;
 
-  public TiDBModule(String connectorId,
+  public TiDBModule(
+      String connectorId,
       TypeManager typeManager,
       FunctionMetadataManager functionMetadataManager,
       StandardFunctionResolution standardFunctionResolution,

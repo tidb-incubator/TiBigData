@@ -20,6 +20,5 @@ import org.junit.ClassRule;
 
 public class FilterPushDownTestBase {
 
-  @ClassRule
-  public static final FilterPushDownValidator validator = new FilterPushDownValidator();
+  @ClassRule public static final FilterPushDownValidator validator = new FilterPushDownValidator();
 }

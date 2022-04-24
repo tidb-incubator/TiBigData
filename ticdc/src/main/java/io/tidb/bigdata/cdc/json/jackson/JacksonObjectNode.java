@@ -110,4 +110,3 @@ public class JacksonObjectNode {
     return new JacksonObjectNode(context, context.objectNodePutObject(object, fieldName));
   }
 }
-

@@ -22,8 +22,7 @@ import org.apache.flink.table.factories.Factory;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
 
-  public TiDBCatalog(String name, String defaultDatabase,
-      Map<String, String> properties) {
+  public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase, properties);
   }
 

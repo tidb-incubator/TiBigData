@@ -39,33 +39,36 @@ import javax.inject.Inject;
 
 public class TiDBPageSinkProvider implements ConnectorPageSinkProvider {
 
-  @Inject
-  private TiDBMetadata metadata;
+  @Inject private TiDBMetadata metadata;
 
   @Override
-  public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
-      ConnectorSession session, ConnectorOutputTableHandle outputTableHandle,
+  public ConnectorPageSink createPageSink(
+      ConnectorTransactionHandle transactionHandle,
+      ConnectorSession session,
+      ConnectorOutputTableHandle outputTableHandle,
       PageSinkProperties pageSinkProperties) {
     return createTiDBPageSink(session, (TiDBTableHandle) outputTableHandle);
   }
 
   @Override
-  public ConnectorPageSink createPageSink(ConnectorTransactionHandle transactionHandle,
-      ConnectorSession session, ConnectorInsertTableHandle insertTableHandle,
+  public ConnectorPageSink createPageSink(
+      ConnectorTransactionHandle transactionHandle,
+      ConnectorSession session,
+      ConnectorInsertTableHandle insertTableHandle,
       PageSinkProperties pageSinkProperties) {
     return createTiDBPageSink(session, (TiDBTableHandle) insertTableHandle);
   }
 
-  private TiDBPageSink createTiDBPageSink(ConnectorSession session,
-      TiDBTableHandle tiDBTableHandle) {
+  private TiDBPageSink createTiDBPageSink(
+      ConnectorSession session, TiDBTableHandle tiDBTableHandle) {
     final String schemaName = tiDBTableHandle.getSchemaName();
     final String tableName = tiDBTableHandle.getTableName();
-    final List<ColumnMetadata> columns = metadata.getTableMetadata(null, tiDBTableHandle)
-        .getColumns();
-    final List<String> columnNames = columns.stream().map(ColumnMetadata::getName)
-        .collect(ImmutableList.toImmutableList());
-    final List<Type> columnTypes = columns.stream().map(ColumnMetadata::getType)
-        .collect(ImmutableList.toImmutableList());
+    final List<ColumnMetadata> columns =
+        metadata.getTableMetadata(null, tiDBTableHandle).getColumns();
+    final List<String> columnNames =
+        columns.stream().map(ColumnMetadata::getName).collect(ImmutableList.toImmutableList());
+    final List<Type> columnTypes =
+        columns.stream().map(ColumnMetadata::getType).collect(ImmutableList.toImmutableList());
     TiDBWriteMode writeMode = fromString(session.getProperty(SESSION_WRITE_MODE, String.class));
     Connection connection;
     try {

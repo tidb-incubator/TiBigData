@@ -42,8 +42,8 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, Loo
 
   protected final JdbcLookupOptions lookupOptions;
 
-  public TiDBBaseDynamicTableSource(TableSchema tableSchema, Map<String, String> properties,
-      JdbcLookupOptions lookupOptions) {
+  public TiDBBaseDynamicTableSource(
+      TableSchema tableSchema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
     this.tableSchema = tableSchema;
     this.properties = properties;
     this.config = new ClientConfig(properties);
@@ -57,18 +57,19 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, Loo
     String[] keyNames = new String[context.getKeys().length];
     for (int i = 0; i < keyNames.length; i++) {
       int[] innerKeyArr = context.getKeys()[i];
-      Preconditions.checkArgument(innerKeyArr.length == 1,
-          "JDBC only support non-nested look up keys");
+      Preconditions.checkArgument(
+          innerKeyArr.length == 1, "JDBC only support non-nested look up keys");
       keyNames[i] = tableSchema.getFieldNames()[innerKeyArr[0]];
     }
     RowType rowType = (RowType) tableSchema.toRowDataType().getLogicalType();
-    return TableFunctionProvider.of(new JdbcRowDataLookupFunction(
-        JdbcUtils.getJdbcOptions(properties),
-        lookupOptions,
-        tableSchema.getFieldNames(),
-        tableSchema.getFieldDataTypes(),
-        keyNames,
-        rowType));
+    return TableFunctionProvider.of(
+        new JdbcRowDataLookupFunction(
+            JdbcUtils.getJdbcOptions(properties),
+            lookupOptions,
+            tableSchema.getFieldNames(),
+            tableSchema.getFieldDataTypes(),
+            keyNames,
+            rowType));
   }
 
   @Override
@@ -84,5 +85,4 @@ public abstract class TiDBBaseDynamicTableSource implements ScanTableSource, Loo
   protected String getRequiredProperties(String key) {
     return Preconditions.checkNotNull(properties.get(key), key + " can not be null");
   }
-
 }

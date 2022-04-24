@@ -24,19 +24,17 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-
 public class JdbcConnectionProviderFactory {
 
   public static JdbcConnectionProvider createJdbcConnectionProvider(ClientConfig config) {
     try {
       Class<?> provideClass = Class.forName(config.getJdbcConnectionProviderImpl());
-      return (JdbcConnectionProvider) provideClass.getConstructor(ClientConfig.class)
-          .newInstance(config);
+      return (JdbcConnectionProvider)
+          provideClass.getConstructor(ClientConfig.class).newInstance(config);
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
   }
-
 
   public abstract static class JdbcConnectionProvider implements AutoCloseable {
 
@@ -50,12 +48,10 @@ public class JdbcConnectionProviderFactory {
       this.password = config.getPassword();
     }
 
-
     abstract Connection getConnection() throws SQLException;
   }
 
   public static class BasicJdbcConnectionProvider extends JdbcConnectionProvider {
-
 
     public BasicJdbcConnectionProvider(ClientConfig config) {
       super(config);
@@ -67,9 +63,7 @@ public class JdbcConnectionProviderFactory {
     }
 
     @Override
-    public void close() throws Exception {
-
-    }
+    public void close() throws Exception {}
   }
 
   public static class HikariDataSourceJdbcConnectionProvider extends JdbcConnectionProvider {
@@ -98,5 +92,4 @@ public class JdbcConnectionProviderFactory {
       dataSource.close();
     }
   }
-
 }

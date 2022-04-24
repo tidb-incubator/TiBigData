@@ -16,7 +16,6 @@
 
 package io.tidb.bigdata.cdc;
 
-
 import static io.tidb.bigdata.cdc.FileLoader.getFile;
 import static io.tidb.bigdata.cdc.FileLoader.getFileContent;
 
@@ -42,8 +41,8 @@ public class StreamTest {
     final EventStream stream = new EventStream();
     int expectedCount = 0;
     for (int idx = 0; idx < number; ++idx) {
-      expectedCount += stream
-          .put(0, EventChunkDecoder.create(keys[idx], values[idx], parser).next());
+      expectedCount +=
+          stream.put(0, EventChunkDecoder.create(keys[idx], values[idx], parser).next());
     }
 
     Event event;

@@ -30,8 +30,8 @@ import io.tidb.bigdata.tidb.Wrapper;
 import java.util.List;
 import javax.inject.Inject;
 
-public final class TiDBSplitManager extends Wrapper<SplitManagerInternal> implements
-    ConnectorSplitManager {
+public final class TiDBSplitManager extends Wrapper<SplitManagerInternal>
+    implements ConnectorSplitManager {
 
   @Inject
   public TiDBSplitManager(TiDBSession session) {
@@ -48,7 +48,8 @@ public final class TiDBSplitManager extends Wrapper<SplitManagerInternal> implem
     TiDBTableHandle tableHandle = layoutHandle.getTable();
     List<SplitInternal> splits = getInternal().getSplits(tableHandle.getInternal());
     return new FixedSplitSource(
-        splits.stream().map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate()))
+        splits.stream()
+            .map(s -> new TiDBSplit(s, layoutHandle.getAdditionalPredicate()))
             .collect(toImmutableList()));
   }
 }

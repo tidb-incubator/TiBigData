@@ -31,17 +31,15 @@ public class JdbcConnectionProviderFactoryTest {
   public void testCreateConnectionProvider() throws Exception {
     ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
     clientConfig.setJdbcConnectionProviderImpl(BasicJdbcConnectionProvider.class.getName());
-    JdbcConnectionProvider provider = JdbcConnectionProviderFactory.createJdbcConnectionProvider(
-        clientConfig);
+    JdbcConnectionProvider provider =
+        JdbcConnectionProviderFactory.createJdbcConnectionProvider(clientConfig);
     Assert.assertTrue(provider instanceof BasicJdbcConnectionProvider);
     provider.close();
 
     clientConfig.setJdbcConnectionProviderImpl(
         HikariDataSourceJdbcConnectionProvider.class.getName());
-    provider = JdbcConnectionProviderFactory.createJdbcConnectionProvider(
-        clientConfig);
+    provider = JdbcConnectionProviderFactory.createJdbcConnectionProvider(clientConfig);
     provider.close();
     Assert.assertTrue(provider instanceof HikariDataSourceJdbcConnectionProvider);
   }
-
 }

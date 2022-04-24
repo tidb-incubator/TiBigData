@@ -134,7 +134,8 @@ public final class ClientConfig {
   private String jdbcConnectionProviderImpl;
 
   public ClientConfig() {
-    this(null,
+    this(
+        null,
         null,
         null,
         Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
@@ -150,7 +151,8 @@ public final class ClientConfig {
   }
 
   public ClientConfig(String databaseUrl, String username, String password) {
-    this(databaseUrl,
+    this(
+        databaseUrl,
         username,
         password,
         Integer.parseInt(MAX_POOL_SIZE_DEFAULT),
@@ -167,7 +169,8 @@ public final class ClientConfig {
 
   /* For historical compatibility, this constructor omits cluster TLS
    * options and implicitly disables TLS. */
-  public ClientConfig(String databaseUrl,
+  public ClientConfig(
+      String databaseUrl,
       String username,
       String password,
       int maximumPoolSize,
@@ -206,7 +209,8 @@ public final class ClientConfig {
 
   /* This constructor adds support for cluster TLS options without
    * breaking backward compatibility for existing programs. */
-  public ClientConfig(String databaseUrl,
+  public ClientConfig(
+      String databaseUrl,
       String username,
       String password,
       boolean clusterTlsEnable,
@@ -253,7 +257,8 @@ public final class ClientConfig {
   }
 
   public ClientConfig(Map<String, String> properties) {
-    this(properties.get(DATABASE_URL),
+    this(
+        properties.get(DATABASE_URL),
         properties.get(USERNAME),
         properties.get(PASSWORD),
         Boolean.parseBoolean(properties.get(CLUSTER_TLS_ENABLE)),
@@ -275,14 +280,16 @@ public final class ClientConfig {
         Long.parseLong(properties.getOrDefault(TIKV_GRPC_TIMEOUT, TIKV_GRPC_TIMEOUT_DEFAULT)),
         Long.parseLong(
             properties.getOrDefault(TIKV_GRPC_SCAN_TIMEOUT, TIKV_GRPC_SCAN_TIMEOUT_DEFAULT)),
-        Boolean.parseBoolean(properties.getOrDefault(TIDB_BUILD_IN_DATABASE_VISIBLE,
-            TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT)),
-        properties.getOrDefault(TIDB_JDBC_CONNECTION_PROVIDER_IMPL,
-            TIDB_JDBC_CONNECTION_PROVIDER_IMPL_DEFAULT));
+        Boolean.parseBoolean(
+            properties.getOrDefault(
+                TIDB_BUILD_IN_DATABASE_VISIBLE, TIDB_BUILD_IN_DATABASE_VISIBLE_DEFAULT)),
+        properties.getOrDefault(
+            TIDB_JDBC_CONNECTION_PROVIDER_IMPL, TIDB_JDBC_CONNECTION_PROVIDER_IMPL_DEFAULT));
   }
 
   public ClientConfig(ClientConfig config) {
-    this(config.getDatabaseUrl(),
+    this(
+        config.getDatabaseUrl(),
         config.getUsername(),
         config.getPassword(),
         config.getClusterTlsEnabled(),
@@ -422,7 +429,6 @@ public final class ClientConfig {
     this.clusterJksTrustPassword = jksTrustPassword;
   }
 
-
   public int getMaximumPoolSize() {
     return maximumPoolSize;
   }
@@ -531,39 +537,96 @@ public final class ClientConfig {
 
   @Override
   public int hashCode() {
-    return Objects.hash(pdAddresses, databaseUrl, username, password, clusterTlsEnabled,
-        clusterTlsCA, clusterTlsKey, clusterTlsCert, clusterUseJks, clusterJksKeyPath,
-        clusterJksKeyPassword, clusterJksTrustPath, clusterJksTrustPassword,
-        maximumPoolSize, minimumIdleSize, writeMode, replicaReadPolicy, isFilterPushDown,
-        dnsSearch, timeout, scanTimeout, buildInDatabaseVisible, jdbcConnectionProviderImpl);
+    return Objects.hash(
+        pdAddresses,
+        databaseUrl,
+        username,
+        password,
+        clusterTlsEnabled,
+        clusterTlsCA,
+        clusterTlsKey,
+        clusterTlsCert,
+        clusterUseJks,
+        clusterJksKeyPath,
+        clusterJksKeyPassword,
+        clusterJksTrustPath,
+        clusterJksTrustPassword,
+        maximumPoolSize,
+        minimumIdleSize,
+        writeMode,
+        replicaReadPolicy,
+        isFilterPushDown,
+        dnsSearch,
+        timeout,
+        scanTimeout,
+        buildInDatabaseVisible,
+        jdbcConnectionProviderImpl);
   }
 
   @Override
   public String toString() {
     return "ClientConfig{"
-        + "pdAddresses='" + pdAddresses + '\''
-        + ", databaseUrl='" + databaseUrl + '\''
-        + ", username='" + username + '\''
-        + ", password='" + password + '\''
-        + ", clusterTlsEnabled='" + clusterTlsEnabled + '\''
-        + ", clusterTlsCA='" + clusterTlsCA + '\''
-        + ", clusterTlsKey='" + clusterTlsKey + '\''
-        + ", clusterTlsCert='" + clusterTlsCert + '\''
-        + ", clusterUseJks='" + clusterUseJks + '\''
-        + ", clusterJksKeyPath='" + clusterJksKeyPath + '\''
-        + ", clusterJksKeyPassword='" + clusterJksKeyPassword + '\''
-        + ", clusterJksTrustPath='" + clusterJksTrustPath + '\''
-        + ", clusterJksTrustPassword='" + clusterJksTrustPassword + '\''
-        + ", maximumPoolSize=" + maximumPoolSize
-        + ", minimumIdleSize=" + minimumIdleSize
-        + ", writeMode='" + writeMode + '\''
-        + ", replicaReadPolicy=" + replicaReadPolicy
-        + ", isFilterPushDown=" + isFilterPushDown
-        + ", dnsSearch='" + dnsSearch + '\''
-        + ", timeout=" + timeout
-        + ", scanTimeout=" + scanTimeout
-        + ", buildInDatabaseVisible=" + buildInDatabaseVisible
-        + ", jdbcConnectionProviderImpl=" + jdbcConnectionProviderImpl
+        + "pdAddresses='"
+        + pdAddresses
+        + '\''
+        + ", databaseUrl='"
+        + databaseUrl
+        + '\''
+        + ", username='"
+        + username
+        + '\''
+        + ", password='"
+        + password
+        + '\''
+        + ", clusterTlsEnabled='"
+        + clusterTlsEnabled
+        + '\''
+        + ", clusterTlsCA='"
+        + clusterTlsCA
+        + '\''
+        + ", clusterTlsKey='"
+        + clusterTlsKey
+        + '\''
+        + ", clusterTlsCert='"
+        + clusterTlsCert
+        + '\''
+        + ", clusterUseJks='"
+        + clusterUseJks
+        + '\''
+        + ", clusterJksKeyPath='"
+        + clusterJksKeyPath
+        + '\''
+        + ", clusterJksKeyPassword='"
+        + clusterJksKeyPassword
+        + '\''
+        + ", clusterJksTrustPath='"
+        + clusterJksTrustPath
+        + '\''
+        + ", clusterJksTrustPassword='"
+        + clusterJksTrustPassword
+        + '\''
+        + ", maximumPoolSize="
+        + maximumPoolSize
+        + ", minimumIdleSize="
+        + minimumIdleSize
+        + ", writeMode='"
+        + writeMode
+        + '\''
+        + ", replicaReadPolicy="
+        + replicaReadPolicy
+        + ", isFilterPushDown="
+        + isFilterPushDown
+        + ", dnsSearch='"
+        + dnsSearch
+        + '\''
+        + ", timeout="
+        + timeout
+        + ", scanTimeout="
+        + scanTimeout
+        + ", buildInDatabaseVisible="
+        + buildInDatabaseVisible
+        + ", jdbcConnectionProviderImpl="
+        + jdbcConnectionProviderImpl
         + '}';
   }
 }

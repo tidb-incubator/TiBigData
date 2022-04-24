@@ -18,15 +18,11 @@ package io.tidb.bigdata.flink.connector.utils;
 
 import static java.lang.String.format;
 
-import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import java.io.Serializable;
 import java.sql.Date;
 import java.time.LocalDate;
-import java.util.LinkedHashMap;
 import java.util.List;
 import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.Schema.Builder;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.exception.TiBatchWriteException;
 import org.tikv.common.meta.TiColumnInfo;
@@ -144,8 +140,8 @@ public class TiDBRowConverter implements Serializable {
           if (type.isAutoIncrement()) {
             if (!ignoreAutoincrementColumn) {
               throw new IllegalStateException(
-                  String.format("Auto increment column: %s can not be null",
-                      tiColumnInfo.getName()));
+                  String.format(
+                      "Auto increment column: %s can not be null", tiColumnInfo.getName()));
             } else {
               continue;
             }
@@ -223,6 +219,4 @@ public class TiDBRowConverter implements Serializable {
     }
     return tiRow;
   }
-
-
 }

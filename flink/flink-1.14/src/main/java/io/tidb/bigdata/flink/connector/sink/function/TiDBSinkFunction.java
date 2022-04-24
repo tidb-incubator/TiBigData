@@ -42,13 +42,14 @@ import org.tikv.common.row.Row;
 /**
  * ATTENTIONS: Right now, this class has not provided exactly-once semantic.
  *
- * A sink function that sinks unbounded stream with exactly-once semantic.
- * <p><b>NOTE:</b> There is still a potential of data loss. Please See
- * {@link TwoPhaseCommitSinkFunction#recoverAndCommit(Object)}
+ * <p>A sink function that sinks unbounded stream with exactly-once semantic.
+ *
+ * <p><b>NOTE:</b> There is still a potential of data loss. Please See {@link
+ * TwoPhaseCommitSinkFunction#recoverAndCommit(Object)}
  */
 @Deprecated
-public class TiDBSinkFunction extends
-    TwoPhaseCommitSinkFunction<Row, TiDBTransactionState, TiDBTransactionContext> {
+public class TiDBSinkFunction
+    extends TwoPhaseCommitSinkFunction<Row, TiDBTransactionState, TiDBTransactionContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBSinkFunction.class);
 
@@ -89,8 +90,9 @@ public class TiDBSinkFunction extends
     }
     this.session = ClientSession.create(new ClientConfig(properties));
     this.init = true;
-    this.rowIDAllocator = new DynamicRowIDAllocator(session, databaseName, tableName,
-        sinkOptions.getRowIdAllocatorStep(), null);
+    this.rowIDAllocator =
+        new DynamicRowIDAllocator(
+            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep(), null);
   }
 
   @Override
@@ -118,8 +120,7 @@ public class TiDBSinkFunction extends
     List<BytePairWrapper> pairs = new ArrayList<>(buffer.size());
     TiDBEncodeHelper tiDBEncodeHelper = tiDBEncodeHelpers.get(transactionId);
     TiDBWriteHelper tiDBWriteHelper = tiDBWriteHelpers.get(transactionId);
-    buffer.forEach(
-        row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesByRow(row)));
+    buffer.forEach(row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesByRow(row)));
     if (tiDBWriteHelper.getPrimaryKey().isPresent()) {
       tiDBWriteHelper.preWriteSecondKeys(pairs);
     } else {
@@ -145,16 +146,17 @@ public class TiDBSinkFunction extends
     String transactionId = UUID.randomUUID().toString();
     buffers.put(transactionId, new ArrayList<>(sinkOptions.getBufferSize()));
     TiTimestamp timestamp = session.getSnapshotVersion();
-    TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(session.getTiSession(),
-        timestamp.getVersion());
-    TiDBEncodeHelper tiDBEncodeHelper = new TiDBEncodeHelper(
-        session,
-        timestamp,
-        databaseName,
-        tableName,
-        sinkOptions.isIgnoreAutoincrementColumn(),
-        sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
-        rowIDAllocator);
+    TiDBWriteHelper tiDBWriteHelper =
+        new TiDBWriteHelper(session.getTiSession(), timestamp.getVersion());
+    TiDBEncodeHelper tiDBEncodeHelper =
+        new TiDBEncodeHelper(
+            session,
+            timestamp,
+            databaseName,
+            tableName,
+            sinkOptions.isIgnoreAutoincrementColumn(),
+            sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+            rowIDAllocator);
     tiDBWriteHelpers.put(transactionId, tiDBWriteHelper);
     tiDBEncodeHelpers.put(transactionId, tiDBEncodeHelper);
     return new TiDBTransactionState(transactionId, timestamp.getPhysical(), timestamp.getLogical());
@@ -168,10 +170,14 @@ public class TiDBSinkFunction extends
   @Override
   protected void commit(TiDBTransactionState transaction) {
     String transactionId = transaction.getTransactionId();
-    Optional.ofNullable(tiDBWriteHelpers.remove(transactionId)).ifPresent(tiDBWriteHelper -> {
-      tiDBWriteHelper.getPrimaryKey().ifPresent(primaryKey -> tiDBWriteHelper.commitPrimaryKey());
-      tiDBWriteHelper.close();
-    });
+    Optional.ofNullable(tiDBWriteHelpers.remove(transactionId))
+        .ifPresent(
+            tiDBWriteHelper -> {
+              tiDBWriteHelper
+                  .getPrimaryKey()
+                  .ifPresent(primaryKey -> tiDBWriteHelper.commitPrimaryKey());
+              tiDBWriteHelper.close();
+            });
     Optional.ofNullable(tiDBEncodeHelpers.remove(transactionId)).ifPresent(TiDBEncodeHelper::close);
   }
 
@@ -208,7 +214,5 @@ public class TiDBSinkFunction extends
     }
   }
 
-  public static class TiDBTransactionContext {
-
-  }
+  public static class TiDBTransactionContext {}
 }

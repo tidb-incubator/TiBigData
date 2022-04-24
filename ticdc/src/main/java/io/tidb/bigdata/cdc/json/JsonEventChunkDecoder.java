@@ -23,9 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 
-/**
- * TiCDC open protocol event decoder, parse key value pairs into chunk of event instances.
- */
+/** TiCDC open protocol event decoder, parse key value pairs into chunk of event instances. */
 public class JsonEventChunkDecoder implements EventChunkDecoder {
 
   private static final ThreadLocal<ArrayList<Event>> tlsEventBuffer =
@@ -38,8 +36,8 @@ public class JsonEventChunkDecoder implements EventChunkDecoder {
     iterator = iterator();
   }
 
-  private static Event[] decode(final byte[] keyBits, final byte[] valueBits,
-      final JsonParser parser) {
+  private static Event[] decode(
+      final byte[] keyBits, final byte[] valueBits, final JsonParser parser) {
     final JsonKeyDecoder keys = new JsonKeyDecoder(keyBits, parser);
     final JsonValueDecoder values = new JsonValueDecoder(valueBits, parser);
     final ArrayList<Event> buffer = tlsEventBuffer.get();

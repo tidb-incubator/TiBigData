@@ -48,8 +48,9 @@ public class TiDBStorageHandler implements HiveStorageHandler {
     return new OutputFormat<Object, Object>() {
 
       @Override
-      public RecordWriter getRecordWriter(FileSystem fileSystem, JobConf jobConf, String s,
-          Progressable progressable) throws IOException {
+      public RecordWriter getRecordWriter(
+          FileSystem fileSystem, JobConf jobConf, String s, Progressable progressable)
+          throws IOException {
         throw new UnsupportedOperationException("Writing to TiDB is unsupported now");
       }
 
@@ -76,36 +77,34 @@ public class TiDBStorageHandler implements HiveStorageHandler {
   }
 
   @Override
-  public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-
-  }
+  public void configureInputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {}
 
   @Override
-  public void configureOutputJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-
-  }
+  public void configureOutputJobProperties(
+      TableDesc tableDesc, Map<String, String> jobProperties) {}
 
   @Override
-  public void configureTableJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {
-
-  }
+  public void configureTableJobProperties(TableDesc tableDesc, Map<String, String> jobProperties) {}
 
   /**
    * Put all tidb properties into jobConf. JobConf contains all properties in hive session and
    * session properties should override table properties except for immutable properties such as
    * url, username, password(see {@link TiDBConstant#IMMUTABLE_CONFIG}).
-   * <p>
-   * TODO: Hide password in jobConf
+   *
+   * <p>TODO: Hide password in jobConf
    */
   @Override
   public void configureJobConf(TableDesc tableDesc, JobConf jobConf) {
-    Maps.fromProperties(tableDesc.getProperties()).forEach((key, value) -> {
-      // If property is immutable in session or jobConf is empty,
-      // we use table property to overwrite it;
-      if (TiDBConstant.IMMUTABLE_CONFIG.contains(key) || StringUtils.isEmpty(jobConf.get(key))) {
-        jobConf.set(key, value);
-      }
-    });
+    Maps.fromProperties(tableDesc.getProperties())
+        .forEach(
+            (key, value) -> {
+              // If property is immutable in session or jobConf is empty,
+              // we use table property to overwrite it;
+              if (TiDBConstant.IMMUTABLE_CONFIG.contains(key)
+                  || StringUtils.isEmpty(jobConf.get(key))) {
+                jobConf.set(key, value);
+              }
+            });
   }
 
   @Override

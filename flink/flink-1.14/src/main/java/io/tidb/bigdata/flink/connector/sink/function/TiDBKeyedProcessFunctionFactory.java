@@ -30,12 +30,14 @@ public class TiDBKeyedProcessFunctionFactory {
       case GLOBAL:
         return new TiDBBatchKeyedProcessFunction(sinkOptions, uniqueIndexColumnNames);
       case CHECKPOINT:
-        return new TiDBStreamKeyedProcessFunction(dataStream.getExecutionEnvironment()
-            .getCheckpointConfig(), sinkOptions, uniqueIndexColumnNames);
+        return new TiDBStreamKeyedProcessFunction(
+            dataStream.getExecutionEnvironment().getCheckpointConfig(),
+            sinkOptions,
+            uniqueIndexColumnNames);
       default:
-        throw new IllegalStateException("Can not create KeyedProcessFunction by transaction: "
-            + sinkOptions.getSinkTransaction());
+        throw new IllegalStateException(
+            "Can not create KeyedProcessFunction by transaction: "
+                + sinkOptions.getSinkTransaction());
     }
   }
-
 }

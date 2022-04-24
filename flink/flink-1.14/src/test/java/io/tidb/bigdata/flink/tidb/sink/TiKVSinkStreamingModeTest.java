@@ -65,20 +65,23 @@ import org.slf4j.LoggerFactory;
 public class TiKVSinkStreamingModeTest extends FlinkTestBase {
 
   private static final String SCHEME_ONE_UNIQUE_KEY =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n" + "(\n" + "    c1  bigint,\n"
-          + "    unique key(c1)\n" + ")";
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint,\n"
+          + "    unique key(c1)\n"
+          + ")";
 
   @Parameters(name = "{index}: Transaction={0}, WriteMode={1}, Deduplicate={2}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{SinkTransaction.MINIBATCH, TiDBWriteMode.UPSERT, true}});
+    return Arrays.asList(new Object[][] {{SinkTransaction.MINIBATCH, TiDBWriteMode.UPSERT, true}});
   }
 
   private final SinkTransaction transaction;
   private final TiDBWriteMode writeMode;
   private final boolean deduplicate;
 
-  public TiKVSinkStreamingModeTest(SinkTransaction transaction, TiDBWriteMode writeMode,
-      boolean deduplicate) {
+  public TiKVSinkStreamingModeTest(
+      SinkTransaction transaction, TiDBWriteMode writeMode, boolean deduplicate) {
     this.transaction = transaction;
     this.writeMode = writeMode;
     this.deduplicate = deduplicate;
@@ -103,21 +106,24 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
     properties.put(WRITE_MODE.key(), writeMode.name());
     properties.put(SINK_BUFFER_SIZE.key(), "1");
 
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable, SCHEME_ONE_UNIQUE_KEY, tableEnvironment,
-        properties);
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(dstTable, SCHEME_ONE_UNIQUE_KEY, tableEnvironment, properties);
 
     NumberSequenceSource numberSequenceSource = new NumberSequenceSource(1, 1000);
     TableSchema tableSchema = TableSchema.builder().field("c1", DataTypes.BIGINT()).build();
 
-    TypeInformation<RowData> typeInformation = (TypeInformation<RowData>) ScanRuntimeProviderContext.INSTANCE.createTypeInformation(
-        tableSchema.toRowDataType());
-    SingleOutputStreamOperator<RowData> dataStream = env.fromSource(numberSequenceSource,
-            WatermarkStrategy.noWatermarks(), "number-source").map(new RandomExceptionMapFunction())
-        .returns(typeInformation);
+    TypeInformation<RowData> typeInformation =
+        (TypeInformation<RowData>)
+            ScanRuntimeProviderContext.INSTANCE.createTypeInformation(tableSchema.toRowDataType());
+    SingleOutputStreamOperator<RowData> dataStream =
+        env.fromSource(numberSequenceSource, WatermarkStrategy.noWatermarks(), "number-source")
+            .map(new RandomExceptionMapFunction())
+            .returns(typeInformation);
     tableEnvironment.createTemporaryView(srcTable, dataStream);
     tableEnvironment.sqlUpdate(
-        String.format("INSERT INTO `tidb`.`%s`.`%s` SELECT c1 FROM %s WHERE c1 <= 100", DATABASE_NAME, dstTable,
-            srcTable));
+        String.format(
+            "INSERT INTO `tidb`.`%s`.`%s` SELECT c1 FROM %s WHERE c1 <= 100",
+            DATABASE_NAME, dstTable, srcTable));
     tableEnvironment.execute("test");
 
     Assert.assertEquals(100, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
@@ -155,5 +161,4 @@ public class TiKVSinkStreamingModeTest extends FlinkTestBase {
       return rowData;
     }
   }
-
 }

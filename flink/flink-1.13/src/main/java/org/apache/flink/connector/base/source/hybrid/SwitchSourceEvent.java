@@ -25,36 +25,36 @@ import org.apache.flink.api.connector.source.SourceEvent;
  */
 public class SwitchSourceEvent implements SourceEvent {
 
-    private static final long serialVersionUID = 1L;
-    private final int sourceIndex;
-    private final Source source;
-    private final boolean finalSource;
+  private static final long serialVersionUID = 1L;
+  private final int sourceIndex;
+  private final Source source;
+  private final boolean finalSource;
 
-    /**
-     * Constructor.
-     *
-     * @param sourceIndex
-     */
-    public SwitchSourceEvent(int sourceIndex, Source source, boolean finalSource) {
-        this.sourceIndex = sourceIndex;
-        this.source = source;
-        this.finalSource = finalSource;
-    }
+  /**
+   * Constructor.
+   *
+   * @param sourceIndex
+   */
+  public SwitchSourceEvent(int sourceIndex, Source source, boolean finalSource) {
+    this.sourceIndex = sourceIndex;
+    this.source = source;
+    this.finalSource = finalSource;
+  }
 
-    public int sourceIndex() {
-        return sourceIndex;
-    }
+  public int sourceIndex() {
+    return sourceIndex;
+  }
 
-    public Source source() {
-        return source;
-    }
+  public Source source() {
+    return source;
+  }
 
-    public boolean isFinalSource() {
-        return finalSource;
-    }
+  public boolean isFinalSource() {
+    return finalSource;
+  }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName() + '{' + "sourceIndex=" + sourceIndex + '}';
-    }
+  @Override
+  public String toString() {
+    return this.getClass().getSimpleName() + '{' + "sourceIndex=" + sourceIndex + '}';
+  }
 }
