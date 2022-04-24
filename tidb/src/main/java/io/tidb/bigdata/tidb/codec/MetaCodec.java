@@ -60,7 +60,7 @@ public class MetaCodec {
     cdo.write(META_PREFIX);
     BytesCodec.writeBytes(cdo, key);
     IntegerCodec.writeULong(cdo, HASH_META_FLAG);
-    return cdo.toShadeByteString();
+    return cdo.toByteString();
   }
 
   public static void encodeHashDataKeyPrefix(CodecDataOutput cdo, byte[] key) {
@@ -99,20 +99,20 @@ public class MetaCodec {
   public static ByteString hashGet(ByteString key, ByteString field, Snapshot snapshot) {
     CodecDataOutput cdo = new CodecDataOutput();
     MetaCodec.encodeHashDataKey(cdo, key.toByteArray(), field.toByteArray());
-    return snapshot.get(cdo.toShadeByteString());
+    return snapshot.get(cdo.toByteString());
   }
 
   public static ByteString bytesGet(ByteString key, Snapshot snapshot) {
     CodecDataOutput cdo = new CodecDataOutput();
     MetaCodec.encodeStringDataKey(cdo, key.toByteArray());
-    return snapshot.get(cdo.toShadeByteString());
+    return snapshot.get(cdo.toByteString());
   }
 
   public static List<Pair<ByteString, ByteString>> hashGetFields(
       ByteString key, Snapshot snapshot) {
     CodecDataOutput cdo = new CodecDataOutput();
     MetaCodec.encodeHashDataKeyPrefix(cdo, key.toByteArray());
-    ByteString encodedKey = cdo.toShadeByteString();
+    ByteString encodedKey = cdo.toByteString();
 
     Iterator<KvPair> iterator = snapshot.scanPrefix(encodedKey);
     List<Pair<ByteString, ByteString>> fields = new ArrayList<>();
