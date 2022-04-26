@@ -19,13 +19,13 @@ package io.tidb.bigdata.flink.tidb.pushdown;
 import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.util.List;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.StringType;
 
 @Category(IntegrationTest.class)
 public class FilterPushDownLikeTest extends FilterPushDownTestBase {

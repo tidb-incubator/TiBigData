@@ -17,10 +17,10 @@
 package io.tidb.bigdata.mapreduce.tidb;
 
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Timestamp;

@@ -24,6 +24,8 @@ import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
 import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,8 +47,6 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.meta.TiTableInfo;
 
 public class TiDBDynamicTableSource
     implements ScanTableSource,

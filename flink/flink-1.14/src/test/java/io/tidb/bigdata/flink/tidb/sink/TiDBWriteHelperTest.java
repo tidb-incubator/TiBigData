@@ -22,9 +22,10 @@ import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.row.ObjectRowImpl;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,7 +34,6 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.ObjectRowImpl;
 
 @Category(IntegrationTest.class)
 public class TiDBWriteHelperTest extends FlinkTestBase {

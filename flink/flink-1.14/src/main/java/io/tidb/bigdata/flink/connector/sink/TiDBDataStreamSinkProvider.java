@@ -34,6 +34,11 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SqlUtils;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -57,12 +62,7 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiIndexColumn;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.Row;
 
 public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 

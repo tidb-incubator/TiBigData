@@ -25,13 +25,13 @@ import com.facebook.presto.spi.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.tidb.bigdata.prestodb.tidb.TypeHelper.RecordCursorReader;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.DataTypes;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.List;
 import java.util.Objects;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {
 

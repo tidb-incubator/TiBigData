@@ -18,6 +18,9 @@
     <dep.tikv-client.version>3.2.0</dep.tikv-client.version>
     <dep.guava.version>30.1.1-jre</dep.guava.version>
     <dep.HikariCP.version>3.4.5</dep.HikariCP.version>
+    <protobuf.version>3.5.1</protobuf.version>
+    <grpc.version>1.38.0</grpc.version>
+    <proto.folder>${basedir}/proto</proto.folder>
   </properties>
 
   <dependencies>
@@ -53,10 +56,60 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-</dependencies>
+    <!-- grpc dependencies -->
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-netty</artifactId>
+      <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>${grpc.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+      <scope>compile</scope>
+    </dependency>
+  </dependencies>
 
   <build>
+    <extensions>
+      <extension>
+        <groupId>kr.motd.maven</groupId>
+        <artifactId>os-maven-plugin</artifactId>
+        <version>1.4.1.Final</version>
+      </extension>
+    </extensions>
     <plugins>
+      <plugin>
+        <groupId>org.antlr</groupId>
+        <artifactId>antlr4-maven-plugin</artifactId>
+        <version>4.7.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>antlr4</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <arguments>
+            <argument>-package</argument>
+            <argument>io.tidb.bigdata.tidb.parser</argument>
+          </arguments>
+          <visitor>true</visitor>
+          <sourceDirectory>./src/main/java/io/tidb/bigdata/tidb/parser</sourceDirectory>
+          <outputDirectory>./target/generated-sources/antlr4/java/io/tidb/bigdata/tidb/parser</outputDirectory>
+        </configuration>
+      </plugin>
       <!-- Compiler Plug-in -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -86,6 +139,96 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
         <version>2.4.1</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.5</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${proto.folder}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/main/tipb/include</directory>
+                  <includes>
+                    <include>**/gogoproto/**</include>
+                  </includes>
+                </resource>
+                <resource>
+                  <directory>${basedir}/src/main/tipb/proto</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.xolstice.maven.plugins</groupId>
+        <artifactId>protobuf-maven-plugin</artifactId>
+        <version>0.6.1</version>
+        <configuration>
+          <protoSourceRoot>${proto.folder}</protoSourceRoot>
+          <!--
+            The version of protoc must match protobuf-java. If you don't depend on
+            protobuf-java directly, you will be transitively depending on the
+            protobuf-java version that grpc depends on.
+          -->
+          <protocArtifact>
+           com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
+          </protocArtifact>
+          <pluginId>grpc-java</pluginId>
+          <pluginArtifact>
+            io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
+          </pluginArtifact>
+        </configuration>
+        <executions>
+          <execution>
+            <id>grpc-build</id>
+            <goals>
+              <goal>compile</goal>
+              <goal>compile-custom</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <ignoreMissingFile>false</ignoreMissingFile>
+          <includes>
+            <include>${basedir}/target/generated-sources/protobuf/**</include>
+          </includes>
+          <replacements>
+            <replacement>
+              <token>io.grpc</token>
+              <value>org.tikv.shade.io.grpc</value>
+            </replacement>
+            <replacement>
+              <token>com.google</token>
+              <value>org.tikv.shade.com.google</value>
+            </replacement>
+            <replacement>
+              <token>io.netty</token>
+              <value>org.tikv.shade.io.netty</value>
+            </replacement>
+          </replacements>
+        </configuration>
       </plugin>
     </plugins>
   </build>

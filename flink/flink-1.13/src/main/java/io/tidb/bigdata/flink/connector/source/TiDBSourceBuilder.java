@@ -30,6 +30,7 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.VALID_STREAMING
 
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
 import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
@@ -41,7 +42,6 @@ import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.Preconditions;
-import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceBuilder implements Serializable {

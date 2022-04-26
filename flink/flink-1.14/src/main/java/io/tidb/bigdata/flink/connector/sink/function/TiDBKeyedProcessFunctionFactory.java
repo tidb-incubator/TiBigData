@@ -17,10 +17,10 @@
 package io.tidb.bigdata.flink.connector.sink.function;
 
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.List;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
-import org.tikv.common.row.Row;
 
 public class TiDBKeyedProcessFunctionFactory {
 

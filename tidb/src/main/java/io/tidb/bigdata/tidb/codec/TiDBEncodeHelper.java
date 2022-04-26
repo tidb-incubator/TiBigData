@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.tidb;
+package io.tidb.bigdata.tidb.codec;
 
 import com.google.common.base.Preconditions;
+import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;
+import io.tidb.bigdata.tidb.key.IndexKey;
+import io.tidb.bigdata.tidb.key.IndexKey.EncodeIndexDataResult;
+import io.tidb.bigdata.tidb.key.Key;
+import io.tidb.bigdata.tidb.key.RowKey;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,18 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.Snapshot;
 import org.tikv.common.StoreVersion;
-import org.tikv.common.codec.CodecDataOutput;
-import org.tikv.common.codec.TableCodec;
 import org.tikv.common.exception.TiBatchWriteException;
-import org.tikv.common.key.IndexKey;
-import org.tikv.common.key.IndexKey.EncodeIndexDataResult;
-import org.tikv.common.key.Key;
-import org.tikv.common.key.RowKey;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.Row;
 import org.tikv.common.util.Pair;
 
 public class TiDBEncodeHelper implements AutoCloseable {
@@ -110,9 +110,9 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return array == null || array.length == 0;
   }
 
-  private long extractHandle(Row tiRow) {
+  private Handle extractHandle(Row tiRow) {
     if (tiTableInfo.isPkHandle()) {
-      return (long) tiRow.get(handleCol.getOffset(), handleCol.getType());
+      return new IntHandle((long) tiRow.get(handleCol.getOffset(), handleCol.getType()));
     } else if (isCommonHandle) {
       throw new TiBatchWriteException("Clustered index does not supported now");
     } else {
@@ -134,7 +134,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
-  private Pair<byte[], Boolean> buildUniqueIndexKey(Row tiRow, long handle, TiIndexInfo index) {
+  private Pair<byte[], Boolean> buildUniqueIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
     EncodeIndexDataResult encodeIndexDataResult =
         IndexKey.encodeIndexDataValues(
             tiRow,
@@ -148,7 +148,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   private BytePairWrapper generateUniqueIndexKeyValue(
-      Row tiRow, long handle, TiIndexInfo index, boolean remove) {
+      Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
     Pair<byte[], Boolean> pair = buildUniqueIndexKey(tiRow, handle, index);
     byte[] key = pair.first;
     byte[] value;
@@ -160,7 +160,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       } else {
         // TODO clustered index
         CodecDataOutput codecDataOutput = new CodecDataOutput();
-        codecDataOutput.writeLong(handle);
+        codecDataOutput.writeLong(handle.intValue());
         value = codecDataOutput.toBytes();
       }
     }
@@ -168,13 +168,13 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   private BytePairWrapper generateSecondaryIndexKeyValue(
-      Row tiRow, long handle, TiIndexInfo index, boolean remove) {
+      Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
     Key[] keys =
         IndexKey.encodeIndexDataValues(tiRow, index.getIndexColumns(), handle, false, tiTableInfo)
             .keys;
     CodecDataOutput codecDataOutput = new CodecDataOutput();
     codecDataOutput.write(IndexKey.toIndexKey(tiTableInfo.getId(), index.getId(), keys).getBytes());
-    codecDataOutput.write(new IntHandle(handle).encodedAsKey());
+    codecDataOutput.write(handle.encodedAsKey());
     byte[] value;
     if (remove) {
       value = EMPTY_BYTES;
@@ -184,7 +184,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return new BytePairWrapper(codecDataOutput.toBytes(), value);
   }
 
-  private BytePairWrapper generateRecordKeyValue(Row tiRow, long handle, boolean remove) {
+  private BytePairWrapper generateRecordKeyValue(Row tiRow, Handle handle, boolean remove) {
     byte[] key;
     byte[] value;
     if (remove) {
@@ -197,7 +197,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return new BytePairWrapper(key, value);
   }
 
-  private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, long handle, boolean remove) {
+  private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, Handle handle, boolean remove) {
     return tiTableInfo.getIndices().stream()
         .filter(tiIndexInfo -> !(isCommonHandle && tiIndexInfo.isPrimary()))
         .map(
@@ -211,9 +211,9 @@ public class TiDBEncodeHelper implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  private List<BytePairWrapper> generateDataToBeRemoved(Row tiRow, long handle) {
+  private List<BytePairWrapper> generateDataToBeRemoved(Row tiRow, Handle handle) {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
-    List<Pair<Row, Long>> deletion = new ArrayList<>();
+    List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
       byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
       byte[] oldValue = snapshot.get(key);
@@ -228,7 +228,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
         if (!uniqueIndexKeyPair.second) {
           byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
           if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-            long oldHandle = TableCodec.decodeHandle(oldValue);
+            Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
             byte[] oldRowValue =
                 snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
             Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
@@ -238,7 +238,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
     List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
-    for (Pair<Row, Long> pair : deletion) {
+    for (Pair<Row, Handle> pair : deletion) {
       deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
       deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
     }
@@ -262,14 +262,14 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (isCommonHandle) {
       throw new TiBatchWriteException("Clustered index does not supported now");
     }
-    long handle;
+    Handle handle;
     boolean constraintCheckIsNeeded =
         isCommonHandle || handleCol != null || uniqueIndices.size() > 0;
     if (constraintCheckIsNeeded) {
       if (isCommonHandle || tiTableInfo.isPkHandle()) {
         handle = extractHandle(row);
       } else {
-        handle = rowIdAllocator.getSharedRowId();
+        handle = new IntHandle(rowIdAllocator.getSharedRowId());
       }
       // get deletion row
       List<BytePairWrapper> dataToBeRemoved = generateDataToBeRemoved(row, handle);
@@ -279,7 +279,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
       keyValues.addAll(dataToBeRemoved);
     } else {
-      handle = rowIdAllocator.getSharedRowId();
+      handle = new IntHandle(rowIdAllocator.getSharedRowId());
     }
     keyValues.add(generateRecordKeyValue(row, handle, false));
     keyValues.addAll(generateIndexKeyValues(row, handle, false));

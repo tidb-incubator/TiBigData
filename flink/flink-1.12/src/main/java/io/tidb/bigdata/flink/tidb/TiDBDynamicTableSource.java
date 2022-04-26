@@ -22,6 +22,10 @@ import static io.tidb.bigdata.flink.tidb.TiDBBaseDynamicTableFactory.TABLE_NAME;
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.expression.visitor.SupportedExpressionValidator;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +43,6 @@ import org.apache.flink.table.expressions.ResolvedExpression;
 import org.apache.flink.table.expressions.ValueLiteralExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.expression.visitor.SupportedExpressionValidator;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.types.DataType;
 
 public abstract class TiDBDynamicTableSource extends TiDBBaseDynamicTableSource
     implements SupportsFilterPushDown {

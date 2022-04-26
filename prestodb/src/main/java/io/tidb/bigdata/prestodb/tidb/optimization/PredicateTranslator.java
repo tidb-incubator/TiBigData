@@ -19,19 +19,19 @@ package io.tidb.bigdata.prestodb.tidb.optimization;
 import static com.facebook.presto.expressions.translator.TranslatedExpression.untranslated;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static io.tidb.bigdata.prestodb.tidb.optimization.TiDBPlanOptimizerProvider.isPushdownType;
+import static io.tidb.bigdata.tidb.types.DateType.DATE;
+import static io.tidb.bigdata.tidb.types.IntegerType.BIGINT;
+import static io.tidb.bigdata.tidb.types.IntegerType.INT;
+import static io.tidb.bigdata.tidb.types.IntegerType.SMALLINT;
+import static io.tidb.bigdata.tidb.types.IntegerType.TINYINT;
+import static io.tidb.bigdata.tidb.types.RealType.DOUBLE;
+import static io.tidb.bigdata.tidb.types.RealType.FLOAT;
+import static io.tidb.bigdata.tidb.types.StringType.CHAR;
+import static io.tidb.bigdata.tidb.types.StringType.VARCHAR;
+import static io.tidb.bigdata.tidb.types.TimeType.TIME;
+import static io.tidb.bigdata.tidb.types.TimestampType.TIMESTAMP;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
-import static org.tikv.common.types.DateType.DATE;
-import static org.tikv.common.types.IntegerType.BIGINT;
-import static org.tikv.common.types.IntegerType.INT;
-import static org.tikv.common.types.IntegerType.SMALLINT;
-import static org.tikv.common.types.IntegerType.TINYINT;
-import static org.tikv.common.types.RealType.DOUBLE;
-import static org.tikv.common.types.RealType.FLOAT;
-import static org.tikv.common.types.StringType.CHAR;
-import static org.tikv.common.types.StringType.VARCHAR;
-import static org.tikv.common.types.TimeType.TIME;
-import static org.tikv.common.types.TimestampType.TIMESTAMP;
 
 import com.facebook.presto.expressions.translator.FunctionTranslator;
 import com.facebook.presto.expressions.translator.RowExpressionTranslator;
@@ -62,10 +62,10 @@ import com.google.common.collect.ImmutableList;
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.prestodb.tidb.TiDBColumnHandle;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.tikv.common.expression.Expression;
 
 public final class PredicateTranslator
     extends RowExpressionTranslator<Expression, Map<VariableReferenceExpression, ColumnHandle>> {

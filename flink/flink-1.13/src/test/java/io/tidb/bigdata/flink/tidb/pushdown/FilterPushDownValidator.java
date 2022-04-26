@@ -24,12 +24,17 @@ import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.TableUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,11 +46,6 @@ import org.junit.Assert;
 import org.junit.rules.ExternalResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
 
 public class FilterPushDownValidator extends ExternalResource {
 

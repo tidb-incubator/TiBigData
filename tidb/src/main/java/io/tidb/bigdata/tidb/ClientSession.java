@@ -32,6 +32,19 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
 import io.tidb.bigdata.tidb.allocator.RowIDAllocator;
+import io.tidb.bigdata.tidb.catalog.Catalog;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.key.Base64KeyRange;
+import io.tidb.bigdata.tidb.key.RowKey;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiDAGRequest;
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiPartitionDef;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
+import io.tidb.bigdata.tidb.row.Row;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -55,17 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.TiConfiguration;
 import org.tikv.common.TiSession;
-import org.tikv.common.catalog.Catalog;
-import org.tikv.common.key.RowKey;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiDAGRequest;
-import org.tikv.common.meta.TiIndexColumn;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiPartitionDef;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.operation.iterator.CoprocessorIterator;
-import org.tikv.common.row.Row;
 import org.tikv.common.util.KeyRangeUtils;
 import org.tikv.common.util.RangeSplitter;
 import org.tikv.kvproto.Coprocessor;
@@ -114,7 +117,10 @@ public final class ClientSession implements AutoCloseable {
     tiConfiguration.setReplicaSelector(policy);
     tiConfiguration.setHostMapping(hostMapping);
     session = TiSession.create(tiConfiguration);
-    catalog = session.getCatalog();
+    // TODO: enhancement to make catalog singleton
+    catalog =
+        new Catalog(
+            session::createSnapshot, tiConfiguration.ifShowRowId(), tiConfiguration.getDBPrefix());
   }
 
   public List<String> getSchemaNames() {

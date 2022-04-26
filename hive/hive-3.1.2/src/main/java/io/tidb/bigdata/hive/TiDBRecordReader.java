@@ -18,10 +18,11 @@ package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -37,7 +38,6 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.types.DataType;
 
 public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable> {
 

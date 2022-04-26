@@ -17,7 +17,7 @@
 package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

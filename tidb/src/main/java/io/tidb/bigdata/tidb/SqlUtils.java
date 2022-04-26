@@ -20,14 +20,14 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static java.util.Collections.nCopies;
 
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiIndexInfo;
-import org.tikv.common.meta.TiTableInfo;
 
 public class SqlUtils {
 

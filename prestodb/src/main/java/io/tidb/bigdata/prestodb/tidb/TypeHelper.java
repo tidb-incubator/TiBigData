@@ -22,9 +22,9 @@ import static java.util.Objects.requireNonNull;
 import com.facebook.presto.spi.type.Type;
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.Objects;
 import java.util.function.Function;
-import org.tikv.common.types.DataType;
 
 public final class TypeHelper {
 

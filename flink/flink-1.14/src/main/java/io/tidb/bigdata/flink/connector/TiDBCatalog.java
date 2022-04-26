@@ -26,6 +26,7 @@ import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.utils.TiDBRowConverter;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -63,7 +64,6 @@ import org.apache.flink.table.factories.Factory;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.meta.TiTableInfo;
 
 public class TiDBCatalog extends AbstractCatalog {
 

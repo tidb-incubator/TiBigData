@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector.sink.function;
 
 import com.google.common.base.Objects;
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
+import io.tidb.bigdata.tidb.row.Row;
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,7 +31,6 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.tikv.common.row.Row;
 
 /**
  * A keyed function that deduplicates elements of an unbounded stream. CheckpointEntry stored in

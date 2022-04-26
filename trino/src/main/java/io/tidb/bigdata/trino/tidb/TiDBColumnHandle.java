@@ -22,16 +22,16 @@ import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.DataTypes;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.trino.tidb.TypeHelper.RecordCursorReader;
 import io.trino.spi.connector.ColumnHandle;
 import io.trino.spi.type.Type;
 import java.util.List;
 import java.util.Objects;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.types.DataType;
 
 public final class TiDBColumnHandle implements ColumnHandle {
 

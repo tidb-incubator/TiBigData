@@ -27,6 +27,12 @@ import static io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper.FlinkEx
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.expression.visitor.SupportedExpressionValidator;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.types.MySQLType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDate;
@@ -49,12 +55,6 @@ import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.types.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.tikv.common.expression.Expression;
-import org.tikv.common.expression.visitor.SupportedExpressionValidator;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.types.MySQLType;
-import org.tikv.common.types.StringType;
 
 public class FilterPushDownHelper {
 
@@ -69,7 +69,7 @@ public class FilterPushDownHelper {
           DataTypes.TINYINT(), DataTypes.SMALLINT(), DataTypes.INT(), DataTypes.BIGINT());
 
   private final TiTableInfo tiTableInfo;
-  private final Map<String, org.tikv.common.types.DataType> nameTypeMap;
+  private final Map<String, io.tidb.bigdata.tidb.types.DataType> nameTypeMap;
   private final Optional<StoreVersion> minimumTiKVVersion;
 
   public boolean isSupportEnumPushDown() {
@@ -223,7 +223,7 @@ public class FilterPushDownHelper {
     final String name = columnElement.getColumnName();
     final DataType type = columnElement.getType();
     final DataType castType = columnElement.getCastType();
-    final org.tikv.common.types.DataType tidbType = nameTypeMap.get(name);
+    final io.tidb.bigdata.tidb.types.DataType tidbType = nameTypeMap.get(name);
     final Object value = valueElement.getValue();
     final DataType valueType = valueElement.getType();
 
@@ -250,7 +250,7 @@ public class FilterPushDownHelper {
     }
 
     // Convert Type, TODO: json and set
-    org.tikv.common.types.DataType resultType = tidbType;
+    io.tidb.bigdata.tidb.types.DataType resultType = tidbType;
     if (tidbType.getType() == MySQLType.TypeEnum) {
       if (!isSupportEnumPushDown() || !(value instanceof String)) {
         return Optional.empty();

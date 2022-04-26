@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.tidb;
+package io.tidb.bigdata.tidb.handle;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import io.tidb.bigdata.tidb.types.DataType;
 import java.io.Serializable;
 import java.util.Objects;
-import org.tikv.common.types.DataType;
 
 public final class ColumnHandleInternal implements Serializable {
 

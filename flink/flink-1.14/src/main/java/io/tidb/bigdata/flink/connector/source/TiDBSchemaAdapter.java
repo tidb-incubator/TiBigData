@@ -18,13 +18,14 @@ package io.tidb.bigdata.flink.connector.source;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.METADATA_INCLUDED;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.METADATA_INCLUDED_ALL;
-import static org.tikv.common.types.MySQLType.TypeDatetime;
-import static org.tikv.common.types.MySQLType.TypeTimestamp;
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeDatetime;
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeTimestamp;
 
 import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.flink.format.cdc.CDCMetadata;
 import io.tidb.bigdata.flink.format.cdc.CDCSchemaAdapter;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.MySQLType;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -59,7 +60,6 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.utils.DataTypeUtils;
 import org.apache.flink.types.RowKind;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.types.MySQLType;
 
 public class TiDBSchemaAdapter implements Serializable {
 
@@ -199,7 +199,7 @@ public class TiDBSchemaAdapter implements Serializable {
    * @param tidbType TiDB datatype
    */
   public static Optional<Object> getObjectWithDataType(
-      @Nullable Object object, DataType flinkType, org.tikv.common.types.DataType tidbType) {
+      @Nullable Object object, DataType flinkType, io.tidb.bigdata.tidb.types.DataType tidbType) {
     if (object == null) {
       return Optional.empty();
     }

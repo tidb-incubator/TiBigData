@@ -19,6 +19,8 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;

@@ -21,10 +21,10 @@ import static io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration.REGIONS_PER_SPLIT
 
 import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;

@@ -16,12 +16,12 @@
 
 package io.tidb.bigdata.tidb.handle;
 
+import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
+import io.tidb.bigdata.tidb.codec.CodecDataOutput;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.IntegerType;
 import java.util.Arrays;
-import org.tikv.common.codec.Codec.IntegerCodec;
-import org.tikv.common.codec.CodecDataOutput;
 import org.tikv.common.exception.CodecException;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.IntegerType;
 
 public class IntHandle implements Handle {
 

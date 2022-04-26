@@ -1,0 +1,3 @@
+[submodule "tidb/src/main/tipb"]
+	path = tidb/src/main/tipb
+	url = https://github.com/pingcap/tipb.git

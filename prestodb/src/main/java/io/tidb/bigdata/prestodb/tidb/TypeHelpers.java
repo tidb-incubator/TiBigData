@@ -56,6 +56,11 @@ import com.facebook.presto.spi.type.VarcharType;
 import com.google.common.collect.ImmutableMap;
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.BytesType;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.EnumType;
+import io.tidb.bigdata.tidb.types.SetType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.sql.Date;
@@ -66,11 +71,6 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.joda.time.DateTimeZone;
 import org.joda.time.chrono.ISOChronology;
-import org.tikv.common.types.BytesType;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.EnumType;
-import org.tikv.common.types.SetType;
-import org.tikv.common.types.StringType;
 
 public final class TypeHelpers {
 

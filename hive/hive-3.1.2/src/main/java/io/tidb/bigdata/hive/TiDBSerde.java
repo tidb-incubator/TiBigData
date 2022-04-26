@@ -21,7 +21,7 @@ import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

@@ -20,18 +20,18 @@ import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RowBuffer;
-import io.tidb.bigdata.tidb.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
 import org.apache.flink.streaming.api.operators.BoundedOneInput;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.tikv.common.meta.TiTableInfo;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.row.Row;
 
 /**
  * Base operator for flushing rows to TiDB. When the row size is larger than the threshold, it will

@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.prestosql.spi.connector.ConnectorInsertTableHandle;
 import io.prestosql.spi.connector.ConnectorOutputTableHandle;
 import io.prestosql.spi.connector.ConnectorTableHandle;
-import io.tidb.bigdata.tidb.TableHandleInternal;
 import io.tidb.bigdata.tidb.Wrapper;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 
 public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
     implements ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {

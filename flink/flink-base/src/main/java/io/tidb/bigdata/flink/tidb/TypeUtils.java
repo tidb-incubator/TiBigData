@@ -16,11 +16,13 @@
 
 package io.tidb.bigdata.flink.tidb;
 
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeDatetime;
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeTimestamp;
 import static java.lang.String.format;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
-import static org.tikv.common.types.MySQLType.TypeDatetime;
-import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
+import io.tidb.bigdata.tidb.types.MySQLType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -42,8 +44,6 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
-import org.tikv.common.types.MySQLType;
-import org.tikv.common.types.StringType;
 
 public class TypeUtils {
 
@@ -58,7 +58,7 @@ public class TypeUtils {
    * @param dataType TiKV DataType
    * @return Flink DataType
    */
-  public static DataType getFlinkType(org.tikv.common.types.DataType dataType) {
+  public static DataType getFlinkType(io.tidb.bigdata.tidb.types.DataType dataType) {
     boolean unsigned = dataType.isUnsigned();
     int length = (int) dataType.getLength();
     switch (dataType.getType()) {
@@ -123,7 +123,7 @@ public class TypeUtils {
   public static Optional<Object> getObjectWithDataType(
       @Nullable Object object,
       DataType flinkType,
-      org.tikv.common.types.DataType tidbType,
+      io.tidb.bigdata.tidb.types.DataType tidbType,
       @NotNull DateTimeFormatter formatter) {
     if (object == null) {
       return Optional.empty();

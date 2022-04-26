@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.connector.sink.function;
 
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.flink.api.common.state.StateTtlConfig;
@@ -26,7 +27,6 @@ import org.apache.flink.api.common.time.Time;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.KeyedProcessFunction;
 import org.apache.flink.util.Collector;
-import org.tikv.common.row.Row;
 
 /**
  * A keyed function that deduplicates elements of a bounded stream. Boolean stored in ValueState is

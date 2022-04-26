@@ -18,6 +18,8 @@ package io.tidb.bigdata.hive;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -41,8 +43,6 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.StringType;
 
 public class TypeUtils {
 

@@ -25,6 +25,7 @@ import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
 import io.tidb.bigdata.flink.tidb.TiDBBaseCatalog;
 import io.tidb.bigdata.flink.tidb.TypeUtils;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,7 +39,6 @@ import org.apache.flink.table.catalog.exceptions.CatalogException;
 import org.apache.flink.table.catalog.exceptions.TableNotExistException;
 import org.apache.flink.table.factories.Factory;
 import org.apache.flink.table.types.DataType;
-import org.tikv.common.meta.TiColumnInfo;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
 

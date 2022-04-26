@@ -21,8 +21,8 @@ import com.facebook.presto.spi.ConnectorOutputTableHandle;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.tidb.bigdata.tidb.TableHandleInternal;
 import io.tidb.bigdata.tidb.Wrapper;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 
 public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
     implements ConnectorTableHandle, ConnectorOutputTableHandle, ConnectorInsertTableHandle {

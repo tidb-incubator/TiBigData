@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.tidb;
+package io.tidb.bigdata.tidb.key;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;

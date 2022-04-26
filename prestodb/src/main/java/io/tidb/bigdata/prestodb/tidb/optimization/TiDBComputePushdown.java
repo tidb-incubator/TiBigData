@@ -42,9 +42,9 @@ import io.tidb.bigdata.prestodb.tidb.TiDBSession;
 import io.tidb.bigdata.prestodb.tidb.TiDBTableHandle;
 import io.tidb.bigdata.prestodb.tidb.TiDBTableLayoutHandle;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.util.Optional;
 import java.util.Set;
-import org.tikv.common.expression.Expression;
 
 public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
 
