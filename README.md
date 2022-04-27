@@ -55,7 +55,7 @@ First, make sure the module add dependency:
 ```xml
  <dependency>
       <groupId>io.tidb</groupId>
-      <artifactId>test</artifactId>
+      <artifactId>bigdata-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
 </dependency>
