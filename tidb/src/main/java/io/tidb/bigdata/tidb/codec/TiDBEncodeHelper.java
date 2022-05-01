@@ -19,6 +19,7 @@ package io.tidb.bigdata.tidb.codec;
 import com.google.common.base.Preconditions;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
+import io.tidb.bigdata.tidb.handle.CommonHandle;
 import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;
 import io.tidb.bigdata.tidb.key.IndexKey;
@@ -26,9 +27,11 @@ import io.tidb.bigdata.tidb.key.IndexKey.EncodeIndexDataResult;
 import io.tidb.bigdata.tidb.key.Key;
 import io.tidb.bigdata.tidb.key.RowKey;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -49,7 +52,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
   public static final String VERSION = "4.0.0";
   public static final byte[] EMPTY_BYTES = new byte[0];
-  public static final byte[] ZERO_BYTES = new byte[] {'0'};
+  public static final byte[] ZERO_BYTES = new byte[]{'0'};
 
   private final ClientSession session;
   private final TiTimestamp timestamp;
@@ -114,7 +117,21 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (tiTableInfo.isPkHandle()) {
       return new IntHandle((long) tiRow.get(handleCol.getOffset(), handleCol.getType()));
     } else if (isCommonHandle) {
-      throw new TiBatchWriteException("Clustered index does not supported now");
+      List<DataType> dataTypes = new ArrayList<>();
+      List<Object> data = new ArrayList<>();
+      List<TiIndexColumn> indexColumns = new ArrayList<>();
+
+      tiTableInfo.getPrimaryKey().getIndexColumns().forEach(
+          indexColumn -> {
+            TiColumnInfo column = tiTableInfo.getColumn(indexColumn.getName());
+            dataTypes.add(0, column.getType());
+            data.add(0, tiRow.get(column.getOffset(), column.getType()));
+            indexColumns.add(0, indexColumn);
+          }
+      );
+
+      return CommonHandle.newCommonHandle(dataTypes.toArray(new DataType[0]), data.toArray(),
+          indexColumns.stream().mapToLong(TiIndexColumn::getLength).toArray());
     } else {
       throw new TiBatchWriteException("Cannot extract handle non pk is handle table");
     }
@@ -150,18 +167,24 @@ public class TiDBEncodeHelper implements AutoCloseable {
   private BytePairWrapper generateUniqueIndexKeyValue(
       Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
     Pair<byte[], Boolean> pair = buildUniqueIndexKey(tiRow, handle, index);
+
     byte[] key = pair.first;
+    boolean needToAppendHandle = pair.second;
     byte[] value;
     if (remove) {
       value = EMPTY_BYTES;
     } else {
-      if (pair.second) {
+      if (needToAppendHandle) {
         value = ZERO_BYTES;
       } else {
-        // TODO clustered index
-        CodecDataOutput codecDataOutput = new CodecDataOutput();
-        codecDataOutput.writeLong(handle.intValue());
-        value = codecDataOutput.toBytes();
+        if (handle.isInt()) {
+          CodecDataOutput codecDataOutput = new CodecDataOutput();
+          codecDataOutput.writeLong(handle.intValue());
+          value = codecDataOutput.toBytes();
+        } else {
+          // clustered index
+          value = TableCodec.genIndexValueForClusteredIndexVersion1(index, handle);
+        }
       }
     }
     return new BytePairWrapper(key, value);
@@ -258,10 +281,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
         throw new IllegalStateException("Auto increment column can not be null");
       }
     }
-    // TODO cluster index
-    if (isCommonHandle) {
-      throw new TiBatchWriteException("Clustered index does not supported now");
-    }
+
     Handle handle;
     boolean constraintCheckIsNeeded =
         isCommonHandle || handleCol != null || uniqueIndices.size() > 0;
@@ -287,7 +307,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+  }
 
   public ClientSession getSession() {
     return session;
