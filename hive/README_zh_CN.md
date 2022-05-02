@@ -24,6 +24,9 @@ Hive 版本与 TiBigData 模块对应关系：
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 
+# 更新子项目 `tipb`
+git submodule update --init --recursive
+
 # 编译 Hive Storage Handler，以 hive-2.2.0 为例
 mvn clean package -DskipTests -am -pl hive/hive-2.2.0
 ```

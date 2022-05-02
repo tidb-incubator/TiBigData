@@ -25,6 +25,9 @@ Hive Version to TiBigData Module：
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 
+# update submodule `tipb`
+git submodule update --init --recursive
+
 # compile Hive Storage Handler，using hive-2.2.0 as an example
 mvn clean package -DskipTests -am -pl hive/hive-2.2.0
 ```
