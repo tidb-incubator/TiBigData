@@ -347,7 +347,7 @@
             </goals>
             <configuration>
               <executable>/bin/bash</executable>
-              <basedir>${project.basedir}</basedir>
+              <workingDirectory>${project.basedir}</workingDirectory>
               <arguments>
                 <argument>-c</argument>
                 <argument>git submodule update --init --recursive</argument>
