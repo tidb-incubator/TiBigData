@@ -350,7 +350,7 @@
               <workingDirectory>${project.basedir}</workingDirectory>
               <arguments>
                 <argument>-c</argument>
-                <argument>git submodule update --init --recursive</argument>
+                <argument>if [ -d .git ]; then git submodule update --init --recursive; fi</argument>
               </arguments>
             </configuration>
           </execution>
