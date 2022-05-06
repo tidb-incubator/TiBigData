@@ -8,6 +8,7 @@
   * [Download Flink](#download-flink) 
   * [Install TiBigData and start Flink cluster](#install-tibigdata-and-start-flink-cluster) 
 * [Read & Write](#read--write)
+* [Supports and Limitations](#supports-and-limitations)
 * [DataTypes supported](#datatypes-supported)
 * [Configuration](#configuration)
 * [TableFactory(deprecated)](#tablefactorydeprecated)
@@ -144,6 +145,14 @@ Flink SQL> SELECT * FROM `tidb`.`test`.`people`;
 +----+-------------+--------------------------------+
 Received a total of 1 row
 ```
+
+## Supports and Limitations
+
+TiBigDate/Flink supports writing data to and reading from clustered index tables, which is a new feature in TiDB-5.0.0.
+
+TiBigDate/Flink does not support the following features: 
+- tables with auto random column
+- partition table
 
 ## DataTypes supported
 
