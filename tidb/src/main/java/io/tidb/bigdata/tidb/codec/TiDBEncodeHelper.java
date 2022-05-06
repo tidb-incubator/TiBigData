@@ -282,6 +282,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
 
+    if (isCommonHandle && !session.supportClusteredIndex()) {
+      throw new TiBatchWriteException(
+          "Current TiDB version does not support clustered index, please make sure TiDB version is greater than or equal to v5.0");
+    }
+
     Handle handle;
     boolean constraintCheckIsNeeded =
         isCommonHandle || handleCol != null || uniqueIndices.size() > 0;

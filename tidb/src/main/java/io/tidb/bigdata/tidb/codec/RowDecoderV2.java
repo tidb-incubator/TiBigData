@@ -22,6 +22,7 @@ import io.tidb.bigdata.tidb.codec.Codec.EnumCodec;
 import io.tidb.bigdata.tidb.codec.Codec.SetCodec;
 import io.tidb.bigdata.tidb.types.Converter;
 import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.ExtendedDateTime;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
@@ -29,7 +30,6 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import org.joda.time.DateTimeZone;
-import org.tikv.common.ExtendedDateTime;
 import org.tikv.common.exception.CodecException;
 import org.tikv.common.util.JsonUtils;
 

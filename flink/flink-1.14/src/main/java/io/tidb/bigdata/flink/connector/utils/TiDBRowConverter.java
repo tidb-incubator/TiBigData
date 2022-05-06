@@ -56,7 +56,11 @@ public class TiDBRowConverter implements Serializable {
     org.apache.flink.table.types.DataType flinkType;
     switch (dataType.getType()) {
       case TypeBit:
-        flinkType = DataTypes.BOOLEAN();
+        if (dataType.getLength() == 1) {
+          flinkType = DataTypes.BOOLEAN();
+        } else {
+          flinkType = DataTypes.BIGINT();
+        }
         break;
       case TypeTiny:
         flinkType = unsigned ? DataTypes.SMALLINT() : DataTypes.TINYINT();

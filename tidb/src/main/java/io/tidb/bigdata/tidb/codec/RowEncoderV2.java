@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import org.joda.time.DateTimeZone;
-import org.tikv.common.ExtendedDateTime;
+import io.tidb.bigdata.tidb.types.ExtendedDateTime;
 import org.tikv.common.exception.CodecException;
 import org.tikv.common.exception.TypeException;
 

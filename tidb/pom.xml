@@ -21,6 +21,7 @@
     <protobuf.version>3.5.1</protobuf.version>
     <grpc.version>1.38.0</grpc.version>
     <proto.folder>${basedir}/proto</proto.folder>
+    <argLine>-Dfile.encoding=UTF-8 -Duser.timezone=GMT+8</argLine>
   </properties>
 
   <dependencies>
