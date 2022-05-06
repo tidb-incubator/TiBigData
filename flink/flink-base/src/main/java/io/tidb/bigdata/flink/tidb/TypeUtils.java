@@ -67,6 +67,7 @@ public class TypeUtils {
         if (dataType.getLength() == 1) {
           return DataTypes.BOOLEAN();
         } else {
+	  // TODO : it's better to convert `BIT(n)` to type `Binary(n/8)`
           return DataTypes.BIGINT();
         }
       case TypeTiny:

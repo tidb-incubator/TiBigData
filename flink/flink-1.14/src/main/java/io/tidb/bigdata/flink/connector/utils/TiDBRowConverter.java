@@ -60,6 +60,7 @@ public class TiDBRowConverter implements Serializable {
         if (dataType.getLength() == 1) {
           flinkType = DataTypes.BOOLEAN();
         } else {
+	  // TODO : it's better to convert `BIT(n)` to type `Binary(n/8)`
           flinkType = DataTypes.BIGINT();
         }
         break;
