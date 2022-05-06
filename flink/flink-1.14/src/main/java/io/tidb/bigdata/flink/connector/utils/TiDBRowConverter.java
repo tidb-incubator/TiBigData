@@ -56,6 +56,7 @@ public class TiDBRowConverter implements Serializable {
     org.apache.flink.table.types.DataType flinkType;
     switch (dataType.getType()) {
       case TypeBit:
+        // Only Convert Bit(1) to Boolean
         if (dataType.getLength() == 1) {
           flinkType = DataTypes.BOOLEAN();
         } else {

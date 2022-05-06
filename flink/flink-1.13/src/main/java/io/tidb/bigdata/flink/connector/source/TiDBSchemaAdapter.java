@@ -57,6 +57,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.runtime.connector.source.ScanRuntimeProviderContext;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.utils.DataTypeUtils;
 import org.apache.flink.types.RowKind;
 import org.tikv.common.meta.TiTimestamp;
@@ -205,6 +206,11 @@ public class TiDBSchemaAdapter implements Serializable {
     }
     Class<?> conversionClass = flinkType.getConversionClass();
     if (flinkType.getConversionClass() == object.getClass()) {
+      if (flinkType.getConversionClass() == BigDecimal.class) {
+        object = DecimalData.fromBigDecimal((BigDecimal) object,
+            ((DecimalType) flinkType.getLogicalType()).getPrecision(),
+            ((DecimalType) flinkType.getLogicalType()).getScale());
+      }
       return Optional.of(object);
     }
     MySQLType mySqlType = tidbType.getType();
