@@ -18,6 +18,8 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 ## Getting Started
 
+**Compiling TiBigData requires git and downloading source code directly is not supported.**
+
 [Flink-TiDB-Connector](./flink/README.md)
 
 [PrestoSQL-TiDB-Connector](./prestosql/README.md)
