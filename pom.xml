@@ -184,7 +184,6 @@
             </dependency>
           </dependencies>
           <configuration>
-            <argLine>-Dfile.encoding=UTF-8 -Duser.timezone=GMT-7</argLine>
             <parallel>suites</parallel>
             <useUnlimitedThreads>true</useUnlimitedThreads>
             <forkMode>always</forkMode>
