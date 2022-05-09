@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 import org.tikv.common.exception.CodecException;
 import org.tikv.common.util.FastByteComparisons;
 
@@ -56,7 +58,7 @@ public class CommonHandle implements Handle {
         long milliseconds = ((Timestamp) data[i]).getTime();
         dataTypes[i].encode(cdo, DataType.EncodeType.KEY, milliseconds);
       } else if (dataTypes[i].getType().equals(MySQLType.TypeDate)) {
-        long days = (long) Math.ceil(((double) ((Date) data[i]).getTime()) / MS_OF_ONE_DAY);
+        long days = Days.daysBetween(new LocalDate(0), new LocalDate(data[i])).getDays();
         if (Converter.getLocalTimezone().getOffset(0) < 0) {
           days += 1;
         }

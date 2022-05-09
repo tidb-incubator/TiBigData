@@ -312,6 +312,7 @@ public class TableCodecV2Test {
 
   @Test
   public void testSpecialDateTimeType() {
+    System.setProperty("user.timezone", "GMT-7");
     TestCase testCase =
         TestCase.createNew(
             new int[] {128, 0, 1, 0, 0, 0, 1, 8, 0, 0, 0, 0, 0, 0, 66, 178, 12},

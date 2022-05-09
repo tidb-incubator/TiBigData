@@ -166,7 +166,7 @@ Received a total of 1 row
 TiBigDate/Flink 支持向聚簇索引表写入数据、读取数据，这是TiDB-5.0.0的一个新特性。
 
 TiBigDate/Flink 暂不支持以下功能：
-- AUTO_RANDOM
+- bypass TiDB 写带有 AUTO_RANDOM 列的表
 - 分区表
 
 ## Flink 与 TiDB 的类型映射

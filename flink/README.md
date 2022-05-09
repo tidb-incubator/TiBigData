@@ -151,7 +151,7 @@ Received a total of 1 row
 TiBigDate/Flink supports writing data to and reading from clustered index tables, which is a new feature in TiDB-5.0.0.
 
 TiBigDate/Flink does not support the following features: 
-- tables with auto random column
+- bypass-write tables with auto random column
 - partition table
 
 ## DataTypes supported
