@@ -48,13 +48,6 @@ import org.junit.Test;
 
 public class TableCodecV2Test {
 
-  {
-    // Timezone is fixed to a random GMT-8 for those timezone-sensitive tests (timestamp_*, date_*, etc)
-    TimeZone timeZone = TimeZone.getTimeZone("GMT+8");
-    // JDK time zone
-    TimeZone.setDefault(timeZone);
-  }
-
   private static final DataType TEST_BIT_TYPE =
       DataTypeFactory.of(
           new TiColumnInfo.InternalTypeHolder(

@@ -52,7 +52,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
   public static final String VERSION = "4.0.0";
   public static final byte[] EMPTY_BYTES = new byte[0];
-  public static final byte[] ZERO_BYTES = new byte[]{'0'};
+  public static final byte[] ZERO_BYTES = new byte[] {'0'};
 
   private final ClientSession session;
   private final TiTimestamp timestamp;
@@ -121,16 +121,20 @@ public class TiDBEncodeHelper implements AutoCloseable {
       List<Object> data = new ArrayList<>();
       List<TiIndexColumn> indexColumns = new ArrayList<>();
 
-      tiTableInfo.getPrimaryKey().getIndexColumns().forEach(
-          indexColumn -> {
-            TiColumnInfo column = tiTableInfo.getColumn(indexColumn.getName());
-            dataTypes.add(0, column.getType());
-            data.add(0, tiRow.get(column.getOffset(), column.getType()));
-            indexColumns.add(0, indexColumn);
-          }
-      );
+      tiTableInfo
+          .getPrimaryKey()
+          .getIndexColumns()
+          .forEach(
+              indexColumn -> {
+                TiColumnInfo column = tiTableInfo.getColumn(indexColumn.getName());
+                dataTypes.add(0, column.getType());
+                data.add(0, tiRow.get(column.getOffset(), column.getType()));
+                indexColumns.add(0, indexColumn);
+              });
 
-      return CommonHandle.newCommonHandle(dataTypes.toArray(new DataType[0]), data.toArray(),
+      return CommonHandle.newCommonHandle(
+          dataTypes.toArray(new DataType[0]),
+          data.toArray(),
           indexColumns.stream().mapToLong(TiIndexColumn::getLength).toArray());
     } else {
       throw new TiBatchWriteException("Cannot extract handle non pk is handle table");
@@ -312,8 +316,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 
   public ClientSession getSession() {
     return session;

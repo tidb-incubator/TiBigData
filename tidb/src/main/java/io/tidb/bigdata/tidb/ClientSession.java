@@ -352,9 +352,7 @@ public final class ClientSession implements AutoCloseable {
   public boolean supportClusteredIndex() {
     try (Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement();
-        ResultSet resultSet =
-            statement.executeQuery(
-                TIDB_ENABLE_CLUSTERED_INDEX)) {
+        ResultSet resultSet = statement.executeQuery(TIDB_ENABLE_CLUSTERED_INDEX)) {
       resultSet.next();
     } catch (SQLException e) {
       return false;

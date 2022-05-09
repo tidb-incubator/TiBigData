@@ -42,8 +42,7 @@ public class MetaUtils {
     private final long maxShardRowIDBits = 0L;
     private final long autoRandomBits = 0L;
 
-    public TableBuilder() {
-    }
+    public TableBuilder() {}
 
     public static TableBuilder newBuilder() {
       return new TableBuilder();
@@ -98,8 +97,7 @@ public class MetaUtils {
     public TableBuilder appendIndex(
         long iid, String indexName, List<String> colNames, boolean isPk) {
       List<TiIndexColumn> indexCols =
-          colNames
-              .stream()
+          colNames.stream()
               .map(name -> columns.stream().filter(c -> c.matchName(name)).findFirst())
               .flatMap(col -> col.isPresent() ? Stream.of(col.get()) : Stream.empty())
               .map(TiColumnInfo::toIndexColumn)
