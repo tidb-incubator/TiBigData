@@ -161,6 +161,14 @@ Received a total of 1 row
 
 至此，你已经知道如何在 Flink 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
 
+## 支持和限制
+
+TiBigDate/Flink 支持向聚簇索引表写入数据、读取数据，这是TiDB-5.0.0的一个新特性。
+
+TiBigDate/Flink 暂不支持以下功能：
+- bypass TiDB 写带有 AUTO_RANDOM 列的表
+- 分区表
+
 ## Flink 与 TiDB 的类型映射
 
 TiDB 与 Flink 的类型映射关系可参考下表：

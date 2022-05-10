@@ -24,14 +24,19 @@ import io.tidb.bigdata.tidb.types.Converter;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.MySQLType;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.joda.time.Days;
+import org.joda.time.LocalDate;
 import org.tikv.common.exception.CodecException;
 import org.tikv.common.util.FastByteComparisons;
 
 public class CommonHandle implements Handle {
+
+  private static final int MS_OF_ONE_DAY = 24 * 3600 * 1000;
   private final byte[] encoded;
   private final int[] colEndOffsets;
 
@@ -50,13 +55,14 @@ public class CommonHandle implements Handle {
     CodecDataOutput cdo = new CodecDataOutput();
     for (int i = 0; i < data.length; i++) {
       if (dataTypes[i].getType().equals(MySQLType.TypeTimestamp)) {
-        dataTypes[i].encode(cdo, DataType.EncodeType.KEY, ((long) data[i]) / 1000);
+        long milliseconds = ((Timestamp) data[i]).getTime();
+        dataTypes[i].encode(cdo, DataType.EncodeType.KEY, milliseconds);
       } else if (dataTypes[i].getType().equals(MySQLType.TypeDate)) {
-        long days = (long) data[i];
+        long days = Days.daysBetween(new LocalDate(0), new LocalDate(data[i])).getDays();
         if (Converter.getLocalTimezone().getOffset(0) < 0) {
           days += 1;
         }
-        dataTypes[i].encode(cdo, DataType.EncodeType.KEY, new Date((days) * 24 * 3600 * 1000));
+        dataTypes[i].encode(cdo, DataType.EncodeType.KEY, new Date((days) * MS_OF_ONE_DAY));
       } else {
         if (prefixLengthes[i] > 0 && data[i] instanceof String) {
           String source = (String) data[i];

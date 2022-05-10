@@ -83,6 +83,7 @@ public final class ClientSession implements AutoCloseable {
   private static final int ROW_ID_STEP = 30000;
   private static final int MAX_RETRY = 0;
   private static final long RANDOM_SLEEP_UPPER_BOUND = 0L;
+  private static final String TIDB_ENABLE_CLUSTERED_INDEX = "select @@tidb_enable_clustered_index";
 
   private final ClientConfig config;
 
@@ -346,6 +347,18 @@ public final class ClientSession implements AutoCloseable {
     } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  public boolean supportClusteredIndex() {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet = statement.executeQuery(TIDB_ENABLE_CLUSTERED_INDEX)) {
+      resultSet.next();
+    } catch (SQLException e) {
+      return false;
+    }
+
+    return true;
   }
 
   public void createTable(

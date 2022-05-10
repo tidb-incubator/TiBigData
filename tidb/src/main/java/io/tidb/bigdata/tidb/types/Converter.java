@@ -36,7 +36,6 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
-import org.tikv.common.ExtendedDateTime;
 import org.tikv.common.exception.ConvertNotSupportException;
 import org.tikv.common.exception.ConvertOverflowException;
 import org.tikv.common.exception.TypeException;
