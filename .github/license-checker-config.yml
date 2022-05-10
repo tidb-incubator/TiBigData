@@ -5,5 +5,5 @@ header:
   paths:
     - '**/*.java'
   paths-ignore:
-    - '**/target''
+    - '**/target'
   comment: on-failure
