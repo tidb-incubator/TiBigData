@@ -4,4 +4,7 @@ header:
     copyright-owner: TiDB Project Authors.
   paths:
     - '**/*.java'
+  paths-ignore:
+    - '**/target'
+    - 'tidb/src/main/java/io/tidb/bigdata/tidb/parser/gen/MySqlLexer.java'
   comment: on-failure
