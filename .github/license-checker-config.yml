@@ -4,4 +4,6 @@ header:
     copyright-owner: TiDB Project Authors.
   paths:
     - '**/*.java'
+  paths-ignore:
+    - '**/target''
   comment: on-failure
