@@ -79,8 +79,13 @@ public class TiDBPageSink implements ConnectorPageSink {
 
   private int batchSize;
 
-  public TiDBPageSink(String schemaName, String tableName, List<String> columnNames,
-      List<Type> columnTypes, TiDBWriteMode writeMode, Connection connection) {
+  public TiDBPageSink(
+      String schemaName,
+      String tableName,
+      List<String> columnNames,
+      List<Type> columnTypes,
+      TiDBWriteMode writeMode,
+      Connection connection) {
     this.schemaName = schemaName;
     this.tableName = tableName;
     this.columnNames = columnNames;
@@ -89,9 +94,11 @@ public class TiDBPageSink implements ConnectorPageSink {
     this.connection = connection;
     try {
       connection.setAutoCommit(false);
-      statement = connection.prepareStatement(
-          writeMode == UPSERT ? getUpsertSql(schemaName, tableName, columnNames)
-              : getInsertSql(schemaName, tableName, columnNames));
+      statement =
+          connection.prepareStatement(
+              writeMode == UPSERT
+                  ? getUpsertSql(schemaName, tableName, columnNames)
+                  : getInsertSql(schemaName, tableName, columnNames));
     } catch (SQLException e) {
       closeWithSuppression(connection, e);
       throw new PrestoException(JDBC_ERROR, e);
@@ -157,8 +164,8 @@ public class TiDBPageSink implements ConnectorPageSink {
       case "date":
         // convert to midnight in default time zone
         long utcMillis = DAYS.toMillis(type.getLong(block, position));
-        long localMillis = getInstanceUTC().getZone()
-            .getMillisKeepLocal(DateTimeZone.getDefault(), utcMillis);
+        long localMillis =
+            getInstanceUTC().getZone().getMillisKeepLocal(DateTimeZone.getDefault(), utcMillis);
         statement.setDate(parameter, new Date(localMillis));
         break;
       case "varbinary":
@@ -170,13 +177,15 @@ public class TiDBPageSink implements ConnectorPageSink {
         } else if (type instanceof VarcharType || type instanceof CharType) {
           statement.setString(parameter, type.getSlice(block, position).toStringUtf8());
         } else if (type instanceof TimestampType) {
-          statement.setTimestamp(parameter, new Timestamp(
-              type.getLong(block, position) / 1000 - TimeZone.getDefault().getRawOffset()));
+          statement.setTimestamp(
+              parameter,
+              new Timestamp(
+                  type.getLong(block, position) / 1000 - TimeZone.getDefault().getRawOffset()));
         } else if (type instanceof TimeType) {
           statement.setTime(parameter, new Time(type.getLong(block, position)));
         } else {
-          throw new PrestoException(NOT_SUPPORTED,
-              "Unsupported column type: " + type.getDisplayName());
+          throw new PrestoException(
+              NOT_SUPPORTED, "Unsupported column type: " + type.getDisplayName());
         }
     }
   }

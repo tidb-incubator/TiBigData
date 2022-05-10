@@ -17,10 +17,12 @@
 package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.FileSplit;
@@ -29,44 +31,17 @@ import org.tikv.common.meta.TiTimestamp;
 public class TiDBInputSplit extends FileSplit {
 
   private Path path;
-  private String databaseName;
-  private String tableName;
-  private String startKey;
-  private String endKey;
-  private long physicalTimestamp;
-  private long logicalTimestamp;
+  private List<SplitInternal> splitInternals;
 
+  public TiDBInputSplit() {}
 
-  public TiDBInputSplit() {
-  }
-
-  public TiDBInputSplit(Path path, SplitInternal splitInternal) {
-    this(path,
-        splitInternal.getTable().getSchemaName(),
-        splitInternal.getTable().getTableName(),
-        splitInternal.getStartKey(),
-        splitInternal.getEndKey(),
-        splitInternal.getTimestamp().getPhysical(),
-        splitInternal.getTimestamp().getLogical());
-  }
-
-  public TiDBInputSplit(Path path, String databaseName, String tableName, String startKey,
-      String endKey, long physicalTimestamp, long logicalTimestamp) {
+  public TiDBInputSplit(Path path, List<SplitInternal> splitInternals) {
     this.path = path;
-    this.databaseName = databaseName;
-    this.tableName = tableName;
-    this.startKey = startKey;
-    this.endKey = endKey;
-    this.physicalTimestamp = physicalTimestamp;
-    this.logicalTimestamp = logicalTimestamp;
+    this.splitInternals = splitInternals;
   }
 
-  public SplitInternal toInternal() {
-    return new SplitInternal(
-        new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
-        startKey,
-        endKey,
-        new TiTimestamp(physicalTimestamp, logicalTimestamp));
+  public List<SplitInternal> getSplitInternals() {
+    return splitInternals;
   }
 
   @Override
@@ -87,46 +62,38 @@ public class TiDBInputSplit extends FileSplit {
   @Override
   public void write(DataOutput dataOutput) throws IOException {
     dataOutput.writeUTF(path.toString());
-    dataOutput.writeUTF(databaseName);
-    dataOutput.writeUTF(tableName);
-    dataOutput.writeUTF(startKey);
-    dataOutput.writeUTF(endKey);
-    dataOutput.writeLong(physicalTimestamp);
-    dataOutput.writeLong(logicalTimestamp);
+    dataOutput.writeInt(splitInternals.size());
+    for (int i = 0; i < splitInternals.size(); i++) {
+      dataOutput.writeUTF(splitInternals.get(i).getTable().getSchemaName());
+      dataOutput.writeUTF(splitInternals.get(i).getTable().getTableName());
+      dataOutput.writeUTF(splitInternals.get(i).getStartKey());
+      dataOutput.writeUTF(splitInternals.get(i).getEndKey());
+      dataOutput.writeLong(splitInternals.get(i).getTimestamp().getPhysical());
+      dataOutput.writeLong(splitInternals.get(i).getTimestamp().getLogical());
+    }
   }
 
   @Override
   public void readFields(DataInput dataInput) throws IOException {
     this.path = new Path(dataInput.readUTF());
-    this.databaseName = dataInput.readUTF();
-    this.tableName = dataInput.readUTF();
-    this.startKey = dataInput.readUTF();
-    this.endKey = dataInput.readUTF();
-    this.physicalTimestamp = dataInput.readLong();
-    this.logicalTimestamp = dataInput.readLong();
-  }
+    Integer size = dataInput.readInt();
+    List<SplitInternal> splitInternalList = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      String databaseName = dataInput.readUTF();
+      String tableName = dataInput.readUTF();
+      String startKey = dataInput.readUTF();
+      String endKey = dataInput.readUTF();
+      Long physicalTimestamp = dataInput.readLong();
+      Long logicalTimestamp = dataInput.readLong();
 
-  public String getDatabaseName() {
-    return databaseName;
-  }
-
-  public String getTableName() {
-    return tableName;
-  }
-
-  public String getStartKey() {
-    return startKey;
-  }
-
-  public String getEndKey() {
-    return endKey;
-  }
-
-  public long getPhysicalTimestamp() {
-    return physicalTimestamp;
-  }
-
-  public long getLogicalTimestamp() {
-    return logicalTimestamp;
+      SplitInternal splitInternal =
+          new SplitInternal(
+              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              startKey,
+              endKey,
+              new TiTimestamp(physicalTimestamp, logicalTimestamp));
+      splitInternalList.add(splitInternal);
+    }
+    this.splitInternals = splitInternalList;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 TiKV Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,12 +46,10 @@ public class MockDiscoverer implements Discoverer {
   }
 
   @Override
-  public void succeeded(String backend) {
-  }
+  public void succeeded(String backend) {}
 
   @Override
-  public void failed(String backend) {
-  }
+  public void failed(String backend) {}
 
   @Override
   public long getLastReloadTime() {

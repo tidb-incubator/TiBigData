@@ -17,25 +17,34 @@
 package io.tidb.bigdata.flink.connector.source;
 
 import io.tidb.bigdata.flink.format.cdc.CDCMetadata;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.tikv.common.meta.TiTimestamp;
 
 public enum TiDBMetadata {
-  COMMIT_VERSION("commit_version",
+  COMMIT_VERSION(
+      "commit_version",
       DataTypes.BIGINT().notNull(),
       TiDBMetadata::commitVersion,
       CDCMetadata.COMMIT_VERSION),
-  COMMIT_TIMESTAMP("commit_timestamp",
+  COMMIT_TIMESTAMP(
+      "commit_timestamp",
       DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull(),
       TiDBMetadata::commitMs,
-      CDCMetadata.COMMIT_TIMESTAMP);
+      CDCMetadata.COMMIT_TIMESTAMP),
+  SOURCE_EVENT(
+      "source_event",
+      DataTypes.STRING().notNull(),
+      tiTimestamp -> StringData.fromString("SNAPSHOT"),
+      CDCMetadata.SOURCE_EVENT);
 
   private static final TiDBMetadata[] EMPTY = new TiDBMetadata[0];
 
@@ -44,7 +53,9 @@ public enum TiDBMetadata {
   private final Function<TiTimestamp, Object> extractor;
   private final CDCMetadata craft;
 
-  TiDBMetadata(final String key, final DataType type,
+  TiDBMetadata(
+      final String key,
+      final DataType type,
       Function<TiTimestamp, Object> extractor,
       CDCMetadata craft) {
     this.key = key;
@@ -86,6 +97,13 @@ public enum TiDBMetadata {
         .map(String::toUpperCase)
         .map(TiDBMetadata::valueOf)
         .toArray(TiDBMetadata[]::new);
+  }
+
+  public static TiDBMetadata fromKey(String key) {
+    return Arrays.stream(TiDBMetadata.values())
+        .filter(tiDBMetadata -> tiDBMetadata.getKey().equals(key))
+        .findFirst()
+        .orElseThrow(() -> new IllegalArgumentException("Can not find metadata by key: " + key));
   }
 
   public static Map<String, DataType> listReadableMetadata() {

@@ -17,19 +17,23 @@
 package io.tidb.bigdata.flink.connector.source.split;
 
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Objects;
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.tikv.common.meta.TiTimestamp;
 
-public class TiDBSourceSplit implements SourceSplit {
-  private final SplitInternal split;
+public class TiDBSourceSplit implements Serializable, SourceSplit {
 
-  public TiDBSourceSplit(SplitInternal split) {
+  private final SplitInternal split;
+  private final long offset;
+
+  public TiDBSourceSplit(SplitInternal split, long offset) {
     this.split = split;
+    this.offset = offset;
   }
 
   @Override
@@ -39,6 +43,10 @@ public class TiDBSourceSplit implements SourceSplit {
 
   public SplitInternal getSplit() {
     return split;
+  }
+
+  public long getOffset() {
+    return offset;
   }
 
   @Override
@@ -55,6 +63,7 @@ public class TiDBSourceSplit implements SourceSplit {
   }
 
   public void serialize(DataOutputStream dos) throws IOException {
+    dos.writeLong(offset);
     TableHandleInternal table = split.getTable();
     dos.writeUTF(table.getConnectorId());
     dos.writeUTF(table.getSchemaName());
@@ -67,6 +76,7 @@ public class TiDBSourceSplit implements SourceSplit {
   }
 
   public static TiDBSourceSplit deserialize(DataInputStream dis) throws IOException {
+    long offset = dis.readLong();
     String connectorId = dis.readUTF();
     String schemaName = dis.readUTF();
     String tableName = dis.readUTF();
@@ -74,8 +84,12 @@ public class TiDBSourceSplit implements SourceSplit {
     String endKey = dis.readUTF();
     long physical = dis.readLong();
     long logical = dis.readLong();
-    return new TiDBSourceSplit(new SplitInternal(
-        new TableHandleInternal(connectorId, schemaName, tableName),
-        startKey, endKey, new TiTimestamp(physical, logical)));
+    return new TiDBSourceSplit(
+        new SplitInternal(
+            new TableHandleInternal(connectorId, schemaName, tableName),
+            startKey,
+            endKey,
+            new TiTimestamp(physical, logical)),
+        offset);
   }
 }

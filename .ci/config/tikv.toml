@@ -1,4 +1,8 @@
-# TiKV Configuration.
-[raftstore]
-# set store capacity, if no set, use disk capacity.
-capacity = "8G"
+[rocksdb]
+max-open-files = 256
+
+[raftdb]
+max-open-files = 256
+
+[storage]
+reserve-space = 0 

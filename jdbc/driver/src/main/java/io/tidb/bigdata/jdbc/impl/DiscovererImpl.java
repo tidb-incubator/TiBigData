@@ -52,10 +52,13 @@ public class DiscovererImpl implements Discoverer {
   private final ConcurrentHashMap<String, String> failedBackends = new ConcurrentHashMap<>();
   private final Executor executor;
 
-  public DiscovererImpl(final Driver driver, final String bootstrapUrl,
-      final Properties info, final Executor executor) {
+  public DiscovererImpl(
+      final Driver driver,
+      final String bootstrapUrl,
+      final Properties info,
+      final Executor executor) {
     this.driver = driver;
-    this.bootstrapUrl = new String[]{bootstrapUrl};
+    this.bootstrapUrl = new String[] {bootstrapUrl};
     this.info = info != null ? (Properties) info.clone() : null;
     this.backends.set(this.bootstrapUrl);
     this.executor = executor;
@@ -68,8 +71,8 @@ public class DiscovererImpl implements Discoverer {
     if (result == bootstrapUrl || failedBackends.isEmpty()) {
       return result;
     }
-    result = Arrays.stream(result)
-        .filter((b) -> !failedBackends.containsKey(b)).toArray(String[]::new);
+    result =
+        Arrays.stream(result).filter((b) -> !failedBackends.containsKey(b)).toArray(String[]::new);
     if (result.length == 0) {
       result = bootstrapUrl;
     }
@@ -155,20 +158,21 @@ public class DiscovererImpl implements Discoverer {
   }
 
   private ExceptionHelper<String[]> discover(final String tidbUrl, final Properties info) {
-    return ExceptionHelper.call(() -> {
-      try (final Connection connection = driver.connect(tidbUrl, info);
-          final Statement statement = connection.createStatement();
-          final ResultSet resultSet = statement.executeQuery(QUERY_TIDB_SERVER_SQL)) {
-        final List<String> list = new ArrayList<>();
-        while (resultSet.next()) {
-          final String ip = resultSet.getString("IP");
-          final int port = resultSet.getInt("PORT");
-          list.add(
-              bootstrapUrl[0].replaceFirst(MYSQL_URL_PREFIX_REGEX,
-                  format("jdbc:mysql://%s:%d", ip, port)));
-        }
-        return list.toArray(new String[0]);
-      }
-    });
+    return ExceptionHelper.call(
+        () -> {
+          try (final Connection connection = driver.connect(tidbUrl, info);
+              final Statement statement = connection.createStatement();
+              final ResultSet resultSet = statement.executeQuery(QUERY_TIDB_SERVER_SQL)) {
+            final List<String> list = new ArrayList<>();
+            while (resultSet.next()) {
+              final String ip = resultSet.getString("IP");
+              final int port = resultSet.getInt("PORT");
+              list.add(
+                  bootstrapUrl[0].replaceFirst(
+                      MYSQL_URL_PREFIX_REGEX, format("jdbc:mysql://%s:%d", ip, port)));
+            }
+            return list.toArray(new String[0]);
+          }
+        });
   }
 }

@@ -17,7 +17,9 @@
 package io.tidb.bigdata.flink.connector.source;
 
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.DATABASE_NAME;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.IGNORE_PARSE_ERRORS;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CANAL_JSON;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_CRAFT;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_CODEC_JSON;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_SOURCE;
@@ -25,24 +27,21 @@ import static io.tidb.bigdata.flink.connector.source.TiDBOptions.STREAMING_SOURC
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.VALID_STREAMING_CODECS;
 import static io.tidb.bigdata.flink.connector.source.TiDBOptions.VALID_STREAMING_SOURCES;
-import static io.tidb.bigdata.flink.format.cdc.CDCOptions.IGNORE_PARSE_ERRORS;
 
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
 import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
+import org.apache.flink.connector.base.source.hybrid.HybridSource.SourceFactory;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.data.RowData;
-import org.apache.flink.table.types.DataType;
 import org.apache.flink.util.Preconditions;
-import org.tikv.common.expression.Expression;
 import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceBuilder implements Serializable {
@@ -57,10 +56,9 @@ public class TiDBSourceBuilder implements Serializable {
   private final Expression expression;
   private final Integer limit;
 
-  public TiDBSourceBuilder(ResolvedCatalogTable table,
-      Function<DataType, TypeInformation<RowData>> typeInfoFactory,
-      TiDBMetadata[] metadata, int[] projectedFields, Expression expression, Integer limit) {
-    this.schema = new TiDBSchemaAdapter(table, typeInfoFactory, metadata, projectedFields);
+  public TiDBSourceBuilder(
+      ResolvedCatalogTable table, TiDBSchemaAdapter schema, Expression expression, Integer limit) {
+    this.schema = schema;
     setProperties(table.getOptions());
     this.expression = expression;
     this.limit = limit;
@@ -68,8 +66,7 @@ public class TiDBSourceBuilder implements Serializable {
 
   private static String validateRequired(String key, String value) {
     Preconditions.checkNotNull(value, "'%s' is not set", key);
-    Preconditions.checkArgument(!value.trim().isEmpty(),
-        "'%s' is not set", key);
+    Preconditions.checkArgument(!value.trim().isEmpty(), "'%s' is not set", key);
     return value;
   }
 
@@ -92,21 +89,22 @@ public class TiDBSourceBuilder implements Serializable {
     this.properties = properties;
     this.databaseName = getRequiredProperty(DATABASE_NAME.key());
     this.tableName = getRequiredProperty(TABLE_NAME.key());
-    this.streamingSource = getOptionalProperty(STREAMING_SOURCE.key())
-        .map(v -> validateProperty(STREAMING_SOURCE.key(), v, VALID_STREAMING_SOURCES))
-        .orElse(null);
-    this.streamingCodec = getOptionalProperty(STREAMING_CODEC.key())
-        .map(v -> validateProperty(STREAMING_CODEC.key(), v, VALID_STREAMING_CODECS))
-        .orElse(STREAMING_CODEC_CRAFT);
-    this.ignoreParseErrors = getOptionalProperty(IGNORE_PARSE_ERRORS.key())
-        .map(Boolean::parseBoolean).orElse(false);
+    this.streamingSource =
+        getOptionalProperty(STREAMING_SOURCE.key())
+            .map(v -> validateProperty(STREAMING_SOURCE.key(), v, VALID_STREAMING_SOURCES))
+            .orElse(null);
+    this.streamingCodec =
+        getOptionalProperty(STREAMING_CODEC.key())
+            .map(v -> validateProperty(STREAMING_CODEC.key(), v, VALID_STREAMING_CODECS))
+            .orElse(STREAMING_CODEC_CRAFT);
+    this.ignoreParseErrors =
+        getOptionalProperty(IGNORE_PARSE_ERRORS.key()).map(Boolean::parseBoolean).orElse(false);
     return this;
   }
 
-  private CDCSourceBuilder createCDCBuilder(TiTimestamp timestamp) {
+  private CDCSourceBuilder<?, ?> createCDCBuilder(TiTimestamp timestamp) {
     if (streamingSource.equals(STREAMING_SOURCE_KAFKA)) {
-      return CDCSourceBuilder
-          .kafka(databaseName, tableName, timestamp, schema)
+      return CDCSourceBuilder.kafka(databaseName, tableName, timestamp, schema)
           .<KafkaCDCSourceBuilder>ignoreParseErrors(ignoreParseErrors)
           .setProperties(properties);
     } else {
@@ -116,8 +114,8 @@ public class TiDBSourceBuilder implements Serializable {
   }
 
   public Source<RowData, ?, ?> build() {
-    final SnapshotSource source = new SnapshotSource(databaseName, tableName, properties, schema,
-        expression, limit);
+    final SnapshotSource source =
+        new SnapshotSource(databaseName, tableName, properties, schema, expression, limit);
     if (streamingSource == null) {
       return source;
     }
@@ -130,18 +128,34 @@ public class TiDBSourceBuilder implements Serializable {
     HybridSource.HybridSourceBuilder<RowData, TiDBSourceSplitEnumerator> builder =
         HybridSource.builder(source);
     builder.addSource(
-        (enumerator) -> {
-          final CDCSourceBuilder cdcBuilder = createCDCBuilder(enumerator.getTimestamp());
-          switch (streamingCodec) {
-            case STREAMING_CODEC_CRAFT:
-              return cdcBuilder.craft();
-            case STREAMING_CODEC_JSON:
-              return cdcBuilder.json();
-            default:
-              throw new IllegalArgumentException("Invalid streaming codec: '"
-                  + streamingCodec + "'");
-          }
-        },
+        (SourceFactory<RowData, Source<RowData, ?, ?>, TiDBSourceSplitEnumerator>)
+            context -> {
+              {
+                TiDBSourceSplitEnumerator previousEnumerator = context.getPreviousEnumerator();
+                TiTimestamp timestamp;
+                if (previousEnumerator == null) {
+                  // If previousEnumerator is null, the batch enumerator has been finished
+                  // in the last checkpoint/savepoint. On this condition, timestamp is no longer
+                  // valid,
+                  // we should use kafka offset.
+                  timestamp = new TiTimestamp(0, 0);
+                } else {
+                  timestamp = previousEnumerator.getTimestamp();
+                }
+                final CDCSourceBuilder<?, ?> cdcBuilder = createCDCBuilder(timestamp);
+                switch (streamingCodec) {
+                  case STREAMING_CODEC_CRAFT:
+                    return cdcBuilder.craft();
+                  case STREAMING_CODEC_JSON:
+                    return cdcBuilder.json();
+                  case STREAMING_CODEC_CANAL_JSON:
+                    return cdcBuilder.canalJson();
+                  default:
+                    throw new IllegalArgumentException(
+                        "Invalid streaming codec: '" + streamingCodec + "'");
+                }
+              }
+            },
         Boundedness.CONTINUOUS_UNBOUNDED);
     return builder.build();
   }

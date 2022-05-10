@@ -24,8 +24,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.prestosql.spi.type.TypeManager;
 
-public final class TiDBModule
-    implements Module {
+public final class TiDBModule implements Module {
 
   private final String connectorId;
   private final TypeManager typeManager;

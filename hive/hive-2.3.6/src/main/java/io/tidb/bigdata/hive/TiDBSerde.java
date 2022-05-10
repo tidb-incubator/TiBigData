@@ -21,7 +21,7 @@ import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,18 +50,17 @@ public class TiDBSerde extends AbstractSerDe {
   @Override
   public void initialize(@Nullable Configuration configuration, Properties properties)
       throws SerDeException {
-    this.tableName = Objects.requireNonNull(properties.getProperty(TABLE_NAME),
-        TABLE_NAME + " can not be null");
-    this.databaseName = Objects.requireNonNull(properties.getProperty(DATABASE_NAME),
-        DATABASE_NAME + " can not be null");
+    this.tableName =
+        Objects.requireNonNull(properties.getProperty(TABLE_NAME), TABLE_NAME + " can not be null");
+    this.databaseName =
+        Objects.requireNonNull(
+            properties.getProperty(DATABASE_NAME), DATABASE_NAME + " can not be null");
     Map<String, String> map = new HashMap<>((Map) properties);
-    try (ClientSession clientSession = ClientSession.create(
-        new ClientConfig(map))) {
+    try (ClientSession clientSession = ClientSession.create(new ClientConfig(map))) {
       columns = clientSession.getTableColumnsMust(databaseName, tableName);
     } catch (Exception e) {
       throw new SerDeException(e);
     }
-
   }
 
   @Override
@@ -106,8 +105,8 @@ public class TiDBSerde extends AbstractSerDe {
   public ObjectInspector getObjectInspector() throws SerDeException {
     List<ObjectInspector> list = new ArrayList<>();
     columns.forEach(column -> list.add(TypeUtils.toObjectInspector(column.getType())));
-    List<String> columnNames = columns.stream().map(ColumnHandleInternal::getName)
-        .collect(Collectors.toList());
+    List<String> columnNames =
+        columns.stream().map(ColumnHandleInternal::getName).collect(Collectors.toList());
     return ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, list);
   }
 }

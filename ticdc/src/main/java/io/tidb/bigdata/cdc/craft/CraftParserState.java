@@ -43,13 +43,17 @@ public class CraftParserState implements Iterator<Event> {
   private int index;
   private final CraftTermDictionary termDictionary;
 
-  CraftParserState(Codec codec, Key[] keys, int[][] sizeTables,
-      CraftTermDictionary termDictionary) {
+  CraftParserState(
+      Codec codec, Key[] keys, int[][] sizeTables, CraftTermDictionary termDictionary) {
     this(codec, keys, sizeTables, new Event[keys.length], termDictionary);
   }
 
-  private CraftParserState(Codec codec, Key[] keys, int[][] sizeTables,
-      Event[] events, CraftTermDictionary termDictionary) {
+  private CraftParserState(
+      Codec codec,
+      Key[] keys,
+      int[][] sizeTables,
+      Event[] events,
+      CraftTermDictionary termDictionary) {
     this.codec = codec;
     this.keys = keys;
     this.index = 0;
@@ -61,8 +65,8 @@ public class CraftParserState implements Iterator<Event> {
 
   @Override
   public CraftParserState clone() {
-    return new CraftParserState(codec.clone(), keys, sizeTables,
-        Arrays.copyOf(events, events.length), termDictionary);
+    return new CraftParserState(
+        codec.clone(), keys, sizeTables, Arrays.copyOf(events, events.length), termDictionary);
   }
 
   @Override
@@ -176,9 +180,13 @@ public class CraftParserState implements Iterator<Event> {
 
     RowColumn[] columns = new RowColumn[numOfColumns];
     for (int idx = 0; idx < numOfColumns; idx++) {
-      columns[idx] = new RowColumn(names[idx],
-          decodeTiDBType(types[idx], flags[idx], values[idx]),
-          false, (int) types[idx], flags[idx]);
+      columns[idx] =
+          new RowColumn(
+              names[idx],
+              decodeTiDBType(types[idx], flags[idx], values[idx]),
+              false,
+              (int) types[idx],
+              flags[idx]);
     }
 
     return columns;

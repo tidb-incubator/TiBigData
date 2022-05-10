@@ -59,7 +59,7 @@ mvn clean test-compile failsafe:integration-test -am -pl ${MODULE_NAME}
 ```xml
  <dependency>
       <groupId>io.tidb</groupId>
-      <artifactId>test</artifactId>
+      <artifactId>bigdata-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
 </dependency>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 TiKV Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,7 @@ public class MockConfig {
   public int[] port;
   private boolean blocked;
 
-  public MockConfig() {
-  }
+  public MockConfig() {}
 
   public MockConfig(String[] backends, String[] ip, int[] port) {
     this.backends = backends;

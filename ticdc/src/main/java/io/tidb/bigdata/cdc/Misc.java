@@ -20,9 +20,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
 
-/**
- * Miscellaneous utility functions and types
- */
+/** Miscellaneous utility functions and types */
 public final class Misc {
 
   public static <T> T uncheckedRun(final Callable<T> callable) {
@@ -42,8 +40,8 @@ public final class Misc {
     return uncheckedRun(clazz::getConstructor);
   }
 
-  public static <T> Method uncheckedGetMethod(final Class<T> clazz, final String name,
-      final Class<?>... parameterTypes) {
+  public static <T> Method uncheckedGetMethod(
+      final Class<T> clazz, final String name, final Class<?>... parameterTypes) {
     return uncheckedRun(() -> clazz.getMethod(name, parameterTypes));
   }
 }

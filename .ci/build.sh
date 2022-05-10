@@ -5,6 +5,8 @@ set -euo pipefail
 
 #.ci/build-client-java.sh
 
+git submodule update --init --recursive
+
 mvn clean compile test -am -pl ticdc
 mvn clean compile test -am -pl flink/flink-1.11
 mvn clean compile test -am -pl flink/flink-1.12
@@ -21,4 +23,4 @@ export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
 mvn clean compile test -am -pl prestosql
 mvn clean compile test -am -pl trino
 
-mvn checkstyle:check
+mvn com.coveo:fmt-maven-plugin:check

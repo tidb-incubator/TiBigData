@@ -16,9 +16,7 @@
 
 package io.tidb.bigdata.jdbc;
 
-/**
- * jdbc:tidb://host:port/database
- */
+/** jdbc:tidb://host:port/database */
 public class TiDBDriver extends LoadBalancingDriver {
 
   public static final String TIDB_URL_PREFIX = "jdbc:tidb://";

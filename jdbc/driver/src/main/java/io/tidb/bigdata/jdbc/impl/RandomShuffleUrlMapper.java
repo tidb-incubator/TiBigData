@@ -22,9 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
 public class RandomShuffleUrlMapper implements Function<String[], String[]> {
-  /**
-   * @param input urls
-   */
+  /** @param input urls */
   @Override
   public String[] apply(final String[] input) {
     Random random = ThreadLocalRandom.current();

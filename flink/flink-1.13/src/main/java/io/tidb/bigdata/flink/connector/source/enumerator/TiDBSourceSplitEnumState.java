@@ -17,17 +17,25 @@
 package io.tidb.bigdata.flink.connector.source.enumerator;
 
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBSourceSplitEnumState {
-  private final Set<TiDBSourceSplit> assignedSplits;
 
-  public TiDBSourceSplitEnumState(Set<TiDBSourceSplit> splits) {
-    this.assignedSplits = new HashSet<>(splits);
+  private final List<TiDBSourceSplit> splits;
+  // Serialize timestamp to avoid split is empty.
+  private final TiTimestamp timestamp;
+
+  public TiDBSourceSplitEnumState(List<TiDBSourceSplit> splits, TiTimestamp timestamp) {
+    this.splits = splits;
+    this.timestamp = timestamp;
   }
 
-  public Set<TiDBSourceSplit> assignedSplits() {
-    return assignedSplits;
+  public List<TiDBSourceSplit> getSplits() {
+    return splits;
+  }
+
+  public TiTimestamp getTimestamp() {
+    return timestamp;
   }
 }

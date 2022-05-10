@@ -16,48 +16,197 @@
 
 package io.tidb.bigdata.flink.connector.source.reader;
 
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.SOURCE_FAILOVER;
+
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
-import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplitState;
+import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.RecordSetInternal;
+import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.CompletableFuture;
+import org.apache.flink.api.connector.source.ReaderOutput;
+import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.base.source.reader.SingleThreadMultiplexSourceReaderBase;
-import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
+import org.apache.flink.core.io.InputStatus;
 import org.apache.flink.table.data.RowData;
 
-public class TiDBSourceReader extends
-    SingleThreadMultiplexSourceReaderBase<RowData, RowData,
-        TiDBSourceSplit, TiDBSourceSplitState> {
+public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> {
+
+  private final Queue<TiDBSourceSplit> remainingSplits;
+  private final SourceReaderContext context;
+  private final Map<String, String> properties;
+  private final List<ColumnHandleInternal> columns;
+  private final TiDBSchemaAdapter schema;
+  private final Expression expression;
+  private final Integer limit;
+  private final FailoverType failoverType;
+
+  private ClientSession session;
+
+  /** The availability future. This reader is available as soon as a split is assigned. */
+  private CompletableFuture<Void> availability;
+
+  private TiDBSourceSplit currentSplit;
+  private long offset;
+  private RecordCursorInternal cursor;
+
+  private boolean noMoreSplits;
 
   public TiDBSourceReader(
-      Supplier<SplitReader<RowData, TiDBSourceSplit>> splitReaderSupplier,
-      Configuration config,
-      SourceReaderContext context) {
-    super(splitReaderSupplier, new TiDBRecordEmitter(), config, context);
+      SourceReaderContext context,
+      Map<String, String> properties,
+      List<ColumnHandleInternal> columns,
+      TiDBSchemaAdapter schema,
+      Expression expression,
+      Integer limit) {
+    this.context = context;
+    this.properties = properties;
+    this.columns = columns;
+    this.schema = schema;
+    this.expression = expression;
+    this.limit = limit;
+    this.availability = new CompletableFuture<>();
+    this.remainingSplits = new ArrayDeque<>();
+    this.failoverType =
+        FailoverType.fromString(
+            properties.getOrDefault(SOURCE_FAILOVER.key(), SOURCE_FAILOVER.defaultValue()));
   }
 
   @Override
-  protected void onSplitFinished(Map<String, TiDBSourceSplitState> map) {
+  public void start() {
+    // request a split if we don't have one
+    if (remainingSplits.isEmpty()) {
+      context.sendSplitRequest();
+    }
+    session = ClientSession.create(new ClientConfig(properties));
+  }
+
+  private void finishSplit() {
+    currentSplit = null;
+    if (cursor != null) {
+      cursor.close();
+      cursor = null;
+    }
+    // request another split if no other is left
+    // we do this only here in the finishSplit part to avoid requesting a split
+    // whenever the reader is polled and doesn't currently have a split
+    if (remainingSplits.isEmpty() && !noMoreSplits) {
+      context.sendSplitRequest();
+    }
+  }
+
+  private InputStatus tryMoveToNextSplit() {
+    currentSplit = remainingSplits.poll();
+    if (currentSplit != null) {
+      SplitInternal split = currentSplit.getSplit();
+      offset = currentSplit.getOffset();
+      cursor =
+          new RecordSetInternal(
+                  session,
+                  split,
+                  columns,
+                  Optional.ofNullable(expression),
+                  Optional.ofNullable(split.getTimestamp()),
+                  Optional.ofNullable(limit))
+              .cursor();
+      // skip offset
+      for (int i = 0; i < offset; i++) {
+        if (!cursor.advanceNextPosition()) {
+          break;
+        }
+      }
+      return InputStatus.MORE_AVAILABLE;
+    } else if (noMoreSplits) {
+      return InputStatus.END_OF_INPUT;
+    } else {
+      // ensure we are not called in a loop by resetting the availability future
+      if (availability.isDone()) {
+        availability = new CompletableFuture<>();
+      }
+      return InputStatus.NOTHING_AVAILABLE;
+    }
   }
 
   @Override
-  protected TiDBSourceSplitState initializedState(TiDBSourceSplit split) {
-    return new TiDBSourceSplitState(split);
+  public InputStatus pollNext(ReaderOutput<RowData> output) throws Exception {
+    if (cursor != null && cursor.advanceNextPosition()) {
+      offset++;
+      output.collect(schema.convert(currentSplit.getSplit().getTimestamp(), cursor));
+      return InputStatus.MORE_AVAILABLE;
+    } else {
+      finishSplit();
+    }
+    return tryMoveToNextSplit();
   }
 
   @Override
-  protected TiDBSourceSplit toSplitType(String s, TiDBSourceSplitState state) {
-    return state.toSplit();
+  public List<TiDBSourceSplit> snapshotState(long checkpointId) {
+    if (currentSplit == null && remainingSplits.isEmpty()) {
+      return Collections.emptyList();
+    }
+    final ArrayList<TiDBSourceSplit> splits = new ArrayList<>(1 + remainingSplits.size());
+    if (currentSplit != null) {
+      // Add back to snapshot
+      if (failoverType == FailoverType.SPLIT) {
+        splits.add(currentSplit);
+      } else {
+        splits.add(new TiDBSourceSplit(currentSplit.getSplit(), offset));
+      }
+    }
+    splits.addAll(remainingSplits);
+    return splits;
   }
 
   @Override
-  public void notifyCheckpointComplete(long checkpointId) throws Exception {
-    super.notifyCheckpointComplete(checkpointId);
+  public CompletableFuture<Void> isAvailable() {
+    return availability;
   }
 
   @Override
-  public void notifyCheckpointAborted(long checkpointId) throws Exception {
-    super.notifyCheckpointAborted(checkpointId);
+  public void addSplits(List<TiDBSourceSplit> splits) {
+    remainingSplits.addAll(splits);
+    // set availability so that pollNext is actually called
+    availability.complete(null);
+  }
+
+  @Override
+  public void notifyNoMoreSplits() {
+    this.noMoreSplits = true;
+    // set availability so that pollNext is actually called
+    availability.complete(null);
+  }
+
+  @Override
+  public void close() throws Exception {
+    if (cursor != null) {
+      cursor.close();
+    }
+    if (session != null) {
+      session.close();
+    }
+  }
+
+  public enum FailoverType {
+    SPLIT,
+    OFFSET;
+
+    public static FailoverType fromString(String s) {
+      return Arrays.stream(values())
+          .filter(value -> value.name().equalsIgnoreCase(s))
+          .findFirst()
+          .orElseThrow(() -> new IllegalArgumentException("Unsupported failover type: " + s));
+    }
   }
 }

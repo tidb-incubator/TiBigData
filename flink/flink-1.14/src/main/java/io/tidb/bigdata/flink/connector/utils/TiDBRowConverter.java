@@ -1,22 +1,36 @@
+/*
+ * Copyright 2022 TiDB Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.tidb.bigdata.flink.connector.utils;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.ObjectRowImpl;
+import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.io.Serializable;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
 import org.apache.flink.table.api.DataTypes;
-import org.apache.flink.table.api.Schema;
-import org.apache.flink.table.api.Schema.Builder;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.exception.TiBatchWriteException;
-import org.tikv.common.meta.TiColumnInfo;
-import org.tikv.common.meta.TiTableInfo;
-import org.tikv.common.row.ObjectRowImpl;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
-import org.tikv.common.types.StringType;
 
 public class TiDBRowConverter implements Serializable {
 
@@ -35,7 +49,7 @@ public class TiDBRowConverter implements Serializable {
    * @return Flink DataType
    */
   public static org.apache.flink.table.types.DataType toFlinkType(
-      org.tikv.common.types.DataType dataType) {
+      io.tidb.bigdata.tidb.types.DataType dataType) {
     boolean notNull = dataType.isNotNull();
     boolean unsigned = dataType.isUnsigned();
     int length = (int) dataType.getLength();
@@ -108,13 +122,6 @@ public class TiDBRowConverter implements Serializable {
     return notNull ? flinkType.notNull() : flinkType.nullable();
   }
 
-  public Schema getSchema() {
-    Builder builder = Schema.newBuilder();
-    columns.forEach(column -> builder.column(column.getName(), toFlinkType(column.getType())));
-    return builder.build();
-  }
-
-
   private void setDefaultValue(Row row, int pos, DataType type) {
     // TODO set default value
     row.set(pos, type, null);
@@ -133,8 +140,8 @@ public class TiDBRowConverter implements Serializable {
           if (type.isAutoIncrement()) {
             if (!ignoreAutoincrementColumn) {
               throw new IllegalStateException(
-                  String.format("Auto increment column: %s can not be null",
-                      tiColumnInfo.getName()));
+                  String.format(
+                      "Auto increment column: %s can not be null", tiColumnInfo.getName()));
             } else {
               continue;
             }
@@ -212,6 +219,4 @@ public class TiDBRowConverter implements Serializable {
     }
     return tiRow;
   }
-
-
 }

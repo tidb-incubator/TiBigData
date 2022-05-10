@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 TiKV Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,37 +40,42 @@ public class TiDBDriverTest {
   public static final String MYSQL_URL = "jdbc:mysql://127.0.0.1:4000?user=root&password=";
   public static final String ORACLE_URL = "jdbc:oracle:thin:@localhost:1521:orcl";
 
-  public static final String[] backends1 = new String[]{
-      "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-  };
+  public static final String[] backends1 =
+      new String[] {
+        "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+      };
 
-  public static final String[] backends2 = new String[]{
-      "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-      "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-  };
+  public static final String[] backends2 =
+      new String[] {
+        "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+        "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+      };
 
-  public static final String[] backends3 = new String[]{
-      "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-      "jdbc:mysql://127.0.0.2:4008?user=root&password=",
-      "jdbc:mysql://127.0.0.3:4009?user=root&password=",
-  };
+  public static final String[] backends3 =
+      new String[] {
+        "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+        "jdbc:mysql://127.0.0.2:4008?user=root&password=",
+        "jdbc:mysql://127.0.0.3:4009?user=root&password=",
+      };
 
-  public static final String[] ip = new String[]{
-      "127.0.0.1", "127.0.0.2", "127.0.0.3",
-  };
+  public static final String[] ip =
+      new String[] {
+        "127.0.0.1", "127.0.0.2", "127.0.0.3",
+      };
 
-  public static final int[] port = new int[]{
-      4007, 4008, 4009,
-  };
+  public static final int[] port =
+      new int[] {
+        4007, 4008, 4009,
+      };
 
   @Test
   public void testTiDBDriver() throws ClassNotFoundException, SQLException {
@@ -83,8 +88,8 @@ public class TiDBDriverTest {
     final MockDriver driver = new MockDriver();
     final MockUrlMapper mapper = new MockUrlMapper(backends2, backends1);
     final LoadBalancingDriver loadBalancingDriver =
-        new LoadBalancingDriver("jdbc:tidb://", mapper, driver,
-            (d, b, i, e) -> new MockDiscoverer(backends1));
+        new LoadBalancingDriver(
+            "jdbc:tidb://", mapper, driver, (d, b, i, e) -> new MockDiscoverer(backends1));
     Assert.assertTrue(loadBalancingDriver.acceptsURL(TIDB_URL));
     Assert.assertTrue(loadBalancingDriver.acceptsURL(MYSQL_URL));
     Assert.assertFalse(loadBalancingDriver.acceptsURL(ORACLE_URL));
@@ -104,8 +109,11 @@ public class TiDBDriverTest {
     Assert.assertEquals(conn1.getConfig().backend, backends2[0]);
     Assert.assertEquals(conn2.getConfig().backend, backends2[0]);
     mapper.setResult(backends3);
-    Assert.assertEquals(((MockConnection) ((MockConnection) loadBalancingDriver.connect(TIDB_URL,
-        prop2))).getConfig().backend, backends3[0]);
+    Assert.assertEquals(
+        ((MockConnection) ((MockConnection) loadBalancingDriver.connect(TIDB_URL, prop2)))
+            .getConfig()
+            .backend,
+        backends3[0]);
   }
 
   @Test
@@ -138,94 +146,110 @@ public class TiDBDriverTest {
     final RoundRobinUrlMapper mapper = new RoundRobinUrlMapper();
     for (int idx = 0; idx < 10; idx++) {
       Assert.assertArrayEquals(backends1, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-      }, mapper.apply(backends1));
-      Assert.assertArrayEquals(new String[]{
-          "jdbc:mysql://127.0.0.1:4008?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4000?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4001?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4002?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4003?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4004?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4005?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4006?user=root&password=",
-          "jdbc:mysql://127.0.0.1:4007?user=root&password=",
-      }, mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+          },
+          mapper.apply(backends1));
+      Assert.assertArrayEquals(
+          new String[] {
+            "jdbc:mysql://127.0.0.1:4008?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4000?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4001?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4002?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4003?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4004?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4005?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4006?user=root&password=",
+            "jdbc:mysql://127.0.0.1:4007?user=root&password=",
+          },
+          mapper.apply(backends1));
     }
   }
 

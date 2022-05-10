@@ -19,9 +19,7 @@ package org.mariadb.jdbc;
 import io.tidb.bigdata.jdbc.ExceptionHelper;
 import io.tidb.bigdata.jdbc.LoadBalancingDriver;
 
-/**
- * jdbc:mariadb://host:port/database
- */
+/** jdbc:mariadb://host:port/database */
 public class Driver extends LoadBalancingDriver {
 
   private static final String MARIADB_URL_PREFIX = "jdbc:mariadb://";

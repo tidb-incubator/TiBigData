@@ -29,8 +29,8 @@ public interface EventChunkDecoder extends Iterable<Event[]>, Iterator<Event[]> 
     return new JsonEventChunkDecoder(key, value, parser);
   }
 
-  static EventChunkDecoder create(final byte[] value,
-      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+  static EventChunkDecoder create(
+      final byte[] value, final ParserFactory<CraftParser, CraftParserState> parserFactory) {
     return new CraftEventChunkDecoder(value, parserFactory.createParser());
   }
 }

@@ -18,66 +18,42 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import static java.lang.String.format;
 
+import io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo;
+import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
-import org.junit.Assert;
-import org.junit.Test;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.StringUtils;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
 public class MapReduceTest {
-  public static final String TIDB_HOST = "TIDB_HOST";
-
-  public static final String TIDB_PORT = "TIDB_PORT";
-
-  public static final String TIDB_USER = "TIDB_USER";
-
-  public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
-
-  public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
-
-  public static final String tidbPort = getEnvOrDefault(TIDB_PORT, "4000");
-
-  public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
-
-  public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
-
-  private static String getEnvOrDefault(String key, String default0) {
-    String tmp = System.getenv(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    tmp = System.getProperty(key);
-    if (tmp != null && !tmp.equals("")) {
-      return tmp;
-    }
-
-    return default0;
-  }
 
   public static final String DATABASE_NAME = "test";
 
@@ -174,48 +150,49 @@ public class MapReduceTest {
   }
 
   private static void doUpdateSql(Connection con, String updateSql) throws SQLException {
-    try (PreparedStatement ps = con.prepareStatement(
-        updateSql)) {
+    try (PreparedStatement ps = con.prepareStatement(updateSql)) {
       ps.executeUpdate();
     }
   }
 
   public ClientSession getSingleConnection() {
-
-    Map<String, String> properties = new HashMap<>();
-    properties.put(ClientConfig.DATABASE_URL, String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort));
-    properties.put(ClientConfig.USERNAME, tidbUser);
-    properties.put(ClientConfig.PASSWORD, tidbPassword);
-
-    return ClientSession.create(new ClientConfig(properties));
+    return ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
   }
 
-  @Test
-  public void testReadRecords() throws Exception {
-
-    try (Connection connection = DriverManager.getConnection(
-        String.format("jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2", tidbHost, tidbPort), tidbUser, tidbPassword)) {
+  @Before
+  public void before() throws Exception {
+    try (ClientSession clientSession = getSingleConnection();
+        Connection connection = clientSession.getJdbcConnection()) {
       doUpdateSql(connection, getCreateDatabaseSql(DATABASE_NAME));
       doUpdateSql(connection, getDropTableSql(TABLE_NAME));
       doUpdateSql(connection, getCreateTableSql(TABLE_NAME));
       doUpdateSql(connection, getInsertRowSql(TABLE_NAME));
     }
+  }
 
+  @Test
+  public void testReadRecords() throws Exception {
     ClientSession clientSession = getSingleConnection();
-    TableHandleInternal tableHandleInternal = new TableHandleInternal(
-        UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
+    TableHandleInternal tableHandleInternal =
+        new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
     SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
     List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals = clientSession.getTableColumns(tableHandleInternal)
-        .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    List<ColumnHandleInternal> columnHandleInternals =
+        clientSession
+            .getTableColumns(tableHandleInternal)
+            .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
-      RecordSetInternal recordSetInternal = new RecordSetInternal(clientSession, splitInternal,
-          Arrays.stream(IntStream.range(0, 29).toArray()).mapToObj(columnHandleInternals::get)
-              .collect(Collectors.toList()),
-          Optional.empty(),
-          Optional.empty(),
-          Optional.of(Integer.MAX_VALUE));
+      RecordSetInternal recordSetInternal =
+          new RecordSetInternal(
+              clientSession,
+              splitInternal,
+              Arrays.stream(IntStream.range(0, 29).toArray())
+                  .mapToObj(columnHandleInternals::get)
+                  .collect(Collectors.toList()),
+              Optional.empty(),
+              Optional.empty(),
+              Optional.of(Integer.MAX_VALUE));
       RecordCursorInternal cursor = recordSetInternal.cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);
@@ -285,5 +262,84 @@ public class MapReduceTest {
     }
 
     clientSession.close();
+  }
+
+  private long getMapInputRecords(Job job) throws IOException {
+    return job.getCounters()
+        .getGroup("org.apache.hadoop.mapreduce.TaskCounter")
+        .findCounter("MAP_INPUT_RECORDS")
+        .getValue();
+  }
+
+  @Test
+  public void testRunLocalMapReduce()
+      throws IOException, ClassNotFoundException, InterruptedException {
+    List<String> options = new ArrayList<>();
+    ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
+    // database url
+    options.add("-du");
+    options.add(clientConfig.getDatabaseUrl());
+    // database
+    options.add("-dn");
+    options.add(DATABASE_NAME);
+    // table
+    options.add("-t");
+    options.add(TABLE_NAME);
+    // user
+    options.add("-u");
+    options.add(clientConfig.getUsername());
+    // password
+    options.add("-p");
+    options.add(clientConfig.getPassword());
+    // fields
+    for (int i = 1; i <= 29; i++) {
+      options.add("-f");
+      options.add("c" + i);
+    }
+    Job job = TiDBMapreduceDemo.createJob(options.toArray(new String[0]));
+    Assert.assertTrue(job.waitForCompletion(true));
+    Assert.assertEquals(1, getMapInputRecords(job));
+  }
+
+  @Test
+  public void testMultipleRegions() throws Exception {
+    String tableName = "test_multiple_regions";
+    String dbTable = String.format("`%s`.`%s`", DATABASE_NAME, tableName);
+    try (ClientSession clientSession = getSingleConnection()) {
+      clientSession.sqlUpdate(
+          "DROP TABLE IF EXISTS " + dbTable,
+          String.format(
+              "CREATE TABLE IF NOT EXISTS %s (`id` INT PRIMARY KEY AUTO_INCREMENT)", dbTable),
+          String.format(
+              "INSERT INTO %s VALUES %s",
+              dbTable, StringUtils.join(",", Collections.nCopies(10000, "(null)"))),
+          String.format(
+              "SPLIT TABLE `%s`.`%s` BETWEEN (0) AND (10000) REGIONS 10",
+              DATABASE_NAME, tableName));
+    }
+    List<String> options = new ArrayList<>();
+    ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
+    // database url
+    options.add("-du");
+    options.add(clientConfig.getDatabaseUrl());
+    // database
+    options.add("-dn");
+    options.add(DATABASE_NAME);
+    // table
+    options.add("-t");
+    options.add(tableName);
+    // user
+    options.add("-u");
+    options.add(clientConfig.getUsername());
+    // password
+    options.add("-p");
+    options.add(clientConfig.getPassword());
+    // fields
+    options.add("-f");
+    options.add("id");
+
+    Job job = TiDBMapreduceDemo.createJob(options.toArray(new String[0]));
+    Assert.assertTrue(job.waitForCompletion(true));
+    Assert.assertEquals(10000, getMapInputRecords(job));
   }
 }

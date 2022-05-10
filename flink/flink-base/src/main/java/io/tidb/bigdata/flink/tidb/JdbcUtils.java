@@ -43,7 +43,8 @@ public class JdbcUtils {
     String host = uri.getHost();
     int port = uri.getPort();
     String path = uri.getPath();
-    return url.replace(String.format("jdbc:%s://%s:%d%s", scheme, host, port, path),
+    return url.replace(
+        String.format("jdbc:%s://%s:%d%s", scheme, host, port, path),
         String.format("jdbc:%s://%s:%d/%s", scheme, host, port, database));
   }
 
@@ -52,7 +53,8 @@ public class JdbcUtils {
     String dbUrl = properties.get(DATABASE_URL.key());
     String databaseName = properties.get(DATABASE_NAME.key());
     String tableName = properties.get(TABLE_NAME.key());
-    checkArgument(dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/.*"),
+    checkArgument(
+        dbUrl.matches("jdbc:(mysql|tidb)://[^/]+:\\d+/.*"),
         "the format of database url does not match jdbc:(mysql|tidb)://host:port/.*");
     dbUrl = rewriteJdbcUrlPath(dbUrl, databaseName);
     String driverName = TiDBDriver.driverForUrl(dbUrl);
@@ -66,6 +68,4 @@ public class JdbcUtils {
         .setDriverName(driverName)
         .build();
   }
-
-
 }

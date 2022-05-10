@@ -47,7 +47,7 @@
     </dependency>
     <dependency>
       <groupId>io.tidb</groupId>
-      <artifactId>test</artifactId>
+      <artifactId>bigdata-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
@@ -64,7 +64,7 @@
   </parent>
 
   <properties>
-    <dep.jackson.version>2.11.0</dep.jackson.version>
+    <dep.jackson.version>2.12.6.1</dep.jackson.version>
   </properties>
 
   <url>https://github.com/tidb-incubator/TiBigData</url>

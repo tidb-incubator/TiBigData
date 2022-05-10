@@ -18,9 +18,11 @@ package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
+import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -36,24 +38,26 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
-import org.tikv.common.types.DataType;
 
 public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBRecordReader.class);
 
-  private final InputSplit split;
+  private final TiDBInputSplit tidbInputSplit;
   private final Map<String, String> properties;
+  private final List<SplitInternal> splitInternals;
 
   private long pos;
   private ClientSession clientSession;
-  private RecordCursorInternal cursor;
+  private Integer currentSplitIndex;
+  private RecordCursorInternal currentCursor;
   private List<ColumnHandleInternal> columns;
 
-
   public TiDBRecordReader(InputSplit split, Map<String, String> properties) {
-    this.split = split;
+    this.currentSplitIndex = 0;
+    this.tidbInputSplit = (TiDBInputSplit) split;
     this.properties = properties;
+    this.splitInternals = tidbInputSplit.getSplitInternals();
   }
 
   private void initClientSession() {
@@ -68,36 +72,49 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
     }
   }
 
-  private void initCursor() {
-    if (cursor != null) {
-      return;
-    }
-    TiDBInputSplit split = (TiDBInputSplit) this.split;
-    columns = clientSession.getTableColumnsMust(split.getDatabaseName(), split.getTableName());
-    TiTimestamp timestamp = getOptionalVersion().orElseGet(
-        () -> getOptionalTimestamp().orElseGet(() -> split.toInternal().getTimestamp()));
-    RecordSetInternal recordSetInternal = new RecordSetInternal(
-        clientSession,
-        split.toInternal(),
-        columns,
-        Optional.empty(),
-        Optional.ofNullable(timestamp));
-    cursor = recordSetInternal.cursor();
+  private void initCurrentCursor() {
+    SplitInternal splitInternal = splitInternals.get(currentSplitIndex);
+
+    columns =
+        clientSession.getTableColumnsMust(
+            splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
+    TiTimestamp timestamp =
+        getOptionalVersion()
+            .orElseGet(() -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
+    RecordSetInternal recordSetInternal =
+        new RecordSetInternal(
+            clientSession,
+            splitInternal,
+            columns,
+            Optional.empty(),
+            Optional.ofNullable(timestamp));
+    currentCursor = recordSetInternal.cursor();
   }
 
   @Override
   public boolean next(LongWritable longWritable, MapWritable mapWritable) throws IOException {
     initClientSession();
-    initCursor();
-    if (!cursor.advanceNextPosition()) {
-      return false;
+
+    if (currentCursor == null) {
+      initCurrentCursor();
     }
+
+    if (!currentCursor.advanceNextPosition()) {
+      LOG.info("Current split index:" + currentSplitIndex);
+      currentSplitIndex++;
+      if (currentSplitIndex == splitInternals.size()) {
+        return false;
+      }
+      initCurrentCursor();
+      currentCursor.advanceNextPosition();
+    }
+
     pos++;
-    for (int i = 0; i < cursor.fieldCount(); i++) {
+    for (int i = 0; i < currentCursor.fieldCount(); i++) {
       ColumnHandleInternal column = columns.get(i);
       String name = column.getName();
       DataType type = column.getType();
-      mapWritable.put(new Text(name), TypeUtils.toWriteable(cursor.getObject(i), type));
+      mapWritable.put(new Text(name), TypeUtils.toWriteable(currentCursor.getObject(i), type));
     }
     return true;
   }
@@ -120,7 +137,7 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   @Override
   public void close() throws IOException {
     try {
-      cursor.close();
+      currentCursor.close();
       clientSession.close();
     } catch (Exception e) {
       LOG.warn("Can not close session");
@@ -133,15 +150,13 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   }
 
   private Optional<TiTimestamp> getOptionalTimestamp() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_TIMESTAMP))
         .filter(StringUtils::isNotEmpty)
         .map(s -> new TiTimestamp(Timestamp.from(ZonedDateTime.parse(s).toInstant()).getTime(), 0));
   }
 
   private Optional<TiTimestamp> getOptionalVersion() {
-    return Optional
-        .ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
+    return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
         .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));

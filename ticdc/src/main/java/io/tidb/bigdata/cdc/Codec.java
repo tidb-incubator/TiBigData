@@ -41,6 +41,7 @@ public interface Codec {
 
   /**
    * Decode single payload events
+   *
    * @param data serialized data
    * @return EventDecoder
    */
@@ -48,6 +49,7 @@ public interface Codec {
 
   /**
    * Decode key value paired events
+   *
    * @param key serialized key
    * @param value serialized value
    * @return EventDecoder
@@ -56,6 +58,7 @@ public interface Codec {
 
   /**
    * Decode key only
+   *
    * @param key serialized key
    * @return KeyDecoder
    */
@@ -63,6 +66,7 @@ public interface Codec {
 
   /**
    * Decode value only
+   *
    * @param value serialized value
    * @return ValueDecoder
    */

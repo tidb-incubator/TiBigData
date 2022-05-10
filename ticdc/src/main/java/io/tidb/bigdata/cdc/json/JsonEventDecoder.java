@@ -21,9 +21,7 @@ import io.tidb.bigdata.cdc.EventDecoder;
 import java.util.Arrays;
 import java.util.Iterator;
 
-/**
- * TiCDC open protocol event decoder, parse key value pairs into event instances.
- */
+/** TiCDC open protocol event decoder, parse key value pairs into event instances. */
 public class JsonEventDecoder implements EventDecoder {
 
   private final Event[] events;

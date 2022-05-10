@@ -18,14 +18,18 @@ package io.tidb.bigdata.hive;
 
 import static io.tidb.bigdata.hive.TiDBConstant.DATABASE_NAME;
 import static io.tidb.bigdata.hive.TiDBConstant.EMPTY_STRING;
+import static io.tidb.bigdata.hive.TiDBConstant.REGIONS_PER_SPLIT;
 import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 
+import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
-import io.tidb.bigdata.tidb.TableHandleInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.apache.hadoop.fs.Path;
@@ -42,19 +46,23 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
 
   @Override
   public InputSplit[] getSplits(JobConf jobConf, int i) throws IOException {
-    try (ClientSession clientSession = ClientSession.create(
-        new ClientConfig(getProperties(jobConf)))) {
-      String tableName = Objects.requireNonNull(jobConf.get(TABLE_NAME),
-          TABLE_NAME + " can not be null");
-      String databaseName = Objects.requireNonNull(jobConf.get(DATABASE_NAME),
-          DATABASE_NAME + " can not be null");
-      TableHandleInternal tableHandle = new TableHandleInternal(EMPTY_STRING, databaseName,
-          tableName);
+    try (ClientSession clientSession =
+        ClientSession.create(new ClientConfig(getProperties(jobConf)))) {
+      String tableName =
+          Objects.requireNonNull(jobConf.get(TABLE_NAME), TABLE_NAME + " can not be null");
+      String databaseName =
+          Objects.requireNonNull(jobConf.get(DATABASE_NAME), DATABASE_NAME + " can not be null");
+      Integer regionNumPerSplit = jobConf.getInt(REGIONS_PER_SPLIT, 1);
+
+      TableHandleInternal tableHandle =
+          new TableHandleInternal(EMPTY_STRING, databaseName, tableName);
       Path path = FileInputFormat.getInputPaths(jobConf)[0];
-      return new SplitManagerInternal(clientSession)
-          .getSplits(tableHandle)
-          .stream()
-          .map(splitInternal -> new TiDBInputSplit(path, splitInternal))
+
+      List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
+      List<List<SplitInternal>> splitPartition = Lists.partition(splits, regionNumPerSplit);
+
+      return splitPartition.stream()
+          .map(splitInternals -> new TiDBInputSplit(path, splitInternals))
           .toArray(TiDBInputSplit[]::new);
     } catch (Exception e) {
       throw new IOException(e);
@@ -62,8 +70,8 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
   }
 
   @Override
-  public RecordReader<LongWritable, MapWritable> getRecordReader(InputSplit inputSplit,
-      JobConf jobConf, Reporter reporter) throws IOException {
+  public RecordReader<LongWritable, MapWritable> getRecordReader(
+      InputSplit inputSplit, JobConf jobConf, Reporter reporter) throws IOException {
     return new TiDBRecordReader(inputSplit, getProperties(jobConf));
   }
 
