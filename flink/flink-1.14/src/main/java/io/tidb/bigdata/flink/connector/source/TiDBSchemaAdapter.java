@@ -57,6 +57,7 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.runtime.connector.source.ScanRuntimeProviderContext;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.utils.DataTypeUtils;
 import org.apache.flink.types.RowKind;
 import org.tikv.common.meta.TiTimestamp;
@@ -177,7 +178,9 @@ public class TiDBSchemaAdapter implements Serializable {
           LocalDateTime.class, TiDBSchemaAdapter::localDateTimeToFlink,
           LocalTime.class, TiDBSchemaAdapter::localTimeToFlink);
 
-  /** transform Row type to RowData type */
+  /**
+   * transform Row type to RowData type
+   */
   public static Object toRowDataType(Object object) {
     if (object == null) {
       return null;
@@ -194,9 +197,9 @@ public class TiDBSchemaAdapter implements Serializable {
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
-   * @param object TiKV java object
+   * @param object    TiKV java object
    * @param flinkType Flink datatype
-   * @param tidbType TiDB datatype
+   * @param tidbType  TiDB datatype
    */
   public static Optional<Object> getObjectWithDataType(
       @Nullable Object object, DataType flinkType, io.tidb.bigdata.tidb.types.DataType tidbType) {
@@ -205,6 +208,11 @@ public class TiDBSchemaAdapter implements Serializable {
     }
     Class<?> conversionClass = flinkType.getConversionClass();
     if (flinkType.getConversionClass() == object.getClass()) {
+      if (flinkType.getConversionClass() == BigDecimal.class) {
+        object = DecimalData.fromBigDecimal((BigDecimal) object,
+            ((DecimalType) flinkType.getLogicalType()).getPrecision(),
+            ((DecimalType) flinkType.getLogicalType()).getScale());
+      }
       return Optional.of(object);
     }
     MySQLType mySqlType = tidbType.getType();

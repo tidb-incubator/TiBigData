@@ -63,7 +63,13 @@ public class TypeUtils {
     int length = (int) dataType.getLength();
     switch (dataType.getType()) {
       case TypeBit:
-        return DataTypes.BOOLEAN();
+        // Only Convert Bit(1) to Boolean
+        if (dataType.getLength() == 1) {
+          return DataTypes.BOOLEAN();
+        } else {
+          // TODO : it's better to convert `BIT(n)` to type `Binary(ceilDiv(n, 8)``
+          return DataTypes.BIGINT();
+        }
       case TypeTiny:
         return unsigned ? DataTypes.SMALLINT() : DataTypes.TINYINT();
       case TypeYear:

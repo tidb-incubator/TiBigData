@@ -29,9 +29,14 @@ public class TiDBTestDatabase extends ExternalResource {
 
   protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+  private ClientSession clientSession;
+
+  public ClientSession getClientSession() {
+    return clientSession;
+  }
   @Override
   protected void before() throws Throwable {
-    ClientSession clientSession =
+    clientSession =
         ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
     clientSession.sqlUpdate(String.format("CREATE DATABASE IF NOT EXISTS `%s`", DATABASE_NAME));
     logger.info("Create database {}", DATABASE_NAME);
@@ -39,7 +44,7 @@ public class TiDBTestDatabase extends ExternalResource {
 
   @Override
   protected void after() {
-    ClientSession clientSession =
+    clientSession =
         ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()));
     clientSession.sqlUpdate(String.format("DROP DATABASE IF EXISTS `%s`", DATABASE_NAME));
     logger.info("Drop database {}", DATABASE_NAME);

@@ -91,4 +91,8 @@ public class TiDBCatalog extends TiDBBaseCatalog {
     }
     return builder.build();
   }
+
+  public int queryTableCount(String databaseName, String tableName) {
+    return getClientSession().queryTableCount(databaseName, tableName);
+  }
 }

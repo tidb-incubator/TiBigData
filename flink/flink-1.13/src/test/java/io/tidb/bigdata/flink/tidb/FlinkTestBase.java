@@ -16,13 +16,18 @@
 
 package io.tidb.bigdata.flink.tidb;
 
+import static java.lang.String.format;
+
+import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
+import java.util.Map;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.junit.ClassRule;
 
 public abstract class FlinkTestBase {
 
-  @ClassRule public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
+  @ClassRule
+  public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
 
   public static final String CATALOG_NAME = "tidb";
 
@@ -34,5 +39,18 @@ public abstract class FlinkTestBase {
   protected TableEnvironment getTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     return TableEnvironment.create(settings);
+  }
+
+  protected TiDBCatalog initTiDBCatalog(
+      String dstTable,
+      String createTableSql,
+      TableEnvironment tableEnvironment,
+      Map<String, String> properties) {
+    TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
+    tableEnvironment.registerCatalog("tidb", tiDBCatalog);
+    String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable);
+    String createTiDBSql = String.format(createTableSql, DATABASE_NAME, dstTable);
+    tiDBCatalog.sqlUpdate(dropTableSql, createTiDBSql);
+    return tiDBCatalog;
   }
 }
