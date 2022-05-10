@@ -51,7 +51,7 @@ For each transaction commit, we select a row as the primary key and perform a tw
 
 Transaction levels can be classified as Global, MiniBatch, Checkpoint:
 - Global is only applicable to bounded data streams, where all written data is considered as a whole and written to TiKV through one big transaction, which is not recommended if there are frequent write conflicts.
-- Checkpoint only supports data sources with checkpointing enabled, Flink uses each checkpoint as a transaction separator, and records commit transaction information through the checkpoint, which combined with TiKV's two-stage commit, can achieve the semantics of exactly once when writing TiDB upstream.
+- ~~Checkpoint only supports data sources with checkpointing enabled, Flink uses each checkpoint as a transaction separator, and records commit transaction information through the checkpoint, which combined with TiKV's two-stage commit, can achieve the semantics of exactly once when writing TiDB upstream.~~(Checkpoint in this design has some data loss potential, so it is not supported now)
 - MiniBatch has no restriction on data sources, no global transaction semantics, and writes to TiDB with a single Task as the dimension. TiDB will be written when the data reaches a specified number of rows or a certain interval since the last write.
 
 ### Data de-duplication
@@ -81,11 +81,13 @@ Global prewrites the primary key when the stream is generated, then the ProcessE
 
 ![image alt text](imgs/global.png)
 
-### Checkpoint
+### ~~Checkpoint~~(Deprecated)
 
-Unlike the previous two implementations, TIDBSinkFunction inherits TwoPhaseCommitSinkFunction, which provides exactly-once semantics. calls to the commit function occur at the checkpoint node, as described in [TwoPhaseCommitSinkFunction](https://nightlies.apache.org/flink/flink-docs-master/api/java/org/apache/flink/streaming/api/functions/sink/TwoPhaseCommitSinkFunction.html).
+~~Unlike the previous two implementations, TIDBSinkFunction inherits TwoPhaseCommitSinkFunction, which provides exactly-once semantics. calls to the commit function occur at the checkpoint node, as described in [TwoPhaseCommitSinkFunction](https://nightlies.apache.org/flink/flink-docs-master/api/java/org/apache/flink/streaming/api/functions/sink/TwoPhaseCommitSinkFunction.html).~~
 
 ![image alt text](imgs/checkpoint.png)
+
+> [!NOTE]：If `commit primary key` fails, the data will be lost, because checkpoint has already been completed. Maybe optimize by storing the data in the external storage.
 
 ## Compatibility
 
