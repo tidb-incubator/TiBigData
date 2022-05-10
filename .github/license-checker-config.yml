@@ -6,4 +6,5 @@ header:
     - '**/*.java'
   paths-ignore:
     - '**/target'
+    - 'tidb/src/main/java/io/tidb/bigdata/tidb/parser/gen/MySqlLexer.java'
   comment: on-failure
