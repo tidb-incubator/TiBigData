@@ -219,7 +219,7 @@ TiBigDate/Flink does not support the following features:
 | tikv.sink.row-id-allocator.step                     | 30000                                                                          | Only work when sink option is `TIKV`. The size of row-ids each time allocator query for.                                                                                                                                                                                                                                                                                                                                                                  |
 | tikv.sink.ignore-autoincrement-column-value         | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, for autoincrement column, we will generate value instead of the the actual value. And if `false`, the value of autoincrement column can not be null.                                                                                                                                                                                                                                            |
 | tikv.sink.deduplicate                               | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, duplicate row will be de-duplicated. If `false`, you should make sure each row is unique otherwise exception will be thrown.                                                                                                                                                                                                                                                                    |
-
+| tidb.telemetry.enable                               | true                                                                           | Whether to enable telemetry collection in TiBigData. Telemetry can be off by setting `false`.                                                                                                                                                                                                                                                                                                                                                             |
 
 ## TableFactory(deprecated)
 
@@ -243,3 +243,45 @@ CREATE TABLE `people`(
 );
 SELECT * FROM people;
 ```
+
+## Telemetry
+
+Currently, flink-tidb-connector in TiBigData (only flink-tidb-connector-1.14 and flink-tidb-connector-1.13 versions) will collect usage information by default and share this information with PingCAP.
+Users can actively turn off telemetry by configuring `tidb.telemetry.enable = false`.
+
+When TiBigData telemetry is enabled, TiBigData will send usage information to PingCAP when initializing `catalog`, including but not limited to:
+
+- Randomly generated identifiers
+- Operating system and hardware information
+- Part of TiBigData configuration information.
+
+An entry table of telemetry is shown here.
+
+| Field name                                            | Description                         |
+|-------------------------------------------------------|-------------------------------------|
+| trackId                                               | ID of the telemetry                 |
+| time                                                  | The time point of reporting         |
+| subName                                               | application name                    |
+| hardware.os                                           | Operating system name               |
+| hardware.version                                      | Operating system version            |
+| hardware.cpu.model                                    | CPU model                           |
+| hardware.cpu.logicalCores                             | Number of CPU logical cores         |
+| hardware.cpu.physicalCores                            | Number of CPU physical cores        |
+| hardware.disks.name                                   | Disks name                          |
+| hardware.disks.size                                   | Disks capacity                      |
+| hardware.memory                                       | Memory capacity                     |
+| instance.TiDBVersion                                  | TiDB Version                        |
+| instance.TiBigDataFlinkVersion                        | flink-tidb-connector Version        |
+| instance.FlinkVersion                                 | Flink Version                       |
+| content.{tidb.write_mode}                             | flink-tidb-connector configuration  |
+| content.{tidb.catalog.load-mode}                      | flink-tidb-connector configuration  |
+| content.{tikv.sink.deduplicate}                       | flink-tidb-connector configuration  |
+| content.{tidb.replica-read}                           | flink-tidb-connector configuration  |
+| content.{tikv.sink.buffer-size}                       | flink-tidb-connector configuration  |
+| content.{tidb.filter-push-down}                       | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.interval}                  | flink-tidb-connector configuration  |
+| content.{tidb.sink.impl}                              | flink-tidb-connector configuration  |
+| content.{tikv.sink.row-id-allocator.step}             | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.max-rows}                  | flink-tidb-connector configuration  |
+| content.{tikv.sink.ignore-autoincrement-column-value} | flink-tidb-connector configuration  |
+| content.{tikv.sink.transaction}                       | flink-tidb-connector configuration  |

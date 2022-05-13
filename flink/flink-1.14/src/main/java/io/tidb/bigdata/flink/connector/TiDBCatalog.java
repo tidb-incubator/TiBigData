@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.utils.TiDBRowConverter;
+import io.tidb.bigdata.flink.telemetry.AsyncTelemetry;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
@@ -72,6 +73,9 @@ public class TiDBCatalog extends AbstractCatalog {
   public static final String TIDB_CATALOG_LOAD_MODE = "tidb.catalog.load-mode";
   public static final String TIDB_CATALOG_LOAD_MODE_DEFAULT = CatalogLoadMode.EAGER.name();
 
+  public static final String TIDB_TELEMETRY_ENABLE = "tidb.telemetry.enable";
+  public static final String TIDB_TELEMETRY_ENABLE_FALSE = "true";
+
   public static final String DEFAULT_DATABASE = "default";
 
   public static final String DEFAULT_NAME = "tidb";
@@ -92,6 +96,12 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public TiDBCatalog(String name, Map<String, String> properties) {
     this(name, DEFAULT_DATABASE, properties);
+
+    // Report telemetry.
+    if (properties.getOrDefault(TIDB_TELEMETRY_ENABLE,TIDB_TELEMETRY_ENABLE_FALSE).equals("true")) {
+      AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
+      asyncTelemetry.report();
+    }
   }
 
   public TiDBCatalog(Map<String, String> properties) {

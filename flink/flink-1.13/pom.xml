@@ -98,6 +98,12 @@
       <version>${dep.flink.version}</version>
       <scope>${flink.kafka.connector.scope}</scope>
     </dependency>
+    <!-- telemetry -->
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-telemetry</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

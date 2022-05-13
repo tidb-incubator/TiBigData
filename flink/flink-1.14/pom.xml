@@ -101,6 +101,12 @@
       <version>${dep.junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- telemetry -->
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-telemetry</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
