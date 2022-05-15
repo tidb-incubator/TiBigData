@@ -3,9 +3,8 @@
 set -x
 set -euo pipefail
 
-#.ci/build-client-java.sh
-
-git submodule update --init --recursive
+# see maven plugin
+# git submodule update --init --recursive
 
 mvn clean compile test -am -pl ticdc
 mvn clean compile test -am -pl flink/flink-1.11
