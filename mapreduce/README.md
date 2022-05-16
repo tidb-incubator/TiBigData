@@ -3,7 +3,6 @@
 ## Build
 
 ```bash
-./.ci/build-client-java.sh
 git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
 mvn clean package -DskipTests -am -pl mapreduce/mapreduce-base -Dmysql.driver.scope=compile
