@@ -19,15 +19,18 @@ package io.tidb.bigdata.flink.tidb.telemetry;
 import io.tidb.bigdata.flink.telemetry.FlinkTeleMsg;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.ConfigUtils;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.TableUtils;
 import org.apache.flink.table.api.TableEnvironment;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.Map;
 
 import static java.lang.String.format;
 
+@Category(IntegrationTest.class)
 public class TelemetryTest extends FlinkTestBase {
 
     @Test
