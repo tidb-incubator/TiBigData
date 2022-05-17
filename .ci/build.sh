@@ -6,6 +6,8 @@ set -euo pipefail
 # see maven plugin
 # git submodule update --init --recursive
 
+mvn com.coveo:fmt-maven-plugin:check
+
 mvn clean compile test -am -pl ticdc
 mvn clean compile test -am -pl flink/flink-1.11
 mvn clean compile test -am -pl flink/flink-1.12
@@ -21,5 +23,3 @@ mvn clean compile test -am -pl hive/hive-3.1.2
 export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
 mvn clean compile test -am -pl prestosql
 mvn clean compile test -am -pl trino
-
-mvn com.coveo:fmt-maven-plugin:check

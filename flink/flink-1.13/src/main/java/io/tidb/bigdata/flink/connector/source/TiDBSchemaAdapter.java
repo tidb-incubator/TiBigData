@@ -207,9 +207,11 @@ public class TiDBSchemaAdapter implements Serializable {
     Class<?> conversionClass = flinkType.getConversionClass();
     if (flinkType.getConversionClass() == object.getClass()) {
       if (flinkType.getConversionClass() == BigDecimal.class) {
-        object = DecimalData.fromBigDecimal((BigDecimal) object,
-            ((DecimalType) flinkType.getLogicalType()).getPrecision(),
-            ((DecimalType) flinkType.getLogicalType()).getScale());
+        object =
+            DecimalData.fromBigDecimal(
+                (BigDecimal) object,
+                ((DecimalType) flinkType.getLogicalType()).getPrecision(),
+                ((DecimalType) flinkType.getLogicalType()).getScale());
       }
       return Optional.of(object);
     }
