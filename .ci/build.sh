@@ -6,8 +6,6 @@ set -euo pipefail
 # see maven plugin
 # git submodule update --init --recursive
 
-mvn com.coveo:fmt-maven-plugin:check
-
 mvn clean compile test -am -pl ticdc
 mvn clean compile test -am -pl flink/flink-1.11
 mvn clean compile test -am -pl flink/flink-1.12

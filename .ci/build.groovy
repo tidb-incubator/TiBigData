@@ -13,6 +13,16 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         curl -sL \$archive_url | tar -zx -C /maven
                         archive_url=http://fileserver.pingcap.net/download/builds/pingcap/tibigdata/cache/tibigdata-m2-cache-latest.tar.gz
                         curl -sL \$archive_url | tar -zx -C /maven
+                        
+                        mvn com.coveo:fmt-maven-plugin:format
+                         git diff --quiet
+                        formatted="\$?"
+                        if [[ "\${formatted}" -eq 1 ]]
+                        then
+                           echo "code format error, please run the following commands:"
+                           echo "mvn com.coveo:fmt-maven-plugin:format"
+                           exit 1
+                        fi
                         """
                         if (sh(returnStatus: true, script: '[ -d .git ] && [ -f Makefile ] && git rev-parse --git-dir > /dev/null 2>&1') != 0) {
                             deleteDir()
