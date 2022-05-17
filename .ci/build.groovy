@@ -23,8 +23,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         sh """
                         mvn com.coveo:fmt-maven-plugin:format
                         git diff --quiet
-                        formatted="\\\$?"
-                        if [[ "\\${formatted}" -eq 1 ]]
+                        formatted="\$?"
+                        if [[ "\${formatted}" -eq 1 ]]
                         then
                            echo "code format error, please run the following commands:"
                            echo "mvn com.coveo:fmt-maven-plugin:format"
