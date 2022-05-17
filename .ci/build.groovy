@@ -5,7 +5,6 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
             container("java") {
                 stage('Prepare') {
                     dir("/home/jenkins/agent/git/tibigdata") {
-                        formatted = null
                         sh """
                         rm -rf /maven/.m2/repository/*
                         rm -rf /maven/.m2/settings.xml
@@ -24,13 +23,14 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         sh """
                         mvn com.coveo:fmt-maven-plugin:format
                         git diff --quiet
-                        ${formatted}="\$?"
+                        formatted="\$?"
+                        if [[ "\${formatted}" -eq 1 ]]
+                        then
+                           echo "code format error, please run the following commands:"
+                           echo "mvn com.coveo:fmt-maven-plugin:format"
+                           exit 1
+                        fi
                         """
-                        if (formatted == 1) {
-                            echo "code format error, please run the following commands:"
-                            echo "mvn com.coveo:fmt-maven-plugin:format"
-                            sh "exit 1"
-                        }
                     }
                     dir("/home/jenkins/agent/lib") {
                         sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
