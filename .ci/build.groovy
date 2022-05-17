@@ -15,7 +15,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         curl -sL \$archive_url | tar -zx -C /maven
                         
                         mvn com.coveo:fmt-maven-plugin:format
-                         git diff --quiet
+                        git diff --quiet
                         formatted="\$?"
                         if [[ "\${formatted}" -eq 1 ]]
                         then
