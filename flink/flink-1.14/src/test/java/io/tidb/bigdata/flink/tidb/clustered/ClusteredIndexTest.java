@@ -49,17 +49,20 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(org.junit.runners.Parameterized.class)
 public class ClusteredIndexTest extends FlinkTestBase {
 
-  private static final List<Pair<String, String>> dataTypesList = Lists.newArrayList(
-      new Pair<>("bit(11)", "0"),
-      new Pair<>("int", "11"), new Pair<>("decimal", "110"),
-      new Pair<>("decimal(6,3)", "110.000"),
-      new Pair<>("timestamp", "2020-08-10 15:30:29"),
-      new Pair<>("text(11)", "textType"),
-      new Pair<>("blob(11)", "blobType"),
-      new Pair<>("boolean", "0"), new Pair<>("bigint", "1234"),
-      new Pair<>("double", "12.3"),
-      new Pair<>("date", "1995-01-01"),
-      new Pair<>("varchar(20)", "varcharType"));
+  private static final List<Pair<String, String>> dataTypesList =
+      Lists.newArrayList(
+          new Pair<>("bit(11)", "0"),
+          new Pair<>("int", "11"),
+          new Pair<>("decimal", "110"),
+          new Pair<>("decimal(6,3)", "110.000"),
+          new Pair<>("timestamp", "2020-08-10 15:30:29"),
+          new Pair<>("text(11)", "textType"),
+          new Pair<>("blob(11)", "blobType"),
+          new Pair<>("boolean", "0"),
+          new Pair<>("bigint", "1234"),
+          new Pair<>("double", "12.3"),
+          new Pair<>("date", "1995-01-01"),
+          new Pair<>("varchar(20)", "varcharType"));
 
   private static final String TABLE_CLUSTERED_INDEX_ONE_COLUMN =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
@@ -72,7 +75,7 @@ public class ClusteredIndexTest extends FlinkTestBase {
   public static Collection<Object[]> data() {
     ArrayList<Object[]> parameters = Lists.newArrayList();
     for (Pair<String, String> dataType : dataTypesList) {
-      parameters.add(new Object[]{dataType});
+      parameters.add(new Object[] {dataType});
     }
 
     return parameters;
@@ -102,23 +105,18 @@ public class ClusteredIndexTest extends FlinkTestBase {
     Map<String, String> properties = defaultProperties();
     properties.put(SINK_IMPL.key(), TIKV.name());
 
-    String createTableSql = String.format(TABLE_CLUSTERED_INDEX_ONE_COLUMN, "%s", "%s",
-        dataType.getKey());
+    String createTableSql =
+        String.format(TABLE_CLUSTERED_INDEX_ONE_COLUMN, "%s", "%s", dataType.getKey());
     if (dataType.getKey().equals("blob(11)") || dataType.getKey().equals("text(11)")) {
       createTableSql = createTableSql.replace("PRIMARY KEY (`c1`)", "PRIMARY KEY (`c1`(11))");
     }
 
     TiDBCatalog tiDBCatalog =
-        initTiDBCatalog(
-            dstTable,
-            createTableSql,
-            tableEnvironment,
-            properties);
+        initTiDBCatalog(dstTable, createTableSql, tableEnvironment, properties);
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " +
-                "VALUES (%s)",
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES (%s)",
             DATABASE_NAME, dstTable, castString(dataType.getKey(), dataType.getValue())));
     tableEnvironment.execute("test");
 
@@ -128,14 +126,16 @@ public class ClusteredIndexTest extends FlinkTestBase {
   }
 
   private void checkSourceScanResult(StreamTableEnvironment tableEnvironment) {
-    Table table = tableEnvironment.sqlQuery(
-        String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
+    Table table =
+        tableEnvironment.sqlQuery(
+            String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
     Row next = table.execute().collect().next();
     if (dataType.getKey().toLowerCase().startsWith("blob")) {
-      Assert.assertArrayEquals((byte[]) next.getField("c1"),
-          dataType.getValue().getBytes(StandardCharsets.UTF_8));
+      Assert.assertArrayEquals(
+          (byte[]) next.getField("c1"), dataType.getValue().getBytes(StandardCharsets.UTF_8));
     } else if (dataType.getKey().toLowerCase().startsWith("timestamp")) {
-      Assert.assertEquals(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+      Assert.assertEquals(
+          DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
               .format((LocalDateTime) Objects.requireNonNull(next.getField("c1"))),
           dataType.getValue());
     } else {
@@ -150,7 +150,8 @@ public class ClusteredIndexTest extends FlinkTestBase {
       return String.format("cast('%s' as bytes)", value);
     } else if (type.toLowerCase().startsWith("text")) {
       return String.format("cast('%s' as string)", value);
-    } else if (type.toLowerCase().startsWith("timestamp") || type.toLowerCase().startsWith("date")
+    } else if (type.toLowerCase().startsWith("timestamp")
+        || type.toLowerCase().startsWith("date")
         || type.toLowerCase().startsWith("varchar")) {
       return String.format("cast('%s' as %s)", value, type);
     } else {

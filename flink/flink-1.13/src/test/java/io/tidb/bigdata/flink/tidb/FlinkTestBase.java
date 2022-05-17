@@ -26,8 +26,7 @@ import org.junit.ClassRule;
 
 public abstract class FlinkTestBase {
 
-  @ClassRule
-  public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
+  @ClassRule public static final TiDBTestDatabase testDatabase = new TiDBTestDatabase();
 
   public static final String CATALOG_NAME = "tidb";
 
