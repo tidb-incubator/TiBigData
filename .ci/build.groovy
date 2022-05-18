@@ -19,6 +19,18 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                         }
                         checkout changelog: false, poll: false, scm: [$class: 'GitSCM', branches: [[name: 'master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'PruneStaleBranch'], [$class: 'CleanBeforeCheckout']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: credentialsId, refspec: '+refs/pull/*:refs/remotes/origin/pr/*', url: 'git@github.com:tidb-incubator/TiBigData.git']]]
                         sh "git checkout -f ${ghprbActualCommit}"
+                        
+                        sh """
+                        mvn com.coveo:fmt-maven-plugin:format
+                        git diff --quiet
+                        formatted="\$?"
+                        if [[ "\${formatted}" -eq 1 ]]
+                        then
+                           echo "code format error, please run the following commands:"
+                           echo "mvn com.coveo:fmt-maven-plugin:format"
+                           exit 1
+                        fi
+                        """
                     }
                     dir("/home/jenkins/agent/lib") {
                         sh "curl https://download.pingcap.org/jdk-11.0.12_linux-x64_bin.tar.gz | tar xz"
