@@ -74,7 +74,7 @@ public class TiDBCatalog extends AbstractCatalog {
   public static final String TIDB_CATALOG_LOAD_MODE_DEFAULT = CatalogLoadMode.EAGER.name();
 
   public static final String TIDB_TELEMETRY_ENABLE = "tidb.telemetry.enable";
-  public static final String TIDB_TELEMETRY_ENABLE_FALSE = "true";
+  public static final String TIDB_TELEMETRY_ENABLE_DEFAULT = "true";
 
   public static final String DEFAULT_DATABASE = "default";
 
@@ -98,7 +98,9 @@ public class TiDBCatalog extends AbstractCatalog {
     this(name, DEFAULT_DATABASE, properties);
 
     // Report telemetry.
-    if (properties.getOrDefault(TIDB_TELEMETRY_ENABLE,TIDB_TELEMETRY_ENABLE_FALSE).equals("true")) {
+    if (properties
+        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
+        .equals("true")) {
       AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
       asyncTelemetry.report();
     }

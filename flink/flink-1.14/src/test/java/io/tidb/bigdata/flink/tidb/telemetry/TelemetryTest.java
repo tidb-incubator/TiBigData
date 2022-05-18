@@ -16,44 +16,42 @@
 
 package io.tidb.bigdata.flink.tidb.telemetry;
 
+import static java.lang.String.format;
+
 import io.tidb.bigdata.flink.telemetry.FlinkTeleMsg;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.TableUtils;
+import java.util.Map;
 import org.apache.flink.table.api.TableEnvironment;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import java.util.Map;
-
-import static java.lang.String.format;
-
 @Category(IntegrationTest.class)
 public class TelemetryTest extends FlinkTestBase {
 
-    @Test
-    public void testTelemetryTableEnvironmetn() throws InterruptedException {
-        Map<String, String> properties = ConfigUtils.defaultProperties();
-        properties.put("type", "tidb");
-        properties.put("tidb.telemetry.enable", "false");
-        TableEnvironment tableEnvironment = getTableEnvironment();
-        Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
-        String createCatalogSql =
-                format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
-        tableEnvironment.executeSql(createCatalogSql);
-        String showDatabases =
-                String.format("SHOW DATABASES");
-        tableEnvironment.executeSql(showDatabases);
-        Thread.sleep(1000);
-        Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
-        properties.put("tidb.telemetry.enable", "true");
-        createCatalogSql =
-                format("CREATE CATALOG `tidb2` WITH ( %s )", TableUtils.toSqlProperties(properties));
-        tableEnvironment.executeSql(createCatalogSql);
-        tableEnvironment.executeSql(showDatabases);
-        Thread.sleep(1000);
-        Assert.assertEquals(false, FlinkTeleMsg.getInstance().shouldSendMsg());
-    }
+  @Test
+  public void testTelemetryTableEnvironmetn() throws InterruptedException {
+    Map<String, String> properties = ConfigUtils.defaultProperties();
+    properties.put("type", "tidb");
+    properties.put("tidb.telemetry.enable", "false");
+    TableEnvironment tableEnvironment = getTableEnvironment();
+    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
+    String createCatalogSql =
+        format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
+    tableEnvironment.executeSql(createCatalogSql);
+    String showDatabases = String.format("SHOW DATABASES");
+    tableEnvironment.executeSql(showDatabases);
+    Thread.sleep(1000);
+    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
+    properties.put("tidb.telemetry.enable", "true");
+    createCatalogSql =
+        format("CREATE CATALOG `tidb2` WITH ( %s )", TableUtils.toSqlProperties(properties));
+    tableEnvironment.executeSql(createCatalogSql);
+    tableEnvironment.executeSql(showDatabases);
+    Thread.sleep(1000);
+    Assert.assertEquals(false, FlinkTeleMsg.getInstance().shouldSendMsg());
+  }
 }

@@ -16,71 +16,71 @@
 
 package io.tidb.bigdata.telemetry;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Telemetry message.
- */
+/** Telemetry message. */
 public abstract class TeleMsg {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public String trackId;
-    public String time;
-    public String subName;
-    public Map<String, Object> hardware;
-    public Map<String, Object> instance;
-    public Map<String, Object> content;
+  public String trackId;
+  public long time;
+  public String subName;
+  public Map<String, Object> hardware;
+  public Map<String, Object> instance;
+  public Map<String, Object> content;
 
-    protected TeleMsg(){
-        this.time = setTime();
-        this.hardware = generateHardwareInfo();
+  protected TeleMsg() {
+    this.time = setTime();
+    this.hardware = generateHardwareInfo();
+  }
+
+  /**
+   * set message track id
+   *
+   * @return
+   */
+  public abstract String setTrackId();
+
+  /**
+   * application name
+   *
+   * @return
+   */
+  public abstract String setSubName();
+
+  /**
+   * application version, TiDB version
+   *
+   * @return
+   */
+  public abstract Map<String, Object> setInstance();
+
+  /**
+   * message content
+   *
+   * @return
+   */
+  public abstract Map<String, Object> setContent();
+
+  public long setTime() {
+    return System.currentTimeMillis() / 1000L;
+  }
+
+  public Map<String, Object> generateHardwareInfo() {
+    Map<String, Object> hardwareInfo = new HashMap<>();
+    try {
+      SystemInfoUtil systemInfoUtil = new SystemInfoUtil();
+      hardwareInfo.put("os", systemInfoUtil.getOsFamily());
+      hardwareInfo.put("version", systemInfoUtil.getOsVersion());
+      hardwareInfo.put("cpu", systemInfoUtil.getCpu());
+      hardwareInfo.put("memory", systemInfoUtil.getMemoryInfo());
+      hardwareInfo.put("disks", systemInfoUtil.getDisks());
+    } catch (Exception e) {
+      logger.info("Failed to generate hardware information. " + e.getMessage());
     }
-
-    /**
-     * set message track id
-     * @return
-     */
-    public abstract String setTrackId();
-
-    /**
-     * application name
-     * @return
-     */
-    public abstract String setSubName();
-
-    /**
-     * application version, TiDB version
-     * @return
-     */
-    public abstract Map<String, Object> setInstance();
-
-    /**
-     * message content
-     * @return
-     */
-    public abstract Map<String, Object> setContent();
-
-    public String setTime() {
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());
-    }
-
-    public Map<String, Object> generateHardwareInfo() {
-        Map<String, Object> hardwareInfo = new HashMap<>();
-        try {
-            SystemInfoUtil systemInfoUtil = new SystemInfoUtil();
-            hardwareInfo.put("os", systemInfoUtil.getOsFamily());
-            hardwareInfo.put("version", systemInfoUtil.getOsVersion());
-            hardwareInfo.put("cpu", systemInfoUtil.getCpu());
-            hardwareInfo.put("memory", systemInfoUtil.getMemoryInfo());
-            hardwareInfo.put("disks", systemInfoUtil.getDisks());
-        } catch (Exception e) {
-            logger.info("Failed to generate hardware information. " + e.getMessage());
-        }
-        return hardwareInfo;
-    }
+    return hardwareInfo;
+  }
 }

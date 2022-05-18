@@ -44,7 +44,7 @@ import org.apache.flink.table.types.DataType;
 public class TiDBCatalog extends TiDBBaseCatalog {
 
   public static final String TIDB_TELEMETRY_ENABLE = "tidb.telemetry.enable";
-  public static final String TIDB_TELEMETRY_ENABLE_FALSE = "true";
+  public static final String TIDB_TELEMETRY_ENABLE_DEFAULT = "true";
 
   public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase, properties);
@@ -54,7 +54,9 @@ public class TiDBCatalog extends TiDBBaseCatalog {
     super(name, properties);
 
     // Report telemetry.
-    if (properties.getOrDefault(TIDB_TELEMETRY_ENABLE,TIDB_TELEMETRY_ENABLE_FALSE).equals("true")) {
+    if (properties
+        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
+        .equals("true")) {
       AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
       asyncTelemetry.report();
     }

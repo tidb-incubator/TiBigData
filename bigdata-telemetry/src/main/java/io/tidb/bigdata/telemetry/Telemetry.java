@@ -22,41 +22,39 @@ import org.apache.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Report telemetry by HTTP POST. The url should be constant
- */
+/** Report telemetry by HTTP POST. The url should be constant */
 public class Telemetry {
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public String url = "http://127.0.0.1:2379";
+  public String url = "https://telemetry.pingcap.com/api/v1/tibigdata/report";
 
-    /**
-     * Send telemetry message.
-     *
-     * @param msg the msg sent to telemetry server
-     */
-    public ReportState report(TeleMsg msg) {
-        try {
-            HttpClientUtil httpClient = new HttpClientUtil();
-            ObjectMapper mapper = new ObjectMapper();
-            String msgString = mapper.writeValueAsString(msg);
-            logger.info("Telemetry report: " + msgString);
-            HttpResponse resp = httpClient.postJSON(url, msg);
-            return (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-                    ? ReportState.SUCCESS
-                    : ReportState.FAILURE;
-        } catch (Exception e) {
-            logger.info("Failed to report telemetry. " + e.getMessage());
-            return ReportState.FAILURE;
-        }
+  /**
+   * Send telemetry message.
+   *
+   * @param msg the msg sent to telemetry server
+   */
+  public ReportState report(TeleMsg msg) {
+    try {
+      HttpClientUtil httpClient = new HttpClientUtil();
+      ObjectMapper mapper = new ObjectMapper();
+      String msgString = mapper.writeValueAsString(msg);
+      logger.info("Telemetry report: " + msgString);
+      HttpResponse resp = httpClient.postJSON(url, msg);
+      return (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
+          ? ReportState.SUCCESS
+          : ReportState.FAILURE;
+    } catch (Exception e) {
+      logger.info("Failed to report telemetry. " + e.getMessage());
+      return ReportState.FAILURE;
     }
+  }
 
-    public void setUrl(String url){
-        this.url = url;
-    }
+  public void setUrl(String url) {
+    this.url = url;
+  }
 
-    public enum ReportState {
-        SUCCESS,
-        FAILURE;
-    }
+  public enum ReportState {
+    SUCCESS,
+    FAILURE;
+  }
 }
