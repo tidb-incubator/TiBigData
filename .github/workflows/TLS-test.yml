@@ -1,0 +1,36 @@
+name: TLS test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          cache: maven
+
+      - name: add host and set env
+        run: | 
+          echo -e "127.0.0.1   pd \n127.0.0.1   tikv" | sudo tee -a /etc/hosts
+          git submodule update --init --recursive
+          sudo cp -r .ci/config/ /config
+
+      - name: build docker
+        run: docker-compose -f docker-compose-TiDB-TLS.yaml up -d
+
+      - name: test
+        run:  export TLS_ENABLE=true && mvn test -am -pl flink/flink-1.14 -D test=TiKVSourceTLSTest -DfailIfNoTests=false
