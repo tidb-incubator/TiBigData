@@ -32,14 +32,22 @@ However, Flink SQL doesn't support statement `INSERT ... ON DUPLICATE KEY UPDATE
 
 ## Detailed Design
 
-### Use `SQL Hints` achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics
+### Use `SQL Hints` to get update columns
 
+With option `tidb.sink.update-columns` in SQL hints, update-columns would be passed to `TiDBDynamicTable`. Combined with `INSERT INTO` clause, we have gotten all information needed.
+
+For example, c2 and c13 are the columns needed to be updated, SQL is as follows.
 
 ```sql
 INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */ 
 SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 from `tidb`.`srcDatabase`.`srcDatabase`
 ```
 
+### Generate `INSERT ... ON DUPLICATE KEY UPDATE` clause 
+
+```sql
+INSERT INTO `tidb`.`dstDatabase`.`dstDatabase`
+```
 
 ## Compatibility
 
