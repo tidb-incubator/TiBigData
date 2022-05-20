@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+interface DynamicTableSink
+
+DynamicTableSink <|-- InsertOrUpdateOnDuplicateSink
+
+GenericJdbcSinkFunction <--* InsertOrUpdateOnDuplicateSink : provide
+
+GenericJdbcSinkFunction "1" o-- "1" JdbcOutputFormat: contains
+
+JdbcOutputFormat #-- InsertOrDuplicateKeyUpdateOutputFormatBuilder : build
+
+@enduml

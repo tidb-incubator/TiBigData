@@ -28,11 +28,14 @@ It is a common requirement that partially updates some fields based on the prima
 
 ![image alt text](imgs/insert-on-duplicate-key-update/Materialized-View.png)
 
-However, Flink SQL doesn't support statement `INSERT ... ON DUPLICATE KEY UPDATE`. So we need find an alternative way to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics. 
+However, Flink SQL doesn't support the statement `INSERT ... ON DUPLICATE KEY UPDATE`. So we need to find an alternative way to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics in TiDBDynamicTable. 
 
 ## Detailed Design
 
-### Use `SQL Hints` to get update columns
+The design will be divided into two parts, one is how it is implemented at the SQL syntax level, in other words, how the user passes all the required parameters. 
+The other part is the implementation of `DynamicTableSink` interface to interact with the TiDB-server.
+
+### Use `SQL Hints` to pass update columns
 
 With option `tidb.sink.update-columns` in SQL hints, update-columns would be passed to `TiDBDynamicTable`. Combined with `INSERT INTO` clause, we have gotten all information needed.
 
@@ -43,20 +46,50 @@ INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-col
 SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 from `tidb`.`srcDatabase`.`srcDatabase`
 ```
 
-### Generate `INSERT ... ON DUPLICATE KEY UPDATE` clause 
+### Implement `InsertOrUpdateOnDuplicateSink`
+
+`InsertOrUpdateOnDuplicateSink` implement the interface `DynamicTableSink`, provide `GenericJdbcSinkFunction` to sink data.
+`GenericJdbcSinkFunction` require `JdbcOutputFormat` to generate FieldNamedPreparedStatement, extract data from rowData.
+
+![image alt text](imgs/insert-on-duplicate-key-update/classes.png)
+
+#### Generate FieldNamedPreparedStatement `INSERT ... ON DUPLICATE KEY UPDATE`
+
+With `tidb.sink.update-columns`, we can easily generate `INSERT ... ON DUPLICATE KEY UPDATE` clause as follows. 
 
 ```sql
-INSERT INTO `tidb`.`dstDatabase`.`dstDatabase`
+INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` (`c2`, `c13`) VALUES (:c2, :c13) ON DUPLICATE KEY UPDATE `c2`=VALUES(`c2`), `c13`=VALUES(`c13`)
+```
+
+### Column Pruning
+
+Use a wrapper class to prune column, which contains an array to store the indexes needed
+
+```java
+public class DuplicateKeyUpdateOutputRowData implements RowData {
+
+  private final RowData rowData;
+  private final int[] index;
+
+  public DuplicateKeyUpdateOutputRowData(RowData rowData, int[] index) {
+    this.rowData = rowData;
+    this.index = index;
+  }
+
+  @Override
+  public int getArity() {
+    return index.length;
+  }
+
+  @Override
+  public boolean isNullAt(int pos) {
+    return rowData.isNullAt(index[pos]);
+  }
+
+}
 ```
 
 ## Compatibility
-
-Compatibility is important, please also take into consideration, a checklist:
-- Compatibility with other features, like partition table, security&privilege, collation&charset, clustered index, async commit, etc.
-- Compatibility with other internal components, like parser, DDL, planner, statistics, executor, etc.
-- Compatibility with other external components, like PD, TiKV, TiFlash, BR, TiCDC, Dumpling, TiUP, K8s, etc.
-- Upgrade compatibility
-- Downgrade compatibility
 
 ## Test Design
 
