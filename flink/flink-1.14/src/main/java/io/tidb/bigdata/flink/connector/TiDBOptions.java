@@ -111,6 +111,11 @@ public class TiDBOptions {
           .defaultValue(1000L)
           .withDescription(
               "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
+  public static final ConfigOption<Boolean> DELETE_ENABLE =
+      ConfigOptions.key("tikv.sink.delete_enable")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription("Whether enable delete RowKind");
 
   // split or offset
   public static final ConfigOption<String> SOURCE_FAILOVER =

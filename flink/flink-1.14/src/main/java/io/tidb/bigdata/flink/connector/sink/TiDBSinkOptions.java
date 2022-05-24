@@ -17,11 +17,13 @@
 package io.tidb.bigdata.flink.connector.sink;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DEDUPLICATE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.DELETE_ENABLE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_AUTOINCREMENT_COLUMN_VALUE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction.MINIBATCH;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.TASK_START_INTERVAL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 
@@ -41,6 +43,7 @@ public class TiDBSinkOptions implements Serializable {
   private final boolean deduplicate;
   private final TiDBWriteMode writeMode;
   private final long taskStartInterval; // set interval in order to avoid allocate rowId conflict.
+  private final boolean deleteEnable;
 
   public TiDBSinkOptions(ReadableConfig config) {
     this.sinkImpl = config.get(SINK_IMPL);
@@ -51,6 +54,7 @@ public class TiDBSinkOptions implements Serializable {
     this.deduplicate = config.get(DEDUPLICATE);
     this.writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     this.taskStartInterval = config.get(TASK_START_INTERVAL);
+    this.deleteEnable = config.get(DELETE_ENABLE);
   }
 
   public long getTaskStartInterval() {
@@ -83,5 +87,9 @@ public class TiDBSinkOptions implements Serializable {
 
   public TiDBWriteMode getWriteMode() {
     return writeMode;
+  }
+
+  public boolean isDeleteEnable() {
+    return deleteEnable && sinkTransaction == MINIBATCH && writeMode == TiDBWriteMode.UPSERT;
   }
 }

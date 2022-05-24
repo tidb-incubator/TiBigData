@@ -250,6 +250,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
     for (TiIndexInfo index : uniqueIndices) {
+      // pk is uk when isCommonHandle, so we need to exclude it
       if (!isCommonHandle || !index.isPrimary()) {
         Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
         if (!uniqueIndexKeyPair.second) {
@@ -313,6 +314,39 @@ public class TiDBEncodeHelper implements AutoCloseable {
     keyValues.add(generateRecordKeyValue(row, handle, false));
     keyValues.addAll(generateIndexKeyValues(row, handle, false));
     return keyValues;
+  }
+
+  /**
+   * generateKeyValuesToDeleteByRow only support cluster index now
+   *
+   * @param row
+   * @return
+   */
+  public List<BytePairWrapper> generateKeyValuesToDeleteByRow(Row row) {
+    // check cluster index
+    Preconditions.checkArgument(
+        handleCol != null || isCommonHandle, "Delete is only support in cluster index");
+
+    // get handle
+    Handle handle = extractHandle(row);
+
+    // get old value in case TiCDC close old value
+    Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
+    List<Pair<Row, Handle>> deletion = new ArrayList<>();
+    byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+    byte[] oldValue = snapshot.get(key);
+    if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+      Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
+      deletion.add(new Pair<>(oldRow, handle));
+    }
+
+    // generate BytePairWrapper
+    List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
+    for (Pair<Row, Handle> pair : deletion) {
+      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
+      deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
+    }
+    return deletionKeyValue;
   }
 
   @Override

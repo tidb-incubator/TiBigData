@@ -20,7 +20,6 @@ import static java.lang.String.format;
 
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
-import io.tidb.bigdata.tidb.row.ObjectRowImpl;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.tidb.types.StringType;
@@ -30,6 +29,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.types.RowKind;
 import org.tikv.common.exception.TiBatchWriteException;
 
 public class TiDBRowConverter implements Serializable {
@@ -135,12 +135,21 @@ public class TiDBRowConverter implements Serializable {
 
   public Row toTiRow(RowData rowData, boolean ignoreAutoincrementColumn) {
     int arity = rowData.getArity();
-    Row tiRow = ObjectRowImpl.create(arity);
+    RowKind rowKind = rowData.getRowKind();
+    TiRow tiRow = new TiRow(arity, rowKind);
     for (int i = 0; i < arity; i++) {
       TiColumnInfo tiColumnInfo = columns.get(i);
       DataType type = tiColumnInfo.getType();
       if (rowData.isNullAt(i)) {
         tiRow.setNull(i);
+        // delete RowKind only need pk not null
+        if (rowKind == RowKind.DELETE) {
+          if (tiColumnInfo.isPrimaryKey()) {
+            throw new IllegalStateException(
+                String.format("Column: %s can not be null when delete", tiColumnInfo.getName()));
+          }
+          continue;
+        }
         // check not null
         if (type.isNotNull()) {
           if (type.isAutoIncrement()) {

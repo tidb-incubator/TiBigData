@@ -58,6 +58,7 @@ import org.apache.flink.table.connector.sink.DataStreamSinkProvider;
 import org.apache.flink.table.connector.sink.DynamicTableSink.Context;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.utils.TableSchemaUtils;
+import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +149,12 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
         String.format(
             "Columns do not match:\n " + "tidb -> flink: \n%s",
             SqlUtils.printColumnMapping(tidbColumns, flinkColumns)));
+
+    // filter delete RowKind if delete is disable, delete only work in MINIBATCH with upsert mode
+    if (!sinkOptions.isDeleteEnable()) {
+      LOG.info("FLink delete is disabled");
+      dataStream = dataStream.filter(row -> row.getRowKind() != RowKind.DELETE);
+    }
 
     // add RowConvertMapFunction
     TiDBRowConverter tiDBRowConverter = new TiDBRowConverter(tiTableInfo);
