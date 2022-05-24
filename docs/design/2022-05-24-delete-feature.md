@@ -11,6 +11,7 @@
   * [New Configuration](#new-configuration)
   * [Main Steps](#mian-steps)
   * [Delete Logical](#delete-logical)
+  * [Row Order](#row-order)
 * [Compatibility](#compatibility)
 * [Test Design](#test-design)
 
@@ -54,6 +55,12 @@ It will also check if the delete row exists in the table, if not, the row will b
 At last, TiBigData/Flink will mix the upsert and delete keyValue to do two phase commit in a transaction
 
 ![image alt text](imgs/delete_feature/delete_logical.png)
+
+### Row Order
+It is important to keep order in streaming mode, or we may get the error results.
+- TiCDC will Ingest the changelogs and sink to kafka. So, make sure kafka will partition the messages by key
+- It's better to optimize deduplication and leave the lasted operation for the same row
+- When Flink executes sink distributedly, make sure the operations on the same row will be sent to the same task
 
 ## Compatibility
 - Delete feature can't work with batch mode, and it doesn't support the DELETE statement
