@@ -1,0 +1,22 @@
+@startuml
+
+start
+
+group TiDBEncodeHelper
+: check pkIsHandle or isCommonHandle;
+: extractHandle from pk;
+: build RowKey with handle and tableId;
+group TiSession
+: get snapshot;
+endgroup
+: check snapshot if the delete row is exist;
+: generate Record KeyValue for delete row;
+: generate index KeyValue for delete row;
+endgroup
+group TiDBMiniBatchWriteOperator
+: mix KeyValue of upsert and delete rows;
+: 2PC;
+endgroup
+
+stop
+@enduml
