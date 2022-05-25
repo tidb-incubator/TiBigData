@@ -163,6 +163,14 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     checkArgument(
         tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
         "Insert on duplicate only work in `upsert` mode.");
+
+    /**
+     * `UPDATE t1 SET c=c+1 WHERE a=1 OR b=2 LIMIT 1;`
+     * If a=1 OR b=2 matches several rows, only one row is updated.
+     * In general, you should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
+     * @see <a href=https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html>insert-on-duplicate</a>
+     * @see <a href=https://github.com/pingcap/tidb/issues/34813>issue-ON-DUPLICATE-KEY</a>
+     */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
       ArrayList<String> strings = Lists.newArrayList(updateColumnNames);
       List<String> collect =
