@@ -29,6 +29,7 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_MA
 import static org.apache.flink.util.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
@@ -36,9 +37,11 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
@@ -114,19 +117,20 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
             .withMaxRetries(config.get(SINK_MAX_RETRIES))
             .build();
     // dml options
+    String[] keyFields = getKeyFields(context, config, databaseName, jdbcOptions.getTableName());
     JdbcDmlOptions jdbcDmlOptions =
         JdbcDmlOptions.builder()
             .withTableName(jdbcOptions.getTableName())
             .withDialect(jdbcOptions.getDialect())
             .withFieldNames(schema.getFieldNames())
-            .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+            .withKeyFields(keyFields)
             .build();
 
     if (tiDBSinkOptions.getUpdateColumns() != null) {
-      checkArgument(
-          tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
-          "Insert on duplicate only work in `upsert` mode.");
       String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
+
+      validationForInsertOndulicateUpdate(tiDBSinkOptions, keyFields, updateColumnNames);
+
       List<TableColumn> updateColumns = new ArrayList<>();
       int[] updateColumnIndexes =
           getUpdateColumnAndIndexes(
@@ -151,6 +155,23 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     } else {
       throw new UnsupportedOperationException(
           "Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
+    }
+  }
+
+  private void validationForInsertOndulicateUpdate(
+      TiDBSinkOptions tiDBSinkOptions, String[] keyFields, String[] updateColumnNames) {
+    checkArgument(
+        tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+        "Insert on duplicate only work in `upsert` mode.");
+    if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
+      ArrayList<String> strings = Lists.newArrayList(updateColumnNames);
+      List<String> collect =
+          Arrays.stream(keyFields).filter(strings::contains).collect(Collectors.toList());
+      checkArgument(
+          collect.size() == 1,
+          "Update columns should only have one unique key or primary key\n"
+              + "If you want to force skip the constraint, "
+              + "set `tidb.sink.skip-check-update-columns` to true");
     }
   }
 

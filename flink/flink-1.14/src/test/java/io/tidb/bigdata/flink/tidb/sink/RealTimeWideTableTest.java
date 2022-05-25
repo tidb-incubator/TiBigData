@@ -16,6 +16,7 @@
 
 package io.tidb.bigdata.flink.tidb.sink;
 
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SKIP_CHECK_UPDATE_COLUMNS;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static java.lang.String.format;
@@ -54,6 +55,17 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    c3  bigint,\n"
           + "    c4  bigint,\n"
           + "    unique key(c1)\n"
+          + ")";
+
+  protected static final String TABLE_SCHEMA_WITH_TWO_KEY =
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint,\n"
+          + "    c2  bigint,\n"
+          + "    c3  bigint,\n"
+          + "    c4  bigint,\n"
+          + "    unique key(c1),\n"
+          + "    primary key(c2)\n"
           + ")";
 
   @Rule public ExpectedException exceptionRule = ExpectedException.none();
@@ -129,6 +141,70 @@ public class RealTimeWideTableTest extends FlinkTestBase {
 
     tableEnvironment.sqlUpdate(sql1);
     tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void testInsertOnDuplicateWithMoreThanOneKeyFields() throws Exception {
+    exceptionRule.expectCause(
+        allOf(
+            isA(IllegalArgumentException.class),
+            hasProperty(
+                "message",
+                containsString(
+                    "Update columns should only have one unique key or primary key\n"
+                        + "If you want to force skip the constraint, "
+                        + "set `tidb.sink.skip-check-update-columns` to true"))));
+
+    dstTable = RandomUtils.randomString();
+
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_TWO_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void testInsertOnDuplicateWithMoreThanOneKeyFieldsSkipCheck() throws Exception {
+    dstTable = RandomUtils.randomString();
+
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+    properties.put(SKIP_CHECK_UPDATE_COLUMNS.key(), "true");
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_TWO_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    String sql2 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c3') */"
+                + "values (1,2,356,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+    System.out.println(sql2);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.sqlUpdate(sql2);
+    tableEnvironment.execute("test");
+
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
   }
 
   private void checkRowResult(TableEnvironment tableEnvironment, List<String> expected) {
