@@ -101,8 +101,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     ReadableConfig config = helper.getOptions();
     TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
 
-    TableSchema schema =
-        TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
+    TableSchema schema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
     String databaseName = config.get(DATABASE_NAME);
     // jdbc options
     JdbcConnectorOptions jdbcOptions =
@@ -120,19 +119,25 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
             .withTableName(jdbcOptions.getTableName())
             .withDialect(jdbcOptions.getDialect())
             .withFieldNames(schema.getFieldNames())
-            .withKeyFields(
-                getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
+            .withKeyFields(getKeyFields(context, config, databaseName, jdbcOptions.getTableName()))
             .build();
 
     if (tiDBSinkOptions.getUpdateColumns() != null) {
-      checkArgument(tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+      checkArgument(
+          tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
           "Insert on duplicate only work in `upsert` mode.");
       String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
       List<TableColumn> updateColumns = new ArrayList<>();
-      int[] updateColumnIndexes = getUpdateColumnAndIndexes(schema, databaseName, jdbcOptions,
-          updateColumnNames, updateColumns);
-      return new InsertOnDuplicateUpdateSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions,
-          schema, updateColumns, updateColumnIndexes);
+      int[] updateColumnIndexes =
+          getUpdateColumnAndIndexes(
+              schema, databaseName, jdbcOptions, updateColumnNames, updateColumns);
+      return new InsertOnDuplicateUpdateSink(
+          jdbcOptions,
+          jdbcExecutionOptions,
+          jdbcDmlOptions,
+          schema,
+          updateColumns,
+          updateColumnIndexes);
     }
 
     if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
@@ -149,18 +154,21 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     }
   }
 
-  private int[] getUpdateColumnAndIndexes(TableSchema schema, String databaseName,
+  private int[] getUpdateColumnAndIndexes(
+      TableSchema schema,
+      String databaseName,
       JdbcConnectorOptions jdbcOptions,
-      String[] updateColumnNames, List<TableColumn> updateColumns) {
+      String[] updateColumnNames,
+      List<TableColumn> updateColumns) {
     int[] index = new int[updateColumnNames.length];
     for (int i = 0; i < updateColumnNames.length; i++) {
       String updateColumnName = updateColumnNames[i];
       Optional<TableColumn> tableColumn = schema.getTableColumn(updateColumnName);
       if (!tableColumn.isPresent()) {
         throw new IllegalStateException(
-            String.format("Unknown updateColumn %s in table %s.%s", updateColumnName,
-                databaseName,
-                jdbcOptions.getTableName()));
+            String.format(
+                "Unknown updateColumn %s in table %s.%s",
+                updateColumnName, databaseName, jdbcOptions.getTableName()));
       } else {
         updateColumns.add(tableColumn.get());
         index[i] = schema.getTableColumns().indexOf(tableColumn.get());

@@ -56,8 +56,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    unique key(c1)\n"
           + ")";
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
+  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @After
   public void teardown() {
@@ -74,8 +73,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
-    TiDBCatalog tiDBCatalog =
-        initTiDBCatalog(dstTable, TABLE_SCHEMA, tableEnvironment, properties);
+    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable, TABLE_SCHEMA, tableEnvironment, properties);
 
     String sql1 =
         format(
@@ -111,11 +109,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
         allOf(
             isA(IllegalArgumentException.class),
             hasProperty(
-                "message",
-                containsString("Insert on duplicate only work in `upsert` mode.")
-            )
-        )
-    );
+                "message", containsString("Insert on duplicate only work in `upsert` mode."))));
 
     dstTable = RandomUtils.randomString();
 
@@ -142,9 +136,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
         tableEnvironment.sqlQuery(
             String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
     CloseableIterator<Row> resultIterator = table.execute().collect();
-    List<String> actualResult = Lists.newArrayList(resultIterator).stream().map(Row::toString)
-        .collect(
-            Collectors.toList());
+    List<String> actualResult =
+        Lists.newArrayList(resultIterator).stream().map(Row::toString).collect(Collectors.toList());
 
     Assert.assertEquals(actualResult, expected);
   }

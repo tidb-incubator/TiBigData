@@ -57,9 +57,7 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 
-/**
- * Builder for {@link JdbcOutputFormat} for clause `INSERT ... ON DUPLICATE KEY UPDATE`.
- */
+/** Builder for {@link JdbcOutputFormat} for clause `INSERT ... ON DUPLICATE KEY UPDATE`. */
 public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -71,8 +69,7 @@ public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializab
   private DataType[] updateColumnTypes;
   private int[] updateColumnIndexes;
 
-  public InsertOnDuplicateKeyUpdateOutputFormatBuilder() {
-  }
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder() {}
 
   public InsertOnDuplicateKeyUpdateOutputFormatBuilder setJdbcOptions(
       JdbcConnectorOptions jdbcOptions) {
@@ -132,7 +129,9 @@ public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializab
   }
 
   private static JdbcBatchStatementExecutor<RowData> createBufferReduceExecutor(
-      JdbcDmlOptions opt, LogicalType[] updateColumnTypes, String[] updateColumnNames,
+      JdbcDmlOptions opt,
+      LogicalType[] updateColumnTypes,
+      String[] updateColumnNames,
       int[] updateColumnIndexes) {
     JdbcDialect dialect = opt.getDialect();
     String tableName = opt.getTableName();
@@ -141,12 +140,16 @@ public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializab
         (rowData) -> new ColumnPruningOutputRowData(rowData, updateColumnIndexes);
 
     return new TableBufferedStatementExecutor(
-        createInsertOnDuplicateUpdateRowExecutor(dialect, tableName, updateColumnNames, updateColumnTypes),
+        createInsertOnDuplicateUpdateRowExecutor(
+            dialect, tableName, updateColumnNames, updateColumnTypes),
         valueTransform);
   }
 
   private static JdbcBatchStatementExecutor<RowData> createInsertOnDuplicateUpdateRowExecutor(
-      JdbcDialect dialect, String tableName, String[] updateColumnNames, LogicalType[] updateColumnTypes) {
+      JdbcDialect dialect,
+      String tableName,
+      String[] updateColumnNames,
+      LogicalType[] updateColumnTypes) {
     String sql = getInsertOnDuplicateKeyUpdateSql(dialect, tableName, updateColumnNames);
     return createSimpleRowExecutor(dialect, updateColumnNames, updateColumnTypes, sql);
   }
