@@ -26,6 +26,7 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.LOOKUP_
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BUFFER_FLUSH_INTERVAL;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BUFFER_FLUSH_MAX_ROWS;
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_MAX_RETRIES;
+import static org.apache.flink.util.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
@@ -100,15 +101,6 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     ReadableConfig config = helper.getOptions();
     TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
 
-    if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
-
-      return new TiDBDynamicTableSink(
-          config.get(DATABASE_NAME),
-          config.get(TABLE_NAME),
-          context.getCatalogTable(),
-          tiDBSinkOptions);
-    }
-
     TableSchema schema =
         TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
     String databaseName = config.get(DATABASE_NAME);
@@ -133,12 +125,22 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
             .build();
 
     if (tiDBSinkOptions.getUpdateColumns() != null) {
+      checkArgument(tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+          "Insert on duplicate only work in `upsert` mode.");
       String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
       List<TableColumn> updateColumns = new ArrayList<>();
       int[] updateColumnIndexes = getUpdateColumnAndIndexes(schema, databaseName, jdbcOptions,
           updateColumnNames, updateColumns);
-      return new InsertOrUpdateOnDuplicateSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions,
+      return new InsertOnDuplicateUpdateSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions,
           schema, updateColumns, updateColumnIndexes);
+    }
+
+    if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
+      return new TiDBDynamicTableSink(
+          config.get(DATABASE_NAME),
+          config.get(TABLE_NAME),
+          context.getCatalogTable(),
+          tiDBSinkOptions);
     } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
       return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
     } else {

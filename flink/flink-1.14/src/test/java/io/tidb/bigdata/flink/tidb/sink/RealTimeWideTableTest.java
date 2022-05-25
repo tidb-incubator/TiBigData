@@ -19,6 +19,10 @@ package io.tidb.bigdata.flink.tidb.sink;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static java.lang.String.format;
+import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.isA;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.hasProperty;
 
 import com.google.common.collect.Lists;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
@@ -32,8 +36,11 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class RealTimeWideTableTest extends FlinkTestBase {
 
@@ -48,6 +55,16 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    c4  bigint,\n"
           + "    unique key(c1)\n"
           + ")";
+
+  @Rule
+  public ExpectedException exceptionRule = ExpectedException.none();
+
+  @After
+  public void teardown() {
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
+  }
 
   @Test
   public void testInsertOnDuplicate() throws Exception {
@@ -88,13 +105,46 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     Assert.assertEquals(1, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
+  @Test
+  public void testInsertOnDuplicateWithAppendMode() throws Exception {
+    exceptionRule.expectCause(
+        allOf(
+            isA(IllegalArgumentException.class),
+            hasProperty(
+                "message",
+                containsString("Insert on duplicate only work in `upsert` mode.")
+            )
+        )
+    );
+
+    dstTable = RandomUtils.randomString();
+
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.APPEND.name());
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+  }
+
   private void checkRowResult(TableEnvironment tableEnvironment, List<String> expected) {
     Table table =
         tableEnvironment.sqlQuery(
             String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
     CloseableIterator<Row> resultIterator = table.execute().collect();
-    List<String> actualResult = Lists.newArrayList(resultIterator).stream().map(Row::toString).collect(
-        Collectors.toList());
+    List<String> actualResult = Lists.newArrayList(resultIterator).stream().map(Row::toString)
+        .collect(
+            Collectors.toList());
 
     Assert.assertEquals(actualResult, expected);
   }
