@@ -36,4 +36,7 @@ build/
 ### Proto ###
 tidb/proto/
 
+### Parser gen ###
+tidb/src/main/java/io/tidb/bigdata/tidb/parser/gen/
+
 
