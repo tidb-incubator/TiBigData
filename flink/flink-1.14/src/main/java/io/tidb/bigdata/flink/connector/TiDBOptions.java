@@ -111,6 +111,10 @@ public class TiDBOptions {
           .defaultValue(1000L)
           .withDescription(
               "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
+  public static final ConfigOption<String> UPDATE_COLUMNS = ConfigOptions.key("tidb.sink.update-columns")
+      .stringType()
+      .noDefaultValue()
+      .withDescription("The columns to be updated");
 
   // split or offset
   public static final ConfigOption<String> SOURCE_FAILOVER =
