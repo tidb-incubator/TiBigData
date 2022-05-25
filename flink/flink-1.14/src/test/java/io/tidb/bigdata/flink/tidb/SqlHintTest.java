@@ -17,7 +17,9 @@
 package io.tidb.bigdata.flink.tidb;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction.CHECKPOINT;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static java.lang.String.format;
@@ -42,6 +44,35 @@ public class SqlHintTest extends FlinkTestBase {
 
   @Test
   public void testSqlHint() throws Exception {
+    final int rowCount = 100000;
+    srcTable = RandomUtils.randomString();
+    generateData(srcTable, rowCount);
+    dstTable = RandomUtils.randomString();
+
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), CHECKPOINT.name());
+
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(dstTable, TABLE_WITH_INDEX, tableEnvironment, properties);
+
+    String sql =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tikv.sink.transaction'='global') */"
+                + "SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 "
+                + "FROM `tidb`.`%s`.`%s`",
+            DATABASE_NAME, dstTable, DATABASE_NAME, srcTable);
+    System.out.println(sql);
+    tableEnvironment.sqlUpdate(sql);
+    tableEnvironment.execute("test");
+
+    Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+  }
+
+  @Test
+  public void testInsertOnDuplicate() throws Exception {
     final int rowCount = 20000;
     srcTable = RandomUtils.randomString();
     generateData(srcTable, rowCount);

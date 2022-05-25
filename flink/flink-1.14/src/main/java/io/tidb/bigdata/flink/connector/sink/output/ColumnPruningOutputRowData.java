@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink;
+package io.tidb.bigdata.flink.connector.sink.output;
 
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.DecimalData;
@@ -25,19 +25,20 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.types.RowKind;
 
-public class DuplicateKeyUpdateOutputRowData implements RowData {
+/** Wrapper class for column pruning. The array `indexes` stores the indexes of visible columns. */
+public class ColumnPruningOutputRowData implements RowData {
 
   private final RowData rowData;
-  private final int[] index;
+  private final int[] indexes;
 
-  public DuplicateKeyUpdateOutputRowData(RowData rowData, int[] index) {
+  public ColumnPruningOutputRowData(RowData rowData, int[] indexes) {
     this.rowData = rowData;
-    this.index = index;
+    this.indexes = indexes;
   }
 
   @Override
   public int getArity() {
-    return index.length;
+    return indexes.length;
   }
 
   @Override
@@ -52,81 +53,81 @@ public class DuplicateKeyUpdateOutputRowData implements RowData {
 
   @Override
   public boolean isNullAt(int pos) {
-    return rowData.isNullAt(index[pos]);
+    return rowData.isNullAt(indexes[pos]);
   }
 
   @Override
   public boolean getBoolean(int pos) {
-    return rowData.getBoolean(index[pos]);
+    return rowData.getBoolean(indexes[pos]);
   }
 
   @Override
   public byte getByte(int pos) {
-    return rowData.getByte(index[pos]);
+    return rowData.getByte(indexes[pos]);
   }
 
   @Override
   public short getShort(int pos) {
-    return rowData.getShort(index[pos]);
+    return rowData.getShort(indexes[pos]);
   }
 
   @Override
   public int getInt(int pos) {
-    return rowData.getInt(index[pos]);
+    return rowData.getInt(indexes[pos]);
   }
 
   @Override
   public long getLong(int pos) {
-    return rowData.getLong(index[pos]);
+    return rowData.getLong(indexes[pos]);
   }
 
   @Override
   public float getFloat(int pos) {
-    return rowData.getFloat(index[pos]);
+    return rowData.getFloat(indexes[pos]);
   }
 
   @Override
   public double getDouble(int pos) {
-    return rowData.getDouble(index[pos]);
+    return rowData.getDouble(indexes[pos]);
   }
 
   @Override
   public StringData getString(int pos) {
-    return rowData.getString(index[pos]);
+    return rowData.getString(indexes[pos]);
   }
 
   @Override
   public DecimalData getDecimal(int pos, int precision, int scale) {
-    return rowData.getDecimal(index[pos], precision, scale);
+    return rowData.getDecimal(indexes[pos], precision, scale);
   }
 
   @Override
   public TimestampData getTimestamp(int pos, int precision) {
-    return rowData.getTimestamp(index[pos], precision);
+    return rowData.getTimestamp(indexes[pos], precision);
   }
 
   @Override
   public <T> RawValueData<T> getRawValue(int pos) {
-    return rowData.getRawValue(index[pos]);
+    return rowData.getRawValue(indexes[pos]);
   }
 
   @Override
   public byte[] getBinary(int pos) {
-    return rowData.getBinary(index[pos]);
+    return rowData.getBinary(indexes[pos]);
   }
 
   @Override
   public ArrayData getArray(int pos) {
-    return rowData.getArray(index[pos]);
+    return rowData.getArray(indexes[pos]);
   }
 
   @Override
   public MapData getMap(int pos) {
-    return rowData.getMap(index[pos]);
+    return rowData.getMap(indexes[pos]);
   }
 
   @Override
   public RowData getRow(int pos, int numFields) {
-    return rowData.getRow(index[pos], numFields);
+    return rowData.getRow(indexes[pos], numFields);
   }
 }

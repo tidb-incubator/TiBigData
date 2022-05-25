@@ -32,20 +32,18 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.connector;
+package io.tidb.bigdata.flink.connector.sink.output;
 
 import static org.apache.flink.table.data.RowData.createFieldGetter;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
-import io.tidb.bigdata.flink.DuplicateKeyUpdateOutputRowData;
 import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.connector.jdbc.JdbcExecutionOptions;
 import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
 import org.apache.flink.connector.jdbc.internal.JdbcOutputFormat;
@@ -65,60 +63,53 @@ import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 
-/**
- * Builder for {@link JdbcOutputFormat} for Table/SQL.
- */
-public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializable {
+/** Builder for {@link JdbcOutputFormat} for clause `INSERT ... ON DUPLICATE KEY UPDATE`. */
+public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializable {
 
   private static final long serialVersionUID = 1L;
 
   private JdbcConnectorOptions jdbcOptions;
   private JdbcExecutionOptions executionOptions;
   private JdbcDmlOptions dmlOptions;
-  private TypeInformation<RowData> rowDataTypeInformation;
   private String[] updateColumnNames;
   private DataType[] updateColumnTypes;
-  private int[] index;
+  private int[] updateColumnIndexes;
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder() {
-  }
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder() {}
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setJdbcOptions(
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setJdbcOptions(
       JdbcConnectorOptions jdbcOptions) {
     this.jdbcOptions = jdbcOptions;
     return this;
   }
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setJdbcExecutionOptions(
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setJdbcExecutionOptions(
       JdbcExecutionOptions executionOptions) {
     this.executionOptions = executionOptions;
     return this;
   }
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setJdbcDmlOptions(
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setJdbcDmlOptions(
       JdbcDmlOptions dmlOptions) {
     this.dmlOptions = dmlOptions;
     return this;
   }
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setRowDataTypeInfo(
-      TypeInformation<RowData> rowDataTypeInfo) {
-    this.rowDataTypeInformation = rowDataTypeInfo;
-    return this;
-  }
-
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setUpdateColumnNames(String[] updateColumnNames) {
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setUpdateColumnNames(
+      String[] updateColumnNames) {
     this.updateColumnNames = updateColumnNames;
     return this;
   }
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setUpdateColumnTypes(DataType[] updateColumnTypes) {
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setUpdateColumnTypes(
+      DataType[] updateColumnTypes) {
     this.updateColumnTypes = updateColumnTypes;
     return this;
   }
 
-  public InsertOrDuplicateKeyUpdateOutputFormatBuilder setIndex(int[] index) {
-    this.index = index;
+  public InsertOnDuplicateKeyUpdateOutputFormatBuilder setUpdateColumnIndexes(
+      int[] updateColumnIndexes) {
+    this.updateColumnIndexes = updateColumnIndexes;
     return this;
   }
 
@@ -128,8 +119,7 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
     checkNotNull(executionOptions, "jdbc execution options can not be null");
 
     final LogicalType[] logicalTypes =
-        Arrays.stream(updateColumnTypes).map(DataType::getLogicalType)
-            .toArray(LogicalType[]::new);
+        Arrays.stream(updateColumnTypes).map(DataType::getLogicalType).toArray(LogicalType[]::new);
 
     if (dmlOptions.getKeyFields().isPresent() && dmlOptions.getKeyFields().get().length > 0) {
       // upsert query
@@ -138,7 +128,7 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
           executionOptions,
           ctx ->
               createBufferReduceExecutor(
-                  dmlOptions, logicalTypes, updateColumnNames, index),
+                  dmlOptions, logicalTypes, updateColumnNames, updateColumnIndexes),
           RecordExtractor.identity());
     } else {
       throw new IllegalStateException("Insert on duplicate key update query must have unique keys");
@@ -146,43 +136,31 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
   }
 
   private static JdbcBatchStatementExecutor<RowData> createBufferReduceExecutor(
-      JdbcDmlOptions opt,
-      LogicalType[] fieldTypes, String[] fieldNames, int[] index) {
+      JdbcDmlOptions opt, LogicalType[] fieldTypes, String[] fieldNames, int[] index) {
     checkArgument(opt.getKeyFields().isPresent());
     JdbcDialect dialect = opt.getDialect();
     String tableName = opt.getTableName();
     String[] pkNames = opt.getKeyFields().get();
     int[] pkFields =
-        Arrays.stream(pkNames)
-            .mapToInt(Arrays.asList(opt.getFieldNames())::indexOf)
-            .toArray();
-    final Function<RowData, RowData> valueTransform = (rowData) -> new DuplicateKeyUpdateOutputRowData(rowData, index);
+        Arrays.stream(pkNames).mapToInt(Arrays.asList(opt.getFieldNames())::indexOf).toArray();
+    final Function<RowData, RowData> valueTransform =
+        (rowData) -> new ColumnPruningOutputRowData(rowData, index);
 
     return new TableBufferReducedStatementExecutor(
-        createUpsertRowExecutor(
-            dialect,
-            tableName,
-            fieldNames,
-            fieldTypes),
+        createUpsertRowExecutor(dialect, tableName, fieldNames, fieldTypes),
         createDeleteExecutor(),
         createRowKeyExtractor(fieldTypes, pkFields),
         valueTransform);
   }
 
   private static JdbcBatchStatementExecutor<RowData> createUpsertRowExecutor(
-
-      JdbcDialect dialect,
-      String tableName,
-      String[] fieldNames,
-      LogicalType[] fieldTypes) {
+      JdbcDialect dialect, String tableName, String[] fieldNames, LogicalType[] fieldTypes) {
     String sql = getInsertOnDuplicateKeyUpdateSql(dialect, tableName, fieldNames);
     return createSimpleRowExecutor(dialect, fieldNames, fieldTypes, sql);
   }
 
   private static String getInsertOnDuplicateKeyUpdateSql(
-      JdbcDialect dialect,
-      String tableName,
-      String[] updateColumns) {
+      JdbcDialect dialect, String tableName, String[] updateColumns) {
     String updateClause =
         Arrays.stream(updateColumns)
             .map(f -> dialect.quoteIdentifier(f) + "=VALUES(" + dialect.quoteIdentifier(f) + ")")
@@ -195,8 +173,7 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
   private static JdbcBatchStatementExecutor<RowData> createDeleteExecutor() {
     return new JdbcBatchStatementExecutor<RowData>() {
       @Override
-      public void prepareStatements(Connection connection) throws SQLException {
-      }
+      public void prepareStatements(Connection connection) throws SQLException {}
 
       @Override
       public void addToBatch(RowData record) throws SQLException {
@@ -204,12 +181,10 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
       }
 
       @Override
-      public void executeBatch() throws SQLException {
-      }
+      public void executeBatch() throws SQLException {}
 
       @Override
-      public void closeStatements() throws SQLException {
-      }
+      public void closeStatements() throws SQLException {}
     };
   }
 
@@ -217,8 +192,7 @@ public class InsertOrDuplicateKeyUpdateOutputFormatBuilder implements Serializab
       JdbcDialect dialect, String[] fieldNames, LogicalType[] fieldTypes, final String sql) {
     final JdbcRowConverter rowConverter = dialect.getRowConverter(RowType.of(fieldTypes));
     return new TableSimpleStatementExecutor(
-        connection ->
-            FieldNamedPreparedStatement.prepareStatement(connection, sql, fieldNames),
+        connection -> FieldNamedPreparedStatement.prepareStatement(connection, sql, fieldNames),
         rowConverter);
   }
 
