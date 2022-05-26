@@ -17,10 +17,9 @@
 package io.tidb.bigdata.flink.telemetry;
 
 import io.tidb.bigdata.telemetry.Telemetry;
+import io.tidb.bigdata.telemetry.Telemetry.ReportState;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,34 +34,29 @@ public class AsyncTelemetry {
 
   public void report() {
     try {
-      if (FlinkTeleMsg.getInstance().shouldSendMsg()) {
+      if (FlinkTeleMsg.getInstance().shouldSendMsg())
         CompletableFuture.runAsync(task);
-      }
     } catch (NullPointerException e) {
       CompletableFuture.runAsync(task);
+    } catch (Exception e) {
+      LOG.warn("Failed to report telemetry. " + e.getMessage());
     }
   }
 
   public Runnable task =
       () -> {
-        Telemetry.ReportState reportState = Telemetry.ReportState.FAILURE;
         try {
           Telemetry telemetry = new Telemetry();
           FlinkTeleMsg teleMsg = FlinkTeleMsg.getInstance(properties);
-          Lock lock = new ReentrantLock();
-          lock.lock();
-          try {
+          synchronized (AsyncTelemetry.class) {
             if (teleMsg.shouldSendMsg()) {
-              reportState = telemetry.report(teleMsg);
               teleMsg.changeState(FlinkTeleMsg.FlinkTeleMsgState.SENT);
+              ReportState reportState = telemetry.report(teleMsg);
+              LOG.info("Telemetry state: " + reportState);
             }
-          } finally {
-            lock.unlock();
           }
         } catch (Exception e) {
           LOG.info("Failed to build flink-1.13 telemetry message. " + e.getMessage());
-        } finally {
-          LOG.info("Telemetry State: " + reportState);
         }
       };
 }

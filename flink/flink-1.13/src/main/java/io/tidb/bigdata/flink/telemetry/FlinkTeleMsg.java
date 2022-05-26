@@ -44,7 +44,7 @@ public class FlinkTeleMsg extends TeleMsg {
 
   private static final String SUBNAME = "flink-1.13";
   private static final String TIBIGDATA_FLINK_VERSION = "0.0.5-SNAPSHOT";
-  private FlinkTeleMsgState sendState = FlinkTeleMsgState.UNSENT;
+  private volatile FlinkTeleMsgState sendState = FlinkTeleMsgState.UNSENT;
   private Map<String, String> properties;
 
   private FlinkTeleMsg(Map<String, String> properties) {
@@ -107,7 +107,7 @@ public class FlinkTeleMsg extends TeleMsg {
     Map<String, Object> instance = new HashMap<>();
     instance.put("TiDBVersion", getTiDBVersion());
     instance.put("TiBigDataFlinkVersion", TIBIGDATA_FLINK_VERSION);
-    instance.put("FlinkVersion", EnvironmentInformation.getVersion());
+    instance.put("FlinkVersion", getFlinkVersion());
     return instance;
   }
 
@@ -186,6 +186,15 @@ public class FlinkTeleMsg extends TeleMsg {
       logger.info("Failed to get TiDB version. " + e.getMessage());
     }
     return "UNKNOWN";
+  }
+
+  private String getFlinkVersion(){
+    try{
+      String flinkVersion = EnvironmentInformation.getVersion();
+      return flinkVersion;
+    } catch (Exception e) {
+      return "UNKNOWN";
+    }
   }
 
   public enum FlinkTeleMsgState {
