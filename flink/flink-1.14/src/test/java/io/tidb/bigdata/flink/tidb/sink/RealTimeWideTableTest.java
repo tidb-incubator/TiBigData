@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.hasProperty;
 import com.google.common.collect.Lists;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.List;
@@ -41,8 +42,10 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
 
+@Category(IntegrationTest.class)
 public class RealTimeWideTableTest extends FlinkTestBase {
 
   private String dstTable;
