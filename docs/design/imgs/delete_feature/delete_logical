@@ -3,13 +3,20 @@
 start
 
 group TiDBEncodeHelper
-: check pkIsHandle or isCommonHandle;
-: extractHandle from pk;
-: build RowKey with handle and tableId;
+: check pk;
 group TiSession
 : get snapshot;
 endgroup
-: check snapshot if the delete row is exist;
+if (pkIsHandle or isCommonHandle) then (true)
+   : extractHandle from pk and build rowKey with handle;
+   : get old value from snapshot with rowKey;
+   : ignore delete if the delete row is not exist;
+  else (false)
+   : buildUniqueIndexKey with pk;
+   : get old value from snapshot with uniqueIndexKey;
+   : get old handle with old value;
+   : ignore delete if the delete row is not exist;
+  endif
 : generate Record KeyValue for delete row;
 : generate index KeyValue for delete row;
 endgroup
@@ -19,4 +26,7 @@ group TiDBMiniBatchWriteOperator
 endgroup
 
 stop
+
+
+
 @enduml
