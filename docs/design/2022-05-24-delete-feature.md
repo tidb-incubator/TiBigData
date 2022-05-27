@@ -63,8 +63,9 @@ It is important to keep order in streaming mode, or we may get the error results
 - When Flink executes sink distributedly, make sure the operations on the same row will be sent to the same task.
 
 ## Compatibility
-- Delete feature can't work with batch mode, and it doesn't support the DELETE statement.
-- Delete feature can't work in global transaction or append mode.
+- Delete feature can't work with batch mode, because it doesn't support the DELETE statement.
+- Delete feature can't work in global transaction because it can only work in batch mode.
+- Delete feature can't work append mode.
 - Delete feature can only work with tables which have pk.
 
 ## Test Design
