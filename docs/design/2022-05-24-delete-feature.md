@@ -35,7 +35,7 @@ We introduce a new configuration `sink.tikv.delete-enable` to control delete.
 ### Main Steps
 Here are the main steps to support the delete feature
 - Add the configuration to open delete
-- Check if delete is enabled. If you are in MINIBATCH transaction or upsert mode, delete will be disabled even you config `sink.tikv.delete-enable` to `true`
+- Check if delete is enabled. If you are in MINIBATCH transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`
 - Use a new class TiRow to distinguish between delete RowKind and insert/update RowKind in MiniBatch
 - Optimize deduplication logic in MINIBATCH transaction
 - Exclude delete RowKind to upsert when flush rows buffer
@@ -58,8 +58,8 @@ At last, TiBigData/Flink will mix the upsert and delete keyValue to do two phase
 
 ### Row Order
 It is important to keep order in streaming mode, or we may get the error results.
-- TiCDC will Ingest the changelogs and sink to kafka. So, make sure kafka will partition the messages by key
-- It's better to optimize deduplication and leave the lasted operation for the same row
+- TiCDC will ingest the changelogs and sink to kafka. So, make sure kafka will partition the messages by key
+- It's better to optimize deduplication and leave the latest operation for the same row
 - When Flink executes sink distributedly, make sure the operations on the same row will be sent to the same task
 
 ## Compatibility
