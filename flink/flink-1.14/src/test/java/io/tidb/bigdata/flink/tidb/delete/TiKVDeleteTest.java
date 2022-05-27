@@ -49,7 +49,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
-/** Delete work with PkisHandle or isCommonHandle */
+/** Delete only support table with pk */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteTest extends FlinkTestBase {
@@ -95,6 +95,9 @@ public class TiKVDeleteTest extends FlinkTestBase {
             2,
             "group_d_2"
           },
+          {
+            SinkTransaction.MINIBATCH, TiDBWriteMode.UPSERT, true, TABLE_NON_CLUSTER, 2, "group_d_3"
+          },
         });
   }
 
@@ -104,6 +107,14 @@ public class TiKVDeleteTest extends FlinkTestBase {
   private final String flinkDeleteTable;
   private final int result;
   private final String kafkaGroup;
+
+  private static final String TABLE_NON_CLUSTER =
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint(20),\n"
+          + "    c2  varchar(255),\n"
+          + "    PRIMARY KEY (`c1`) /*T![clustered_index] NONCLUSTERED */\n"
+          + ")";
 
   private static final String TABLE_CLUSTER_BIGINT =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"

@@ -323,21 +323,49 @@ public class TiDBEncodeHelper implements AutoCloseable {
    * @return
    */
   public List<BytePairWrapper> generateKeyValuesToDeleteByRow(Row row) {
-    // check cluster index
+    // get pk
+    List<TiIndexInfo> primaryIndices =
+        tiTableInfo.getIndices().stream()
+            .filter(TiIndexInfo::isPrimary)
+            .collect(Collectors.toList());
+
+    // check pk
     Preconditions.checkArgument(
-        handleCol != null || isCommonHandle, "Delete is only support in cluster index");
+        handleCol != null || isCommonHandle || !primaryIndices.isEmpty(),
+        "Delete is only support with pk");
 
-    // get handle
-    Handle handle = extractHandle(row);
+    // it will not happen in theory, check it in case unknown error
+    if (!primaryIndices.isEmpty()) {
+      Preconditions.checkArgument(primaryIndices.size() == 1, "Table can only have one pk");
+    }
 
-    // get old value in case TiCDC close old value
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
-    byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
-    byte[] oldValue = snapshot.get(key);
-    if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-      Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
-      deletion.add(new Pair<>(oldRow, handle));
+
+    // get deletion row
+    if (handleCol != null || isCommonHandle) {
+      Handle handle = extractHandle(row);
+      byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+      byte[] oldValue = snapshot.get(key);
+      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+        Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
+        deletion.add(new Pair<>(oldRow, handle));
+      }
+    } else {
+      // just make buildUniqueIndexKey method works
+      Handle fakeHandle = new IntHandle(0L);
+      Pair<byte[], Boolean> uniqueIndexKeyPair =
+          buildUniqueIndexKey(row, fakeHandle, primaryIndices.get(0));
+      if (!uniqueIndexKeyPair.second) {
+        byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
+        if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+          Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
+          byte[] oldRowValue =
+              snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
+          Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
+          deletion.add(new Pair<>(oldRow, oldHandle));
+        }
+      }
     }
 
     // generate BytePairWrapper
