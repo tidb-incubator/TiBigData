@@ -1,4 +1,4 @@
-# Insert on duplicate key update
+# Real-time wide table 
 
 - Author(s): [yangxin](http://github.com/xuanyu66)
 - Tracking Issue: https://github.com/tidb-incubator/TiBigData/issues/197
@@ -20,14 +20,15 @@
 
 ## Introduction
 
-This design doc is about how to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics in TiDBDynamicTable.
+This design doc is about how to sink Real-time wide table in TiDBDynamicTable.
 
 ## Motivation or Background
 
-It is a common requirement that partially updates some fields based on the primary key in the `Materialized View` scenario.
+It is a common requirement that partially updates some fields based on the primary key in the `Real-time wide table` scenario.
 
-![image alt text](imgs/insert-on-duplicate-key-update/Materialized-View.png)
+![image alt text](imgs/real-time-wide-table/Materialized-View.png)
 
+Inevitably， it occurs to us that it's a suitable way to use `INSERT ... ON DUPLICATE KEY UPDATE`  
 However, Flink SQL doesn't support the statement `INSERT ... ON DUPLICATE KEY UPDATE`. So we need to find an alternative way to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics in TiDBDynamicTable. 
 
 ## Detailed Design
@@ -39,19 +40,36 @@ The other part is the implementation of `DynamicTableSink` interface to interact
 
 With option `tidb.sink.update-columns` in SQL hints, update-columns would be passed to `TiDBDynamicTable`. Combined with `INSERT INTO` clause, we have gotten all information needed.
 
-For example, c2 and c13 are the columns needed to be updated, SQL is as follows.
+For example, c2 and c4 are the columns needed to be updated, SQL is as follows.
 
 ```sql
 INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */ 
-SELECT c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16,c17 from `tidb`.`srcDatabase`.`srcDatabase`
+SELECT c1,c2,c3,c4 from `tidb`.`srcDatabase`.`srcDatabase`
+
+// the same as above 
+INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */
+VALUES('v1', 'v2', 'v3', 'v4')
 ```
+
+> [!NOTE]
+> Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */ (c2, c4)
+VALUES('v2', 'v4')```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
+
+### Argument constraints
+
+Due to reasons mentioned in [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html), we should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
+So we will check the following argument constraints before execution in case of an unexpected result.
+- the destination table should contain only one unique key(including primary key).
+- the update columns should contain only one unique key column(including primary key).
+
+It should be noted that this validation is optional(default not skip). Users can explicitly skip the validation, but be aware of the risks.
 
 ### Implement `InsertOrUpdateOnDuplicateSink`
 
 `InsertOrUpdateOnDuplicateSink` implement the interface `DynamicTableSink`, provide `GenericJdbcSinkFunction` to sink data.
 `GenericJdbcSinkFunction` require `JdbcOutputFormat` to generate FieldNamedPreparedStatement, extract data from rowData.
 
-![image alt text](imgs/insert-on-duplicate-key-update/classes.png)
+![image alt text](imgs/real-time-wide-table/classes.png)
 
 #### Generate FieldNamedPreparedStatement `INSERT ... ON DUPLICATE KEY UPDATE`
 
@@ -89,45 +107,11 @@ public class DuplicateKeyUpdateOutputRowData implements RowData {
 }
 ```
 
-## Compatibility
-
 ## Test Design
 
-A brief description of how the implementation will be tested. Both the integration test and the unit test should be considered.
+- insert on duplicate update without unique key.
+- insert on duplicate update with only one unique key.
+- insert on duplicate update with multiple unique keys(skip the constraint).
+- insert on duplicate update with multiple unique keys(keep the constraint).
 
-### Functional Tests
 
-It's used to ensure the basic feature function works as expected. Both the integration test and the unit test should be considered.
-
-### Scenario Tests
-
-It's used to ensure this feature works as expected in some common scenarios.
-
-### Compatibility Tests
-
-A checklist to test compatibility:
-- Compatibility with other features, like partition table, security & privilege, charset & collation, clustered index, async commit, etc.
-- Compatibility with other internal components, like parser, DDL, planner, statistics, executor, etc.
-- Compatibility with other external components, like PD, TiKV, TiFlash, BR, TiCDC, Dumpling, TiUP, K8s, etc.
-- Upgrade compatibility
-- Downgrade compatibility
-
-### Benchmark Tests
-
-The following two parts need to be measured:
-- The performance of this feature under different parameters
-- The performance influence on the online workload
-
-## Impacts & Risks
-
-Describe the potential impacts & risks of the design on overall performance, security, k8s, and other aspects. List all the risks or unknowns by far.
-
-Please describe impacts and risks in two sections: Impacts could be positive or negative, and intentional. Risks are usually negative, unintentional, and may or may not happen. E.g., for performance, we might expect a new feature to improve latency by 10% (expected impact), there is a risk that latency in scenarios X and Y could degrade by 50%.
-
-## Investigation & Alternatives
-
-How do other systems solve this issue? What other designs have been considered and what is the rationale for not choosing them?
-
-## References
-
-List the reference materials here.
