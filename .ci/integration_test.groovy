@@ -40,7 +40,7 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     println "TICDC_BRANCH=${TICDC_BRANCH}"
     def label = "regression-test-tispark-${BUILD_NUMBER}"
 
-    podTemplate(name: label, label: label, instanceCap: 12, namespace: 'jenkins-tispark', containers: [
+    podTemplate(name: label, label: label, instanceCap: 12, cloud: "kubernetes-ng", idleMinutes: 0, namespace: 'jenkins-tibigdata', containers: [
             containerTemplate(name: 'java', image: 'hub.pingcap.net/jenkins/centos7_golang-1.13_java:cached',
                     resourceRequestCpu: '8000m',
                     resourceRequestMemory: '24Gi',

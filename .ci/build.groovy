@@ -1,7 +1,7 @@
 def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
 
     catchError {
-        node ('build') {
+        run_with_pod {
             container("java") {
                 stage('Prepare') {
                     dir("/home/jenkins/agent/git/tibigdata") {
