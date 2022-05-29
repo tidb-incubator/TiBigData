@@ -1,7 +1,7 @@
 def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
 
     catchError {
-        podTemplate(label: label,
+        podTemplate(label: "${JOB_NAME}-${BUILD_NUMBER}-build",
             cloud: "kubernetes-ng",
             namespace: "jenkins-tibigdata",
             idleMinutes: 0,
