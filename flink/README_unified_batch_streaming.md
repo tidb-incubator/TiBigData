@@ -156,9 +156,9 @@ DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 
 Limitation
 - Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
-- Delete only works in MINIBATCH transaction. if you work in GLOBAL transaction, delete row will be ignored.
-- Delete only works with upsert mode. if you are in upsert mode, delete row will be ignored.
-- Delete only works with tables which have pk. if table doesn't have pk, the exception will be thrown. 
+- Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
+- Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
+- Delete only works with tables which have pk. If table doesn't have pk, the exception will be thrown. 
 
 
 ## 7 Configuration
