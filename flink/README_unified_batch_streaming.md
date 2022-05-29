@@ -98,7 +98,8 @@ You will find that the data in Flink is the same as the real data of tidb and is
 
 ## 6 Delete in Streaming Mode
 
-Create source table and target table with same schema in TiDB
+Create source table and target table with same schema in TiDB:
+
 ```sql
 CREATE TABLE `test`.`src_table`(
     id BIGINT(20) PRIMARY KEY ,
@@ -113,7 +114,8 @@ CREATE TABLE `test`.`target_table`(
 );
 ```
 
-Start Flink SQL client in streaming mode, create TiDB Catalog and insert
+Start Flink SQL client in streaming mode, create TiDB Catalog and insert:
+
 ```sql
 SET 'sql-client.execution.result-mode' = 'table';
 
@@ -153,9 +155,11 @@ DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 ```
 
 Limitation
-- Delete only works in streaming mode, and the DELETE statement is not supported now
-- Delete only works in MINIBATCH transaction and upsert mode, or delete RowKind will be ignored
-- Delete only works with cluster index so far, and for TiDB < 5.0, delete only work with int pk table and config `alter-primary-key = false`, or exception will be thrown
+- Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
+- Delete only works in MINIBATCH transaction. if you work in GLOBAL transaction, delete row will be ignored.
+- Delete only works with upsert mode. if you are in upsert mode, delete row will be ignored.
+- Delete only works with tables which have pk. if table doesn't have pk, the exception will be thrown. 
+
 
 ## 7 Configuration
 
