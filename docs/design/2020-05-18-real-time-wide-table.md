@@ -28,8 +28,8 @@ It is a common requirement that partially updates some fields based on the prima
 
 ![image alt text](imgs/real-time-wide-table/Materialized-View.png)
 
-Inevitably， it occurs to us that it's a suitable way to use `INSERT ... ON DUPLICATE KEY UPDATE`  
-However, Flink SQL doesn't support the statement `INSERT ... ON DUPLICATE KEY UPDATE`. So we need to find an alternative way to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics in TiDBDynamicTable. 
+Inevitably, it occurs to us that it's a suitable way to use `INSERT ... ON DUPLICATE KEY UPDATE`  
+However, Flink SQL doesn't support the statement `INSERT ... ON DUPLICATE KEY UPDATE`. So we need to find an alternative way to achieve `INSERT ... ON DUPLICATE KEY UPDATE` semantics in `TiDBDynamicTable`. 
 
 ## Detailed Design
 
