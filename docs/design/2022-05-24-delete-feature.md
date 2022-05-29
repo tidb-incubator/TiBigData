@@ -27,12 +27,14 @@ As a real batch&streaming engine, it's necessary to support delete in Flink.
 ## Detailed Design
 
 ### New Configuration
+
 We introduce a new configuration `sink.tikv.delete-enable` to control delete.
 - The configuration is a boolean type with the default value `false`, which will disable the delete feature.
 - The configuration can only work in MINIBATCH transaction and upsert mode, or delete RowKind will be filtered.
 - Only support delete from table with pk so far.
 
 ### Main Steps
+
 Here are the main steps to support the delete feature:
 - Add the configuration to open delete.
 - Check if delete is enabled. If you are in MINIBATCH transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`.
@@ -48,21 +50,28 @@ Here are the main steps to support the delete feature:
 ![image alt text](imgs/delete_feature/delete.png)
 
 ### Delete Logical
-Now, TiBigData/Flink only supports delete from table with pk, or exception will be thrown.
 
-It will also check if the delete row exists in the table, if not, the row will be ignored.
+> TiBigData/Flink only supports delete from table with pk, or exception will be thrown.
 
-At last, TiBigData/Flink will mix the upsert and delete keyValue to do two phase commit in a transaction.
+At first, check pk and get old value from snapshot.
+
+Then, ignore the rows which do not exist in the table.
+
+After that, generate record key/value with handle and generate index key/value with index.
+
+At last, mix the upsert and delete keyValue to do two phase commit in a transaction.
 
 ![image alt text](imgs/delete_feature/delete_logical.png)
 
 ### Row Order
+
 It is important to keep order in streaming mode, or we may get the error results.
 - TiCDC will ingest the changelogs and sink to kafka. So, make sure kafka will partition the messages by key.
 - It's better to optimize deduplication and leave the latest operation for the same row.
 - When Flink executes sink distributedly, make sure the operations on the same row will be sent to the same task.
 
 ## Compatibility
+
 - Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
 - Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
 - Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
@@ -70,6 +79,7 @@ It is important to keep order in streaming mode, or we may get the error results
 
 
 ## Test Design
+
 | scenes                                | expected results       |
 | ------------------------------------- | ---------------------- |
 | global & enable delete                | delete rows be ignored |
