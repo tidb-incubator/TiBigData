@@ -43,16 +43,16 @@ With option `tidb.sink.update-columns` in SQL hints, update-columns would be pas
 For example, c2 and c4 are the columns needed to be updated, SQL is as follows.
 
 ```sql
-INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */ 
-SELECT c1,c2,c3,c4 from `tidb`.`srcDatabase`.`srcDatabase`
+INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */ 
+SELECT c1,c2,c3,c4 from `tidb`.`srcDatabase`.`srcTable`
 
 // the same as above 
-INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */
+INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */
 VALUES('v1', 'v2', 'v3', 'v4')
 ```
 
 > [!NOTE]
-> Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c13') */ (c2, c4)
+> Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */ (c2, c4)
 VALUES('v2', 'v4')```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
 
 ### Argument constraints
@@ -76,7 +76,7 @@ It should be noted that this validation is optional(default not skip). Users can
 With `tidb.sink.update-columns`, we can easily generate `INSERT ... ON DUPLICATE KEY UPDATE` clause as follows. 
 
 ```sql
-INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` (`c2`, `c13`) VALUES (:c2, :c13) ON DUPLICATE KEY UPDATE `c2`=VALUES(`c2`), `c13`=VALUES(`c13`)
+INSERT INTO `tidb`.`dstDatabase`.`dstTable` (`c2`, `c4`) VALUES (:c2, :c4) ON DUPLICATE KEY UPDATE `c2`=VALUES(:c2), `c4`=VALUES(:c4)
 ```
 
 ### Column Pruning
