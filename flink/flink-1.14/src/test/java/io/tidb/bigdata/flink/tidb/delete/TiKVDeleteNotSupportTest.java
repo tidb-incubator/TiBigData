@@ -50,8 +50,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * MINIBATCH or disableDelete will filter delete RowKind, Global is not tested for it can't work with
- * streaming
+ * MINIBATCH or disableDelete will filter delete RowKind, Global is not tested for it can't work
+ * with streaming
  */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
