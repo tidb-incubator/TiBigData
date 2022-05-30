@@ -21,5 +21,3 @@ mvn clean compile test -am -pl hive/hive-3.1.2
 export JAVA_HOME=/home/jenkins/agent/lib/jdk-11.0.12
 mvn clean compile test -am -pl prestosql
 mvn clean compile test -am -pl trino
-
-mvn com.coveo:fmt-maven-plugin:check
