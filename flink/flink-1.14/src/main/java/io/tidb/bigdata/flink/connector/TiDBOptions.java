@@ -196,6 +196,10 @@ public class TiDBOptions {
         .build();
   }
 
+  public static Set<ConfigOption<?>> sqlHintOptions() {
+    return ImmutableSet.<ConfigOption<?>>builder().add(UPDATE_COLUMNS).build();
+  }
+
   public enum SinkImpl {
     JDBC,
     TIKV;

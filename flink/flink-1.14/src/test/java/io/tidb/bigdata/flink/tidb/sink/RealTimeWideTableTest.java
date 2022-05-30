@@ -50,7 +50,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
 
   private String dstTable;
 
-  protected static final String TABLE_SCHEMA =
+  private static final String TABLE_SCHEMA =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
           + "    c1  bigint,\n"
@@ -60,7 +60,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    unique key(c1)\n"
           + ")";
 
-  protected static final String TABLE_SCHEMA_WITH_TWO_KEY =
+  private static final String TABLE_SCHEMA_WITH_TWO_KEY =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
           + "    c1  bigint,\n"
@@ -69,6 +69,16 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    c4  bigint,\n"
           + "    unique key(c1),\n"
           + "    primary key(c2)\n"
+          + ")";
+
+  private static final String TABLE_SCHEMA_WITH_MULTI_COLUMN =
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint,\n"
+          + "    c2  bigint,\n"
+          + "    c3  bigint,\n"
+          + "    c4  bigint,\n"
+          + "    unique key(c1, c2, c3)\n"
           + ")";
 
   @Rule public ExpectedException exceptionRule = ExpectedException.none();
@@ -147,6 +157,23 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   }
 
   @Test
+  public void testInsertOnDuplicateWithCatalogProperties() throws Exception {
+    exceptionRule.expect(
+        allOf(
+            isA(IllegalArgumentException.class),
+            hasProperty(
+                "message",
+                containsString("Option tidb.sink.update-columns is only working for table."))));
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+    properties.put("tidb.sink.update-columns", "c1, c18");
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA, tableEnvironment, properties);
+  }
+
+  @Test
   public void testInsertOnDuplicateWithMoreThanOneKeyFields() throws Exception {
     exceptionRule.expectCause(
         allOf(
@@ -189,6 +216,38 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     properties.put(SKIP_CHECK_UPDATE_COLUMNS.key(), "true");
 
     initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_TWO_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    String sql2 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c3') */"
+                + "values (1,2,356,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+    System.out.println(sql2);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.sqlUpdate(sql2);
+    tableEnvironment.execute("test");
+
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+  }
+
+  @Test
+  public void testInsertOnDuplicateWithMultiColumnIndex() throws Exception {
+    dstTable = RandomUtils.randomString();
+
+    TableEnvironment tableEnvironment = getTableEnvironment();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+    properties.put(SKIP_CHECK_UPDATE_COLUMNS.key(), "true");
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_MULTI_COLUMN, tableEnvironment, properties);
 
     String sql1 =
         format(
