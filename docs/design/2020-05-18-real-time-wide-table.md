@@ -40,27 +40,24 @@ The other part is the implementation of `DynamicTableSink` interface to interact
 
 With option `tidb.sink.update-columns` in SQL hints, update-columns would be passed to `TiDBDynamicTable`. Combined with `INSERT INTO` clause, we have gotten all information needed.
 
-For example, c2 and c4 are the columns needed to be updated, SQL is as follows.
+For example, `id`, `item_id`, `item_name`, `user_id`, `ts` are the columns needed to be updated, SQL is as follows. The `mock_${value}` will never be used，just a placeholder.
 
 ```sql
-INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */ 
-SELECT c1,c2,c3,c4 from `tidb`.`srcDatabase`.`srcTable`
-
-// the same as above 
-INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */
-VALUES('v1', 'v2', 'v3', 'v4')
+INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */
+VALUES(100, 001, '手机','张三', 2021-12-06 12:01:01, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, mock_exp_id, mock_address, mock_recipent, mock_exp_ts)
 ```
 
 > [!NOTE]
-> Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='c2, c4') */ (c2, c4)
-VALUES('v2', 'v4')```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
+> Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
+VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
 
 ### Argument constraints
 
 Due to reasons mentioned in [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html), we should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
 So we will check the following argument constraints before execution in case of an unexpected result.
-- the destination table should contain only one unique key(including primary key).
-- the update columns should contain only one unique key column(including primary key).
+- the destination table should contain only one not-null unique key(including primary key).
+  - Multiple-Column Indexes should be all not-null.
+- the update columns should contain the unique key column(including primary key).
 
 It should be noted that this validation is optional(default not skip). Users can explicitly skip the validation, but be aware of the risks.
 
@@ -76,7 +73,7 @@ It should be noted that this validation is optional(default not skip). Users can
 With `tidb.sink.update-columns`, we can easily generate `INSERT ... ON DUPLICATE KEY UPDATE` clause as follows. 
 
 ```sql
-INSERT INTO `tidb`.`dstDatabase`.`dstTable` (`c2`, `c4`) VALUES (:c2, :c4) ON DUPLICATE KEY UPDATE `c2`=VALUES(:c2), `c4`=VALUES(:c4)
+INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` (`id`, `item_id`, `item_name`, `user_id`, `ts`) VALUES (:id, :item_id, :item_name, :user_id, :ts) ON DUPLICATE KEY UPDATE `id`=VALUES(:id), `item_id`=VALUES(:item_id), `item_name`=VALUES(:item_name), `user_id`=VALUES(:user_id), `ts`=VALUES(:ts)
 ```
 
 ### Column Pruning
