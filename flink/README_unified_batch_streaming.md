@@ -158,7 +158,7 @@ Limitation
 - Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
 - Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
 - Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
-- Delete only works with tables which have pk. If table doesn't have pk, the exception will be thrown. 
+- Delete only works with tables which have pk or uk, and every column of the pk or uk should not be null, or the exception will be thrown. 
 
 
 ## 7 Configuration
