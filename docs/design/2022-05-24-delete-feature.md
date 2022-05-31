@@ -42,7 +42,7 @@ Here are the main steps to support the delete feature:
 - Optimize deduplication logic in MINIBATCH transaction.
 - Exclude delete RowKind to upsert when flush rows buffer.
 - Use delete RowKind to delete when flush rows buffer.
-  - check pk
+  - check pk/uk
   - extract handle
   - encode key/value of records and index
 - 2PC to commit both the upsert and delete key/value.
@@ -51,7 +51,7 @@ Here are the main steps to support the delete feature:
 
 ### Delete Logical
 
-> TiBigData/Flink only supports delete from table with pk, or exception will be thrown.
+> TiBigData/Flink only supports delete from table with pk/uk, or exception will be thrown.
 
 At first, check pk/uk and get old value from snapshot.
 
@@ -81,12 +81,12 @@ It is important to keep order in streaming mode, or we may get the error results
 
 ## Test Design
 
-| scenes                                | expected results       |
-| ------------------------------------- | ---------------------- |
-| global & enable delete                | delete rows be ignored |
-| minibatch & enable delete & append    | delete rows be ignored |
-| minibatch & disable delete & upsert   | delete rows be ignored |
-| minibatch & enable delete & upsert    | delete correctly        |
-| table with no-cluster index           | delete correctly        |
-| table with cluster index & int pk     | delete correctly        |
-| table with cluster index & varchar pk | delete correctly        |
+| scenes                              | expected results       |
+|-------------------------------------| ---------------------- |
+| global & enable delete              | delete rows be ignored |
+| minibatch & enable delete & append  | delete rows be ignored |
+| minibatch & disable delete & upsert | delete rows be ignored |
+| minibatch & enable delete & upsert  | delete correctly        |
+| table with pk                       | delete correctly        |
+| table with uk                       | delete correctly        |
+| table with mutile-column uk         | delete correctly        |
