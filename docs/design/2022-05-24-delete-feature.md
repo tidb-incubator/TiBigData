@@ -53,7 +53,7 @@ Here are the main steps to support the delete feature:
 
 > TiBigData/Flink only supports delete from table with pk, or exception will be thrown.
 
-At first, check pk and get old value from snapshot.
+At first, check pk/uk and get old value from snapshot.
 
 Then, ignore the rows which do not exist in the table.
 
@@ -75,7 +75,8 @@ It is important to keep order in streaming mode, or we may get the error results
 - Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
 - Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
 - Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
-- Delete only works with tables which have pk. If table doesn't have pk, the exception will be thrown.
+- Delete only works with tables which have pk/uk, and at least one pk/uk's value should not be null (every column should not be null for multiple-column pk/uk), or the exception will be thrown.
+
 
 
 ## Test Design

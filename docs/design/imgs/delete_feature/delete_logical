@@ -3,7 +3,8 @@
 start
 
 group TiDBEncodeHelper
-: check pk;
+: get pk or uk without null value;
+: check pk/uk;
 group TiSession
 : get snapshot;
 endgroup
@@ -12,7 +13,7 @@ if (pkIsHandle or isCommonHandle) then (true)
    : get old value from snapshot with rowKey;
    : ignore delete if the delete row is not exist;
   else (false)
-   : buildUniqueIndexKey with pk;
+   : buildUniqueIndexKey with pk/uk;
    : get old value from snapshot with uniqueIndexKey;
    : get old handle with old value;
    : ignore delete if the delete row is not exist;
