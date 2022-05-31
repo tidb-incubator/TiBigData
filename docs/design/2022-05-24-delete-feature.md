@@ -31,13 +31,13 @@ As a real batch&streaming engine, it's necessary to support delete in Flink.
 We introduce a new configuration `sink.tikv.delete-enable` to control delete.
 - The configuration is a boolean type with the default value `false`, which will disable the delete feature.
 - The configuration can only work in MINIBATCH transaction and upsert mode, or delete RowKind will be filtered.
-- Only support delete from table with pk so far.
+- Only support delete from table with pk or uk (can't contain null value).
 
 ### Main Steps
 
 Here are the main steps to support the delete feature:
 - Add the configuration to open delete.
-- Check if delete is enabled. If you are in MINIBATCH transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`.
+- Check if delete is enabled. If you are not in MINIBATCH transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`.
 - Use a new class TiRow to distinguish between delete RowKind and insert/update RowKind in MiniBatch.
 - Optimize deduplication logic in MINIBATCH transaction.
 - Exclude delete RowKind to upsert when flush rows buffer.
