@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.tidb.bigdata.flink.tidb.delete;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DELETE_ENABLE;
@@ -22,7 +21,8 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC;
-import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_JSON;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_CANAL_JSON;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_CRAFT;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_SOURCE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
@@ -44,64 +44,52 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
-/** Delete only support table with pk or uk without null value */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
-public class TiKVDeleteTest extends FlinkTestBase {
-
+public class TiKVDeleteCodecTest extends FlinkTestBase {
   private String srcTable;
 
   private String dstTable;
 
-  public TiKVDeleteTest(String flinkDeleteTable, int result, String kafkaGroup) {
+  public TiKVDeleteCodecTest(
+      String flinkDeleteTable, int result, String kafkaGroup, String streamingCodec) {
     this.flinkDeleteTable = flinkDeleteTable;
     this.result = result;
     this.kafkaGroup = kafkaGroup;
+    this.streamingCodec = streamingCodec;
   }
 
-  @Parameters(name = "{index}: FlinkDeleteTable={0}, Result={1} ,KafkaGroup={2} ")
+  @Parameters(
+      name = "{index}: FlinkDeleteTable={0}, Result={1} ,KafkaGroup={2},StreamingCodec={3} ")
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {TABLE_PK, 2, "group_d_1"}, {TABLE_UK, 2, "group_d_2"}, {TABLE_MUTILE_UK, 2, "group_d_3"},
+          {TABLE_PK, 2, "group_c_1", STREAMING_CODEC_CRAFT},
+          {TABLE_PK, 2, "group_c_2", STREAMING_CODEC_CANAL_JSON},
         });
   }
 
   private final String flinkDeleteTable;
   private final int result;
   private final String kafkaGroup;
+  private final String streamingCodec;
 
   private static final String TABLE_PK =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
-          + "    c1  varchar(255),\n"
+          + "    c1  bigint(20),\n"
           + "    c2  varchar(255),\n"
           + "    PRIMARY KEY (`c1`) \n"
           + ")";
 
-  private static final String TABLE_UK =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
-          + "(\n"
-          + "    c1  bigint(20) NULL DEFAULT NULL,\n"
-          + "    c2  bigint(20) NOT NULL,\n"
-          + "    UNIQUE INDEX `uniq_1`(`c1`) USING BTREE,\n"
-          + "    UNIQUE INDEX `uniq_2`(`c2`) USING BTREE\n"
-          + ")";
-
-  private static final String TABLE_MUTILE_UK =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
-          + "(\n"
-          + "    c1  bigint(20) NOT NULL,\n"
-          + "    c2  bigint(20) NOT NULL,\n"
-          + "    UNIQUE INDEX `uniq_1`(`c1`,`c2`) USING BTREE\n"
-          + ")";
-
   @Test
+  @Ignore("need cdc change protocol first")
   public void testDelete() throws Exception {
     srcTable = "flink_delete_src_test" + RandomUtils.randomString();
     dstTable = "flink_delete_dst_test" + RandomUtils.randomString();
@@ -111,7 +99,7 @@ public class TiKVDeleteTest extends FlinkTestBase {
     Map<String, String> properties = defaultProperties();
     // source
     properties.put(STREAMING_SOURCE.key(), "kafka");
-    properties.put(STREAMING_CODEC.key(), STREAMING_CODEC_JSON);
+    properties.put(STREAMING_CODEC.key(), streamingCodec);
     properties.put("tidb.streaming.kafka.bootstrap.servers", "localhost:9092");
     properties.put("tidb.streaming.kafka.topic", "tidb_test");
     properties.put("tidb.streaming.kafka.group.id", kafkaGroup);

@@ -317,27 +317,31 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   /**
-   * generateKeyValuesToDeleteByRow only support cluster index now
+   * generateKeyValuesToDeleteByRow only support table with pk or uk
+   * Every column of the index should not be null, or an exception will be thrown
    *
    * @param row
    * @return
    */
   public List<BytePairWrapper> generateKeyValuesToDeleteByRow(Row row) {
-    // get pk
-    List<TiIndexInfo> primaryIndices =
-        tiTableInfo.getIndices().stream()
-            .filter(TiIndexInfo::isPrimary)
-            .collect(Collectors.toList());
+    // get first pk or uk with value
+    Optional<TiIndexInfo> UniqueIndexKeyWithValue =
+        uniqueIndices.stream()
+            .filter(
+                indices -> {
+                  for (TiIndexColumn col : indices.getIndexColumns()) {
+                    if (row.isNull(col.getOffset())) {
+                      return false;
+                    }
+                  }
+                  return true;
+                })
+            .findFirst();
 
-    // check pk
+    // check constraint
     Preconditions.checkArgument(
-        handleCol != null || isCommonHandle || !primaryIndices.isEmpty(),
-        "Delete is only support with pk");
-
-    // it will not happen in theory, check it in case unknown error
-    if (!primaryIndices.isEmpty()) {
-      Preconditions.checkArgument(primaryIndices.size() == 1, "Table can only have one pk");
-    }
+        isCommonHandle || handleCol != null || UniqueIndexKeyWithValue.isPresent(),
+        "Delete is only support with pk or uk, and their value should not be null");
 
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
@@ -355,7 +359,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       // just make buildUniqueIndexKey method works
       Handle fakeHandle = new IntHandle(0L);
       Pair<byte[], Boolean> uniqueIndexKeyPair =
-          buildUniqueIndexKey(row, fakeHandle, primaryIndices.get(0));
+          buildUniqueIndexKey(row, fakeHandle, UniqueIndexKeyWithValue.get());
       if (!uniqueIndexKeyPair.second) {
         byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
         if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
