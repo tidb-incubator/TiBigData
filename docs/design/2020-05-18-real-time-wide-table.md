@@ -59,7 +59,7 @@ So we will check the following argument constraints before execution in case of 
   - Multiple-Column Indexes should be all not-null.
 - the update columns should contain the unique key column(including primary key).
 
-It should be noted that this validation is optional(default not skip). Users can explicitly skip the validation, but be aware of the risks.
+It should be noted that this validation is optional(default not skip). Users can explicitly skip the validation(set `tidb.sink.skip-check-update-columns` to true), but be aware of the risks.
 
 ### Implement `InsertOrUpdateOnDuplicateSink`
 
@@ -104,11 +104,17 @@ public class DuplicateKeyUpdateOutputRowData implements RowData {
 }
 ```
 
+## Compatibility
+
+- This feature works in both batch and streaming mode.
+- This feature only works when `tidb.sink.impl` is `JDBC` and `tidb.write_mode` is `upsert`.
+
 ## Test Design
 
+The tests will run on both batch and streaming mode
 - insert on duplicate update without unique key.
 - insert on duplicate update with only one unique key.
-- insert on duplicate update with multiple unique keys(skip the constraint).
-- insert on duplicate update with multiple unique keys(keep the constraint).
+- insert on duplicate update with multiple-column unique key(skip the constraint).
+- insert on duplicate update with multiple-column unique key(keep the constraint).
 
 
