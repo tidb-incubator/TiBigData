@@ -77,7 +77,7 @@ It is important to keep order in streaming mode, or we may get the error results
 - Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
 - Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
 - Delete only works with tables which have pk/uk, and at least one pk/uk's value is not null (every column should not be null for multiple-column pk/uk), or the exception will be thrown.
-- Delete can work in json,craft,canal_json codec
+- Delete can work in json, craft and canal_json codec
 
 ## Test Design
 
