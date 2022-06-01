@@ -104,46 +104,6 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     ReadableConfig config = helper.getOptions();
     TiDBSinkOptions tiDBSinkOptions = new TiDBSinkOptions(config);
 
-    TableSchema schema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
-    String databaseName = config.get(DATABASE_NAME);
-    // jdbc options
-    JdbcConnectorOptions jdbcOptions =
-        JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
-    // execution options
-    JdbcExecutionOptions jdbcExecutionOptions =
-        JdbcExecutionOptions.builder()
-            .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
-            .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
-            .withMaxRetries(config.get(SINK_MAX_RETRIES))
-            .build();
-    // dml options
-    String[] keyFields = getKeyFields(context, config, databaseName, jdbcOptions.getTableName());
-    JdbcDmlOptions jdbcDmlOptions =
-        JdbcDmlOptions.builder()
-            .withTableName(jdbcOptions.getTableName())
-            .withDialect(jdbcOptions.getDialect())
-            .withFieldNames(schema.getFieldNames())
-            .withKeyFields(keyFields)
-            .build();
-
-    if (tiDBSinkOptions.getUpdateColumns() != null) {
-      String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
-
-      validationForInsertOndulicateUpdate(tiDBSinkOptions, keyFields, updateColumnNames);
-
-      List<TableColumn> updateColumns = new ArrayList<>();
-      int[] updateColumnIndexes =
-          getUpdateColumnAndIndexes(
-              schema, databaseName, jdbcOptions, updateColumnNames, updateColumns);
-      return new InsertOnDuplicateUpdateSink(
-          jdbcOptions,
-          jdbcExecutionOptions,
-          jdbcDmlOptions,
-          schema,
-          updateColumns,
-          updateColumnIndexes);
-    }
-
     if (tiDBSinkOptions.getSinkImpl() == SinkImpl.TIKV) {
       return new TiDBDynamicTableSink(
           config.get(DATABASE_NAME),
@@ -151,14 +111,54 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
           context.getCatalogTable(),
           tiDBSinkOptions);
     } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
-      return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+      TableSchema schema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
+      String databaseName = config.get(DATABASE_NAME);
+      // jdbc options
+      JdbcConnectorOptions jdbcOptions =
+          JdbcUtils.getJdbcOptions(context.getCatalogTable().toProperties());
+      // execution options
+      JdbcExecutionOptions jdbcExecutionOptions =
+          JdbcExecutionOptions.builder()
+              .withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS))
+              .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
+              .withMaxRetries(config.get(SINK_MAX_RETRIES))
+              .build();
+      // dml options
+      String[] keyFields = getKeyFields(context, config, databaseName, jdbcOptions.getTableName());
+      JdbcDmlOptions jdbcDmlOptions =
+          JdbcDmlOptions.builder()
+              .withTableName(jdbcOptions.getTableName())
+              .withDialect(jdbcOptions.getDialect())
+              .withFieldNames(schema.getFieldNames())
+              .withKeyFields(keyFields)
+              .build();
+
+      if (tiDBSinkOptions.getUpdateColumns() != null) {
+        String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
+
+        validationForInsertOnDuplicateUpdate(tiDBSinkOptions, keyFields, updateColumnNames);
+
+        List<TableColumn> updateColumns = new ArrayList<>();
+        int[] updateColumnIndexes =
+            getUpdateColumnAndIndexes(
+                schema, databaseName, jdbcOptions, updateColumnNames, updateColumns);
+        return new InsertOnDuplicateUpdateSink(
+            jdbcOptions,
+            jdbcExecutionOptions,
+            jdbcDmlOptions,
+            schema,
+            updateColumns,
+            updateColumnIndexes);
+      } else {
+        return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
+      }
     } else {
       throw new UnsupportedOperationException(
           "Unsupported sink impl: " + tiDBSinkOptions.getSinkImpl());
     }
   }
 
-  private void validationForInsertOndulicateUpdate(
+  private void validationForInsertOnDuplicateUpdate(
       TiDBSinkOptions tiDBSinkOptions, String[] keyFields, String[] updateColumnNames) {
     checkArgument(
         tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
@@ -172,6 +172,11 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
      * @see <a
      *     href=https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html>insert-on-duplicate</a>
      * @see <a href=https://github.com/pingcap/tidb/issues/34813>issue-ON-DUPLICATE-KEY</a>
+     *
+     * The constraints are as follows:
+     *   - the destination table should contain only one not-null unique key(including primary key).
+     *      - Multiple-Column Indexes should be all not-null.
+     *   - the update columns should contain the unique key column(including primary key).
      */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
       ArrayList<String> strings = Lists.newArrayList(updateColumnNames);

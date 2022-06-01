@@ -31,8 +31,11 @@ import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
@@ -44,9 +47,29 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameters;
 
 @Category(IntegrationTest.class)
+@RunWith(org.junit.runners.Parameterized.class)
 public class RealTimeWideTableTest extends FlinkTestBase {
+
+  private final Supplier<TableEnvironment> tableEnvironmentSupplier;
+  private final String mode;
+
+  public RealTimeWideTableTest(Supplier<TableEnvironment> tableEnvironmentSupplier, String mode) {
+    this.tableEnvironmentSupplier = tableEnvironmentSupplier;
+    this.mode = mode;
+  }
+
+  @Parameters(name = "{index}: mode={1}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+            {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
+            {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
+        });
+  }
 
   private String dstTable;
 
@@ -78,7 +101,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    c2  bigint,\n"
           + "    c3  bigint,\n"
           + "    c4  bigint,\n"
-          + "    unique key(c1, c2, c3)\n"
+          + "    unique key(c1, c2)\n"
           + ")";
 
   @Rule public ExpectedException exceptionRule = ExpectedException.none();
@@ -93,8 +116,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   @Test
   public void testInsertOnDuplicate() throws Exception {
     dstTable = RandomUtils.randomString();
-
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
@@ -137,8 +159,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
                 "message", containsString("Insert on duplicate only work in `upsert` mode."))));
 
     dstTable = RandomUtils.randomString();
-
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.APPEND.name());
@@ -163,8 +184,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
             isA(IllegalArgumentException.class),
             hasProperty(
                 "message",
-                containsString("Option tidb.sink.update-columns is only working for table."))));
-    TableEnvironment tableEnvironment = getTableEnvironment();
+                containsString("Option tidb.sink.update-columns is only working for sql hint."))));
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
@@ -186,8 +207,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
                         + "set `tidb.sink.skip-check-update-columns` to true"))));
 
     dstTable = RandomUtils.randomString();
-
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
@@ -208,8 +228,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   @Test
   public void testInsertOnDuplicateWithMoreThanOneKeyFieldsSkipCheck() throws Exception {
     dstTable = RandomUtils.randomString();
-
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
@@ -240,8 +259,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   @Test
   public void testInsertOnDuplicateWithMultiColumnIndex() throws Exception {
     dstTable = RandomUtils.randomString();
-
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
     Map<String, String> properties = defaultProperties();
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
