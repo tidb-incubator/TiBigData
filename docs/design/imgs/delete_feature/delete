@@ -1,7 +1,7 @@
 @startuml
+
 group
 TiDBDataStreamSinkProvider -> TiDBSinkOptions: check if delete enable
-
 TiDBSinkOptions -> TiDBDataStreamSinkProvider: return if delete enable
 TiDBDataStreamSinkProvider -> TiDBDataStreamSinkProvider: filter delete RowKind if disable
 TiDBDataStreamSinkProvider -> TiDBRowConverter: convert RowData to TiRow
@@ -16,7 +16,5 @@ TiDBMiniBatchWriteOperator -> TiDBEncodeHelper: generate Key/Values to delete by
 TiDBEncodeHelper -> TiDBDataStreamSinkProvider: return key/values
 TiDBDataStreamSinkProvider <-> TiDBWriteHelper: 2PC to preWrite and commit
 end
-
-
 
 @enduml

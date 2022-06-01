@@ -1,4 +1,4 @@
-# TiBigdata Design Documents
+# Flink connector Delete Feature
 
 - Author(s): [Shi Yuhang](http://github.com/shiyuhang0)
 - Tracking Issue: https://github.com/tidb-incubator/TiBigData/issues/200
@@ -17,12 +17,14 @@
 
 ## Introduction
 
-Support delete feature for TiBigData/Flink.
+Support delete feature in streaming mode for TiBigData/Flink.
 
 ## Motivation or Background
 
 Currently, TiBigData/Flink doesn't support DELETE RowKind in the TiKV sink. In other words, we can't consume delete changelog to execute delete.
-As a real batch&streaming engine, it's necessary to support delete in Flink.
+As a real batch&streaming engine, it's necessary to support delete in Flink. 
+- Delete will bypass TiDB
+- Delete is supported in streaming mode
 
 ## Detailed Design
 
@@ -76,8 +78,6 @@ It is important to keep order in streaming mode, or we may get the error results
 - Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
 - Delete only works with tables which have pk/uk, and at least one pk/uk's value is not null (every column should not be null for multiple-column pk/uk), or the exception will be thrown.
 - Delete can work in json,craft,canal_json codec
-
-
 
 ## Test Design
 
