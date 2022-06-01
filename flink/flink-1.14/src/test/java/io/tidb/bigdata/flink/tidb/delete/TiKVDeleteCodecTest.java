@@ -44,7 +44,6 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -58,26 +57,29 @@ public class TiKVDeleteCodecTest extends FlinkTestBase {
   private String dstTable;
 
   public TiKVDeleteCodecTest(
-      String flinkDeleteTable, int result, String kafkaGroup, String streamingCodec) {
+      String flinkDeleteTable, int result, String kafkaGroup, String topic, String streamingCodec) {
     this.flinkDeleteTable = flinkDeleteTable;
     this.result = result;
     this.kafkaGroup = kafkaGroup;
+    this.topic = topic;
     this.streamingCodec = streamingCodec;
   }
 
   @Parameters(
-      name = "{index}: FlinkDeleteTable={0}, Result={1} ,KafkaGroup={2},StreamingCodec={3} ")
+      name =
+          "{index}: FlinkDeleteTable={0}, Result={1} ,KafkaGroup={2},Topic={3},StreamingCodec={4}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {TABLE_PK, 2, "group_c_1", STREAMING_CODEC_CRAFT},
-          {TABLE_PK, 2, "group_c_2", STREAMING_CODEC_CANAL_JSON},
+          {TABLE_PK, 2, "group_c_1", "tidb_test_craft", STREAMING_CODEC_CRAFT},
+          {TABLE_PK, 2, "group_c_2", "tidb_test_canal_json", STREAMING_CODEC_CANAL_JSON},
         });
   }
 
   private final String flinkDeleteTable;
   private final int result;
   private final String kafkaGroup;
+  private final String topic;
   private final String streamingCodec;
 
   private static final String TABLE_PK =
@@ -89,7 +91,6 @@ public class TiKVDeleteCodecTest extends FlinkTestBase {
           + ")";
 
   @Test
-  @Ignore("need cdc change protocol first")
   public void testDelete() throws Exception {
     srcTable = "flink_delete_src_test" + RandomUtils.randomString();
     dstTable = "flink_delete_dst_test" + RandomUtils.randomString();
@@ -101,7 +102,7 @@ public class TiKVDeleteCodecTest extends FlinkTestBase {
     properties.put(STREAMING_SOURCE.key(), "kafka");
     properties.put(STREAMING_CODEC.key(), streamingCodec);
     properties.put("tidb.streaming.kafka.bootstrap.servers", "localhost:9092");
-    properties.put("tidb.streaming.kafka.topic", "tidb_test");
+    properties.put("tidb.streaming.kafka.topic", topic);
     properties.put("tidb.streaming.kafka.group.id", kafkaGroup);
     properties.put(IGNORE_PARSE_ERRORS.key(), "true");
     // sink
