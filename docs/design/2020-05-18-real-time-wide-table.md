@@ -51,6 +51,22 @@ VALUES(100, 001, '手机','张三', 2021-12-06 12:01:01, mock_pay_id, mock_pay_a
 > Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
 VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
 
+### Check option 'tidb.sink.update-columns' in catalog properties
+
+'DynamicTable' will inherit properties from catalog. If user set `tidb.sink.update-columns` in catalog as follows, it will make all tables have 'tidb.sink.update-columns' option. 
+```sql
+CREATE CATALOG `tidb`
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = '',
+    'tidb.sink.update-columns' = 'c1, c2'
+);
+```
+
+Therefore, it's necessary to check `tidb.sink.update-columns` in catalog properties and throw `IllegalArgumentException` if exists.
+
 ### Argument constraints
 
 Due to reasons mentioned in [MySQL Reference Manual](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html), we should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
