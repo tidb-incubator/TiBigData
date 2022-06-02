@@ -40,14 +40,18 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
     println "TICDC_BRANCH=${TICDC_BRANCH}"
     def label = "regression-test-tispark-${BUILD_NUMBER}"
 
-    podTemplate(name: label, label: label, instanceCap: 12, namespace: 'jenkins-tispark', containers: [
-            containerTemplate(name: 'java', image: 'hub.pingcap.net/jenkins/centos7_golang-1.13_java:cached',
-                    resourceRequestCpu: '8000m',
-                    resourceRequestMemory: '24Gi',
-                    envVars: [
-                            envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375'),
-                    ], alwaysPullImage: true, ttyEnabled: true, command: 'cat'),
-    ]) {
+    podTemplate(name: label, label: label, 
+        instanceCap: 12, cloud: "kubernetes-ng",
+        idleMinutes: 0, namespace: 'jenkins-tibigdata', 
+        containers: [
+            containerTemplate(
+                name: 'java', alwaysPullImage: true,
+                image: "hub.pingcap.net/jenkins/centos7_golang-1.13_java:cached", ttyEnabled: true,
+                resourceRequestCpu: '8000m', resourceRequestMemory: '24Gi',
+                command: '/bin/sh -c', args: 'cat',
+                envVars: [envVar(key: 'DOCKER_HOST', value: 'tcp://localhost:2375')]     
+            )
+        ]) {
         catchError {
             stage('Prepare') {
                 node(label) {
