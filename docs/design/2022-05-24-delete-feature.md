@@ -96,7 +96,7 @@ It is important to keep order in streaming mode, or we may get the error results
 ## Compatibility
 
 - Delete is only supported in Flink 1.14.
-- Delete can work both TiDB 5.x and 6.x. 
+- Delete can work with TiDB >= 4.0.
 
 ## Test Design
 
