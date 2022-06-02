@@ -155,11 +155,14 @@ INSERT INTO `test`.`test_cdc` VALUES(3,'is');
 DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 ```
 
-限制
-- 删除不能在批模式中运行，因为 Flink 目前还没有支持删除语句。
-- 删除只能在 MINIBATCH 级别下运行，如果你运行在 GLOBAL 级别下，那么删除会被忽略。
-- 删除只能在 upsert 模式下运行，如果你运行在 append 模式下，那么删除会被忽略。
-- 删除只能在带有主键或唯一索引的表下运行，并且至少一个主键或唯一索引不为 null 值（如果是联合索引，那么包含的所有列都不能为 null 值），否则将会抛出异常。
+关键点
+- 删除只支持在流模式中运行，因此它只能在 MINIBATCH 下工作，如果在 GLOBAL 下工作，则会抛出异常。
+- 删除只能在 upsert 模式下运行，如果你运行在 append 模式下，则会抛出异常。
+- 删除只能在含有至少一个主键或合法唯一索引的表下运行，否则将会抛出异常，合法的唯一索引是指:
+  - 唯一索引的值不为 null
+  - 如果是联合索引，那么每一列的值都不能为 null
+- 删除兼容 source 支持的所有编码方式，目前包括: json,craft 以及 canal-json
+
 
 ## 7 高级配置
 
@@ -175,6 +178,7 @@ DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 | tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                               |
 | tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                                                                                |
 | tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                                                                                           |
+| tidb.sink.delete_enable                | false         | 是否在流模式中开启删除，这个配置只有当 `tidb.sink.impl=TIKV` 时才会生效                                                                                                              |
 
 ## 8 Codec
 

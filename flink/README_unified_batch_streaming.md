@@ -154,12 +154,13 @@ Delete from src table, and you will find data also be deleted from target table
 DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 ```
 
-Limitation
-- Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
-- Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
-- Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
-- Delete only works with tables which have pk/uk, and at least one pk/uk's value should not be null (every column should not be null for multiple-column pk/uk), or the exception will be thrown.
-
+Keypoints
+- Delete is only supported in streaming mode, which means delete can only work in MINIBATCH because GLOBAL transaction is for batch mode. If you work in GLOBAL transaction, an exception will be thrown.
+- Delete is only supported in upsert mode, If you work in append mode, an exception will be thrown.
+- Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown. valid uk means:
+  - The uk's value should not be null.
+  - Every column should not be null if uk has multiple-column.
+- Delete compatible with all the codec that is supported by the source, currently including: json craft and canal_json.
 
 ## 7 Configuration
 
@@ -175,7 +176,7 @@ In addition to supporting the configuration in [TiDB Batch Mode](./README.md), t
 | tidb.streaming.kafka.group.id                            | -             | Kafka group id                                                                                                                                                                                                                                                                                                                                                                |
 | tidb.streaming.ignore-parse-errors                       | false         | Whether to ignore exceptions in case of decoding failure                                                                                                                                                                                                                                                                                                                      |
 | tidb.metadata.included                                   | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                                                                                                                                                                                                                                                          |
-| tikv.sink.delete_enable                                  | false         | Whether enable delete RowKind                                                                                                                                                                                                                                                                                                                                                 |
+| tikv.sink.delete_enable                                  | false         | Whether enable delete in streaming, this config only works in `tidb.sink.impl=TIKV`                                                                                                                                                                                                                                                                                           |
 
 ## 8 Codec
 
