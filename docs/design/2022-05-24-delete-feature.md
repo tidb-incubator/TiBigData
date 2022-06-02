@@ -8,32 +8,47 @@
 * [Introduction](#introduction)
 * [Motivation or Background](#motivation-or-background)
 * [Detailed Design](#detailed-design)
+  * [Goals](#goals)
   * [New Configuration](#new-configuration)
   * [Main Steps](#main-steps)
   * [Delete Logical](#delete-logical)
+  * [Codec](#codec)
   * [Row Order](#row-order)
 * [Compatibility](#compatibility)
 * [Test Design](#test-design)
 
 ## Introduction
 
-Support delete feature in streaming mode for TiBigData/Flink.
+Support delete feature for TiBigData/Flink.
 
 ## Motivation or Background
 
 Currently, TiBigData/Flink doesn't support DELETE RowKind in the TiKV sink. In other words, we can't consume delete changelog to execute delete.
-As a real batch&streaming engine, it's necessary to support delete in Flink. 
-- Delete will bypass TiDB
-- Delete is supported in streaming mode
+As a real batch&streaming engine, it's necessary to support delete in Flink.
 
 ## Detailed Design
 
+### Goals
+Flink does not support DELETE statement now, in other word, we can't ingest data to delete with SQL in batch mode. Therefore, we can only ingest data from the TiCDC changelog in streaming mode, which is DELETE RowKind in Flink.
+
+Streaming mode introduces another problem, if the DELETE RowKind does not have any constraints, then we do not know which row needs to be deleted. So we need a constraint: at least one pk or valid uk.
+
+Pk is easy to understand, a valid uk means:
+- the uk's value should not be null.
+- every column should not be null if uk has multiple-column.
+
+In summary, Here are the goals:
+- Delete will bypass TiDB.
+- Delete is only supported in streaming mode, which means delete can only work in `MINIBATCH` because `GLOBAL` transaction is for batch mode.
+- Delete is only supported in upsert mode, for append mode does not have delete semantics.
+- Delete is only supported in tables with at least one pk or valid uk.
+
 ### New Configuration
 
-We introduce a new configuration `sink.tikv.delete-enable` to control delete.
-- The configuration is a boolean type with the default value `false`, which will disable the delete feature.
-- The configuration can only work in MINIBATCH transaction and upsert mode, or delete RowKind will be filtered.
-- Only support delete from table with pk/uk, make sure at least one pk/uk's value is not null. (every column should not be null for multiple-column pk/uk)
+We introduce a new config `sink.tikv.delete-enable` to control delete.
+- The config is a boolean type with the default value `false`, which will disable the delete feature.
+- It is a config for streaming, and it will not work if you use it in batch mode.
+- The config works with `tidb.sink.impl=TIKV`, it will not work when `tidb.sink.impl=JDBC`.
 
 ### Main Steps
 
@@ -64,32 +79,37 @@ At last, mix the upsert and delete keyValue to do two phase commit in a transact
 
 ![image alt text](imgs/delete_feature/delete_logical.png)
 
+### Codec
+TiBigData supports three TiCDC encoding types, namely json(called default in the lower version of tidb), craft, and canal-json.
+
+Delete supports all three encoding types. when you use canal-json, pay attention to adding `enable-tidb-extension=true` config when we create changefeed with TiCDC.
+
+The TiDB source can't ingest any data without `enable-tidb-extension=true`, so we can not perform delete in the sink.
+
 ### Row Order
 
 It is important to keep order in streaming mode, or we may get the error results.
 - TiCDC will ingest the changelogs and sink to kafka. So, make sure kafka will partition the messages by key.
 - It's better to optimize deduplication and leave the latest operation for the same row.
-- When Flink executes sink distributedly, make sure the operations on the same row will be sent to the same task.
+- When Flink runs distributed, make sure the operations on the same row will be sent to the same task.
 
 ## Compatibility
 
-- Delete can't work with batch mode, because Flink doesn't support the DELETE statement now.
-- Delete only works in MINIBATCH transaction. If you work in GLOBAL transaction, delete row will be ignored.
-- Delete only works with upsert mode. If you are in append mode, delete row will be ignored.
-- Delete only works with tables which have pk/uk, and at least one pk/uk's value is not null (every column should not be null for multiple-column pk/uk), or the exception will be thrown.
-- Delete can work in json, craft and canal_json codec.
+- Delete is only supported in Flink 1.14.
+- Delete can work both TiDB 5.x and 6.x. 
 
 ## Test Design
 
-| scenes                              | expected results        |
-|-------------------------------------|-------------------------|
-| global & enable delete              | delete rows be ignored  |
-| minibatch & enable delete & append  | delete rows be ignored  |
-| minibatch & disable delete & upsert | delete rows be ignored  |
-| minibatch & enable delete & upsert  | delete correctly        |
-| table with pk                       | delete correctly        |
-| table with uk                       | delete correctly        |
-| table with mutile-column uk         | delete correctly        |
-| codec: json                         | delete correctly        |
-| codec: craft                        | delete correctly        |
-| codec: canal_json                   | delete correctly        |
+> All the test will work in streaming mode
+
+| scenes                        | expected results   |
+|-------------------------------|--------------------|
+| enable delete & append        | throw exception    |
+| disable delete & upsert       | throw exception    |
+| enable delete & upsert        | delete correctly   |
+| table with pk                 | delete correctly   |
+| table with uk                 | delete correctly   |
+| table with multiple-column uk | delete correctly   |
+| codec: json                   | delete correctly   |
+| codec: craft                  | delete correctly   |
+| codec: canal_json             | delete correctly   |
