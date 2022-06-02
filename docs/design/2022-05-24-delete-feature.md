@@ -34,8 +34,8 @@ Flink does not support DELETE statement now, in other word, we can't ingest data
 Streaming mode introduces another problem, if the DELETE RowKind does not have any constraints, then we do not know which row needs to be deleted. So we need a constraint: at least one pk or valid uk.
 
 Pk is easy to understand, a valid uk means:
-- the uk's value should not be null.
-- every column should not be null if uk has multiple-column.
+- The uk's value should not be null.
+- Every column should not be null if uk has multiple-column.
 
 In summary, Here are the goals:
 - Delete will bypass TiDB.
