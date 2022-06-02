@@ -23,7 +23,6 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
-import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction.MINIBATCH;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.TASK_START_INTERVAL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 
@@ -90,6 +89,6 @@ public class TiDBSinkOptions implements Serializable {
   }
 
   public boolean isDeleteEnable() {
-    return deleteEnable && sinkTransaction == MINIBATCH && writeMode == TiDBWriteMode.UPSERT;
+    return deleteEnable;
   }
 }

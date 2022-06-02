@@ -34,6 +34,7 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SqlUtils;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
+import io.tidb.bigdata.tidb.TiDBWriteMode;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
@@ -150,8 +151,16 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
             "Columns do not match:\n " + "tidb -> flink: \n%s",
             SqlUtils.printColumnMapping(tidbColumns, flinkColumns)));
 
-    // filter delete RowKind if delete is disable, delete only work in MINIBATCH with upsert mode
-    if (!sinkOptions.isDeleteEnable()) {
+    if (sinkOptions.isDeleteEnable()) {
+      // check MINIBATCH
+      Preconditions.checkArgument(
+          sinkOptions.getSinkTransaction() == MINIBATCH, "delete is only supported in MINIBATCH");
+      // check upsert
+      Preconditions.checkArgument(
+          sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
+          "delete is only supported in upsert mode");
+    } else {
+      // filter delete RowKind if delete is disable, delete only work in MINIBATCH with upsert mode
       LOG.info("FLink delete is disabled");
       dataStream = dataStream.filter(row -> row.getRowKind() != RowKind.DELETE);
     }

@@ -49,6 +49,7 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
+/** test for different codec, json has been test in {@link TiKVDeleteTest} */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteCodecTest extends FlinkTestBase {

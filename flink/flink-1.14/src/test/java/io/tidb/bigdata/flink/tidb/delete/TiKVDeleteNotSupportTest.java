@@ -37,22 +37,16 @@ import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
-/**
- * MINIBATCH or disableDelete will filter delete RowKind, Global is not tested for it can't work
- * with streaming
- */
+/** append mode will throw exception Global is not tested for it can't work with streaming */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteNotSupportTest extends FlinkTestBase {
@@ -66,37 +60,26 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
       TiDBWriteMode writeMode,
       boolean enableDelete,
       String flinkDeleteTable,
-      int result,
       String kafkaGroup) {
     this.transaction = transaction;
     this.writeMode = writeMode;
     this.enableDelete = enableDelete;
     this.flinkDeleteTable = flinkDeleteTable;
-    this.result = result;
     this.kafkaGroup = kafkaGroup;
   }
 
   @Parameters(
       name =
-          "{index}: Transaction={0}, WriteMode={1}, EnableDelete={2},FlinkDeleteTable={3}, Result={4} ,KafkaGroup={5} ")
+          "{index}: Transaction={0}, WriteMode={1}, EnableDelete={2},FlinkDeleteTable={3} ,KafkaGroup={4} ")
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
           {
             SinkTransaction.MINIBATCH,
-            TiDBWriteMode.UPSERT,
-            false,
-            TABLE_CLUSTER_BIGINT,
-            3,
-            "group_d_u_1"
-          },
-          {
-            SinkTransaction.MINIBATCH,
             TiDBWriteMode.APPEND,
             true,
             TABLE_CLUSTER_BIGINT,
-            3,
-            "group_d_u_2"
+            "group_d_u_1"
           },
         });
   }
@@ -105,7 +88,6 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
   private final TiDBWriteMode writeMode;
   private final boolean enableDelete;
   private final String flinkDeleteTable;
-  private final int result;
   private final String kafkaGroup;
 
   private static final String TABLE_CLUSTER_BIGINT =
@@ -116,20 +98,10 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
           + "    PRIMARY KEY (`c1`) /*T![clustered_index] CLUSTERED */\n"
           + ")";
 
-  private static final String TABLE_CLUSTER_VARCHAR =
-      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
-          + "(\n"
-          + "    c1  varchar(255),\n"
-          + "    c2  varchar(255),\n"
-          + "    PRIMARY KEY (`c1`) /*T![clustered_index] CLUSTERED */\n"
-          + ")";
-
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testDeleteNotSupport() throws Exception {
     srcTable = "flink_delete_src_test" + RandomUtils.randomString();
     dstTable = "flink_delete_dst_test" + RandomUtils.randomString();
-
-    ExecutorService executor = Executors.newSingleThreadExecutor();
 
     Map<String, String> properties = defaultProperties();
     // source
@@ -146,63 +118,21 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
     properties.put(SINK_TRANSACTION.key(), transaction.name());
     properties.put(DELETE_ENABLE.key(), Boolean.toString(enableDelete));
 
-    executor.execute(
-        () -> {
-          EnvironmentSettings settings =
-              EnvironmentSettings.newInstance().inStreamingMode().build();
-          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-          StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-          // init catalog and create dstTable
-          TiDBCatalog tiDBCatalog =
-              initTiDBCatalog(dstTable, flinkDeleteTable, tableEnvironment, properties);
-          // create src table
-          tiDBCatalog.sqlUpdate(
-              String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
-          tiDBCatalog.sqlUpdate(String.format(flinkDeleteTable, DATABASE_NAME, srcTable));
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    // init catalog and create dstTable
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(dstTable, flinkDeleteTable, tableEnvironment, properties);
+    // create src table
+    tiDBCatalog.sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+    tiDBCatalog.sqlUpdate(String.format(flinkDeleteTable, DATABASE_NAME, srcTable));
 
-          tableEnvironment.sqlUpdate(
-              String.format(
-                  "INSERT INTO `tidb`.`%s`.`%s` SELECT c1,c2 FROM `tidb`.`%s`.`%s`",
-                  DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
-          try {
-            tableEnvironment.execute("test");
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
-
-    try {
-      // wait stream job ready
-      Thread.sleep(20000);
-
-      // insert 4 rows in src, flush 3 insert to dst
-      testDatabase
-          .getClientSession()
-          .sqlUpdate(
-              String.format(
-                  "insert into `%s`.`%s` values('1','1'),('2','2'),('3','3'),('4','4')",
-                  DATABASE_NAME, srcTable));
-      Thread.sleep(10000);
-      Assert.assertEquals(
-          4, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
-      Assert.assertEquals(
-          3, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
-
-      // delete 3 rows in src , flush 1 insert and 2 delete to dst
-      testDatabase
-          .getClientSession()
-          .sqlUpdate(
-              String.format(
-                  "delete from `%s`.`%s` where c1 = '1' or c1 = '2' or c1 = '3'",
-                  DATABASE_NAME, srcTable));
-      Thread.sleep(10000);
-      Assert.assertEquals(
-          1, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
-      Assert.assertEquals(
-          result, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
-    } finally {
-      executor.shutdownNow();
-    }
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO `tidb`.`%s`.`%s` SELECT c1,c2 FROM `tidb`.`%s`.`%s`",
+            DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
+    tableEnvironment.execute("test");
   }
 
   @After

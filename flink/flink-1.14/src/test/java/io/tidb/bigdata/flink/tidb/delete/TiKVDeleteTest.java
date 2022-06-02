@@ -49,7 +49,9 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
-/** Delete only support table with pk or uk without null value */
+/**
+ * Test for pk, uk and multiple_uk table
+ */
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteTest extends FlinkTestBase {
