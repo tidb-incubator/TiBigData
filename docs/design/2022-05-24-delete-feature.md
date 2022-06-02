@@ -41,7 +41,7 @@ In summary, Here are the goals:
 - Delete will bypass TiDB.
 - Delete is only supported in streaming mode, which means delete can only work in `MINIBATCH` because `GLOBAL` transaction is for batch mode.
 - Delete is only supported in upsert mode, for append mode does not have delete semantics.
-- Delete is only supported in tables with at least one pk or valid uk.
+- Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown.
 
 ### New Configuration
 
