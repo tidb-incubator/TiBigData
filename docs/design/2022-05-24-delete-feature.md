@@ -84,7 +84,7 @@ TiBigData supports three TiCDC encoding types, namely json(called default in the
 
 Delete supports all three encoding types. when you use canal-json, pay attention to adding `enable-tidb-extension=true` config when we create changefeed with TiCDC.
 
-The TiDB source can't ingest any data without `enable-tidb-extension=true`, so we can not perform delete in the sink.
+The TiDB source can't ingest any data without `enable-tidb-extension=true`, thus we can not perform delete in the sink too.
 
 ### Row Order
 
