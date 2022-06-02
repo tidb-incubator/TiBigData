@@ -98,7 +98,7 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
           + "    PRIMARY KEY (`c1`) /*T![clustered_index] CLUSTERED */\n"
           + ")";
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = Exception.class)
   public void testDeleteNotSupport() throws Exception {
     srcTable = "flink_delete_src_test" + RandomUtils.randomString();
     dstTable = "flink_delete_dst_test" + RandomUtils.randomString();
