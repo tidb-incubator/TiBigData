@@ -47,7 +47,7 @@ In summary, Here are the goals:
 
 We introduce a new config `sink.tikv.delete-enable` to control delete.
 - The config is a boolean type with the default value `false`, which will disable the delete feature.
-- It is a config for streaming, and it will not work if you use it in batch mode.
+- It is a config for streaming. When you work in batch mode and set this config, an exception will be thrown.
 - The config works with `tidb.sink.impl=TIKV`, it will not work when `tidb.sink.impl=JDBC`.
 
 ### Main Steps
