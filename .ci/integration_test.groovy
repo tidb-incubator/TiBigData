@@ -155,9 +155,9 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         sleep 10
                                         ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test" --no-confirm
                                         sleep 10
-                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft&protocol=craft" --no-confirm
+                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?protocol=craft" --no-confirm
                                         sleep 10
-                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json&protocol=canal-json&enable-tidb-extension=true" --no-confirm
+                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?protocol=canal-json&enable-tidb-extension=true" --no-confirm
                                     """
                                 }
 
