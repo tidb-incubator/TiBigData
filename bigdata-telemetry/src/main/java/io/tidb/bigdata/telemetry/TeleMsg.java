@@ -79,7 +79,7 @@ public abstract class TeleMsg {
       hardwareInfo.put("memory", systemInfoUtil.getMemoryInfo());
       hardwareInfo.put("disks", systemInfoUtil.getDisks());
     } catch (Exception e) {
-      logger.info("Failed to generate hardware information. " + e.getMessage());
+      logger.warn("Failed to generate hardware information. " + e.getMessage());
     }
     return hardwareInfo;
   }

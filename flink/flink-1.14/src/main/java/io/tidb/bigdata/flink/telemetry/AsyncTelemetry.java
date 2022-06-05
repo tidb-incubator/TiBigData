@@ -56,7 +56,7 @@ public class AsyncTelemetry {
             }
           }
         } catch (Exception e) {
-          LOG.info("Failed to build flink-1.14 telemetry message. " + e.getMessage());
+          LOG.warn("Failed to build flink-1.14 telemetry message. " + e.getMessage());
         }
       };
 }

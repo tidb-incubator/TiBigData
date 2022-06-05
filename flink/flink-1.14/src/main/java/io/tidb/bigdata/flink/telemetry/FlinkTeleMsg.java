@@ -22,12 +22,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.tidb.bigdata.telemetry.TeleMsg;
 import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ClientSession;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.flink.api.common.JobID;
@@ -35,6 +38,8 @@ import org.apache.flink.runtime.util.EnvironmentInformation;
 import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.raw.RawKVClient;
+import org.tikv.shade.com.google.protobuf.ByteString;
 
 /** FlinkTeleMsg is a single instance. Only send once in one Flink application. */
 public class FlinkTeleMsg extends TeleMsg {
@@ -44,6 +49,9 @@ public class FlinkTeleMsg extends TeleMsg {
 
   private static final String SUBNAME = "flink-1.14";
   private static final String TIBIGDATA_FLINK_VERSION = "0.0.5-SNAPSHOT";
+  private static final String TRACK_ID = "TiBigDataFlink1.14TelemetryID";
+  private static final String TRACK_ID_PREFIX = "trkid_";
+  private static final String APP_ID_PREFIX = "appid_";
   private volatile FlinkTeleMsgState sendState = FlinkTeleMsgState.UNSENT;
   private Map<String, String> properties;
 
@@ -94,7 +102,21 @@ public class FlinkTeleMsg extends TeleMsg {
 
   @Override
   public String setTrackId() {
-    return JobID.generate().toString();
+    try (RawKVClient client =
+        ClientSession.create(new ClientConfig(properties)).getTiSession().createRawClient(); ) {
+      Optional<ByteString> value = client.get(ByteString.copyFromUtf8(TRACK_ID));
+
+      if (value.isPresent()) {
+        return value.get().toStringUtf8();
+      }
+
+      String uuid = TRACK_ID_PREFIX + UUID.randomUUID();
+      client.put(ByteString.copyFromUtf8(TRACK_ID), ByteString.copyFromUtf8(uuid));
+      return uuid;
+    } catch (Exception e) {
+      logger.warn("Failed to generated telemetry track ID. " + e.getMessage());
+      return APP_ID_PREFIX + JobID.generate();
+    }
   }
 
   @Override
@@ -161,7 +183,7 @@ public class FlinkTeleMsg extends TeleMsg {
     try {
       msgString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this);
     } catch (JsonProcessingException e) {
-      logger.info("Failed to make telemetry message to string " + e.getMessage());
+      logger.warn("Failed to make telemetry message to string " + e.getMessage());
     }
     return msgString;
   }
@@ -183,13 +205,13 @@ public class FlinkTeleMsg extends TeleMsg {
         return m.group(0);
       }
     } catch (Exception e) {
-      logger.info("Failed to get TiDB version. " + e.getMessage());
+      logger.warn("Failed to get TiDB version. " + e.getMessage());
     }
     return "UNKNOWN";
   }
 
-  private String getFlinkVersion(){
-    try{
+  private String getFlinkVersion() {
+    try {
       String flinkVersion = EnvironmentInformation.getVersion();
       return flinkVersion;
     } catch (Exception e) {

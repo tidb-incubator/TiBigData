@@ -44,7 +44,7 @@ public class Telemetry {
           ? ReportState.SUCCESS
           : ReportState.FAILURE;
     } catch (Exception e) {
-      logger.info("Failed to report telemetry. " + e.getMessage());
+      logger.warn("Failed to report telemetry. " + e.getMessage());
       return ReportState.FAILURE;
     }
   }

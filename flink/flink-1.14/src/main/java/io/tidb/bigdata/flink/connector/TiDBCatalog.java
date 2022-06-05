@@ -96,14 +96,6 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public TiDBCatalog(String name, Map<String, String> properties) {
     this(name, DEFAULT_DATABASE, properties);
-
-    // Report telemetry.
-    if (properties
-        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
-        .equals("true")) {
-      AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
-      asyncTelemetry.report();
-    }
   }
 
   public TiDBCatalog(Map<String, String> properties) {
@@ -115,6 +107,14 @@ public class TiDBCatalog extends AbstractCatalog {
       try {
         LOG.info("Init client session");
         clientSession = Optional.of(ClientSession.create(new ClientConfig(properties)));
+        // Report telemetry.
+        if (properties
+            .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
+            .equals("true")) {
+          LOG.error("TELEMETRY");
+          AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
+          asyncTelemetry.report();
+        }
       } catch (Exception e) {
         throw new CatalogException("Can not init client session", e);
       }

@@ -17,7 +17,6 @@
 package io.tidb.bigdata.telemetry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpGet;
@@ -60,11 +59,10 @@ public class HttpClientUtil {
    * @param url server url
    * @return HttpResponse response
    */
-  public HttpResponse get(String url) throws IOException {
+  public HttpResponse get(String url) throws Exception {
     try {
       CloseableHttpClient httpClient = HttpClients.createDefault();
       HttpGet httpGet = new HttpGet(url);
-      httpGet.setHeader("Content-Type", "application/json");
       HttpResponse resp = httpClient.execute(httpGet);
       checkResp(url, resp);
       return resp;
@@ -75,7 +73,7 @@ public class HttpClientUtil {
 
   private void checkResp(String url, HttpResponse resp) {
     if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      logger.info(
+      logger.warn(
           String.format(
               "Failed to get HTTP request: %s, response: %s, code: %d.",
               url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));

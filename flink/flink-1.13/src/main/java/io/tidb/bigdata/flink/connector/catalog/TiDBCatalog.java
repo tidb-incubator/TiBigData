@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.table.TiDBDynamicTableFactory;
-import io.tidb.bigdata.flink.telemetry.AsyncTelemetry;
 import io.tidb.bigdata.flink.tidb.TiDBBaseCatalog;
 import io.tidb.bigdata.flink.tidb.TypeUtils;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
@@ -43,23 +42,12 @@ import org.apache.flink.table.types.DataType;
 
 public class TiDBCatalog extends TiDBBaseCatalog {
 
-  public static final String TIDB_TELEMETRY_ENABLE = "tidb.telemetry.enable";
-  public static final String TIDB_TELEMETRY_ENABLE_DEFAULT = "true";
-
   public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase, properties);
   }
 
   public TiDBCatalog(String name, Map<String, String> properties) {
     super(name, properties);
-
-    // Report telemetry.
-    if (properties
-        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
-        .equals("true")) {
-      AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
-      asyncTelemetry.report();
-    }
   }
 
   public TiDBCatalog(Map<String, String> properties) {
