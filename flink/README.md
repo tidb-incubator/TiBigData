@@ -257,7 +257,7 @@ Currently, TiKV-Client supports two specified certificate forms:
   - tidb.cluster-tls-ca
   - tidb.cluster-tls-key
   - tidb.cluster-tls-cert
-2. A JKS store with four configurations.
+2. A JKS store with five configurations.
   - tidb.cluster-jks-enable
   - tidb.cluster-jks-key-path
   - tidb.cluster-jks-key-password

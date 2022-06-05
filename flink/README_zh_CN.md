@@ -272,7 +272,7 @@ TiKV-Client 是 TiBigData 用于链接 TiKV 集群的客户端，开启 TiKV-Cli
    - tidb.cluster-tls-ca
    - tidb.cluster-tls-key
    - tidb.cluster-tls-cert
-2. 配置 JKS 密钥库证书。需配置以下四项。
+2. 配置 JKS 密钥库证书。需配置以下五项。
    - tidb.cluster-jks-enable 
    - tidb.cluster-jks-key-path
    - tidb.cluster-jks-key-password
