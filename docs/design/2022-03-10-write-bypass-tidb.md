@@ -47,7 +47,7 @@ TiKV implements Google's Percolator transaction mode, which is a variation of 2p
 
 For each transaction commit, we select a row as the primary key and perform a two-stage commit, while the transaction satisfies the ACID principle.
 
-![image alt text](imgs/2pc-percolator.png)
+![image alt text](imgs/write-bypass-tidb/2pc-percolator.png)
 
 Transaction levels can be classified as Global, MiniBatch, Checkpoint:
 - Global is only applicable to bounded data streams, where all written data is considered as a whole and written to TiKV through one big transaction, which is not recommended if there are frequent write conflicts.
@@ -73,19 +73,19 @@ It is worth noting that the box actually indicates the add of Transformation, an
 
 ProcessElement is executed once when it iterates over each element. As you can see, MiniBatch has no global transaction guarantee and performs a 2pc write to the data whenever the number of data rows reaches a certain threshold.
 
-![image alt text](imgs/mini-batch.png)
+![image alt text](imgs/write-bypass-tidb/mini-batch.png)
 
 ### Global
 
 Global prewrites the primary key when the stream is generated, then the ProcessElement only prewrites the Secondary Keys and commits the primary key once all the data has been written.
 
-![image alt text](imgs/global.png)
+![image alt text](imgs/write-bypass-tidb/global.png)
 
 ### ~~Checkpoint~~(Deprecated)
 
 ~~Unlike the previous two implementations, TIDBSinkFunction inherits TwoPhaseCommitSinkFunction, which provides exactly-once semantics. calls to the commit function occur at the checkpoint node, as described in [TwoPhaseCommitSinkFunction](https://nightlies.apache.org/flink/flink-docs-master/api/java/org/apache/flink/streaming/api/functions/sink/TwoPhaseCommitSinkFunction.html).~~
 
-![image alt text](imgs/checkpoint.png)
+![image alt text](imgs/write-bypass-tidb/checkpoint.png)
 
 > [!NOTE]：If `commit primary key` fails, the data will be lost, because checkpoint has already been completed. Maybe optimize by storing the data in the external storage.
 
