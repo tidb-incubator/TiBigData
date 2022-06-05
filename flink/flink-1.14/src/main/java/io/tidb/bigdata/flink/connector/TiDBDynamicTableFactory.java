@@ -36,9 +36,11 @@ import io.tidb.bigdata.flink.connector.utils.JdbcUtils;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import io.tidb.bigdata.tidb.meta.TiColumnInfo;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -111,7 +113,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
           context.getCatalogTable(),
           tiDBSinkOptions);
     } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
-      TableSchema schema = TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
+      TableSchema schema = TableSchemaUtils.getPhysicalSchema(
+          context.getCatalogTable().getSchema());
       String databaseName = config.get(DATABASE_NAME);
       // jdbc options
       JdbcConnectorOptions jdbcOptions =
@@ -123,20 +126,21 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
               .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
               .withMaxRetries(config.get(SINK_MAX_RETRIES))
               .build();
-      // dml options
-      String[] keyFields = getKeyFields(context, config, databaseName, jdbcOptions.getTableName());
-      JdbcDmlOptions jdbcDmlOptions =
-          JdbcDmlOptions.builder()
-              .withTableName(jdbcOptions.getTableName())
-              .withDialect(jdbcOptions.getDialect())
-              .withFieldNames(schema.getFieldNames())
-              .withKeyFields(keyFields)
-              .build();
+      ColumnKeyField columnKeyField = getKeyFields(context, config, databaseName,
+          jdbcOptions.getTableName());
 
       if (tiDBSinkOptions.getUpdateColumns() != null) {
+        // dml options
+        JdbcDmlOptions jdbcDmlOptions =
+            JdbcDmlOptions.builder()
+                .withTableName(jdbcOptions.getTableName())
+                .withDialect(jdbcOptions.getDialect())
+                .withFieldNames(schema.getFieldNames())
+                .build();
+
         String[] updateColumnNames = tiDBSinkOptions.getUpdateColumns().split("\\s*,\\s*");
 
-        validationForInsertOnDuplicateUpdate(tiDBSinkOptions, keyFields, updateColumnNames);
+        validationForInsertOnDuplicateUpdate(tiDBSinkOptions, columnKeyField, updateColumnNames);
 
         List<TableColumn> updateColumns = new ArrayList<>();
         int[] updateColumnIndexes =
@@ -150,6 +154,15 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
             updateColumns,
             updateColumnIndexes);
       } else {
+        // dml option
+        JdbcDmlOptions jdbcDmlOptions =
+            JdbcDmlOptions.builder()
+                .withTableName(jdbcOptions.getTableName())
+                .withDialect(jdbcOptions.getDialect())
+                .withFieldNames(schema.getFieldNames())
+                .withKeyFields(columnKeyField.getKeyFieldFlatMap())
+                .build();
+
         return new JdbcDynamicTableSink(jdbcOptions, jdbcExecutionOptions, jdbcDmlOptions, schema);
       }
     } else {
@@ -159,7 +172,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
   }
 
   private void validationForInsertOnDuplicateUpdate(
-      TiDBSinkOptions tiDBSinkOptions, String[] keyFields, String[] updateColumnNames) {
+      TiDBSinkOptions tiDBSinkOptions, ColumnKeyField columnKeyField, String[] updateColumnNames) {
     checkArgument(
         tiDBSinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
         "Insert on duplicate only work in `upsert` mode.");
@@ -179,12 +192,31 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
      *   - the update columns should contain the unique key column(including primary key).
      */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
-      ArrayList<String> strings = Lists.newArrayList(updateColumnNames);
-      List<String> collect =
-          Arrays.stream(keyFields).filter(strings::contains).collect(Collectors.toList());
+      List<List<String>> keyFields = Lists.newArrayList(columnKeyField.getUniqueKeys());
+      List<String> primaryKey = columnKeyField.getPrimaryKey();
+      if (!primaryKey.isEmpty()) {
+        keyFields.add(primaryKey);
+      }
+
+      checkArgument(keyFields.size() == 1,
+          "Sink table should only have one unique key or primary key\n"
+              + "If you want to force skip the constraint, "
+              + "set `tidb.sink.skip-check-update-columns` to true");
+
+      TiTableInfo table = columnKeyField.getTableInfo();
+      for (String keyField : Objects.requireNonNull(columnKeyField.getKeyFieldFlatMap())) {
+        TiColumnInfo column = table.getColumn(keyField);
+        checkArgument(column.getType().isNotNull(), "Unique key or primary key should be not null\n"
+            + "If you want to force skip the constraint, "
+            + "set `tidb.sink.skip-check-update-columns` to true");
+      }
+
+      ArrayList<String> updateColumns = Lists.newArrayList(updateColumnNames);
+      List<List<String>> collect =
+          keyFields.stream().filter(updateColumns::containsAll).collect(Collectors.toList());
       checkArgument(
           collect.size() == 1,
-          "Update columns should only have one unique key or primary key\n"
+          "Update columns should contains all unique key columns or primary key columns\n"
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
     }
@@ -213,24 +245,65 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     return index;
   }
 
-  private String[] getKeyFields(
+  private ColumnKeyField getKeyFields(
       Context context, ReadableConfig config, String databaseName, String tableName) {
     // check write mode
     TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
-    String[] keyFields = null;
+    ColumnKeyField columnKeyField = new ColumnKeyField();
     if (writeMode == TiDBWriteMode.UPSERT) {
       try (ClientSession clientSession =
           ClientSession.create(new ClientConfig(context.getCatalogTable().toProperties()))) {
-        Set<String> set =
-            ImmutableSet.<String>builder()
-                .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
-                .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
-                .build();
-        keyFields = set.size() == 0 ? null : set.toArray(new String[0]);
+
+        columnKeyField.setUniqueKeys(clientSession.getUniqueKeyColumns(databaseName, tableName));
+        columnKeyField.setPrimaryKey(clientSession.getPrimaryKeyColumns(databaseName, tableName));
+        columnKeyField.setTableInfo(clientSession.getTable(databaseName, tableName)
+            .orElseThrow(() -> new IllegalStateException(
+                String.format("Table %s.%s not exist", databaseName, tableName))));
       } catch (Exception e) {
         throw new IllegalStateException(e);
       }
     }
-    return keyFields;
+    return columnKeyField;
+  }
+
+  private static class ColumnKeyField {
+
+    private List<String> primaryKey;
+    private List<List<String>> uniqueKeys;
+    private TiTableInfo tableInfo;
+
+    public void setPrimaryKey(List<String> primaryKey) {
+      this.primaryKey = primaryKey;
+    }
+
+    public void setUniqueKeys(List<List<String>> uniqueKeys) {
+      this.uniqueKeys = uniqueKeys;
+    }
+
+    public List<String> getPrimaryKey() {
+      return primaryKey;
+    }
+
+    public List<List<String>> getUniqueKeys() {
+      return uniqueKeys;
+    }
+
+    public TiTableInfo getTableInfo() {
+      return tableInfo;
+    }
+
+    public void setTableInfo(TiTableInfo tableInfo) {
+      this.tableInfo = tableInfo;
+    }
+
+    public String[] getKeyFieldFlatMap() {
+      Set<String> set =
+          ImmutableSet.<String>builder()
+              .addAll(uniqueKeys.stream()
+                  .flatMap(List::stream).collect(Collectors.toList()))
+              .addAll(primaryKey)
+              .build();
+      return set.size() == 0 ? null : set.toArray(new String[0]);
+    }
   }
 }

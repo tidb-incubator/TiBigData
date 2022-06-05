@@ -21,7 +21,9 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.time.Duration;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
@@ -67,7 +69,9 @@ public abstract class TiDBBaseDynamicTableFactory
           .stringType()
           .defaultValue(ClientConfig.TIDB_WRITE_MODE_DEFAULT);
 
-  /** see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory} */
+  /**
+   * see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory}
+   */
   public static final ConfigOption<Integer> SINK_BUFFER_FLUSH_MAX_ROWS =
       ConfigOptions.key("sink.buffer-flush.max-rows")
           .intType()
@@ -140,7 +144,9 @@ public abstract class TiDBBaseDynamicTableFactory
         .build();
   }
 
-  /** see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory} */
+  /**
+   * see ${@link org.apache.flink.connector.jdbc.table.JdbcDynamicTableFactory}
+   */
   @Override
   public DynamicTableSink createDynamicTableSink(Context context) {
     FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
@@ -178,7 +184,8 @@ public abstract class TiDBBaseDynamicTableFactory
           ClientSession.create(new ClientConfig(context.getCatalogTable().toProperties()))) {
         Set<String> set =
             ImmutableSet.<String>builder()
-                .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName))
+                .addAll(clientSession.getUniqueKeyColumns(databaseName, tableName).stream().flatMap(
+                    List::stream).collect(Collectors.toList()))
                 .addAll(clientSession.getPrimaryKeyColumns(databaseName, tableName))
                 .build();
         keyFields = set.size() == 0 ? null : set.toArray(new String[0]);

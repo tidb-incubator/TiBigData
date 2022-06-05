@@ -65,7 +65,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   @Parameters(name = "{index}: mode={1}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
-        new Object[][] {
+        new Object[][]{
             {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
             {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
         });
@@ -76,7 +76,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   private static final String TABLE_SCHEMA =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
-          + "    c1  bigint,\n"
+          + "    c1  bigint not null,\n"
           + "    c2  bigint,\n"
           + "    c3  bigint,\n"
           + "    c4  bigint,\n"
@@ -86,25 +86,37 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   private static final String TABLE_SCHEMA_WITH_TWO_KEY =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
-          + "    c1  bigint,\n"
-          + "    c2  bigint,\n"
+          + "    c1  bigint not null,\n"
+          + "    c2  bigint not null,\n"
           + "    c3  bigint,\n"
           + "    c4  bigint,\n"
           + "    unique key(c1),\n"
           + "    primary key(c2)\n"
           + ")";
 
-  private static final String TABLE_SCHEMA_WITH_MULTI_COLUMN =
+  private static final String TABLE_SCHEMA_WITH_MULTI_COLUMN_KEY =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "(\n"
-          + "    c1  bigint,\n"
-          + "    c2  bigint,\n"
+          + "    c1  bigint not null,\n"
+          + "    c2  bigint not null,\n"
           + "    c3  bigint,\n"
           + "    c4  bigint,\n"
           + "    unique key(c1, c2)\n"
           + ")";
 
-  @Rule public ExpectedException exceptionRule = ExpectedException.none();
+  private static final String TABLE_SCHEMA_WITH_TWO_MULTI_COLUMN_KEY =
+      "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
+          + "(\n"
+          + "    c1  bigint not null,\n"
+          + "    c2  bigint,\n"
+          + "    c3  bigint,\n"
+          + "    c4  bigint,\n"
+          + "    unique key(c1, c2),\n"
+          + "    primary key(c1, c3)\n"
+          + ")";
+
+  @Rule
+  public ExpectedException exceptionRule = ExpectedException.none();
 
   @After
   public void teardown() {
@@ -195,6 +207,36 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   }
 
   @Test
+  public void testInsertOnDuplicateWithMultiColumnIndex() throws Exception {
+    dstTable = RandomUtils.randomString();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_MULTI_COLUMN_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    String sql2 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c3') */"
+                + "values (1,2,356,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+    System.out.println(sql2);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.sqlUpdate(sql2);
+    tableEnvironment.execute("test");
+
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+  }
+
+  @Test
   public void testInsertOnDuplicateWithMoreThanOneKeyFields() throws Exception {
     exceptionRule.expectCause(
         allOf(
@@ -202,7 +244,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
             hasProperty(
                 "message",
                 containsString(
-                    "Update columns should only have one unique key or primary key\n"
+                    "Sink table should only have one unique key or primary key\n"
                         + "If you want to force skip the constraint, "
                         + "set `tidb.sink.skip-check-update-columns` to true"))));
 
@@ -257,7 +299,38 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   }
 
   @Test
-  public void testInsertOnDuplicateWithMultiColumnIndex() throws Exception {
+  public void testInsertOnDuplicateWithTwoMultiColumnKey() throws Exception {
+    exceptionRule.expectCause(
+        allOf(
+            isA(IllegalArgumentException.class),
+            hasProperty(
+                "message",
+                containsString(
+                    "Sink table should only have one unique key or primary key\n"
+                        + "If you want to force skip the constraint, "
+                        + "set `tidb.sink.skip-check-update-columns` to true"))));
+
+    dstTable = RandomUtils.randomString();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_TWO_MULTI_COLUMN_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+  }
+
+  @Test
+  public void testInsertOnDuplicateWithTwoMultiColumnIndexSkipCheck() throws Exception {
     dstTable = RandomUtils.randomString();
     TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
 
@@ -265,11 +338,11 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
     properties.put(SKIP_CHECK_UPDATE_COLUMNS.key(), "true");
 
-    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_MULTI_COLUMN, tableEnvironment, properties);
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_TWO_MULTI_COLUMN_KEY, tableEnvironment, properties);
 
     String sql1 =
         format(
-            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c4') */"
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c2, c3, c4') */"
                 + "values (1,2,3,32)",
             DATABASE_NAME, dstTable);
     String sql2 =
@@ -285,6 +358,37 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     tableEnvironment.execute("test");
 
     checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+  }
+
+  @Test
+  public void testInsertOnDuplicateLackUpdateColumns() throws Exception {
+    exceptionRule.expectCause(
+        allOf(
+            isA(IllegalArgumentException.class),
+            hasProperty(
+                "message",
+                containsString(
+                    "Update columns should contains all unique key columns or primary key columns\n"
+                        + "If you want to force skip the constraint, "
+                        + "set `tidb.sink.skip-check-update-columns` to true"))));
+
+    dstTable = RandomUtils.randomString();
+    TableEnvironment tableEnvironment = tableEnvironmentSupplier.get();
+
+    Map<String, String> properties = defaultProperties();
+    properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+
+    initTiDBCatalog(dstTable, TABLE_SCHEMA_WITH_MULTI_COLUMN_KEY, tableEnvironment, properties);
+
+    String sql1 =
+        format(
+            "INSERT INTO `tidb`.`%s`.`%s` /*+ OPTIONS('tidb.sink.update-columns'='c1, c3, c4') */"
+                + "values (1,2,3,32)",
+            DATABASE_NAME, dstTable);
+    System.out.println(sql1);
+
+    tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
   }
 
   private void checkRowResult(TableEnvironment tableEnvironment, List<String> expected) {
