@@ -113,8 +113,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
           context.getCatalogTable(),
           tiDBSinkOptions);
     } else if (tiDBSinkOptions.getSinkImpl() == SinkImpl.JDBC) {
-      TableSchema schema = TableSchemaUtils.getPhysicalSchema(
-          context.getCatalogTable().getSchema());
+      TableSchema schema =
+          TableSchemaUtils.getPhysicalSchema(context.getCatalogTable().getSchema());
       String databaseName = config.get(DATABASE_NAME);
       // jdbc options
       JdbcConnectorOptions jdbcOptions =
@@ -126,8 +126,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
               .withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis())
               .withMaxRetries(config.get(SINK_MAX_RETRIES))
               .build();
-      ColumnKeyField columnKeyField = getKeyFields(context, config, databaseName,
-          jdbcOptions.getTableName());
+      ColumnKeyField columnKeyField =
+          getKeyFields(context, config, databaseName, jdbcOptions.getTableName());
 
       if (tiDBSinkOptions.getUpdateColumns() != null) {
         // dml options
@@ -185,11 +185,10 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
      * @see <a
      *     href=https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html>insert-on-duplicate</a>
      * @see <a href=https://github.com/pingcap/tidb/issues/34813>issue-ON-DUPLICATE-KEY</a>
-     *
-     * The constraints are as follows:
-     *   - the destination table should contain only one not-null unique key(including primary key).
-     *      - Multiple-Column Indexes should be all not-null.
-     *   - the update columns should contain the unique key column(including primary key).
+     *     <p>The constraints are as follows: - the destination table should contain only one
+     *     not-null unique key(including primary key). - Multiple-Column Indexes should be all
+     *     not-null. - the update columns should contain the unique key column(including primary
+     *     key).
      */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
       List<List<String>> keyFields = Lists.newArrayList(columnKeyField.getUniqueKeys());
@@ -198,7 +197,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
         keyFields.add(primaryKey);
       }
 
-      checkArgument(keyFields.size() == 1,
+      checkArgument(
+          keyFields.size() == 1,
           "Sink table should only have one unique key or primary key\n"
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
@@ -206,9 +206,11 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       TiTableInfo table = columnKeyField.getTableInfo();
       for (String keyField : Objects.requireNonNull(columnKeyField.getKeyFieldFlatMap())) {
         TiColumnInfo column = table.getColumn(keyField);
-        checkArgument(column.getType().isNotNull(), "Unique key or primary key should be not null\n"
-            + "If you want to force skip the constraint, "
-            + "set `tidb.sink.skip-check-update-columns` to true");
+        checkArgument(
+            column.getType().isNotNull(),
+            "Unique key or primary key should be not null\n"
+                + "If you want to force skip the constraint, "
+                + "set `tidb.sink.skip-check-update-columns` to true");
       }
 
       ArrayList<String> updateColumns = Lists.newArrayList(updateColumnNames);
@@ -256,9 +258,13 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
         columnKeyField.setUniqueKeys(clientSession.getUniqueKeyColumns(databaseName, tableName));
         columnKeyField.setPrimaryKey(clientSession.getPrimaryKeyColumns(databaseName, tableName));
-        columnKeyField.setTableInfo(clientSession.getTable(databaseName, tableName)
-            .orElseThrow(() -> new IllegalStateException(
-                String.format("Table %s.%s not exist", databaseName, tableName))));
+        columnKeyField.setTableInfo(
+            clientSession
+                .getTable(databaseName, tableName)
+                .orElseThrow(
+                    () ->
+                        new IllegalStateException(
+                            String.format("Table %s.%s not exist", databaseName, tableName))));
       } catch (Exception e) {
         throw new IllegalStateException(e);
       }
@@ -299,8 +305,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     public String[] getKeyFieldFlatMap() {
       Set<String> set =
           ImmutableSet.<String>builder()
-              .addAll(uniqueKeys.stream()
-                  .flatMap(List::stream).collect(Collectors.toList()))
+              .addAll(uniqueKeys.stream().flatMap(List::stream).collect(Collectors.toList()))
               .addAll(primaryKey)
               .build();
       return set.size() == 0 ? null : set.toArray(new String[0]);

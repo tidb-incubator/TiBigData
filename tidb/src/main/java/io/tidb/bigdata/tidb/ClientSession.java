@@ -475,7 +475,8 @@ public final class ClientSession implements AutoCloseable {
         .filter(TiIndexInfo::isUnique)
         .map(TiIndexInfo::getIndexColumns)
         .map(list -> list.stream().map(TiIndexColumn::getName).collect(Collectors.toList()))
-        .filter(list -> !list.equals(primaryKeyColumns)).collect(Collectors.toList());
+        .filter(list -> !list.equals(primaryKeyColumns))
+        .collect(Collectors.toList());
   }
 
   public TiTimestamp getSnapshotVersion() {

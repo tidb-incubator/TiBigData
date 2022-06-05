@@ -65,9 +65,9 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   @Parameters(name = "{index}: mode={1}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
-        new Object[][]{
-            {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
-            {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
+        new Object[][] {
+          {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
+          {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
         });
   }
 
@@ -115,8 +115,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
           + "    primary key(c1, c3)\n"
           + ")";
 
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
+  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @After
   public void teardown() {
