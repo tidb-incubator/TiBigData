@@ -39,6 +39,7 @@ import io.tidb.bigdata.tidb.TiDBWriteMode;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -191,8 +192,9 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
      *     key).
      */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
-      List<List<String>> keyFields = Lists.newArrayList(columnKeyField.getUniqueKeys());
-      List<String> primaryKey = columnKeyField.getPrimaryKey();
+      List<List<String>> keyFields = Lists.newArrayList(
+          columnKeyField.getUniqueKeys().orElse(Collections.emptyList()));
+      List<String> primaryKey = columnKeyField.getPrimaryKey().orElse(Collections.emptyList());
       if (!primaryKey.isEmpty()) {
         keyFields.add(primaryKey);
       }
@@ -203,7 +205,10 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
 
-      TiTableInfo table = columnKeyField.getTableInfo();
+      TiTableInfo table = columnKeyField.getTableInfo()
+          .orElseThrow(() -> new IllegalStateException(
+              String.format("Failed to get tableInfo for table %s.%s",
+                  columnKeyField.getDatabaseName(), columnKeyField.getTableName())));
       for (String keyField : Objects.requireNonNull(columnKeyField.getKeyFieldFlatMap())) {
         TiColumnInfo column = table.getColumn(keyField);
         checkArgument(
@@ -251,7 +256,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       Context context, ReadableConfig config, String databaseName, String tableName) {
     // check write mode
     TiDBWriteMode writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
-    ColumnKeyField columnKeyField = new ColumnKeyField();
+    ColumnKeyField columnKeyField = new ColumnKeyField(databaseName, tableName);
     if (writeMode == TiDBWriteMode.UPSERT) {
       try (ClientSession clientSession =
           ClientSession.create(new ClientConfig(context.getCatalogTable().toProperties()))) {
@@ -274,9 +279,25 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
   private static class ColumnKeyField {
 
+    private final String databaseName;
+    private final String tableName;
+
+    public ColumnKeyField(String databaseName, String tableName) {
+      this.databaseName = databaseName;
+      this.tableName = tableName;
+    }
+
     private List<String> primaryKey;
     private List<List<String>> uniqueKeys;
     private TiTableInfo tableInfo;
+
+    public String getDatabaseName() {
+      return databaseName;
+    }
+
+    public String getTableName() {
+      return tableName;
+    }
 
     public void setPrimaryKey(List<String> primaryKey) {
       this.primaryKey = primaryKey;
@@ -286,16 +307,16 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       this.uniqueKeys = uniqueKeys;
     }
 
-    public List<String> getPrimaryKey() {
-      return primaryKey;
+    public Optional<List<String>> getPrimaryKey() {
+      return Optional.ofNullable(primaryKey);
     }
 
-    public List<List<String>> getUniqueKeys() {
-      return uniqueKeys;
+    public Optional<List<List<String>>> getUniqueKeys() {
+      return Optional.ofNullable(uniqueKeys);
     }
 
-    public TiTableInfo getTableInfo() {
-      return tableInfo;
+    public Optional<TiTableInfo> getTableInfo() {
+      return Optional.ofNullable(tableInfo);
     }
 
     public void setTableInfo(TiTableInfo tableInfo) {
@@ -305,8 +326,9 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     public String[] getKeyFieldFlatMap() {
       Set<String> set =
           ImmutableSet.<String>builder()
-              .addAll(uniqueKeys.stream().flatMap(List::stream).collect(Collectors.toList()))
-              .addAll(primaryKey)
+              .addAll(this.getUniqueKeys().orElse(Collections.emptyList()).stream()
+                  .flatMap(List::stream).collect(Collectors.toList()))
+              .addAll(this.getPrimaryKey().orElse(Collections.emptyList()))
               .build();
       return set.size() == 0 ? null : set.toArray(new String[0]);
     }
