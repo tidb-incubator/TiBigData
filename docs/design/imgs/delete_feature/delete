@@ -1,0 +1,20 @@
+@startuml
+
+group
+TiDBDataStreamSinkProvider -> TiDBSinkOptions: check if delete enable
+TiDBSinkOptions -> TiDBDataStreamSinkProvider: return if delete enable
+TiDBDataStreamSinkProvider -> TiDBDataStreamSinkProvider: filter delete RowKind if disable
+TiDBDataStreamSinkProvider -> TiDBRowConverter: convert RowData to TiRow
+TiDBRowConverter -> TiRow: create Row with RowKind
+TiRow <-> ObjectRowImpl: create ObjectRowImpl
+TiRow -> TiDBDataStreamSinkProvider: return TiRow
+end
+
+group
+TiDBDataStreamSinkProvider -> TiDBMiniBatchWriteOperator: process data with MiniBatch transaction
+TiDBMiniBatchWriteOperator -> TiDBEncodeHelper: generate Key/Values to delete by row
+TiDBEncodeHelper -> TiDBDataStreamSinkProvider: return key/values
+TiDBDataStreamSinkProvider <-> TiDBWriteHelper: 2PC to preWrite and commit
+end
+
+@enduml
