@@ -192,8 +192,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
      *     key).
      */
     if (!tiDBSinkOptions.isSkipCheckForUpdateColumns()) {
-      List<List<String>> keyFields = Lists.newArrayList(
-          columnKeyField.getUniqueKeys().orElse(Collections.emptyList()));
+      List<List<String>> keyFields =
+          Lists.newArrayList(columnKeyField.getUniqueKeys().orElse(Collections.emptyList()));
       List<String> primaryKey = columnKeyField.getPrimaryKey().orElse(Collections.emptyList());
       if (!primaryKey.isEmpty()) {
         keyFields.add(primaryKey);
@@ -205,10 +205,15 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
 
-      TiTableInfo table = columnKeyField.getTableInfo()
-          .orElseThrow(() -> new IllegalStateException(
-              String.format("Failed to get tableInfo for table %s.%s",
-                  columnKeyField.getDatabaseName(), columnKeyField.getTableName())));
+      TiTableInfo table =
+          columnKeyField
+              .getTableInfo()
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          String.format(
+                              "Failed to get tableInfo for table %s.%s",
+                              columnKeyField.getDatabaseName(), columnKeyField.getTableName())));
       for (String keyField : Objects.requireNonNull(columnKeyField.getKeyFieldFlatMap())) {
         TiColumnInfo column = table.getColumn(keyField);
         checkArgument(
@@ -326,8 +331,10 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
     public String[] getKeyFieldFlatMap() {
       Set<String> set =
           ImmutableSet.<String>builder()
-              .addAll(this.getUniqueKeys().orElse(Collections.emptyList()).stream()
-                  .flatMap(List::stream).collect(Collectors.toList()))
+              .addAll(
+                  this.getUniqueKeys().orElse(Collections.emptyList()).stream()
+                      .flatMap(List::stream)
+                      .collect(Collectors.toList()))
               .addAll(this.getPrimaryKey().orElse(Collections.emptyList()))
               .build();
       return set.size() == 0 ? null : set.toArray(new String[0]);
