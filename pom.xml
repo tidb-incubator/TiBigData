@@ -208,6 +208,8 @@
           </dependencies>
           <configuration>
             <skip>${skipIntegrationTests}</skip>
+            <trimStackTrace>false</trimStackTrace>
+            <useFile>false</useFile>
             <groups>io.tidb.bigdata.test.IntegrationTest</groups>
             <includes>
               <include>**/*.java</include>
