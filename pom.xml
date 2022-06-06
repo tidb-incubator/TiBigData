@@ -190,6 +190,8 @@
             <forkMode>always</forkMode>
             <!-- Skip the Integration tests as part of surefire run -->
             <excludedGroups>io.tidb.bigdata.test.IntegrationTest</excludedGroups>
+            <trimStackTrace>false</trimStackTrace>
+            <useFile>false</useFile>
           </configuration>
           <version>3.0.0-M3</version>
         </plugin>
