@@ -123,12 +123,12 @@ public class InsertOnDuplicateKeyUpdateOutputFormatBuilder implements Serializab
         new SimpleJdbcConnectionProvider(jdbcOptions),
         executionOptions,
         ctx ->
-            createBufferReduceExecutor(
+            createSimpleBufferedExecutor(
                 dmlOptions, logicalTypes, updateColumnNames, updateColumnIndexes),
         RecordExtractor.identity());
   }
 
-  private static JdbcBatchStatementExecutor<RowData> createBufferReduceExecutor(
+  private static JdbcBatchStatementExecutor<RowData> createSimpleBufferedExecutor(
       JdbcDmlOptions opt,
       LogicalType[] updateColumnTypes,
       String[] updateColumnNames,

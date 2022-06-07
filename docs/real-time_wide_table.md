@@ -71,13 +71,28 @@ INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.updat
 VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, 3002, '上海市黄浦区外滩SOHO C座', '张三', 2021-12-06 15:01:01)
 ```
 
-> [!NOTE]
+> **NOTE:**
 > Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
 VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
+
+> **NOTE:**
+> `tidb.sink.update-columns` is only working in SQL hints. If you set this in catalog properties, it will raise an `IllegalArgumentException`.
 
 ## Constraints
 
 To avoid unexpected results, we default check some constraints. You can set `tidb.sink.skip-check-update-columns` true to force skip check.
+
+```sql
+CREATE
+CATALOG `tidb`
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = '',
+    'tidb.sink.skip-check-update-columns' = 'true'
+);
+```
 
 ### The destination table
 
