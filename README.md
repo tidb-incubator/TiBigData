@@ -8,7 +8,6 @@
 
 Misc BigData components for TiDB, Presto, Flink and MapReduce connectors for example.
 
-
 ## License
 
 TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
