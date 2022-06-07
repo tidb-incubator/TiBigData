@@ -142,12 +142,8 @@ public class TiDBRowConverter implements Serializable {
       DataType type = tiColumnInfo.getType();
       if (rowData.isNullAt(i)) {
         tiRow.setNull(i);
-        // delete RowKind only need pk not null
+        // delete RowKind can be null for TiCDC may close old value
         if (rowKind == RowKind.DELETE) {
-          if (tiColumnInfo.isPrimaryKey()) {
-            throw new IllegalStateException(
-                String.format("Column: %s can not be null when delete", tiColumnInfo.getName()));
-          }
           continue;
         }
         // check not null
