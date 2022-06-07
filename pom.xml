@@ -184,6 +184,8 @@
             </dependency>
           </dependencies>
           <configuration>
+            <trimStackTrace>false</trimStackTrace>
+            <useFile>false</useFile>
             <argLine>-Dfile.encoding=UTF-8 -Duser.timezone=GMT+8</argLine>
             <parallel>suites</parallel>
             <useUnlimitedThreads>true</useUnlimitedThreads>
@@ -205,6 +207,8 @@
             </dependency>
           </dependencies>
           <configuration>
+            <trimStackTrace>false</trimStackTrace>
+            <useFile>false</useFile>
             <skip>${skipIntegrationTests}</skip>
             <groups>io.tidb.bigdata.test.IntegrationTest</groups>
             <includes>
