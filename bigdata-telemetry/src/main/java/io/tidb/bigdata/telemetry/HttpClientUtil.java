@@ -38,19 +38,20 @@ public class HttpClientUtil {
    * @return HttpResponse response
    */
   public HttpResponse postJSON(String url, Object msg) throws Exception {
-    try {
-      ObjectMapper mapper = new ObjectMapper();
-      String msgString = mapper.writeValueAsString(msg);
-      CloseableHttpClient httpClient = HttpClients.createDefault();
-      HttpPost httpPost = new HttpPost(url);
-      httpPost.setEntity(new StringEntity(msgString));
-      httpPost.setHeader("Content-Type", "application/json");
-      HttpResponse resp = httpClient.execute(httpPost);
-      checkResp(url, resp);
-      return resp;
-    } catch (Exception e) {
-      throw e;
+    ObjectMapper mapper = new ObjectMapper();
+    String msgString = mapper.writeValueAsString(msg);
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    HttpPost httpPost = new HttpPost(url);
+    httpPost.setEntity(new StringEntity(msgString));
+    httpPost.setHeader("Content-Type", "application/json");
+    HttpResponse resp = httpClient.execute(httpPost);
+    if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      logger.warn(
+          String.format(
+              "Failed to get HTTP request: %s, response: %s, code: %d.",
+              url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
     }
+    return resp;
   }
 
   /**
@@ -60,23 +61,15 @@ public class HttpClientUtil {
    * @return HttpResponse response
    */
   public HttpResponse get(String url) throws Exception {
-    try {
-      CloseableHttpClient httpClient = HttpClients.createDefault();
-      HttpGet httpGet = new HttpGet(url);
-      HttpResponse resp = httpClient.execute(httpGet);
-      checkResp(url, resp);
-      return resp;
-    } catch (Exception e) {
-      throw e;
-    }
-  }
-
-  private void checkResp(String url, HttpResponse resp) {
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    HttpGet httpGet = new HttpGet(url);
+    HttpResponse resp = httpClient.execute(httpGet);
     if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
       logger.warn(
           String.format(
               "Failed to get HTTP request: %s, response: %s, code: %d.",
               url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
     }
+    return resp;
   }
 }

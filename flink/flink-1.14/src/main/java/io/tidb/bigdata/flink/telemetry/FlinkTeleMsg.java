@@ -16,7 +16,18 @@
 
 package io.tidb.bigdata.flink.telemetry;
 
-import static java.util.Objects.requireNonNull;
+import static io.tidb.bigdata.flink.connector.TiDBCatalog.TIDB_CATALOG_LOAD_MODE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.DEDUPLICATE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_AUTOINCREMENT_COLUMN_VALUE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
+import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BUFFER_FLUSH_INTERVAL;
+import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_BUFFER_FLUSH_MAX_ROWS;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -102,8 +113,8 @@ public class FlinkTeleMsg extends TeleMsg {
 
   @Override
   public String setTrackId() {
-    try (RawKVClient client =
-        ClientSession.create(new ClientConfig(properties)).getTiSession().createRawClient(); ) {
+    try (ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
+        RawKVClient client = clientSession.getTiSession().createRawClient(); ) {
       Optional<ByteString> value = client.get(ByteString.copyFromUtf8(TRACK_ID));
 
       if (value.isPresent()) {
@@ -137,18 +148,19 @@ public class FlinkTeleMsg extends TeleMsg {
   public Map<String, Object> setContent() {
     Map<String, Object> content = new HashMap<>();
     Map<String, String> defaultConf = new HashMap<>();
-    defaultConf.put("tidb.write_mode", "append");
-    defaultConf.put("tidb.replica-read", "leader");
-    defaultConf.put("sink.buffer-flush.max-rows", "100");
-    defaultConf.put("sink.buffer-flush.interval", "1s");
-    defaultConf.put("tidb.filter-push-down", "false");
-    defaultConf.put("tidb.catalog.load-mode", "eager");
-    defaultConf.put("tidb.sink.impl", "JDBC");
-    defaultConf.put("tikv.sink.transaction", "MINIBATCH");
-    defaultConf.put("tikv.sink.buffer-size", "1000");
-    defaultConf.put("tikv.sink.row-id-allocator.step", "30000");
-    defaultConf.put("tikv.sink.ignore-autoincrement-column-value", "false");
-    defaultConf.put("tikv.sink.deduplicate", "false");
+    defaultConf.put(TIDB_WRITE_MODE, "append");
+    defaultConf.put(TIDB_REPLICA_READ, "leader");
+    defaultConf.put(SINK_BUFFER_FLUSH_MAX_ROWS.key(), "100");
+    defaultConf.put(SINK_BUFFER_FLUSH_INTERVAL.key(), "1s");
+    defaultConf.put(TIDB_FILTER_PUSH_DOWN, "false");
+    defaultConf.put(TIDB_CATALOG_LOAD_MODE, "eager");
+    defaultConf.put(SINK_IMPL.key(), "JDBC");
+    defaultConf.put(SINK_TRANSACTION.key(), "MINIBATCH");
+    defaultConf.put(SINK_BUFFER_SIZE.key(), "1000");
+    defaultConf.put(ROW_ID_ALLOCATOR_STEP.key(), "30000");
+    defaultConf.put(IGNORE_AUTOINCREMENT_COLUMN_VALUE.key(), "false");
+    defaultConf.put(DEDUPLICATE.key(), "false");
+
     for (Map.Entry<String, String> conf : defaultConf.entrySet()) {
       try {
         switch (conf.getKey()) {
@@ -189,15 +201,15 @@ public class FlinkTeleMsg extends TeleMsg {
   }
 
   private String getTiDBVersion() {
-    try {
+    try (Connection connection =
+            DriverManager.getConnection(
+                properties.get(ClientConfig.DATABASE_URL),
+                properties.get(ClientConfig.USERNAME),
+                properties.get(ClientConfig.PASSWORD));
+        Statement statement = connection.createStatement(); ) {
       String pattern = "v[0-9]\\.[0-9]\\.[0-9]";
       Pattern r = Pattern.compile(pattern);
       String sql = "SELECT TIDB_VERSION()";
-      String url = requireNonNull(properties.get(ClientConfig.DATABASE_URL));
-      String username = requireNonNull(properties.get(ClientConfig.USERNAME));
-      String password = requireNonNull(properties.get(ClientConfig.PASSWORD));
-      Connection connection = DriverManager.getConnection(url, username, password);
-      Statement statement = connection.createStatement();
       ResultSet resultSet = statement.executeQuery(sql);
       resultSet.next();
       Matcher m = r.matcher(resultSet.getString("tidb_version()"));
@@ -215,6 +227,7 @@ public class FlinkTeleMsg extends TeleMsg {
       String flinkVersion = EnvironmentInformation.getVersion();
       return flinkVersion;
     } catch (Exception e) {
+      logger.warn("Failed to get Flink version. " + e.getMessage());
       return "UNKNOWN";
     }
   }

@@ -33,7 +33,7 @@ import org.junit.experimental.categories.Category;
 public class TelemetryTest extends FlinkTestBase {
 
   @Test
-  public void testTelemetryTableEnvironmetn() throws InterruptedException {
+  public void testTelemetry() throws InterruptedException {
     Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put("type", "tidb");
     properties.put("tidb.telemetry.enable", "false");
