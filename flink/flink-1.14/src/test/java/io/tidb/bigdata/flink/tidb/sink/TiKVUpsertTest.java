@@ -24,7 +24,6 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
 import com.google.common.collect.Lists;
-import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
@@ -97,16 +96,18 @@ public class TiKVUpsertTest extends FlinkTestBase {
     properties.put(DEDUPLICATE.key(), "true");
     properties.put(WRITE_MODE.key(), "upsert");
 
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable, TABLE, tableEnvironment, properties);
+    initTiDBCatalog(dstTable, TABLE, tableEnvironment, properties);
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before'), (2, 'before')", DATABASE_NAME, dstTable));
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before'), (2, 'before')",
+            DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after'), (2, 'after')", DATABASE_NAME, dstTable));
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after'), (2, 'after')",
+            DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
     checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, after]", "+I[2, after]"), dstTable);
