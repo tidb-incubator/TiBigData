@@ -96,12 +96,17 @@ public abstract class FlinkTestBase {
           + "    unique key(c1)\n"
           + ")";
 
-  protected TableEnvironment getTableEnvironment() {
+  protected static TableEnvironment getBatchTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     return TableEnvironment.create(settings);
   }
 
-  protected StreamTableEnvironment getBatchModeStreamTableEnvironment() {
+  protected static TableEnvironment getStreamingTableEnvironment() {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    return TableEnvironment.create(settings);
+  }
+
+  protected static StreamTableEnvironment getBatchModeStreamTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
