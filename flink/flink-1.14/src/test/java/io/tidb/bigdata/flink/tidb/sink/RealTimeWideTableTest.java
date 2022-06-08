@@ -66,7 +66,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-//          {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
+          //          {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment,
+          // "Batch"},
           {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
         });
   }
