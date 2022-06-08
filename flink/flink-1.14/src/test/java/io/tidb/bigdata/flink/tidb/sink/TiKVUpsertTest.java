@@ -63,7 +63,7 @@ public class TiKVUpsertTest extends FlinkTestBase {
     this.mode = mode;
   }
 
-  @Parameters(name = "{index}: mode={2}")
+  @Parameters(name = "{index}: transaction={0} mode={2}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
