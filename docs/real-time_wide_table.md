@@ -1,5 +1,13 @@
 # Real-time wide table
 
+* [Real-time wide table](#real-time-wide-table)
+    * [Background](#background)
+    * [Supports and Limitations](#supports-and-limitations)
+    * [How to use](#how-to-use)
+    * [Constraints](#constraints)
+        * [The destination table](#the-destination-table)
+        * [Update columns](#update-columns)
+
 ## Background
 
 Users maybe want to partially update some fields based on the unique key(including the primary key) in the `Real-time wide table` scenario.
@@ -55,7 +63,7 @@ CREATE TABLE `order_wide_table`
 );
 ```
 
-Using flink sql client to sink in `Real-time wide table` scenario. The `mock_${value}` will never be used，just a placeholder.:
+Using flink sql client to sink in `Real-time wide table` scenario. The `mock_${value}` will never be used，just a placeholder:
 
 ```sql
 // the first source
@@ -100,7 +108,7 @@ The destination table should contain only one not-null unique key(including the 
 - Multiple-Column Indexes should be all not-null.
 
 Due to reasons mentioned in [insert-on-duplicate](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html), we should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
-Due to `NULL` meaning “a missing unknown value” [working-with-null](https://dev.mysql.com/doc/refman/8.0/en/working-with-null.html), in the other words, `NULL`  does not equal `NULL`, which will cause inserting instead of updating when the key is `NULL`.
+Due to `NULL` meaning "a missing unknown value" [working-with-null](https://dev.mysql.com/doc/refman/8.0/en/working-with-null.html), in the other words, `NULL`  does not equal `NULL`, which will cause inserting instead of updating when the key is `NULL`.
 
 ### Update columns
 
