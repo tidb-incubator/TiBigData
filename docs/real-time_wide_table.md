@@ -5,8 +5,8 @@
     * [Supports and Limitations](#supports-and-limitations)
     * [How to use](#how-to-use)
     * [Constraints](#constraints)
-        * [The destination table](#the-destination-table)
-        * [Update columns](#update-columns)
+        * [Constraints on the destination table](#constraints-on-the-destination-table)
+        * [Constraints on the update columns](#constraints-on-the-update-columns)
 
 ## Background
 
@@ -102,7 +102,7 @@ WITH (
 );
 ```
 
-### The destination table
+### Constraints on the destination table
 
 The destination table should contain only one not-null unique key(including the primary key).
 - Multiple-Column Indexes should be all not-null.
@@ -110,6 +110,6 @@ The destination table should contain only one not-null unique key(including the 
 Due to reasons mentioned in [insert-on-duplicate](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html), we should try to avoid using an ON DUPLICATE KEY UPDATE clause on tables with multiple unique indexes.
 Due to `NULL` meaning "a missing unknown value" [working-with-null](https://dev.mysql.com/doc/refman/8.0/en/working-with-null.html), in the other words, `NULL`  does not equal `NULL`, which will cause inserting instead of updating when the key is `NULL`.
 
-### Update columns
+### Constraints on the update columns
 
 The update columns should contain the unique key column(including the primary key).
