@@ -19,7 +19,6 @@ Users maybe want to partially update some fields based on the unique key(includi
 - only work when `tidb.write_mode` is `upsert`.
 - only work when `tidb.sink.impl` is `JDBC`.
 - work in both `batch` and `streaming` execution mode.
-- In `streaming` execution mode, we don't make any order guarantee, so make sure source data is order-independent.
 
 ## How to use
 
