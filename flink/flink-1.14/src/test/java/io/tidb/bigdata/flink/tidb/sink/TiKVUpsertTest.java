@@ -34,7 +34,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.apache.flink.table.api.TableEnvironment;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -102,15 +101,14 @@ public class TiKVUpsertTest extends FlinkTestBase {
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before')", DATABASE_NAME, dstTable));
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before'), (2, 'before')", DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after')", DATABASE_NAME, dstTable));
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after'), (2, 'after')", DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
-    Assert.assertEquals(1, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, after]"), dstTable);
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, after]", "+I[2, after]"), dstTable);
   }
 }
