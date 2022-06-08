@@ -39,8 +39,7 @@ df.show(20)
 If applicable, add screenshots to help explain your problem.
  -->
 
-**Spark and TiSpark version info**
-<!-- What version of Spark and TiSpark are you using? (Provide Spark version and run `spark.sql(“select ti_version()”).show(false)` in spark-shell) -->
+**Flink/Presto/MapReduce/Trino/Hive and TiBigData version info**
 
 <!--
 **Additional context**
