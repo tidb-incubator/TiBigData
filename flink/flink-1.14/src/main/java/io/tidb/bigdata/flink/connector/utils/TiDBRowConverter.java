@@ -142,7 +142,12 @@ public class TiDBRowConverter implements Serializable {
       DataType type = tiColumnInfo.getType();
       if (rowData.isNullAt(i)) {
         tiRow.setNull(i);
-        // delete RowKind can be null for TiCDC may close old value
+        /**
+         * the columns of delete RowKind can be null even is not null, for TiCDC may close old value
+         * resulting in only one column with value we don't check constraint here, we check
+         * constraint in {@link
+         * io.tidb.bigdata.tidb.codec.TiDBEncodeHelper#generateKeyValuesToDeleteByRow}
+         */
         if (rowKind == RowKind.DELETE) {
           continue;
         }

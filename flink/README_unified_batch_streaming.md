@@ -101,7 +101,7 @@ You will find that the data in Flink is the same as the real data of tidb and is
 Create source table and target table with same schema in TiDB:
 
 ```sql
-CREATE TABLE `test`.`src_table`(
+CREATE TABLE `test`.`source_table`(
     id BIGINT(20) PRIMARY KEY ,
     name VARCHAR(16) ,
     PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
@@ -137,21 +137,21 @@ WITH (
   'tikv.sink.delete_enable' = 'true'
 );
 
-INSERT INTO `tidb`.`test`.`target_table` SELECT id,name FROM `tidb`.`test`.`src_target`;
+INSERT INTO `tidb`.`test`.`target_table` SELECT id,name FROM `tidb`.`test`.`source_table`;
 ```
 
-Insert into src table, and you will find data also be inserted into target table
+Insert into source table, and you will find data also be inserted into target table
 
 ```sql
-INSERT INTO `test`.`test_cdc` VALUES(1,'zs');
-INSERT INTO `test`.`test_cdc` VALUES(2,'ls');
-INSERT INTO `test`.`test_cdc` VALUES(3,'is');
+INSERT INTO `test`.`source_table` VALUES(1,'zs');
+INSERT INTO `test`.`source_table` VALUES(2,'ls');
+INSERT INTO `test`.`source_table` VALUES(3,'is');
 ```
 
-Delete from src table, and you will find data also be deleted from target table
+Delete from source table, and you will find data also be deleted from target table
 
 ```sql
-DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
+DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 ```
 
 Keypoints
@@ -160,7 +160,7 @@ Keypoints
 - Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown. valid uk means:
   - The uk's value should not be null.
   - Every column should not be null if uk has multiple-column.
-- Delete compatible with all the codec that is supported by the source, currently including: json craft and canal_json.
+- Delete is compatible with all the codecs that is supported by the source, currently including json, craft and canal_json.
 
 ## 7 Configuration
 
@@ -170,12 +170,12 @@ In addition to supporting the configuration in [TiDB Batch Mode](./README.md), t
 |:---------------------------------------------------------|:--------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tidb.source.failover                                     | split         | The TiDB batch stage recovery strategy when it fails, `split` and `offset` are available. `split` recovers from the failed region, guaranteeing at least once semantics, and `offset` recovers from the failed single row data, guaranteeing exactly once semantics. Note that the `offset` behavior may change in higher versions of TiDB (6+), making it impossible to use. |
 | tidb.streaming.source                                    | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later.                                                                                                                                                                                                                                      |
-| tidb.streaming.codec                                     | craft         | TiDB's change log encoding method, currently supports json(called default in the lower version of tidb), craft, canal-json. See [Codec](#7-Codec)                                                                                                                                                                                                                             |
+| tidb.streaming.codec                                     | craft         | TiDB's change log encoding method, currently supports json(called default in the lower version of tidb), craft, canal-json. See [Codec](#8-Codec)                                                                                                                                                                                                                             |
 | tidb.streaming.kafka.bootstrap.servers                   | -             | Kafka server address                                                                                                                                                                                                                                                                                                                                                          |
 | tidb.streaming.kafka.topic                               | -             | Kafka topic                                                                                                                                                                                                                                                                                                                                                                   |
 | tidb.streaming.kafka.group.id                            | -             | Kafka group id                                                                                                                                                                                                                                                                                                                                                                |
 | tidb.streaming.ignore-parse-errors                       | false         | Whether to ignore exceptions in case of decoding failure                                                                                                                                                                                                                                                                                                                      |
-| tidb.metadata.included                                   | -             | TiDB Metadata, see [TiDB Metadata](#8-TiDB-Metadata)                                                                                                                                                                                                                                                                                                                          |
+| tidb.metadata.included                                   | -             | TiDB Metadata, see [TiDB Metadata](#9-TiDB-Metadata)                                                                                                                                                                                                                                                                                                                          |
 | tikv.sink.delete_enable                                  | false         | Whether enable delete in streaming, this config only works in `tidb.sink.impl=TIKV`                                                                                                                                                                                                                                                                                           |
 
 ## 8 Codec

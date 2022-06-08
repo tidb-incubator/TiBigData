@@ -102,7 +102,7 @@ UPDATE `test`.`test_cdc` SET id = 1 WHERE id = 2;
 在 TiDB 中创建表结构相同的源表和目标表：
 
 ```sql
-CREATE TABLE `test`.`src_table`(
+CREATE TABLE `test`.`source_table`(
     id BIGINT(20) PRIMARY KEY ,
     name VARCHAR(16) ,
     PRIMARY KEY (`id`) /*T![clustered_index] CLUSTERED */
@@ -138,21 +138,21 @@ WITH (
   'tikv.sink.delete_enable' = 'true'
 );
 
-INSERT INTO `tidb`.`test`.`target_table` SELECT id,name FROM `tidb`.`test`.`src_target`;
+INSERT INTO `tidb`.`test`.`target_table` SELECT id,name FROM `tidb`.`test`.`source_table`;
 ```
 
 在 TiDB 中向源表插入数据，你会发现数据被同步插入到目标表。
 
 ```sql
-INSERT INTO `test`.`test_cdc` VALUES(1,'zs');
-INSERT INTO `test`.`test_cdc` VALUES(2,'ls');
-INSERT INTO `test`.`test_cdc` VALUES(3,'is');
+INSERT INTO `test`.`source_table` VALUES(1,'zs');
+INSERT INTO `test`.`source_table` VALUES(2,'ls');
+INSERT INTO `test`.`source_table` VALUES(3,'is');
 ```
 
 在 TiDB 中从源表删除数据，你会发现目标表中的数据被同步删除。
 
 ```sql
-DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
+DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 ```
 
 关键点
@@ -172,12 +172,12 @@ DELETE FROM `test`.`test_cdc` WHERE id = 1 or id = 2;
 |:---------------------------------------|:--------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | tidb.source.failover                   | split         | TiDB 批阶段失败时的恢复策略，可选 split 与 offset。split 会从失败的 region 恢复，保证 at least once 语义；offset 会从失败的单行数据恢复，保证 exactly once 语义。注意，offset 行为在高版本 TiDB(6+) 可能会发生改变，导致不能使用。 |
 | tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                                                                                           |
-| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#7-Codec)                                                               |
+| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#8-Codec)                                                               |
 | tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                                                                              |
 | tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                                  |
 | tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                               |
 | tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                                                                                |
-| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#8-TiDB-Metadata)                                                                                                           |
+| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#9-TiDB-Metadata)                                                                                                           |
 | tidb.sink.delete_enable                | false         | 是否在流模式中开启删除，这个配置只有当 `tidb.sink.impl=TIKV` 时才会生效                                                                                                              |
 
 ## 8 Codec

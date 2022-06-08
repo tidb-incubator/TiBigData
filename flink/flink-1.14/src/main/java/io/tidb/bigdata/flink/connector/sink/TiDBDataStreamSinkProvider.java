@@ -161,7 +161,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
           "delete is only supported in upsert mode");
     } else {
       // filter delete RowKind if delete is disable, delete only work in MINIBATCH with upsert mode
-      LOG.info("FLink delete is disabled");
+      LOG.info("Flink delete is disabled");
       dataStream = dataStream.filter(row -> row.getRowKind() != RowKind.DELETE);
     }
 
