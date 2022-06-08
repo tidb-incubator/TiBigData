@@ -66,7 +66,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
   public static Collection<Object[]> data() {
     return Arrays.asList(
         new Object[][] {
-          {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
+//          {(Supplier<TableEnvironment>) FlinkTestBase::getBatchTableEnvironment, "Batch"},
           {(Supplier<TableEnvironment>) FlinkTestBase::getStreamingTableEnvironment, "Streaming"},
         });
   }
@@ -153,7 +153,11 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     System.out.println(sql3);
 
     tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+
     tableEnvironment.sqlUpdate(sql2);
+    tableEnvironment.execute("test");
+
     tableEnvironment.sqlUpdate(sql3);
     tableEnvironment.execute("test");
 
@@ -229,6 +233,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     System.out.println(sql2);
 
     tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
@@ -291,6 +297,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     System.out.println(sql2);
 
     tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
@@ -353,6 +361,8 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     System.out.println(sql2);
 
     tableEnvironment.sqlUpdate(sql1);
+    tableEnvironment.execute("test");
+
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
@@ -398,6 +408,6 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     List<String> actualResult =
         Lists.newArrayList(resultIterator).stream().map(Row::toString).collect(Collectors.toList());
 
-    Assert.assertEquals(actualResult, expected);
+    Assert.assertEquals(expected, actualResult);
   }
 }
