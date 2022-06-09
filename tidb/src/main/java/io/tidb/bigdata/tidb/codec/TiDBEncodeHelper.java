@@ -242,8 +242,20 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   /**
-   * Generate the key-value pair conflicted with the given row. - unique index conflict - key:
-   * encoded index key - value: empty - primary index conflict - key: encoded row key - value: empty
+   * Generate the key-value pair conflicted with the given row. <br>
+   *
+   * <ul>
+   *   <li>- unique index conflict
+   *       <ul>
+   *         <li>- key: encoded index key
+   *         <li>- value: empty
+   *       </ul>
+   *   <li>- primary index conflict
+   *       <ul>
+   *         <li>- key: encoded row key
+   *         <li>- value: empty
+   *       </ul>
+   * </ul>
    */
   private Map<ByteBuffer, BytePairWrapper> fetchConflictedRowDeletionPairs(
       Row tiRow, Handle handle) {
