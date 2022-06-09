@@ -37,7 +37,7 @@ public class TelemetryTest extends FlinkTestBase {
     Map<String, String> properties = ConfigUtils.defaultProperties();
     properties.put("type", "tidb");
     properties.put("tidb.telemetry.enable", "false");
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = getBatchTableEnvironment();
     Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
     String createCatalogSql =
         format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
