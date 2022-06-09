@@ -32,5 +32,8 @@ jobs:
       - name: build docker
         run: docker-compose -f docker-compose-TiDB-TLS.yaml up -d
 
-      - name: test
+      - name: test flink-connector-1.14
         run:  export TLS_ENABLE=true && mvn test -am -pl flink/flink-1.14 -D test=TiKVSourceTLSTest -DfailIfNoTests=false
+
+      - name: test flink-connector-1.13
+        run: export TLS_ENABLE=true && mvn test -am -pl flink/flink-1.13 -D test=TiKVSourceTLSTest -DfailIfNoTests=false
