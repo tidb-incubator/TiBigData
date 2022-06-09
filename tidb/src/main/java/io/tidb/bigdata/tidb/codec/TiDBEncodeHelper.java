@@ -241,7 +241,12 @@ public class TiDBEncodeHelper implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  private Map<ByteBuffer, BytePairWrapper> generateDataToBeRemoved(Row tiRow, Handle handle) {
+  /**
+   * Generate the key-value pair conflicted with the given row. - unique index conflict - key:
+   * encoded index key - value: empty - primary index conflict - key: encoded row key - value: empty
+   */
+  private Map<ByteBuffer, BytePairWrapper> fetchConflictedRowDeletionPairs(
+      Row tiRow, Handle handle) {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
@@ -299,7 +304,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
 
     Handle handle;
-    Map<ByteBuffer, BytePairWrapper> dataToBeRemoved = new HashMap<>();
+    Map<ByteBuffer, BytePairWrapper> conflictRowDeletionPairs = new HashMap<>();
     boolean constraintCheckIsNeeded =
         isCommonHandle || handleCol != null || uniqueIndices.size() > 0;
     if (constraintCheckIsNeeded) {
@@ -309,8 +314,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
         handle = new IntHandle(rowIdAllocator.getSharedRowId());
       }
       // get deletion row
-      dataToBeRemoved = generateDataToBeRemoved(row, handle);
-      if (dataToBeRemoved.size() > 0 && !replace) {
+      conflictRowDeletionPairs = fetchConflictedRowDeletionPairs(row, handle);
+      if (conflictRowDeletionPairs.size() > 0 && !replace) {
         throw new IllegalStateException(
             "Unique index conflicts, please use upsert mode, row = " + row);
       }
@@ -320,10 +325,13 @@ public class TiDBEncodeHelper implements AutoCloseable {
     keyValues.add(generateRecordKeyValue(row, handle, false));
     keyValues.addAll(generateIndexKeyValues(row, handle, false));
 
+    // if the key needs to be updated, then the deletion pair need to be removed and keep
+    // the update pair. Otherwise, the execution order can't be guaranteed, which may cause
+    // a problem when the update pair is executed first.
     for (BytePairWrapper keyValue : keyValues) {
-      dataToBeRemoved.remove(ByteBuffer.wrap(keyValue.getKey()));
+      conflictRowDeletionPairs.remove(ByteBuffer.wrap(keyValue.getKey()));
     }
-    keyValues.addAll(dataToBeRemoved.values());
+    keyValues.addAll(conflictRowDeletionPairs.values());
 
     return keyValues;
   }
