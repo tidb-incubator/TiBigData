@@ -339,7 +339,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
     // if the key needs to be updated, then the deletion pair need to be removed and keep
     // the update pair. Otherwise, the execution order can't be guaranteed, which may cause
-    // a problem when the update pair is executed first.
+    // the deletion of the row when the update pair is executed first and deletion pair second.
     for (BytePairWrapper keyValue : keyValues) {
       conflictRowDeletionPairs.remove(ByteBuffer.wrap(keyValue.getKey()));
     }
