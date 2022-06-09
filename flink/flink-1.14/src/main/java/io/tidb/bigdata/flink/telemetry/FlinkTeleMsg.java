@@ -89,8 +89,8 @@ public class FlinkTeleMsg extends TeleMsg {
   }
 
   /**
-   * * Get FlinkTeleMsg single instance. If flinkTeleMsg has been initialized, the object is
-   * returned, otherwise an exception is thrown.
+   * Get FlinkTeleMsg single instance. If flinkTeleMsg has been initialized, the object is returned,
+   * otherwise an exception is thrown.
    *
    * @return flinkTeleMsg
    */

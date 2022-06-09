@@ -48,35 +48,44 @@ public class TelemetryTest {
     server.stop(0);
   }
 
+  private class TestTeleMsg extends TeleMsg {
+
+    public TestTeleMsg() {
+      this.trackId = setTrackId();
+      this.subName = setSubName();
+      this.instance = setInstance();
+      this.content = setContent();
+    }
+
+    @Override
+    public String setTrackId() {
+      return "testId";
+    }
+
+    @Override
+    public String setSubName() {
+      return "telemetryTest";
+    }
+
+    @Override
+    public Map<String, Object> setInstance() {
+      Map<String, Object> instance = new HashMap<String, Object>();
+      instance.put("version", "test01");
+      return instance;
+    }
+
+    @Override
+    public Map<String, Object> setContent() {
+      Map<String, Object> content = new HashMap<String, Object>();
+      content.put("cost_time", "1000");
+      return content;
+    }
+  }
+
   @Test
   public void testTelemetry() throws JsonProcessingException {
     Telemetry telemetry = new Telemetry();
-    TeleMsg teleMsg =
-        new TeleMsg() {
-          @Override
-          public String setTrackId() {
-            return "testId";
-          }
-
-          @Override
-          public String setSubName() {
-            return "telemetryTest";
-          }
-
-          @Override
-          public Map<String, Object> setInstance() {
-            Map<String, Object> instance = new HashMap<String, Object>();
-            instance.put("version", "test01");
-            return instance;
-          }
-
-          @Override
-          public Map<String, Object> setContent() {
-            Map<String, Object> content = new HashMap<String, Object>();
-            content.put("cost_time", "1000");
-            return null;
-          }
-        };
+    TeleMsg teleMsg = new TestTeleMsg();
     ObjectMapper mapper = new ObjectMapper();
     String msgString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(teleMsg);
     System.out.println(msgString);

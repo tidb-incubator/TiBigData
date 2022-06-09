@@ -34,9 +34,7 @@ public class AsyncTelemetry {
 
   public void report() {
     try {
-      if (FlinkTeleMsg.getInstance().shouldSendMsg()) CompletableFuture.runAsync(task);
-    } catch (NullPointerException e) {
-      CompletableFuture.runAsync(task);
+      if (FlinkTeleMsg.getInstance(properties).shouldSendMsg()) CompletableFuture.runAsync(task);
     } catch (Exception e) {
       LOG.warn("Failed to run async telemetry task. " + e.getMessage());
     }
@@ -55,7 +53,7 @@ public class AsyncTelemetry {
             }
           }
         } catch (Exception e) {
-          LOG.warn("Failed to send flink-1.14 telemetry message. " + e.getMessage());
+          LOG.warn("Failed to send flink-connector-1.14 telemetry message. " + e.getMessage());
         }
       };
 }

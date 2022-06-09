@@ -29,6 +29,7 @@ public class ConfigUtils {
   public static final String TIDB_PORT = "TIDB_PORT";
   public static final String TIDB_USER = "TIDB_USER";
   public static final String TIDB_PASSWORD = "TIDB_PASSWORD";
+  public static final String TELEMETRY_ENABLE = "tidb.telemetry.enable";
 
   public static final String tidbHost = getEnvOrDefault(TIDB_HOST, "127.0.0.1");
 
@@ -37,6 +38,8 @@ public class ConfigUtils {
   public static final String tidbUser = getEnvOrDefault(TIDB_USER, "root");
 
   public static final String tidbPassword = getEnvOrDefault(TIDB_PASSWORD, "");
+
+  public static final String telemetryEnable = getEnvOrDefault(TELEMETRY_ENABLE, "false");
 
   private static String getEnvOrDefault(String key, String defaultValue) {
     String env = System.getenv(key);
@@ -56,6 +59,7 @@ public class ConfigUtils {
             tidbHost, tidbPort));
     properties.put(USERNAME, tidbUser);
     properties.put(PASSWORD, tidbPassword);
+    properties.put(TELEMETRY_ENABLE, telemetryEnable);
     return properties;
   }
 }
