@@ -81,7 +81,7 @@ VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, mock_pay_id, mo
 ```
 
 > **NOTE:**
->  目前并不支持 ```INSERT INTO `tidb`.`dstDatabase`.`dstDatabase` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
+>  目前并不支持 ```INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
 VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, 这是因为 Flink 已知的[bug](https://issues.apache.org/jira/browse/FLINK-27683)。
 
 > **NOTE:**
