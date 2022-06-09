@@ -125,7 +125,7 @@ public final class MetadataInternal {
     return session.getPrimaryKeyColumns(databaseName, tableName);
   }
 
-  public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
+  public List<List<String>> getUniqueKeyColumns(String databaseName, String tableName) {
     return session.getUniqueKeyColumns(databaseName, tableName);
   }
 
