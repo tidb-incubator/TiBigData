@@ -24,6 +24,7 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
 import com.google.common.collect.Lists;
+import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
@@ -33,6 +34,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 import org.apache.flink.table.api.TableEnvironment;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -47,7 +49,10 @@ public class TiKVUpsertTest extends FlinkTestBase {
           + "("
           + "  `id` bigint(20) NOT NULL,\n"
           + "  `name` varchar(255) NULL DEFAULT NULL,\n"
-          + "  PRIMARY KEY (`id`) USING BTREE\n"
+          + "  `age` int(11) NULL DEFAULT NULL,\n"
+          + "  PRIMARY KEY (`id`) USING BTREE,\n"
+          + "  index(`name`),\n"
+          + "  unique key(`age`)"
           + ")";
 
   private final SinkTransaction transaction;
@@ -96,20 +101,24 @@ public class TiKVUpsertTest extends FlinkTestBase {
     properties.put(DEDUPLICATE.key(), "true");
     properties.put(WRITE_MODE.key(), "upsert");
 
-    initTiDBCatalog(dstTable, TABLE, tableEnvironment, properties);
+    TiDBCatalog tiDBCatalog = initTiDBCatalog(dstTable, TABLE, tableEnvironment, properties);
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before'), (2, 'before')",
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'before', 1), (2, 'before', 10)",
             DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
     tableEnvironment.sqlUpdate(
         String.format(
-            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after'), (2, 'after')",
+            "INSERT INTO `tidb`.`%s`.`%s` " + "VALUES(1, 'after', 2), (2, 'after', 20)",
             DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, after]", "+I[2, after]"), dstTable);
+    checkRowResult(
+        tableEnvironment, Lists.newArrayList("+I[1, after, 2]", "+I[2, after, 20]"), dstTable);
+    Assert.assertEquals(2, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+    Assert.assertEquals(2, tiDBCatalog.queryIndexCount(DATABASE_NAME, dstTable, "name"));
+    Assert.assertEquals(2, tiDBCatalog.queryIndexCount(DATABASE_NAME, dstTable, "age"));
   }
 }
