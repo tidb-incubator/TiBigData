@@ -109,11 +109,10 @@ public abstract class FlinkTestBase {
   protected static StreamTableEnvironment getBatchModeStreamTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    return tableEnvironment;
+    return StreamTableEnvironment.create(env, settings);
   }
 
-  protected TiDBCatalog initTiDBCatalog(
+  protected static TiDBCatalog initTiDBCatalog(
       String dstTable,
       String createTableSql,
       TableEnvironment tableEnvironment,
@@ -126,7 +125,7 @@ public abstract class FlinkTestBase {
     return tiDBCatalog;
   }
 
-  protected void generateData(String tableName, int rowCount) throws Exception {
+  protected static void generateData(String tableName, int rowCount) throws Exception {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);

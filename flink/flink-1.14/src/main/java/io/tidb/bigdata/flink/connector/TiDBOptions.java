@@ -111,6 +111,16 @@ public class TiDBOptions {
           .defaultValue(1000L)
           .withDescription(
               "The interval between two task start, in milliseconds, in oder to avoid allocate rowId conflict");
+  public static final ConfigOption<String> UPDATE_COLUMNS =
+      ConfigOptions.key("tidb.sink.update-columns")
+          .stringType()
+          .noDefaultValue()
+          .withDescription("The columns to be updated");
+  public static final ConfigOption<Boolean> SKIP_CHECK_UPDATE_COLUMNS =
+      ConfigOptions.key("tidb.sink.skip-check-update-columns")
+          .booleanType()
+          .defaultValue(Boolean.FALSE)
+          .withDescription("Force skip the constraint check for the update columns");
 
   // split or offset
   public static final ConfigOption<String> SOURCE_FAILOVER =
@@ -184,6 +194,10 @@ public class TiDBOptions {
             DEDUPLICATE,
             SOURCE_FAILOVER)
         .build();
+  }
+
+  public static Set<ConfigOption<?>> sqlHintOptions() {
+    return ImmutableSet.<ConfigOption<?>>builder().add(UPDATE_COLUMNS).build();
   }
 
   public enum SinkImpl {

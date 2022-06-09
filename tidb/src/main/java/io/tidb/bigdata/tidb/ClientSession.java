@@ -484,14 +484,13 @@ public final class ClientSession implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
+  public List<List<String>> getUniqueKeyColumns(String databaseName, String tableName) {
     List<String> primaryKeyColumns = getPrimaryKeyColumns(databaseName, tableName);
     return getTableMust(databaseName, tableName).getIndices().stream()
         .filter(TiIndexInfo::isUnique)
         .map(TiIndexInfo::getIndexColumns)
-        .flatMap(Collection::stream)
-        .map(TiIndexColumn::getName)
-        .filter(name -> !primaryKeyColumns.contains(name))
+        .map(list -> list.stream().map(TiIndexColumn::getName).collect(Collectors.toList()))
+        .filter(list -> !list.equals(primaryKeyColumns))
         .collect(Collectors.toList());
   }
 
