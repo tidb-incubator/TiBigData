@@ -349,6 +349,21 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
+  public int queryIndexCount(String databaseName, String tableName, String indexName) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet =
+            statement.executeQuery(
+                format(
+                    "SELECT COUNT(`%s`) as c FROM `%s`.`%s`",
+                    indexName, databaseName, tableName))) {
+      resultSet.next();
+      return resultSet.getInt("c");
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public boolean supportClusteredIndex() {
     try (Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement();
