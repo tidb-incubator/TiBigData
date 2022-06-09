@@ -89,7 +89,7 @@ VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, 这是因为 Fli
 
 ## 约束
 
-为了避免产生不可预期的结果，我们默认会执行一些严格的约束检查. 你可以指定 `tidb.sink.skip-check-update-columns` 为 true 来跳过约束检查。
+为了避免产生不可预期的结果，我们默认会执行一些严格的约束检查。你可以指定 `tidb.sink.skip-check-update-columns` 为 true 来跳过约束检查。
 
 ```sql
 CREATE
