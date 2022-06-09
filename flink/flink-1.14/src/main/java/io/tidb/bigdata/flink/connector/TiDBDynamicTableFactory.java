@@ -41,7 +41,6 @@ import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -204,6 +203,7 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
           "Sink table should only have one unique key or primary key\n"
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
+      List<String> theOnlyOneKeyField = keyFields.get(0);
 
       TiTableInfo table =
           columnKeyField
@@ -214,8 +214,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
                           String.format(
                               "Failed to get tableInfo for table %s.%s",
                               columnKeyField.getDatabaseName(), columnKeyField.getTableName())));
-      for (String keyField : Objects.requireNonNull(columnKeyField.getKeyFieldFlatMap())) {
-        TiColumnInfo column = table.getColumn(keyField);
+      for (String keyColumn : theOnlyOneKeyField) {
+        TiColumnInfo column = table.getColumn(keyColumn);
         checkArgument(
             column.getType().isNotNull(),
             "Unique key or primary key should be not null\n"
@@ -224,10 +224,8 @@ public class TiDBDynamicTableFactory implements DynamicTableSourceFactory, Dynam
       }
 
       ArrayList<String> updateColumns = Lists.newArrayList(updateColumnNames);
-      List<List<String>> collect =
-          keyFields.stream().filter(updateColumns::containsAll).collect(Collectors.toList());
       checkArgument(
-          collect.size() == 1,
+          updateColumns.containsAll(theOnlyOneKeyField),
           "Update columns should contains all unique key columns or primary key columns\n"
               + "If you want to force skip the constraint, "
               + "set `tidb.sink.skip-check-update-columns` to true");
