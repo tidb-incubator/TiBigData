@@ -33,14 +33,9 @@ import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
-import org.apache.flink.types.Row;
-import org.apache.flink.util.CloseableIterator;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -161,7 +156,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     tableEnvironment.sqlUpdate(sql3);
     tableEnvironment.execute("test");
 
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 7, 9, 32]"));
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 7, 9, 32]"), dstTable);
     Assert.assertEquals(1, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
   }
 
@@ -238,7 +233,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"), dstTable);
   }
 
   @Test
@@ -302,7 +297,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"), dstTable);
   }
 
   @Test
@@ -366,7 +361,7 @@ public class RealTimeWideTableTest extends FlinkTestBase {
     tableEnvironment.sqlUpdate(sql2);
     tableEnvironment.execute("test");
 
-    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"));
+    checkRowResult(tableEnvironment, Lists.newArrayList("+I[1, 2, 356, 32]"), dstTable);
   }
 
   @Test
@@ -398,16 +393,5 @@ public class RealTimeWideTableTest extends FlinkTestBase {
 
     tableEnvironment.sqlUpdate(sql1);
     tableEnvironment.execute("test");
-  }
-
-  private void checkRowResult(TableEnvironment tableEnvironment, List<String> expected) {
-    Table table =
-        tableEnvironment.sqlQuery(
-            String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
-    CloseableIterator<Row> resultIterator = table.execute().collect();
-    List<String> actualResult =
-        Lists.newArrayList(resultIterator).stream().map(Row::toString).collect(Collectors.toList());
-
-    Assert.assertEquals(expected, actualResult);
   }
 }

@@ -109,8 +109,7 @@ public abstract class FlinkTestBase {
   protected static StreamTableEnvironment getBatchModeStreamTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    return tableEnvironment;
+    return StreamTableEnvironment.create(env, settings);
   }
 
   protected static TiDBCatalog initTiDBCatalog(
