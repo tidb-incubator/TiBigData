@@ -349,6 +349,21 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
+  public int queryIndexCount(String databaseName, String tableName, String indexName) {
+    try (Connection connection = jdbcConnectionProvider.getConnection();
+        Statement statement = connection.createStatement();
+        ResultSet resultSet =
+            statement.executeQuery(
+                format(
+                    "SELECT COUNT(`%s`) as c FROM `%s`.`%s`",
+                    indexName, databaseName, tableName))) {
+      resultSet.next();
+      return resultSet.getInt("c");
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
   public boolean supportClusteredIndex() {
     try (Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement();
@@ -469,14 +484,13 @@ public final class ClientSession implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  public List<String> getUniqueKeyColumns(String databaseName, String tableName) {
+  public List<List<String>> getUniqueKeyColumns(String databaseName, String tableName) {
     List<String> primaryKeyColumns = getPrimaryKeyColumns(databaseName, tableName);
     return getTableMust(databaseName, tableName).getIndices().stream()
         .filter(TiIndexInfo::isUnique)
         .map(TiIndexInfo::getIndexColumns)
-        .flatMap(Collection::stream)
-        .map(TiIndexColumn::getName)
-        .filter(name -> !primaryKeyColumns.contains(name))
+        .map(list -> list.stream().map(TiIndexColumn::getName).collect(Collectors.toList()))
+        .filter(list -> !list.equals(primaryKeyColumns))
         .collect(Collectors.toList());
   }
 

@@ -89,6 +89,7 @@ public class TiDBCatalog extends AbstractCatalog {
   public TiDBCatalog(String name, String defaultDatabase, Map<String, String> properties) {
     super(name, defaultDatabase);
     this.properties = Preconditions.checkNotNull(properties);
+    checkForSqlHintOptions(properties);
     this.catalogLoadMode =
         CatalogLoadMode.fromString(
             properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
@@ -100,6 +101,17 @@ public class TiDBCatalog extends AbstractCatalog {
       AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
       asyncTelemetry.report();
     }
+  }
+
+  private void checkForSqlHintOptions(Map<String, String> properties) {
+    TiDBOptions.sqlHintOptions()
+        .forEach(
+            configOption -> {
+              if (properties.containsKey(configOption.key())) {
+                throw new IllegalArgumentException(
+                    String.format("Option %s is only working for sql hint.", configOption.key()));
+              }
+            });
   }
 
   public TiDBCatalog(String name, Map<String, String> properties) {
@@ -447,6 +459,10 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public int queryTableCount(String databaseName, String tableName) {
     return getClientSession().queryTableCount(databaseName, tableName);
+  }
+
+  public int queryIndexCount(String databaseName, String tableName, String indexName) {
+    return getClientSession().queryIndexCount(databaseName, tableName, indexName);
   }
 
   private ClientSession getClientSession() {

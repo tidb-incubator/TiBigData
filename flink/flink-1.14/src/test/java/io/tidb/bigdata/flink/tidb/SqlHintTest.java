@@ -47,7 +47,7 @@ public class SqlHintTest extends FlinkTestBase {
     generateData(srcTable, rowCount);
     dstTable = RandomUtils.randomString();
 
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = getBatchTableEnvironment();
 
     Map<String, String> properties = defaultProperties();
     properties.put(SINK_IMPL.key(), TIKV.name());

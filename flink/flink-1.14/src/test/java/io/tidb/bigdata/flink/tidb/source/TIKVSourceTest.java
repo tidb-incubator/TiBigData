@@ -105,7 +105,7 @@ public class TIKVSourceTest extends FlinkTestBase {
       }
 
       // read by version
-      TableEnvironment tableEnvironment = getTableEnvironment();
+      TableEnvironment tableEnvironment = getBatchTableEnvironment();
       properties.put("type", "tidb");
       String createCatalogSql =
           format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
