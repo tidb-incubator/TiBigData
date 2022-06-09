@@ -24,13 +24,19 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction.MINIBA
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static java.lang.String.format;
 
+import com.google.common.collect.Lists;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.catalog.CatalogBaseTable;
+import org.apache.flink.types.Row;
+import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.ClassRule;
 
@@ -90,12 +96,17 @@ public abstract class FlinkTestBase {
           + "    unique key(c1)\n"
           + ")";
 
-  protected TableEnvironment getTableEnvironment() {
+  protected static TableEnvironment getBatchTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     return TableEnvironment.create(settings);
   }
 
-  protected StreamTableEnvironment getBatchModeStreamTableEnvironment() {
+  protected static TableEnvironment getStreamingTableEnvironment() {
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    return TableEnvironment.create(settings);
+  }
+
+  protected static StreamTableEnvironment getBatchModeStreamTableEnvironment() {
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
@@ -174,5 +185,17 @@ public abstract class FlinkTestBase {
             DATABASE_NAME, tableName, rowCount * 8, 100);
     tiDBCatalog.sqlUpdate(splitRegionSql);
     Assert.assertEquals(rowCount, tiDBCatalog.queryTableCount(DATABASE_NAME, tableName));
+  }
+
+  protected static void checkRowResult(
+      TableEnvironment tableEnvironment, List<String> expected, String dstTable) {
+    Table table =
+        tableEnvironment.sqlQuery(
+            String.format("SELECT * FROM `tidb`.`%s`.`%s`", DATABASE_NAME, dstTable));
+    CloseableIterator<Row> resultIterator = table.execute().collect();
+    List<String> actualResult =
+        Lists.newArrayList(resultIterator).stream().map(Row::toString).collect(Collectors.toList());
+
+    Assert.assertEquals(expected, actualResult);
   }
 }

@@ -437,6 +437,10 @@ public class TiDBCatalog extends AbstractCatalog {
     return getClientSession().queryTableCount(databaseName, tableName);
   }
 
+  public int queryIndexCount(String databaseName, String tableName, String indexName) {
+    return getClientSession().queryIndexCount(databaseName, tableName, indexName);
+  }
+
   private ClientSession getClientSession() {
     if (clientSession.isPresent()) {
       return clientSession.get();
