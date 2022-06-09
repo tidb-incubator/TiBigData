@@ -8,6 +8,8 @@
   * [3.1 下载安装包](#31-下载安装包)
   * [3.2 安装 TiBigData 并启动 Flink 集群](#32-安装-tibigdata-并启动-flink-集群)
 * [利用 Flink 读写 TiDB](#利用-flink-读写-tidb)
+* [实时宽表场景](#实时宽表场景)
+* [支持和限制](#支持和限制)
 * [Flink 与 TiDB 的类型映射](#flink-与-tidb-的类型映射)
 * [高级配置](#高级配置)
 * [TableFactory（废弃）](#tablefactory废弃)
@@ -161,6 +163,11 @@ Received a total of 1 row
 
 至此，你已经知道如何在 Flink 内使用 TiBigData 了。更多高级的功能以及配置调优可参考下面的章节。
 
+
+## 实时宽表场景
+
+请看[文档](../docs/real-time_wide_table_zh_CN.md)
+
 ## 支持和限制
 
 TiBigDate/Flink 支持向聚簇索引表写入数据、读取数据，这是TiDB-5.0.0的一个新特性。
@@ -222,6 +229,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tidb.replica-read.blacklist                 | null                                                                           | TiKV store 的 ip 黑名单列表，如果配置了，TiBigData 将不会从这些节点读取数据。                                                                                                                                                                                                                                                  |
 | sink.buffer-flush.max-rows                  | 100                                                                            | 写入数据的缓冲区大小，你可以设置为 0 以禁用缓冲区。                                                                                                                                                                                                                                                                          |
 | sink.buffer-flush.interval                  | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                  |
+| tidb.sink.skip-check-update-columns         | false                                                                          | 请看 [Real-time wide table](../docs/real-time_wide_table_zh_CN.md)                                                                                                                                                                                                                                     |
 | sink.max-retries                            | 3                                                                              | 写入数据失败的最大重试次数。                                                                                                                                                                                                                                                                                       |
 | tidb.filter-push-down                       | false                                                                          | TiBigData 支持下推 Flink 的算子到 TiKV，设置为 true 以开启，仅对 Flink 1.13+ 支持。详细文档见[Flink 下推说明](../docs/flink_push_down_zh_CN.md)                                                                                                                                                                                    |
 | tidb.snapshot_timestamp                     | null                                                                           | TiBigData 支持读取 TiDB 的快照数据，我们采用的格式为 `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.  比如 `2021-01-01T14:00:00+08:00`                                                                                                                                                                         |

@@ -121,7 +121,10 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
         getTableMetadataStream(schemaName, tableName).collect(toImmutableList()),
         ImmutableMap.of(
             PRIMARY_KEY, join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName)),
-            UNIQUE_KEY, join(",", getInternal().getUniqueKeyColumns(schemaName, tableName))));
+            UNIQUE_KEY,
+                getInternal().getUniqueKeyColumns(schemaName, tableName).stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.joining(","))));
   }
 
   @Override
