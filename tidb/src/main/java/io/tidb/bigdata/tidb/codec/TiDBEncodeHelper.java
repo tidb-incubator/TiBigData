@@ -317,8 +317,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   /**
-   * generateKeyValuesToDeleteByRow only support table with pk or uk Every column of the index
-   * should not be null, or an exception will be thrown
+   * Generate record and index kay-value of the given row to delete. It will only delete one row
+   * including its index in every call.
+   *
+   * <p>Only support table with at least one pk or uk (for multiple-column uk, every column should
+   * not be null) or an exception will be thrown.
    *
    * @param row
    * @return
