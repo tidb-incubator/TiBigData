@@ -181,7 +181,7 @@ public class TiDBCatalogTest extends FlinkTestBase {
   private Row runByCatalog(Map<String, String> properties, String resultSql, String tableName)
       throws Exception {
     // env
-    TableEnvironment tableEnvironment = getTableEnvironment();
+    TableEnvironment tableEnvironment = getBatchTableEnvironment();
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();

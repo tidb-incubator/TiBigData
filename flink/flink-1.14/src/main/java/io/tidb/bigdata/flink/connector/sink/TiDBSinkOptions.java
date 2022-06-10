@@ -23,7 +23,9 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SKIP_CHECK_UPDATE_COLUMNS;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.TASK_START_INTERVAL;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.UPDATE_COLUMNS;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl;
@@ -42,6 +44,8 @@ public class TiDBSinkOptions implements Serializable {
   private final boolean deduplicate;
   private final TiDBWriteMode writeMode;
   private final long taskStartInterval; // set interval in order to avoid allocate rowId conflict.
+  private final String updateColumns;
+  private final boolean skipCheckForUpdateColumns;
   private final boolean deleteEnable;
 
   public TiDBSinkOptions(ReadableConfig config) {
@@ -53,7 +57,17 @@ public class TiDBSinkOptions implements Serializable {
     this.deduplicate = config.get(DEDUPLICATE);
     this.writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     this.taskStartInterval = config.get(TASK_START_INTERVAL);
+    this.updateColumns = config.get(UPDATE_COLUMNS);
+    this.skipCheckForUpdateColumns = config.get(SKIP_CHECK_UPDATE_COLUMNS);
     this.deleteEnable = config.get(DELETE_ENABLE);
+  }
+
+  public boolean isSkipCheckForUpdateColumns() {
+    return skipCheckForUpdateColumns;
+  }
+
+  public String getUpdateColumns() {
+    return updateColumns;
   }
 
   public long getTaskStartInterval() {

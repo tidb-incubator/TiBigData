@@ -32,9 +32,12 @@ import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -238,7 +241,24 @@ public class TiDBEncodeHelper implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  private List<BytePairWrapper> generateDataToBeRemoved(Row tiRow, Handle handle) {
+  /**
+   * Generate the key-value pair conflicted with the given row. <br>
+   *
+   * <ul>
+   *   <li>- unique index conflict
+   *       <ul>
+   *         <li>- key: encoded index key
+   *         <li>- value: empty
+   *       </ul>
+   *   <li>- primary index conflict
+   *       <ul>
+   *         <li>- key: encoded row key
+   *         <li>- value: empty
+   *       </ul>
+   * </ul>
+   */
+  private Map<ByteBuffer, BytePairWrapper> fetchConflictedRowDeletionPairs(
+      Row tiRow, Handle handle) {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
@@ -265,10 +285,14 @@ public class TiDBEncodeHelper implements AutoCloseable {
         }
       }
     }
-    List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
+    Map<ByteBuffer, BytePairWrapper> deletionKeyValue = new HashMap<>();
     for (Pair<Row, Handle> pair : deletion) {
-      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
-      deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
+      BytePairWrapper recordKeyValue = generateRecordKeyValue(pair.first, pair.second, true);
+      deletionKeyValue.put(ByteBuffer.wrap(recordKeyValue.getKey()), recordKeyValue);
+      List<BytePairWrapper> indexKeyValues = generateIndexKeyValues(pair.first, pair.second, true);
+      indexKeyValues.forEach(
+          indexKeyValue ->
+              deletionKeyValue.put(ByteBuffer.wrap(indexKeyValue.getKey()), indexKeyValue));
     }
     return deletionKeyValue;
   }
@@ -293,6 +317,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
 
     Handle handle;
+    Map<ByteBuffer, BytePairWrapper> conflictRowDeletionPairs = new HashMap<>();
     boolean constraintCheckIsNeeded =
         isCommonHandle || handleCol != null || uniqueIndices.size() > 0;
     if (constraintCheckIsNeeded) {
@@ -302,17 +327,25 @@ public class TiDBEncodeHelper implements AutoCloseable {
         handle = new IntHandle(rowIdAllocator.getSharedRowId());
       }
       // get deletion row
-      List<BytePairWrapper> dataToBeRemoved = generateDataToBeRemoved(row, handle);
-      if (dataToBeRemoved.size() > 0 && !replace) {
+      conflictRowDeletionPairs = fetchConflictedRowDeletionPairs(row, handle);
+      if (conflictRowDeletionPairs.size() > 0 && !replace) {
         throw new IllegalStateException(
             "Unique index conflicts, please use upsert mode, row = " + row);
       }
-      keyValues.addAll(dataToBeRemoved);
     } else {
       handle = new IntHandle(rowIdAllocator.getSharedRowId());
     }
     keyValues.add(generateRecordKeyValue(row, handle, false));
     keyValues.addAll(generateIndexKeyValues(row, handle, false));
+
+    // if the key needs to be updated, then the deletion pair need to be removed and keep
+    // the update pair. Otherwise, the execution order can't be guaranteed, which may cause
+    // the deletion of the row when the update pair is executed first and deletion pair second.
+    for (BytePairWrapper keyValue : keyValues) {
+      conflictRowDeletionPairs.remove(ByteBuffer.wrap(keyValue.getKey()));
+    }
+    keyValues.addAll(conflictRowDeletionPairs.values());
+
     return keyValues;
   }
 
