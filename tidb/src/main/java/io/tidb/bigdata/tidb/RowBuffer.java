@@ -22,9 +22,10 @@ import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.tikv.common.util.Pair;
 
@@ -35,7 +36,7 @@ public abstract class RowBuffer {
 
   protected RowBuffer(int bufferSize) {
     this.bufferSize = bufferSize;
-    this.rows = new ArrayList<>(bufferSize);
+    this.rows = new LinkedList<>();
   }
 
   public abstract boolean add(Row row);
@@ -53,7 +54,7 @@ public abstract class RowBuffer {
   }
 
   public void clear() {
-    this.rows = new ArrayList<>(bufferSize);
+    this.rows = new LinkedList<>();
   }
 
   public boolean isFull() {
@@ -88,8 +89,10 @@ public abstract class RowBuffer {
   static class DeduplicateRowBuffer extends RowBuffer {
 
     private final TiTableInfo tiTableInfo;
-    // index -> index values
-    private final List<Pair<List<Integer>, Set<List<Object>>>> uniqueIndexValues;
+    // index -> index values -> row
+    private final List<Pair<List<Integer>, Map<List<Object>, Row>>> uniqueIndexValues;
+    // row -> uniqueIndex values
+    private final Map<Row, List<List<Object>>> row2Values;
 
     private DeduplicateRowBuffer(
         TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
@@ -103,8 +106,9 @@ public abstract class RowBuffer {
             uniqueIndex.getIndexColumns().stream()
                 .map(TiIndexColumn::getOffset)
                 .collect(Collectors.toList());
-        uniqueIndexValues.add(new Pair<>(columnIndex, new HashSet<>()));
+        uniqueIndexValues.add(new Pair<>(columnIndex, new HashMap<>()));
       }
+      row2Values = new HashMap<>();
     }
 
     @Override
@@ -117,32 +121,46 @@ public abstract class RowBuffer {
         return true;
       }
       List<List<Object>> values = new ArrayList<>();
-      for (Pair<List<Integer>, Set<List<Object>>> pair : uniqueIndexValues) {
+      boolean result = true;
+      for (Pair<List<Integer>, Map<List<Object>, Row>> pair : uniqueIndexValues) {
         List<Integer> indexColumns = pair.first;
-        Set<List<Object>> indexValues = pair.second;
+        Map<List<Object>, Row> indexValues = pair.second;
         List<Object> indexValue =
             indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList());
-        if (indexValues.contains(indexValue)) {
-          return false;
+        if (indexValues.containsKey(indexValue)) {
+          result = false;
+          // delete the old row
+          Row deleteRow = indexValues.get(indexValue);
+          rows.remove(deleteRow);
+          // delete the old index value
+          List<List<Object>> oldValues = row2Values.get(deleteRow);
+          for (int i = 0; i < uniqueIndexValues.size(); i++) {
+            uniqueIndexValues.get(i).second.remove(oldValues.get(i));
+          }
+          // delete row -> uniqueIndex values
+          row2Values.remove(deleteRow);
         }
         values.add(indexValue);
       }
-      // add row
+      // add the new row
       rows.add(row);
-      // add index value
+      // add the new index value
       for (int i = 0; i < uniqueIndexValues.size(); i++) {
-        uniqueIndexValues.get(i).second.add(values.get(i));
+        uniqueIndexValues.get(i).second.put(values.get(i), row);
       }
-      return true;
+      // add row -> uniqueIndex values
+      row2Values.put(row, values);
+      return result;
     }
 
     @Override
     public void clear() {
       super.clear();
       for (int i = 0; i < uniqueIndexValues.size(); i++) {
-        Pair<List<Integer>, Set<List<Object>>> oldPair = uniqueIndexValues.get(i);
-        uniqueIndexValues.set(i, new Pair<>(oldPair.first, new HashSet<>()));
+        Pair<List<Integer>, Map<List<Object>, Row>> oldPair = uniqueIndexValues.get(i);
+        uniqueIndexValues.set(i, new Pair<>(oldPair.first, new HashMap<>()));
       }
+      row2Values.clear();
     }
   }
 }
