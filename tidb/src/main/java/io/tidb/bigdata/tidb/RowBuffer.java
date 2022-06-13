@@ -128,7 +128,8 @@ public abstract class RowBuffer {
         List<Integer> indexColumns = pair.first;
         Map<List<Object>, Row> indexValues = pair.second;
         List<Object> indexValue =
-            Collections.unmodifiableList(indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList()));
+            Collections.unmodifiableList(
+                indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList()));
         if (indexValues.containsKey(indexValue)) {
           result = false;
           // delete the old row
