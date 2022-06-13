@@ -22,6 +22,7 @@ import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -90,6 +91,7 @@ public abstract class RowBuffer {
 
     private final TiTableInfo tiTableInfo;
     // index -> index values -> row
+    // List is unmodifiableList, so it can be the key of map.
     private final List<Pair<List<Integer>, Map<List<Object>, Row>>> uniqueIndexValues;
     // row -> uniqueIndex values
     private final Map<Row, List<List<Object>>> row2Values;
@@ -126,7 +128,7 @@ public abstract class RowBuffer {
         List<Integer> indexColumns = pair.first;
         Map<List<Object>, Row> indexValues = pair.second;
         List<Object> indexValue =
-            indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList());
+            Collections.unmodifiableList(indexColumns.stream().map(i -> row.get(i, null)).collect(Collectors.toList()));
         if (indexValues.containsKey(indexValue)) {
           result = false;
           // delete the old row
