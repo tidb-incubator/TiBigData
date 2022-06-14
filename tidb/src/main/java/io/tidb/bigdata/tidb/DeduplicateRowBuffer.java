@@ -21,7 +21,6 @@ import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
