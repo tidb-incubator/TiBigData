@@ -16,7 +16,7 @@
 
 package io.tidb.bigdata.tidb;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
@@ -109,6 +109,6 @@ public class RowBufferTest {
     buffer.add(row1);
     buffer.add(row6);
     buffer.add(row7);
-    Assert.assertEquals(ImmutableList.of(row1, row6, row7), buffer.getRows());
+    Assert.assertEquals(ImmutableSet.of(row1, row6, row7), buffer.getRows());
   }
 }
