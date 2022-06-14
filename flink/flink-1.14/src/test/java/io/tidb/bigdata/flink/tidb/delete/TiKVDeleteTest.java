@@ -37,10 +37,14 @@ import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableResult;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
 import org.junit.Assert;
@@ -123,63 +127,62 @@ public class TiKVDeleteTest extends FlinkTestBase {
     properties.put(SINK_TRANSACTION.key(), SinkTransaction.MINIBATCH.name());
     properties.put(DELETE_ENABLE.key(), Boolean.toString(true));
 
-    executor.execute(
-        () -> {
-          EnvironmentSettings settings =
-              EnvironmentSettings.newInstance().inStreamingMode().build();
-          StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-          StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-          // init catalog and create dstTable
-          TiDBCatalog tiDBCatalog =
-              initTiDBCatalog(dstTable, flinkDeleteTable, tableEnvironment, properties);
-          // create src table
-          tiDBCatalog.sqlUpdate(
-              String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
-          tiDBCatalog.sqlUpdate(String.format(flinkDeleteTable, DATABASE_NAME, srcTable));
+    FutureTask<Optional<JobClient>> task =
+        new FutureTask<>(
+            () -> {
+              EnvironmentSettings settings =
+                  EnvironmentSettings.newInstance().inStreamingMode().build();
+              StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+              StreamTableEnvironment tableEnvironment =
+                  StreamTableEnvironment.create(env, settings);
+              // init catalog and create dstTable
+              TiDBCatalog tiDBCatalog =
+                  initTiDBCatalog(dstTable, flinkDeleteTable, tableEnvironment, properties);
+              // create src table
+              tiDBCatalog.sqlUpdate(
+                  String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
+              tiDBCatalog.sqlUpdate(String.format(flinkDeleteTable, DATABASE_NAME, srcTable));
 
-          tableEnvironment.sqlUpdate(
-              String.format(
-                  "INSERT INTO `tidb`.`%s`.`%s` SELECT c1,c2 FROM `tidb`.`%s`.`%s`",
-                  DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
-          try {
-            tableEnvironment.execute("test");
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-        });
+              TableResult tableResult =
+                  tableEnvironment.executeSql(
+                      String.format(
+                          "INSERT INTO `tidb`.`%s`.`%s` SELECT c1,c2 FROM `tidb`.`%s`.`%s`",
+                          DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
 
-    try {
-      // wait stream job ready
-      Thread.sleep(20000);
+              return tableResult.getJobClient();
+            });
+    executor.submit(task);
+    // wait stream job ready
+    Thread.sleep(20000);
 
-      // insert 4 rows in src, flush 3 insert to dst
-      testDatabase
-          .getClientSession()
-          .sqlUpdate(
-              String.format(
-                  "insert into `%s`.`%s` values('1','1'),('2','2'),('3','3'),('4','4')",
-                  DATABASE_NAME, srcTable));
-      Thread.sleep(20000);
-      Assert.assertEquals(
-          4, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
-      Assert.assertEquals(
-          3, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
+    JobClient jobClient = task.get().orElseThrow(IllegalStateException::new);
 
-      // delete 3 rows in src , flush 1 insert and 2 delete to dst
-      testDatabase
-          .getClientSession()
-          .sqlUpdate(
-              String.format(
-                  "delete from `%s`.`%s` where c1 = '1' or c1 = '2' or c1 = '3'",
-                  DATABASE_NAME, srcTable));
-      Thread.sleep(20000);
-      Assert.assertEquals(
-          1, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
-      Assert.assertEquals(
-          result, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
-    } finally {
-      executor.shutdownNow();
-    }
+    // insert 4 rows in src, flush 3 insert to dst
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(
+            String.format(
+                "insert into `%s`.`%s` values('1','1'),('2','2'),('3','3'),('4','4')",
+                DATABASE_NAME, srcTable));
+    Thread.sleep(20000);
+    Assert.assertEquals(
+        4, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
+    Assert.assertEquals(
+        3, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
+    // delete 3 rows in src , flush 1 insert and 2 delete to dst
+    testDatabase
+        .getClientSession()
+        .sqlUpdate(
+            String.format(
+                "delete from `%s`.`%s` where c1 = '1' or c1 = '2' or c1 = '3'",
+                DATABASE_NAME, srcTable));
+    Thread.sleep(20000);
+    Assert.assertEquals(
+        1, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, srcTable));
+    Assert.assertEquals(
+        result, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
+
+    jobClient.cancel();
   }
 
   @After

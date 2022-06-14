@@ -128,11 +128,10 @@ public class TiKVDeleteNotSupportTest extends FlinkTestBase {
     tiDBCatalog.sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, srcTable));
     tiDBCatalog.sqlUpdate(String.format(flinkDeleteTable, DATABASE_NAME, srcTable));
 
-    tableEnvironment.sqlUpdate(
+    tableEnvironment.executeSql(
         String.format(
             "INSERT INTO `tidb`.`%s`.`%s` SELECT c1,c2 FROM `tidb`.`%s`.`%s`",
             DATABASE_NAME, dstTable, DATABASE_NAME, srcTable));
-    tableEnvironment.execute("test");
   }
 
   @After
