@@ -42,7 +42,9 @@ public abstract class RowBuffer {
     return (int) collection.stream().map(this::add).filter(b -> b).count();
   }
 
-  public Collection<Row> getRows();
+  public Collection<Row> getRows(){
+    return rows;
+  }
 
   public void clear() {
     this.rows = new LinkedList<>();
