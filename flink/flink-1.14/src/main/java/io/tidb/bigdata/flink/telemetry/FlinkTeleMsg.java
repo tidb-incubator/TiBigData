@@ -94,7 +94,7 @@ public class FlinkTeleMsg extends TeleMsg {
    *
    * @return flinkTeleMsg
    */
-  public static FlinkTeleMsg getInstance() {
+  public static FlinkTeleMsg validateAndGet() {
     return Preconditions.checkNotNull(flinkTeleMsg, "FlinkTeleMsg hasn't been initialized");
   }
 

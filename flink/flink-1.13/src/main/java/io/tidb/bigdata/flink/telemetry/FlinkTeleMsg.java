@@ -54,7 +54,7 @@ public class FlinkTeleMsg extends TeleMsg {
 
   private static final String SUBNAME = "flink-1.13";
   private static final String TIBIGDATA_FLINK_VERSION = "0.0.5-SNAPSHOT";
-  private static final String TRACK_ID = "TiBigDataFlink1.14TelemetryID";
+  private static final String TRACK_ID = "TiBigDataFlink1.13TelemetryID";
   private static final String TRACK_ID_PREFIX = "trkid_";
   private static final String APP_ID_PREFIX = "appid_";
   private volatile FlinkTeleMsgState sendState = FlinkTeleMsgState.UNSENT;
@@ -88,7 +88,7 @@ public class FlinkTeleMsg extends TeleMsg {
    *
    * @return flinkTeleMsg
    */
-  public static FlinkTeleMsg getInstance() {
+  public static FlinkTeleMsg validateAndGet() {
     return Preconditions.checkNotNull(flinkTeleMsg, "FlinkTeleMsg hasn't been initialized");
   }
 

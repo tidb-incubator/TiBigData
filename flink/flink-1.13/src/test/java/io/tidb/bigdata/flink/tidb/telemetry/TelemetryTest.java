@@ -38,20 +38,20 @@ public class TelemetryTest extends FlinkTestBase {
     properties.put("type", "tidb");
     properties.put("tidb.telemetry.enable", "false");
     TableEnvironment tableEnvironment = getTableEnvironment();
-    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
+    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::validateAndGet);
     String createCatalogSql =
         format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
     tableEnvironment.executeSql(createCatalogSql);
     String showDatabases = String.format("SHOW DATABASES");
     tableEnvironment.executeSql(showDatabases);
     Thread.sleep(1000);
-    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::getInstance);
+    Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::validateAndGet);
     properties.put("tidb.telemetry.enable", "true");
     createCatalogSql =
         format("CREATE CATALOG `tidb2` WITH ( %s )", TableUtils.toSqlProperties(properties));
     tableEnvironment.executeSql(createCatalogSql);
     tableEnvironment.executeSql(showDatabases);
     Thread.sleep(1000);
-    Assert.assertEquals(false, FlinkTeleMsg.getInstance().shouldSendMsg());
+    Assert.assertEquals(false, FlinkTeleMsg.validateAndGet().shouldSendMsg());
   }
 }
