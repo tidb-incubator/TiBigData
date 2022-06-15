@@ -262,7 +262,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
-      getOldRowWithHandleColOrIsCommonHandle(handle, snapshot).ifPresent(deletion::add);
+      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
     }
     for (TiIndexInfo index : uniqueIndices) {
       // pk is uk when isCommonHandle, so we need to exclude it
@@ -298,8 +298,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return Optional.empty();
   }
 
-  public Optional<Pair<Row, Handle>> getOldRowWithHandleColOrIsCommonHandle(
-      Handle handle, Snapshot snapshot) {
+  public Optional<Pair<Row, Handle>> getOldRowWithClusterIndex(Handle handle, Snapshot snapshot) {
     byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
     byte[] oldValue = snapshot.get(key);
     if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
@@ -397,7 +396,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     // get deletion row
     if (handleCol != null || isCommonHandle) {
       Handle handle = extractHandle(row);
-      getOldRowWithHandleColOrIsCommonHandle(handle, snapshot).ifPresent(deletion::add);
+      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
     } else {
       // just make buildUniqueIndexKey method works
       Handle fakeHandle = new IntHandle(0L);
