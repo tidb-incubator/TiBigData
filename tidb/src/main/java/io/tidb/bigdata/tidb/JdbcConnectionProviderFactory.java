@@ -28,6 +28,7 @@ public class JdbcConnectionProviderFactory {
 
   public static JdbcConnectionProvider createJdbcConnectionProvider(ClientConfig config) {
     try {
+      // load JDBC drivers and register to DriverManager
       Class.forName(ClientConfig.MYSQL_DRIVER_NAME);
       Class<?> provideClass = Class.forName(config.getJdbcConnectionProviderImpl());
       return (JdbcConnectionProvider)
