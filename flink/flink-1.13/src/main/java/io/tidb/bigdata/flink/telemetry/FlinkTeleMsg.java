@@ -35,7 +35,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,7 +44,6 @@ import org.apache.flink.util.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.BytePairWrapper;
-import org.tikv.raw.RawKVClient;
 import org.tikv.shade.com.google.protobuf.ByteString;
 
 /** FlinkTeleMsg is a single instance. Only send once in one Flink application. */
@@ -109,23 +107,20 @@ public class FlinkTeleMsg extends TeleMsg {
 
   @Override
   public String setTrackId() {
-    try (ClientSession clientSession = ClientSession.create(new ClientConfig(properties));
-        //RawKVClient client = clientSession.getTiSession().createRawClient();
-        ) {
-      //Optional<ByteString> value = client.get(ByteString.copyFromUtf8(TRACK_ID));
-
-      ByteString value = clientSession.getTiSession().createSnapshot().get(ByteString.copyFromUtf8(TRACK_ID));
+    try (ClientSession clientSession = ClientSession.create(new ClientConfig(properties)); ) {
+      ByteString value =
+          clientSession.getTiSession().createSnapshot().get(ByteString.copyFromUtf8(TRACK_ID));
 
       if (!value.isEmpty()) {
         return value.toStringUtf8();
       }
 
       String uuid = TRACK_ID_PREFIX + UUID.randomUUID();
-      TiDBWriteHelper tiDBWriteHelper = new TiDBWriteHelper(clientSession.getTiSession(),
-          clientSession.getSnapshotVersion().getVersion());
-      tiDBWriteHelper.preWriteFirst(new BytePairWrapper(TRACK_ID.getBytes(),uuid.getBytes()));
+      TiDBWriteHelper tiDBWriteHelper =
+          new TiDBWriteHelper(
+              clientSession.getTiSession(), clientSession.getSnapshotVersion().getVersion());
+      tiDBWriteHelper.preWriteFirst(new BytePairWrapper(TRACK_ID.getBytes(), uuid.getBytes()));
       tiDBWriteHelper.commitPrimaryKey();
-      //client.put(ByteString.copyFromUtf8(TRACK_ID), ByteString.copyFromUtf8(uuid));
       return uuid;
     } catch (Exception e) {
       logger.warn("Failed to generated telemetry track ID. " + e.getMessage());
