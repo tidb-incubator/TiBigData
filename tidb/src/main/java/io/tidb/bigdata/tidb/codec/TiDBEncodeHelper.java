@@ -262,23 +262,12 @@ public class TiDBEncodeHelper implements AutoCloseable {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
-      Optional<Row> optRow = getOldRowWithHandleColOrIsCommonHandle(handle, snapshot);
-      optRow.ifPresent(row -> deletion.add(new Pair<>(row, handle)));
+      getOldRowWithHandleColOrIsCommonHandle(handle, snapshot).ifPresent(deletion::add);
     }
     for (TiIndexInfo index : uniqueIndices) {
       // pk is uk when isCommonHandle, so we need to exclude it
       if (!isCommonHandle || !index.isPrimary()) {
-        Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
-        if (!uniqueIndexKeyPair.second) {
-          byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
-          if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-            Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
-            byte[] oldRowValue =
-                snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
-            Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
-            deletion.add(new Pair<>(oldRow, oldHandle));
-          }
-        }
+        getOldRowWithUniqueIndexKey(index, handle, tiRow).ifPresent(deletion::add);
       }
     }
     Map<ByteBuffer, BytePairWrapper> deletionKeyValue = new HashMap<>();
@@ -293,11 +282,29 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return deletionKeyValue;
   }
 
-  public Optional<Row> getOldRowWithHandleColOrIsCommonHandle(Handle handle, Snapshot snapshot) {
+  public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
+      TiIndexInfo index, Handle handle, Row tiRow) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
+    if (!uniqueIndexKeyPair.second) {
+      byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
+      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+        Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
+        byte[] oldRowValue =
+            snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
+        Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
+        return Optional.of(new Pair<>(oldRow, oldHandle));
+      }
+    }
+    return Optional.empty();
+  }
+
+  public Optional<Pair<Row, Handle>> getOldRowWithHandleColOrIsCommonHandle(
+      Handle handle, Snapshot snapshot) {
     byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
     byte[] oldValue = snapshot.get(key);
     if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-      return Optional.of(TableCodec.decodeRow(oldValue, handle, tiTableInfo));
+      Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
+      return Optional.of(new Pair<>(oldRow, handle));
     }
     return Optional.empty();
   }
@@ -390,23 +397,12 @@ public class TiDBEncodeHelper implements AutoCloseable {
     // get deletion row
     if (handleCol != null || isCommonHandle) {
       Handle handle = extractHandle(row);
-      Optional<Row> optRow = getOldRowWithHandleColOrIsCommonHandle(handle, snapshot);
-      optRow.ifPresent(oldRow -> deletion.add(new Pair<>(oldRow, handle)));
+      getOldRowWithHandleColOrIsCommonHandle(handle, snapshot).ifPresent(deletion::add);
     } else {
       // just make buildUniqueIndexKey method works
       Handle fakeHandle = new IntHandle(0L);
-      Pair<byte[], Boolean> uniqueIndexKeyPair =
-          buildUniqueIndexKey(row, fakeHandle, UniqueIndexKeyWithValue.get());
-      if (!uniqueIndexKeyPair.second) {
-        byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
-        if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-          Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
-          byte[] oldRowValue =
-              snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
-          Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
-          deletion.add(new Pair<>(oldRow, oldHandle));
-        }
-      }
+      getOldRowWithUniqueIndexKey(UniqueIndexKeyWithValue.get(), fakeHandle, row)
+          .ifPresent(deletion::add);
     }
 
     // generate BytePairWrapper
