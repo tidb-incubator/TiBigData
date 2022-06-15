@@ -262,12 +262,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
-      byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
-      byte[] oldValue = snapshot.get(key);
-      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
-        deletion.add(new Pair<>(oldRow, handle));
-      }
+      Optional<Row> optRow = getOldRowWithHandleColOrIsCommonHandle(handle, snapshot);
+      optRow.ifPresent(row -> deletion.add(new Pair<>(row, handle)));
     }
     for (TiIndexInfo index : uniqueIndices) {
       // pk is uk when isCommonHandle, so we need to exclude it
@@ -295,6 +291,15 @@ public class TiDBEncodeHelper implements AutoCloseable {
               deletionKeyValue.put(ByteBuffer.wrap(indexKeyValue.getKey()), indexKeyValue));
     }
     return deletionKeyValue;
+  }
+
+  public Optional<Row> getOldRowWithHandleColOrIsCommonHandle(Handle handle, Snapshot snapshot) {
+    byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+    byte[] oldValue = snapshot.get(key);
+    if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+      return Optional.of(TableCodec.decodeRow(oldValue, handle, tiTableInfo));
+    }
+    return Optional.empty();
   }
 
   public List<BytePairWrapper> generateKeyValuesByRow(Row row) {
@@ -385,12 +390,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
     // get deletion row
     if (handleCol != null || isCommonHandle) {
       Handle handle = extractHandle(row);
-      byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
-      byte[] oldValue = snapshot.get(key);
-      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
-        deletion.add(new Pair<>(oldRow, handle));
-      }
+      Optional<Row> optRow = getOldRowWithHandleColOrIsCommonHandle(handle, snapshot);
+      optRow.ifPresent(oldRow -> deletion.add(new Pair<>(oldRow, handle)));
     } else {
       // just make buildUniqueIndexKey method works
       Handle fakeHandle = new IntHandle(0L);

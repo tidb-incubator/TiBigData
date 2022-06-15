@@ -34,16 +34,17 @@ import java.util.stream.Collectors;
 public class DeduplicateRowBuffer extends RowBuffer {
 
   private final List<TiIndexInfo> uniqueIndexs;
-  private final Row2ukUtil row2ukUtil;
+  private final RowUKBiMap rowUKBiMap;
 
   public DeduplicateRowBuffer(
       TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
     // just use set to accelerate remove
     super(bufferSize, new LinkedHashSet<>());
     uniqueIndexs = SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
-    row2ukUtil = new Row2ukUtil();
+    rowUKBiMap = new RowUKBiMap();
   }
 
+  // return true if there is no conflict
   @Override
   public boolean add(Row row) {
     if (isFull()) {
@@ -53,62 +54,62 @@ public class DeduplicateRowBuffer extends RowBuffer {
       rows.add(row);
       return true;
     }
-    boolean conflict = true;
+    boolean conflict = false;
     for (TiIndexInfo indexInfo : uniqueIndexs) {
-      // get ukWithValue
+      // get uniqueKeyColumns
       List<TiIndexColumn> indexColumns = indexInfo.getIndexColumns();
       List<Object> indexValue =
           Collections.unmodifiableList(
               indexColumns.stream()
                   .map(i -> row.get(i.getOffset(), null))
                   .collect(Collectors.toList()));
-      UkWithValue ukWithValue = new UkWithValue(indexInfo, indexValue);
+      UniqueKeyColumns uniqueKeyColumns = new UniqueKeyColumns(indexInfo, indexValue);
       // judge if conflict with old row
-      if (row2ukUtil.ukWithValueExist(ukWithValue)) {
-        conflict = false;
+      if (rowUKBiMap.uniqueKeyColumnsExist(uniqueKeyColumns)) {
+        conflict = true;
         // get old row that is conflict
-        Row oldRow = row2ukUtil.getRow(ukWithValue);
+        Row oldRow = rowUKBiMap.getRow(uniqueKeyColumns);
         // remove the old row from row buffer
         rows.remove(oldRow);
         // remove the old row's relationship
-        row2ukUtil.removeRow(oldRow);
+        rowUKBiMap.removeRow(oldRow);
       }
       // add the new row's relationship
-      row2ukUtil.add(row, ukWithValue);
+      rowUKBiMap.add(row, uniqueKeyColumns);
     }
     // add new row
     rows.add(row);
 
-    return conflict;
+    return !conflict;
   }
 
   @Override
   public void clear() {
     super.clear();
-    row2ukUtil.clear();
+    rowUKBiMap.clear();
   }
 
-  public static class Row2ukUtil {
-    Multimap<Row, UkWithValue> row2Uk = ArrayListMultimap.create();
-    Map<UkWithValue, Row> uk2Row = new HashMap<>();
+  private static class RowUKBiMap {
+    private final Multimap<Row, UniqueKeyColumns> row2Uk = ArrayListMultimap.create();
+    private final Map<UniqueKeyColumns, Row> uk2Row = new HashMap<>();
 
-    public boolean ukWithValueExist(UkWithValue ukWithValue) {
-      return uk2Row.containsKey(ukWithValue);
+    public boolean uniqueKeyColumnsExist(UniqueKeyColumns uniqueKeyColumns) {
+      return uk2Row.containsKey(uniqueKeyColumns);
     }
 
-    public Row getRow(UkWithValue ukWithValue) {
-      return uk2Row.get(ukWithValue);
+    public Row getRow(UniqueKeyColumns uniqueKeyColumns) {
+      return uk2Row.get(uniqueKeyColumns);
     }
 
     public void removeRow(Row row) {
-      Collection<UkWithValue> ukWithValues = row2Uk.get(row);
-      ukWithValues.forEach(e -> uk2Row.remove(e));
+      Collection<UniqueKeyColumns> uniqueKeyColumnss = row2Uk.get(row);
+      uniqueKeyColumnss.forEach(uk2Row::remove);
       row2Uk.removeAll(row);
     }
 
-    public void add(Row row, UkWithValue ukWithValue) {
-      row2Uk.put(row, ukWithValue);
-      uk2Row.put(ukWithValue, row);
+    public void add(Row row, UniqueKeyColumns uniqueKeyColumns) {
+      row2Uk.put(row, uniqueKeyColumns);
+      uk2Row.put(uniqueKeyColumns, row);
     }
 
     public void clear() {
@@ -117,12 +118,12 @@ public class DeduplicateRowBuffer extends RowBuffer {
     }
   }
 
-  static class UkWithValue {
-    TiIndexInfo uniqueIndex;
+  private static class UniqueKeyColumns {
+    private final TiIndexInfo uniqueIndex;
     // the values will be unmodifiableList
-    List<Object> values;
+    private final List<Object> values;
 
-    public UkWithValue(TiIndexInfo uniqueIndex, List<Object> values) {
+    public UniqueKeyColumns(TiIndexInfo uniqueIndex, List<Object> values) {
       this.uniqueIndex = uniqueIndex;
       this.values = values;
     }
@@ -135,7 +136,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      UkWithValue that = (UkWithValue) o;
+      UniqueKeyColumns that = (UniqueKeyColumns) o;
       return Objects.equals(uniqueIndex, that.uniqueIndex) && Objects.equals(values, that.values);
     }
 

@@ -141,6 +141,7 @@ public class TiKVDeleteCodecTest extends FlinkTestBase {
 
               return tableResult.getJobClient();
             });
+    executor.submit(task);
     // wait stream job ready
     Thread.sleep(20000);
 
