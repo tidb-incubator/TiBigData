@@ -20,7 +20,6 @@ import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
 
 public abstract class RowBuffer {
 
@@ -42,12 +41,13 @@ public abstract class RowBuffer {
     return (int) collection.stream().map(this::add).filter(b -> b).count();
   }
 
-  public Collection<Row> getRows(){
+  public Collection<Row> getRows() {
     return rows;
   }
 
   public void clear() {
-    this.rows = new LinkedList<>();
+    // clear is better than new
+    this.rows.clear();
   }
 
   public boolean isFull() {

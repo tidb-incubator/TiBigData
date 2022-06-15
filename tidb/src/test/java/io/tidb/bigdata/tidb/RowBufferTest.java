@@ -102,9 +102,9 @@ public class RowBufferTest {
             });
     Row row6 = ObjectRowImpl.create(new Object[] {2, 3, 4, 5, 6, 7, 8});
     Row row7 = ObjectRowImpl.create(new Object[] {2, 4, 6, 7, 8, 9, 10});
-    buffer.add(row2);
-    buffer.add(row3);
-    buffer.add(row4);
+    //    buffer.add(row2);
+    //    buffer.add(row3);
+    //    buffer.add(row4);
     buffer.add(row5);
     buffer.add(row1);
     buffer.add(row6);

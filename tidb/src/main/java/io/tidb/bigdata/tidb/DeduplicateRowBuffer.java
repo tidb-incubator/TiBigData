@@ -16,39 +16,32 @@
 
 package io.tidb.bigdata.tidb;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DeduplicateRowBuffer extends RowBuffer {
 
-  private final List<UniqueIndexAndValues> uniqueIndexValues;
-  // row -> uk's values
-  private final Map<Row, List<List<Object>>> row2Values;
+  private final List<TiIndexInfo> uniqueIndexs;
+  private final Row2ukUtil row2ukUtil;
 
   public DeduplicateRowBuffer(
       TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
     // just use set to accelerate remove
     super(bufferSize, new LinkedHashSet<>());
-    List<TiIndexInfo> uniqueIndexes =
-        SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
-    this.uniqueIndexValues = new ArrayList<>(uniqueIndexes.size());
-    for (TiIndexInfo uniqueIndex : uniqueIndexes) {
-      List<Integer> columnIndex =
-          uniqueIndex.getIndexColumns().stream()
-              .map(TiIndexColumn::getOffset)
-              .collect(Collectors.toList());
-      uniqueIndexValues.add(new UniqueIndexAndValues(columnIndex, new HashMap<>()));
-    }
-    row2Values = new HashMap<>();
+    uniqueIndexs = SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
+    row2ukUtil = new Row2ukUtil();
   }
 
   @Override
@@ -56,83 +49,99 @@ public class DeduplicateRowBuffer extends RowBuffer {
     if (isFull()) {
       throw new IllegalStateException("Row buffer is full!");
     }
-    if (uniqueIndexValues.size() == 0) {
+    if (uniqueIndexs.size() == 0) {
       rows.add(row);
       return true;
     }
-    List<List<Object>> values = new ArrayList<>();
     boolean conflict = true;
-    for (UniqueIndexAndValues uniqueIndexAndValues : uniqueIndexValues) {
+    for (TiIndexInfo indexInfo : uniqueIndexs) {
+      // get ukWithValue
+      List<TiIndexColumn> indexColumns = indexInfo.getIndexColumns();
       List<Object> indexValue =
           Collections.unmodifiableList(
-              uniqueIndexAndValues.pos.stream()
-                  .map(i -> row.get(i, null))
+              indexColumns.stream()
+                  .map(i -> row.get(i.getOffset(), null))
                   .collect(Collectors.toList()));
-      if (uniqueIndexAndValues.isConflict(indexValue)) {
+      UkWithValue ukWithValue = new UkWithValue(indexInfo, indexValue);
+      // judge if conflict with old row
+      if (row2ukUtil.ukWithValueExist(ukWithValue)) {
         conflict = false;
-        // delete the old row
-        Row deleteRow = uniqueIndexAndValues.getRow(indexValue);
-        rows.remove(deleteRow);
-        // delete the old index values
-        List<List<Object>> oldValues = row2Values.get(deleteRow);
-        for (int i = 0; i < uniqueIndexValues.size(); i++) {
-          uniqueIndexValues.get(i).deleteValues2Row(oldValues.get(i));
-        }
-        // delete row -> uk's values
-        row2Values.remove(deleteRow);
+        // get old row that is conflict
+        Row oldRow = row2ukUtil.getRow(ukWithValue);
+        // remove the old row from row buffer
+        rows.remove(oldRow);
+        // remove the old row's relationship
+        row2ukUtil.removeRow(oldRow);
       }
-      // build the index values for the new row
-      values.add(indexValue);
+      // add the new row's relationship
+      row2ukUtil.add(row, ukWithValue);
     }
-    // add the new row
+    // add new row
     rows.add(row);
-    // add the new index values
-    for (int i = 0; i < uniqueIndexValues.size(); i++) {
-      uniqueIndexValues.get(i).addValues2Row(values.get(i), row);
-    }
-    // add row -> uk's values
-    row2Values.put(row, values);
+
     return conflict;
   }
 
   @Override
   public void clear() {
     super.clear();
-    for (UniqueIndexAndValues uniqueIndexValue : uniqueIndexValues) {
-      uniqueIndexValue.clear();
-    }
-    row2Values.clear();
+    row2ukUtil.clear();
   }
 
-  // the uniqueIndex and all its values, every values determines a row
-  static class UniqueIndexAndValues {
-    List<Integer> pos;
-    // List will be unmodifiableList, so take it easy to use it be the key of map
-    Map<List<Object>, Row> values2Row;
+  public static class Row2ukUtil {
+    Multimap<Row, UkWithValue> row2Uk = ArrayListMultimap.create();
+    Map<UkWithValue, Row> uk2Row = new HashMap<>();
 
-    public UniqueIndexAndValues(List<Integer> pos, Map<List<Object>, Row> values2Row) {
-      this.pos = pos;
-      this.values2Row = values2Row;
+    public boolean ukWithValueExist(UkWithValue ukWithValue) {
+      return uk2Row.containsKey(ukWithValue);
+    }
+
+    public Row getRow(UkWithValue ukWithValue) {
+      return uk2Row.get(ukWithValue);
+    }
+
+    public void removeRow(Row row) {
+      Collection<UkWithValue> ukWithValues = row2Uk.get(row);
+      ukWithValues.forEach(e -> uk2Row.remove(e));
+      row2Uk.removeAll(row);
+    }
+
+    public void add(Row row, UkWithValue ukWithValue) {
+      row2Uk.put(row, ukWithValue);
+      uk2Row.put(ukWithValue, row);
     }
 
     public void clear() {
-      values2Row = new HashMap<>();
+      row2Uk.clear();
+      uk2Row.clear();
+    }
+  }
+
+  static class UkWithValue {
+    TiIndexInfo uniqueIndex;
+    // the values will be unmodifiableList
+    List<Object> values;
+
+    public UkWithValue(TiIndexInfo uniqueIndex, List<Object> values) {
+      this.uniqueIndex = uniqueIndex;
+      this.values = values;
     }
 
-    public void deleteValues2Row(List<Object> values) {
-      values2Row.remove(values);
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      UkWithValue that = (UkWithValue) o;
+      return Objects.equals(uniqueIndex, that.uniqueIndex) && Objects.equals(values, that.values);
     }
 
-    public void addValues2Row(List<Object> values, Row row) {
-      values2Row.put(values, row);
-    }
-
-    public Row getRow(List<Object> values) {
-      return values2Row.get(values);
-    }
-
-    public Boolean isConflict(List<Object> values) {
-      return values2Row.containsKey(values);
+    @Override
+    public int hashCode() {
+      return Objects.hash(uniqueIndex, values);
     }
   }
 }
