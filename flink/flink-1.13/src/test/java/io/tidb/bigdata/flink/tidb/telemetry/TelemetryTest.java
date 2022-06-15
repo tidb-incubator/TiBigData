@@ -46,12 +46,12 @@ public class TelemetryTest extends FlinkTestBase {
     tableEnvironment.executeSql(showDatabases);
     Thread.sleep(1000);
     Assert.assertThrows(NullPointerException.class, FlinkTeleMsg::validateAndGet);
-//    properties.put("tidb.telemetry.enable", "true");
-//    createCatalogSql =
-//        format("CREATE CATALOG `tidb2` WITH ( %s )", TableUtils.toSqlProperties(properties));
-//    tableEnvironment.executeSql(createCatalogSql);
-//    tableEnvironment.executeSql(showDatabases);
-//    Thread.sleep(1000);
-//    Assert.assertEquals(false, FlinkTeleMsg.validateAndGet().shouldSendMsg());
+    properties.put("tidb.telemetry.enable", "true");
+    createCatalogSql =
+        format("CREATE CATALOG `tidb2` WITH ( %s )", TableUtils.toSqlProperties(properties));
+    tableEnvironment.executeSql(createCatalogSql);
+    tableEnvironment.executeSql(showDatabases);
+    Thread.sleep(1000);
+    Assert.assertEquals(false, FlinkTeleMsg.validateAndGet().shouldSendMsg());
   }
 }
