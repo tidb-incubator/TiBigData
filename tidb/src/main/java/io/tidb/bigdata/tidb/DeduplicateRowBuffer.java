@@ -33,14 +33,14 @@ import java.util.stream.Collectors;
 
 public class DeduplicateRowBuffer extends RowBuffer {
 
-  private final List<TiIndexInfo> uniqueIndexs;
+  private final List<TiIndexInfo> uniqueIndexes;
   private final RowUKBiMap rowUKBiMap;
 
   public DeduplicateRowBuffer(
       TiTableInfo tiTableInfo, boolean ignoreAutoincrementColumn, int bufferSize) {
     // just use set to accelerate remove
     super(bufferSize, new LinkedHashSet<>());
-    uniqueIndexs = SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
+    uniqueIndexes = SqlUtils.getUniqueIndexes(tiTableInfo, ignoreAutoincrementColumn);
     rowUKBiMap = new RowUKBiMap();
   }
 
@@ -50,12 +50,12 @@ public class DeduplicateRowBuffer extends RowBuffer {
     if (isFull()) {
       throw new IllegalStateException("Row buffer is full!");
     }
-    if (uniqueIndexs.size() == 0) {
+    if (uniqueIndexes.size() == 0) {
       rows.add(row);
       return true;
     }
     boolean conflict = false;
-    for (TiIndexInfo indexInfo : uniqueIndexs) {
+    for (TiIndexInfo indexInfo : uniqueIndexes) {
       // get uniqueKeyColumns
       List<TiIndexColumn> indexColumns = indexInfo.getIndexColumns();
       List<Object> indexValue =
@@ -102,8 +102,8 @@ public class DeduplicateRowBuffer extends RowBuffer {
     }
 
     public void removeRow(Row row) {
-      Collection<UniqueKeyColumns> uniqueKeyColumnss = row2Uk.get(row);
-      uniqueKeyColumnss.forEach(uk2Row::remove);
+      Collection<UniqueKeyColumns> uniqueKeyColumns = row2Uk.get(row);
+      uniqueKeyColumns.forEach(uk2Row::remove);
       row2Uk.removeAll(row);
     }
 
