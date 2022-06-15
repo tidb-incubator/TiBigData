@@ -64,11 +64,10 @@ public class DeduplicateRowBuffer extends RowBuffer {
                   .map(i -> row.get(i.getOffset(), null))
                   .collect(Collectors.toList()));
       UniqueKeyColumns uniqueKeyColumns = new UniqueKeyColumns(indexInfo, indexValue);
-      // judge if conflict with old row
-      if (rowUKBiMap.uniqueKeyColumnsExist(uniqueKeyColumns)) {
+      // get old row
+      Row oldRow = rowUKBiMap.getRow(uniqueKeyColumns);
+      if (oldRow != null) {
         conflict = true;
-        // get old row that is conflict
-        Row oldRow = rowUKBiMap.getRow(uniqueKeyColumns);
         // remove the old row from row buffer
         rows.remove(oldRow);
         // remove the old row's relationship
@@ -92,10 +91,6 @@ public class DeduplicateRowBuffer extends RowBuffer {
   private static class RowUKBiMap {
     private final Multimap<Row, UniqueKeyColumns> row2Uk = ArrayListMultimap.create();
     private final Map<UniqueKeyColumns, Row> uk2Row = new HashMap<>();
-
-    public boolean uniqueKeyColumnsExist(UniqueKeyColumns uniqueKeyColumns) {
-      return uk2Row.containsKey(uniqueKeyColumns);
-    }
 
     public Row getRow(UniqueKeyColumns uniqueKeyColumns) {
       return uk2Row.get(uniqueKeyColumns);
