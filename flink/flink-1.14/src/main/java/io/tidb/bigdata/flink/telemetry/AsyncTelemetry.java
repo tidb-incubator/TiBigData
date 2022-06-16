@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 public class AsyncTelemetry {
   private static final Logger LOG = LoggerFactory.getLogger(AsyncTelemetry.class);
 
+  public static final String TELEMETRY_URL = "tidb.telemetry.url";
   private Map<String, String> properties;
 
   public AsyncTelemetry(Map<String, String> properties) {
@@ -44,6 +45,10 @@ public class AsyncTelemetry {
       () -> {
         try {
           Telemetry telemetry = new Telemetry();
+          // Usually we needn't change url. Here is for setting a test HTTP server.
+          if (properties.containsKey(TELEMETRY_URL)) {
+            telemetry.setUrl(properties.get(TELEMETRY_URL));
+          }
           FlinkTeleMsg teleMsg = FlinkTeleMsg.getInstance(properties);
           synchronized (AsyncTelemetry.class) {
             if (teleMsg.shouldSendMsg()) {
