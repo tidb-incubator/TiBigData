@@ -225,7 +225,53 @@ TiBigDate/Flink does not support the following features:
 | tikv.sink.row-id-allocator.step             | 30000                                                                          | Only work when sink option is `TIKV`. The size of row-ids each time allocator query for.                                                                                                                                                                                                                                                                                                                                                                  |
 | tikv.sink.ignore-autoincrement-column-value | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, for autoincrement column, we will generate value instead of the the actual value. And if `false`, the value of autoincrement column can not be null.                                                                                                                                                                                                                                            |
 | tikv.sink.deduplicate                       | false                                                                          | Only work when sink option is `TIKV`. If value is `true`, duplicate row will be de-duplicated. If `false`, you should make sure each row is unique otherwise exception will be thrown.                                                                                                                                                                                                                                                                    |
+| tidb.cluster-tls-enable                     | false                                                                          | Whether to enable TLS between TiBigData and TiKV.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| tidb.cluster-tls-ca                         | _                                                                              | Trusted certificates for verifying the remote endpoint's certificate, e.g. `/home/TiBigData/.ci/config/cert/pem/root.pem`. The file should contain an X.509 certificate collection in PEM format.                                                                                                                                                                                                                                                         |
+| tidb.cluster-tls-key                        | _                                                                              | A PKCS#8 private key file in PEM format. e.g. `/home/TiBigData/.ci/config/cert/pem/client.pem`.                                                                                                                                                                                                                                                                                                                                                           |
+| tidb.cluster-tls-cert                       | _                                                                              | An X.509 certificate chain file in PEM format, e.g. `/home/TiBigData/.ci/config/cert/pem/client-pkcs8.key`.                                                                                                                                                                                                                                                                                                                                               |
+| tidb.cluster-jks-enable                     | false                                                                          | Whether to use JKS keystore.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| tidb.cluster-jks-key-path                   | _                                                                              | The path of the JKS key store, which is used by the remote service to authenticate this node. The key encryption is PKCS#12. e.g. `/home/TiBigData/.ci/config/cert/jks/client-keystore.p12`.                                                                                                                                                                                                                                                              |
+| tidb.cluster-jks-key-password               | _                                                                              | The key of JKS key store.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| tidb.cluster-jks-trust-path                 | _                                                                              | The path of the JKS trust certificates store, which is used to authenticate remote service. e.g. `/home/TiBigData/.ci/config/cert/jks/server-cert-store`.                                                                                                                                                                                                                                                                                                 |
+| tidb.cluster-jks-trust-password             | _                                                                              | The key of JKS trust certificates store.                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | tidb.telemetry.enable                       | true                                                                           | Whether to enable telemetry collection in TiBigData. Telemetry can be off by setting `false`.                                                                                                                                                                                                                                                                                                                                                             |
+
+### TLS NOTE
+
+TiBigData supports enabling TLS when connecting with a TiDB cluster. If you want to fully enable TLS, you need to enable TLS for JDBC and TiKV-client respectively.
+
+#### JDBC TLS
+
+To enable JDBC TLS in TiBigData, just add the TLS configuration to the `tidb.database.url` configuration.
+
+```
+&useSSL=true&requireSSL=true&verifyServerCertificate=false
+```
+
+More JDBC TLS configurations can be found [here](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-connp-props-security.html).
+
+For how to open JDBC TLS, see [here](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-using-ssl.html).
+
+For how to open TiDB TLS, see [here](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between-clients-and-servers).
+
+#### TiKV-Client TLS
+
+TiKV-Client is the client used by TiBigData to link TiKV clusters. To enable TiKV-Client TLS, you need to specify `tidb.cluster-tls-enable=true` in the configuration.
+
+Currently, TiKV-Client supports two specified certificate forms:
+
+1. An X.509 certificate collection in PEM format needs three configurations.
+  - tidb.cluster-tls-ca
+  - tidb.cluster-tls-key
+  - tidb.cluster-tls-cert
+2. A JKS store with five configurations.
+  - tidb.cluster-jks-enable
+  - tidb.cluster-jks-key-path
+  - tidb.cluster-jks-key-password
+  - tidb.cluster-jks-trust-path
+  - tidb.cluster-jks-trust-password
+
+To enable TiKV-Client TLS, you need to enable TLS for the internal components of the TiDB cluster in advance. For details, please refer to [Enable TLS Between TiDB Components](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between -components).
 
 ## TableFactory(deprecated)
 
