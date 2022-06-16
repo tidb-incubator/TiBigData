@@ -95,9 +95,8 @@ public class TiDBCatalog extends AbstractCatalog {
             properties.getOrDefault(TIDB_CATALOG_LOAD_MODE, TIDB_CATALOG_LOAD_MODE_DEFAULT));
 
     // Report telemetry.
-    if (properties
-        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
-        .equals(TIDB_TELEMETRY_ENABLE_DEFAULT)) {
+    if (Boolean.parseBoolean(
+        properties.getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT))) {
       AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
       asyncTelemetry.report();
     }

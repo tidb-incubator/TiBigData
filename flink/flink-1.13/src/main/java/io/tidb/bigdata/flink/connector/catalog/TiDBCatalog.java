@@ -54,9 +54,8 @@ public class TiDBCatalog extends TiDBBaseCatalog {
     super(name, properties);
 
     // Report telemetry.
-    if (properties
-        .getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT)
-        .equals(TIDB_TELEMETRY_ENABLE_DEFAULT)) {
+    if (Boolean.parseBoolean(
+        properties.getOrDefault(TIDB_TELEMETRY_ENABLE, TIDB_TELEMETRY_ENABLE_DEFAULT))) {
       AsyncTelemetry asyncTelemetry = new AsyncTelemetry(properties);
       asyncTelemetry.report();
     }
