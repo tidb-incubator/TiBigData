@@ -241,7 +241,53 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tikv.sink.row-id-allocator.step             | 30000                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。每次 allocator 申请的 row-id 范围长度。                                                                                                                                                                                                                                             |
 | tikv.sink.ignore-autoincrement-column-value | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，对于 autoincrement 列，会自动生成以替换原有的值。如果设置为 `false`，autoincrement 列的值不能为 null。                                                                                                                                                                                     |
 | tikv.sink.deduplicate                       | false                                                                          | 只有在 sink 选项设置为 `TIKV` 时才生效。如果设置为 `true`，重复的行数据将会进行去重。如果设置为 `false`，需要确保没有重复的行数据，不然程序会抛出异常。                                                                                                                                                                                                           |
+| tidb.cluster-tls-enable                     | false                                                                          | 在 TiBigData 和 TiKV 之间是否开启 TLS，默认为 `false`。                                                                                                                                                                                                                                                           |
+| tidb.cluster-tls-ca                         | _                                                                              | 信任证书路径，用于验证远端服务器。该文件为 PEM 格式的 X.509 证书。示例：`/home/TiBigData/.ci/config/cert/pem/root.pem`。                                                                                                                                                                                                            |
+| tidb.cluster-tls-key                        | _                                                                              | 本节点证书路径，用于远端服务验证本节点。该证书为 PEM 格式的 X.509 证书。示例：`/home/TiBigData/.ci/config/cert/pem/client.pem`。                                                                                                                                                                                                       |
+| tidb.cluster-tls-cert                       | _                                                                              | 本节点证书密钥路径，该密钥为 PKCS#8 加密的 PEM 格式密钥。示例：`/home/TiBigData/.ci/config/cert/pem/client-pkcs8.key`。                                                                                                                                                                                                        |
+| tidb.cluster-jks-enable                     | false                                                                          | 开启 TLS 后，是否使用 JKS 密钥库。默认为 `false`。                                                                                                                                                                                                                                                                   |
+| tidb.cluster-jks-key-path                   | _                                                                              | JKS 密钥库路径，用于远端服务验证本节点。该密钥加密方式 PKCS#12。示例：`/home/TiBigData/.ci/config/cert/jks/client-keystore.p12`。                                                                                                                                                                                                  |
+| tidb.cluster-jks-key-password               | _                                                                              | JKS 密钥库的密码。                                                                                                                                                                                                                                                                                          |
+| tidb.cluster-jks-trust-path                 | _                                                                              | JKS 信任证书库路径，用于验证远端服务器。示例：`/home/TiBigData/.ci/config/cert/jks/server-cert-store`。                                                                                                                                                                                                                    |
+| tidb.cluster-jks-trust-password             | _                                                                              | JKS 信任证书库密码。                                                                                                                                                                                                                                                                                         |
 
+### TLS 配置项说明
+
+TiBigData 支持与 TiDB 集群链接时开启 TLS。如果想要完全启用 TLS，需要分别开启 JDBC 和 TiKV-client 的 TLS。
+
+#### JDBC TLS
+
+在 TiBigData 中开启 JDBC TLS，只需要在 `tidb.database.url` 配置中加上 TLS 配置。
+
+```
+# 此配置项表示 JDBC 链接启用 TLS 加密传输，但不做客户端和服务端的验证
+&useSSL=true&requireSSL=true&verifyServerCertificate=false
+```
+
+更多 JDBC TLS 配置参数可参考 [MySQL Connector Security](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-connp-props-security.html)。
+
+JDBC 连接器开启 TLS 可参考 [Connecting Securely Using SSL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-using-ssl.html)。
+
+TiDB 集群开启 TLS 可参考[为 TiDB 客户端服务端间通信开启加密传输](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between-clients-and-servers)。
+
+#### TiKV-Client TLS
+
+TiKV-Client 是 TiBigData 用于链接 TiKV 集群的客户端，开启 TiKV-Client TLS，需要在配置中指定 `tidb.cluster-tls-enable=true`。
+
+目前支持 TiKV-Client 两种指定证书形式：
+
+1. 配置 PEM 格式证书。需配置以下三项。
+   - tidb.cluster-tls-ca
+   - tidb.cluster-tls-key
+   - tidb.cluster-tls-cert
+2. 配置 JKS 密钥库证书。需配置以下五项。
+   - tidb.cluster-jks-enable 
+   - tidb.cluster-jks-key-path
+   - tidb.cluster-jks-key-password
+   - tidb.cluster-jks-trust-path
+   - tidb.cluster-jks-trust-password
+
+启用 TiKV-Client TLS，需要预先开启 TiDB 集群内部组件 TLS，具体可参考[为 TiDB 组件间通信开启加密传输](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between-components)。
 
 ## TableFactory（废弃）
 
