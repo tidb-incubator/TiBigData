@@ -29,7 +29,7 @@ public class JdbcConnectionProviderFactory {
 
   public static JdbcConnectionProvider createJdbcConnectionProvider(ClientConfig config) {
     try {
-      // load JDBC drivers and register to DriverManager
+      /** load JDBC drivers and register to DriverManager {@link com.mysql.cj.jdbc.Driver} */
       TiDBDriver.driverForUrl(config.getDatabaseUrl());
       Class<?> provideClass = Class.forName(config.getJdbcConnectionProviderImpl());
       return (JdbcConnectionProvider)
