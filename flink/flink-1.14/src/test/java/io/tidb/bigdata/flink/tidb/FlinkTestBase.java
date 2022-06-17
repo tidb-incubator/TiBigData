@@ -132,7 +132,7 @@ public abstract class FlinkTestBase {
     Map<String, String> properties = defaultProperties();
     properties.put(SINK_IMPL.key(), TIKV.name());
     properties.put(SINK_TRANSACTION.key(), MINIBATCH.name());
-    properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(10000));
+    properties.put(ROW_ID_ALLOCATOR_STEP.key(), Integer.toString(100));
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
     String dropTableSql = format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, tableName);

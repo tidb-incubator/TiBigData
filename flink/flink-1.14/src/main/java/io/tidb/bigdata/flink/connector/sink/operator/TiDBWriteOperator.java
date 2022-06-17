@@ -79,8 +79,8 @@ public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void>
             session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep());
 
     // Start operator orderly in order to avoid rowID allocation conflict.
-    Thread.sleep(
-        sinkOptions.getTaskStartInterval() * this.getRuntimeContext().getIndexOfThisSubtask());
+//    Thread.sleep(
+//        sinkOptions.getTaskStartInterval() * this.getRuntimeContext().getIndexOfThisSubtask());
     openInternal();
   }
 
