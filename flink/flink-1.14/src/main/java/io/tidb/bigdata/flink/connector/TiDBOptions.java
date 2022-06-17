@@ -149,6 +149,24 @@ public class TiDBOptions {
               "Optional flag to skip change events with parse errors instead of failing;\n"
                   + "fields are set to null in case of errors, false by default.");
 
+  // Options for TLS
+  public static final ConfigOption<String> CLUSTER_TLS_ENABLE =
+      optional(ClientConfig.CLUSTER_TLS_ENABLE);
+  public static final ConfigOption<String> CLUSTER_TLS_CA = optional(ClientConfig.CLUSTER_TLS_CA);
+  public static final ConfigOption<String> CLUSTER_TLS_KEY = optional(ClientConfig.CLUSTER_TLS_KEY);
+  public static final ConfigOption<String> CLUSTER_TLS_CERT =
+      optional(ClientConfig.CLUSTER_TLS_CERT);
+  public static final ConfigOption<String> CLUSTER_JKS_ENABLE =
+      optional(ClientConfig.CLUSTER_JKS_ENABLE);
+  public static final ConfigOption<String> CLUSTER_JKS_KEY_PATH =
+      optional(ClientConfig.CLUSTER_JKS_KEY_PATH);
+  public static final ConfigOption<String> CLUSTER_JKS_KEY_PASSWORD =
+      optional(ClientConfig.CLUSTER_JKS_KEY_PASSWORD);
+  public static final ConfigOption<String> CLUSTER_JKS_TRUST_PATH =
+      optional(ClientConfig.CLUSTER_JKS_TRUST_PATH);
+  public static final ConfigOption<String> CLUSTER_JKS_TRUST_PASSWORD =
+      optional(ClientConfig.CLUSTER_JKS_TRUST_PASSWORD);
+
   // For example:
   // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
   public static final String METADATA_INCLUDED = "tidb.metadata.included";
@@ -192,7 +210,16 @@ public class TiDBOptions {
             ROW_ID_ALLOCATOR_STEP,
             IGNORE_AUTOINCREMENT_COLUMN_VALUE,
             DEDUPLICATE,
-            SOURCE_FAILOVER)
+            SOURCE_FAILOVER,
+            CLUSTER_TLS_ENABLE,
+            CLUSTER_TLS_CA,
+            CLUSTER_TLS_KEY,
+            CLUSTER_TLS_CERT,
+            CLUSTER_JKS_ENABLE,
+            CLUSTER_JKS_KEY_PATH,
+            CLUSTER_JKS_KEY_PASSWORD,
+            CLUSTER_JKS_TRUST_PATH,
+            CLUSTER_JKS_TRUST_PASSWORD)
         .build();
   }
 
