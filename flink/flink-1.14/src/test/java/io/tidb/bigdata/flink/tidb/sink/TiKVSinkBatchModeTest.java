@@ -113,10 +113,8 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
         .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
 
-
   public static void main(String[] args) {
     KeyError build = KeyError.newBuilder().setConflict(WriteConflict.getDefaultInstance()).build();
     System.out.println(build.toString());
   }
-
 }
