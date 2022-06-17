@@ -17,8 +17,8 @@
 package io.tidb.bigdata.telemetry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,10 +39,11 @@ public class Telemetry {
       ObjectMapper mapper = new ObjectMapper();
       String msgString = mapper.writeValueAsString(msg);
       logger.info("Telemetry report: " + msgString);
-      HttpResponse resp = httpClient.postJSON(url, msg);
-      return (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
-          ? ReportState.SUCCESS
-          : ReportState.FAILURE;
+      try (CloseableHttpResponse resp = httpClient.postJSON(url, msg)) {
+        return (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK)
+            ? ReportState.SUCCESS
+            : ReportState.FAILURE;
+      }
     } catch (Exception e) {
       logger.warn("Failed to report telemetry. " + e.getMessage());
       return ReportState.FAILURE;
@@ -55,6 +56,6 @@ public class Telemetry {
 
   public enum ReportState {
     SUCCESS,
-    FAILURE;
+    FAILURE
   }
 }

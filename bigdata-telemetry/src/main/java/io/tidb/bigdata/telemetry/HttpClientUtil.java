@@ -17,8 +17,8 @@
 package io.tidb.bigdata.telemetry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -28,48 +28,57 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class HttpClientUtil {
-  private Logger logger = LoggerFactory.getLogger(this.getClass());
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   /**
-   * HTTP POST
+   * HTTP POST. Please close the CloseableHttpResponse in a final clause. {@link
+   * org.apache.http.client.methods.CloseableHttpResponse}
    *
    * @param url server url
    * @param msg post entry object
-   * @return HttpResponse response
+   * @return CloseableHttpResponse
    */
-  public HttpResponse postJSON(String url, Object msg) throws Exception {
+  public CloseableHttpResponse postJSON(String url, Object msg) throws Exception {
     ObjectMapper mapper = new ObjectMapper();
     String msgString = mapper.writeValueAsString(msg);
-    CloseableHttpClient httpClient = HttpClients.createDefault();
     HttpPost httpPost = new HttpPost(url);
-    httpPost.setEntity(new StringEntity(msgString));
-    httpPost.setHeader("Content-Type", "application/json");
-    HttpResponse resp = httpClient.execute(httpPost);
-    if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      logger.warn(
-          String.format(
-              "Failed to get HTTP request: %s, response: %s, code: %d.",
-              url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      httpPost.setEntity(new StringEntity(msgString));
+      httpPost.setHeader("Content-Type", "application/json");
+      CloseableHttpResponse resp = httpClient.execute(httpPost);
+      resp.close();
+      if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        logger.warn(
+            String.format(
+                "Failed to get HTTP request: %s, response: %s, code: %d.",
+                url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
+      }
+      return resp;
+    } finally {
+      httpPost.releaseConnection();
     }
-    return resp;
   }
 
   /**
-   * HTTP GET
+   * HTTP GET. Please close the CloseableHttpResponse in a final clause. {@link
+   * org.apache.http.client.methods.CloseableHttpResponse}
    *
    * @param url server url
-   * @return HttpResponse response
+   * @return CloseableHttpResponse
    */
-  public HttpResponse get(String url) throws Exception {
-    CloseableHttpClient httpClient = HttpClients.createDefault();
+  public CloseableHttpResponse get(String url) throws Exception {
     HttpGet httpGet = new HttpGet(url);
-    HttpResponse resp = httpClient.execute(httpGet);
-    if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-      logger.warn(
-          String.format(
-              "Failed to get HTTP request: %s, response: %s, code: %d.",
-              url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      CloseableHttpResponse resp = httpClient.execute(httpGet);
+      if (resp.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        logger.warn(
+            String.format(
+                "Failed to get HTTP request: %s, response: %s, code: %d.",
+                url, resp.getEntity().toString(), resp.getStatusLine().getStatusCode()));
+      }
+      return resp;
+    } finally {
+      httpGet.releaseConnection();
     }
-    return resp;
   }
 }

@@ -25,25 +25,22 @@ import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.ProcessorIdentifier;
 import oshi.hardware.HWDiskStore;
 import oshi.hardware.HardwareAbstractionLayer;
-import oshi.software.os.FileSystem;
 import oshi.software.os.OperatingSystem;
 
 /** SystemInfoUtil is used to get system and hardware information. */
 public class SystemInfoUtil {
-  private SystemInfo si;
-  private HardwareAbstractionLayer hal;
-  private OperatingSystem operatingSystem;
-  private CentralProcessor processor;
-  private ProcessorIdentifier processorIdentifier;
-  private FileSystem fs;
+
+  private final HardwareAbstractionLayer hal;
+  private final OperatingSystem operatingSystem;
+  private final CentralProcessor processor;
+  private final ProcessorIdentifier processorIdentifier;
 
   public SystemInfoUtil() {
-    this.si = new SystemInfo();
+    SystemInfo si = new SystemInfo();
     this.hal = si.getHardware();
     this.operatingSystem = si.getOperatingSystem();
     this.processor = hal.getProcessor();
     this.processorIdentifier = processor.getProcessorIdentifier();
-    this.fs = operatingSystem.getFileSystem();
   }
 
   /**
