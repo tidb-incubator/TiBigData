@@ -39,6 +39,8 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
+import org.tikv.kvproto.Kvrpcpb.KeyError;
+import org.tikv.kvproto.Kvrpcpb.WriteConflict;
 
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
@@ -110,4 +112,11 @@ public class TiKVSinkBatchModeTest extends FlinkTestBase {
         .getClientSession()
         .sqlUpdate(String.format("DROP TABLE IF EXISTS `%s`.`%s`", DATABASE_NAME, dstTable));
   }
+
+
+  public static void main(String[] args) {
+    KeyError build = KeyError.newBuilder().setConflict(WriteConflict.getDefaultInstance()).build();
+    System.out.println(build.toString());
+  }
+
 }
