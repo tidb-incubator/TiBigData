@@ -21,6 +21,8 @@ import org.tikv.kvproto.Kvrpcpb.KeyError;
 
 public class ProtobufTest {
 
+  // https://github.com/tidb-incubator/TiBigData/issues/217
+  // Fix protobufClass.toString() causes NoClassDefFoundError or ExceptionInInitializerError
   @Test
   public void testProtobufToString() {
     KeyError.getDefaultInstance().toString();
