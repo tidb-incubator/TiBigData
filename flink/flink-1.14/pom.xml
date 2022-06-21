@@ -127,18 +127,20 @@
                   <pattern>com.google.common</pattern>
                   <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
                 </relocation>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>oshi</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.oshi</shadedPattern>
+                </relocation>
               </relocations>
               <finalName>${project.artifactId}-${project.version}</finalName>
               <transformers>
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
               </transformers>
-              <artifactSet>
-                <excludes>
-                  <exclude>org.apache.httpcomponents:*</exclude>
-                  <exclude>com.github.oshi:*</exclude>
-                </excludes>
-              </artifactSet>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
