@@ -262,26 +262,12 @@ public class TiDBEncodeHelper implements AutoCloseable {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
-      byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
-      byte[] oldValue = snapshot.get(key);
-      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
-        deletion.add(new Pair<>(oldRow, handle));
-      }
+      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
     }
     for (TiIndexInfo index : uniqueIndices) {
+      // pk is uk when isCommonHandle, so we need to exclude it
       if (!isCommonHandle || !index.isPrimary()) {
-        Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
-        if (!uniqueIndexKeyPair.second) {
-          byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
-          if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-            Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
-            byte[] oldRowValue =
-                snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
-            Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
-            deletion.add(new Pair<>(oldRow, oldHandle));
-          }
-        }
+        getOldRowWithUniqueIndexKey(index, handle, tiRow).ifPresent(deletion::add);
       }
     }
     Map<ByteBuffer, BytePairWrapper> deletionKeyValue = new HashMap<>();
@@ -294,6 +280,32 @@ public class TiDBEncodeHelper implements AutoCloseable {
               deletionKeyValue.put(ByteBuffer.wrap(indexKeyValue.getKey()), indexKeyValue));
     }
     return deletionKeyValue;
+  }
+
+  public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
+      TiIndexInfo index, Handle handle, Row tiRow) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
+    if (!uniqueIndexKeyPair.second) {
+      byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
+      if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+        Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
+        byte[] oldRowValue =
+            snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
+        Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
+        return Optional.of(new Pair<>(oldRow, oldHandle));
+      }
+    }
+    return Optional.empty();
+  }
+
+  public Optional<Pair<Row, Handle>> getOldRowWithClusterIndex(Handle handle, Snapshot snapshot) {
+    byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+    byte[] oldValue = snapshot.get(key);
+    if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
+      Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
+      return Optional.of(new Pair<>(oldRow, handle));
+    }
+    return Optional.empty();
   }
 
   public List<BytePairWrapper> generateKeyValuesByRow(Row row) {
@@ -346,6 +358,59 @@ public class TiDBEncodeHelper implements AutoCloseable {
     keyValues.addAll(conflictRowDeletionPairs.values());
 
     return keyValues;
+  }
+
+  /**
+   * Generate record and index kay-value of the given row to delete. It will only delete one row
+   * including its index in every call.
+   *
+   * <p>Only support table with at least one pk or uk (for multiple-column uk, every column should
+   * not be null) or an exception will be thrown.
+   *
+   * @param row
+   * @return
+   */
+  public List<BytePairWrapper> generateKeyValuesToDeleteByRow(Row row) {
+    // get first pk or uk with value
+    Optional<TiIndexInfo> UniqueIndexKeyWithValue =
+        uniqueIndices.stream()
+            .filter(
+                indices -> {
+                  for (TiIndexColumn col : indices.getIndexColumns()) {
+                    if (row.isNull(col.getOffset())) {
+                      return false;
+                    }
+                  }
+                  return true;
+                })
+            .findFirst();
+
+    // check constraint
+    Preconditions.checkArgument(
+        isCommonHandle || handleCol != null || UniqueIndexKeyWithValue.isPresent(),
+        "Delete is only support with pk or uk, and their value should not be null");
+
+    Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
+    List<Pair<Row, Handle>> deletion = new ArrayList<>();
+
+    // get deletion row
+    if (handleCol != null || isCommonHandle) {
+      Handle handle = extractHandle(row);
+      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
+    } else {
+      // just make buildUniqueIndexKey method works
+      Handle fakeHandle = new IntHandle(0L);
+      getOldRowWithUniqueIndexKey(UniqueIndexKeyWithValue.get(), fakeHandle, row)
+          .ifPresent(deletion::add);
+    }
+
+    // generate BytePairWrapper
+    List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
+    for (Pair<Row, Handle> pair : deletion) {
+      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
+      deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
+    }
+    return deletionKeyValue;
   }
 
   @Override
