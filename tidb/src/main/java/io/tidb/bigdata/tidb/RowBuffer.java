@@ -31,6 +31,11 @@ public abstract class RowBuffer {
     this.rows = rows;
   }
 
+  protected RowBuffer(int bufferSize) {
+    this.bufferSize = bufferSize;
+    this.rows = new ArrayList<>();
+  }
+
   public abstract boolean add(Row row);
 
   public int size() {
@@ -66,7 +71,7 @@ public abstract class RowBuffer {
   static class DefaultRowBuffer extends RowBuffer {
 
     public DefaultRowBuffer(int bufferSize) {
-      super(bufferSize, new ArrayList<>());
+      super(bufferSize);
     }
 
     @Override

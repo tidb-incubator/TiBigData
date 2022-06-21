@@ -22,6 +22,7 @@ import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,7 +74,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
         // remove the old row's relationship
         rowUKBiMap.removeRow(oldRow);
       }
-      // add the new row's relationship
+      // add the new row's uniqueKeyColumns
       rowUKBiMap.add(row, uniqueKeyColumns);
     }
     // add new row
