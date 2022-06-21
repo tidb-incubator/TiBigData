@@ -59,13 +59,27 @@
                             <relocations>
                                 <relocation>
                                     <pattern>org.apache.http</pattern>
-                                    <shadedPattern>shade.bigdata.org.apache.http</shadedPattern>
+                                    <shadedPattern>io.tidb.bigdata.telemetry.shade.org.apache.http</shadedPattern>
                                 </relocation>
                                 <relocation>
                                     <pattern>oshi</pattern>
-                                    <shadedPattern>shade.bigdata.oshi</shadedPattern>
+                                    <shadedPattern>io.tidb.bigdata.telemetry.shade.oshi</shadedPattern>
                                 </relocation>
                             </relocations>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                </transformer>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                         </configuration>
                     </execution>
                 </executions>
