@@ -107,12 +107,6 @@
                 <transformer
                   implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer"/>
               </transformers>
-              <artifactSet>
-                <excludes>
-                  <exclude>org.apache.httpcomponents:*</exclude>
-                  <exclude>com.github.oshi:*</exclude>
-                </excludes>
-              </artifactSet>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>
