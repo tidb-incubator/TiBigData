@@ -17,6 +17,7 @@
 package io.tidb.bigdata.flink.connector.sink.operator;
 
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
+import io.tidb.bigdata.flink.connector.utils.TiRow;
 import io.tidb.bigdata.tidb.RowBuffer;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
@@ -27,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.flink.runtime.state.StateSnapshotContext;
+import org.apache.flink.types.RowKind;
 import org.tikv.common.BytePairWrapper;
 import org.tikv.common.ByteWrapper;
 import org.tikv.common.meta.TiTimestamp;
@@ -73,18 +75,30 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
             rowIDAllocator);
     TiDBWriteHelper tiDBWriteHelper =
         new TiDBWriteHelper(session.getTiSession(), timestamp.getVersion());
-    buffer.getRows().forEach(row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesByRow(row)));
-    tiDBWriteHelper.preWriteFirst(pairs);
-    long commitTs = tiDBWriteHelper.commitPrimaryKey();
 
-    Iterator<ByteWrapper> secondaryKeys =
-        pairs.stream()
-            .map(bytePairWrapper -> new ByteWrapper(bytePairWrapper.getKey()))
-            .collect(Collectors.toList())
-            .iterator();
-    secondaryKeys.next();
+    // insert or upsert
+    buffer.getRows().stream()
+        .filter(row -> ((TiRow) row).getRowKind() != RowKind.DELETE)
+        .forEach(row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesByRow(row)));
+    // delete
+    buffer.getRows().stream()
+        .filter(row -> ((TiRow) row).getRowKind() == RowKind.DELETE)
+        .forEach(row -> pairs.addAll(tiDBEncodeHelper.generateKeyValuesToDeleteByRow(row)));
 
-    tiDBWriteHelper.commitSecondaryKeys(secondaryKeys, commitTs);
+    if (!pairs.isEmpty()) {
+      tiDBWriteHelper.preWriteFirst(pairs);
+      long commitTs = tiDBWriteHelper.commitPrimaryKey();
+
+      Iterator<ByteWrapper> secondaryKeys =
+          pairs.stream()
+              .map(bytePairWrapper -> new ByteWrapper(bytePairWrapper.getKey()))
+              .collect(Collectors.toList())
+              .iterator();
+      secondaryKeys.next();
+
+      tiDBWriteHelper.commitSecondaryKeys(secondaryKeys, commitTs);
+    }
+
     tiDBWriteHelper.close();
     tiDBEncodeHelper.close();
 
