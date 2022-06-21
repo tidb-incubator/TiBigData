@@ -106,6 +106,12 @@
       <groupId>io.tidb</groupId>
       <artifactId>bigdata-telemetry</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
