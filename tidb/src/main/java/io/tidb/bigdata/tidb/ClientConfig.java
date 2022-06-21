@@ -23,10 +23,6 @@ import java.util.Objects;
 
 public final class ClientConfig {
 
-  public static final String TIDB_DRIVER_NAME = "io.tidb.bigdata.jdbc.TiDBDriver";
-
-  public static final String MYSQL_DRIVER_NAME = "com.mysql.jdbc.Driver";
-
   public static final String DATABASE_URL = "tidb.database.url";
 
   public static final String USERNAME = "tidb.username";
