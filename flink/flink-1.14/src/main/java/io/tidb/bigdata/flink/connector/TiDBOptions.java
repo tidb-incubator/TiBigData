@@ -121,6 +121,11 @@ public class TiDBOptions {
           .booleanType()
           .defaultValue(Boolean.FALSE)
           .withDescription("Force skip the constraint check for the update columns");
+  public static final ConfigOption<Boolean> DELETE_ENABLE =
+      ConfigOptions.key("tikv.sink.delete_enable")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription("Whether enable delete RowKind");
 
   // split or offset
   public static final ConfigOption<String> SOURCE_FAILOVER =
