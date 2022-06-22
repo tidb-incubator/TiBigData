@@ -44,7 +44,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 @Category(IntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
-public class TiKVDeduplicateNullTest extends FlinkTestBase {
+public class TiKVDeduplicateNullableIndexTest extends FlinkTestBase {
 
   @Parameters(name = "{index}: Transaction={0}, WriteMode={1}, Deduplicate={2}")
   public static Collection<Object[]> data() {
@@ -61,7 +61,7 @@ public class TiKVDeduplicateNullTest extends FlinkTestBase {
   private final TiDBWriteMode writeMode;
   private final boolean deduplicate;
 
-  public TiKVDeduplicateNullTest(
+  public TiKVDeduplicateNullableIndexTest(
       SinkTransaction transaction, TiDBWriteMode writeMode, boolean deduplicate) {
     this.transaction = transaction;
     this.writeMode = writeMode;
@@ -79,7 +79,7 @@ public class TiKVDeduplicateNullTest extends FlinkTestBase {
           + ")";
 
   @Test
-  public void testDeduplicateWithNullUniqueKey() throws Exception {
+  public void testDeduplicateWithNullUniqueIndex() throws Exception {
     dstTable = "flink_deduplicate_dst_test" + RandomUtils.randomString();
 
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();

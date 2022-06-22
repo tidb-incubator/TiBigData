@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.tidb;
+package io.tidb.bigdata.tidb.buffer;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import io.tidb.bigdata.tidb.SqlUtils;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
@@ -44,7 +45,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
     rowUKBiMap = new RowUKBiMap();
   }
 
-  // return true if row is not duplicate.
+  // return true if row is not duplicate and added successfully.
   @Override
   public boolean add(Row row) {
     if (isFull()) {
