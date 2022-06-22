@@ -44,7 +44,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
     rowUKBiMap = new RowUKBiMap();
   }
 
-  // return true if there is no conflict
+  // return true if row is not duplicate.
   @Override
   public boolean add(Row row) {
     if (isFull()) {
@@ -54,7 +54,8 @@ public class DeduplicateRowBuffer extends RowBuffer {
       rows.add(row);
       return true;
     }
-    boolean conflict = false;
+
+    boolean notDuplicate = true;
     for (TiIndexInfo indexInfo : uniqueIndexes) {
       // get uniqueKeyColumns
       List<TiIndexColumn> indexColumns = indexInfo.getIndexColumns();
@@ -63,11 +64,18 @@ public class DeduplicateRowBuffer extends RowBuffer {
               indexColumns.stream()
                   .map(i -> row.get(i.getOffset(), null))
                   .collect(Collectors.toList()));
+
+      // Since NULL != NULL, we don't deduplicate key with NULL.
+      if (indexValue.contains(null)) {
+        rows.add(row);
+        return true;
+      }
+
       UniqueKeyColumns uniqueKeyColumns = new UniqueKeyColumns(indexInfo, indexValue);
       // get old row
       Row oldRow = rowUKBiMap.getRow(uniqueKeyColumns);
       if (oldRow != null) {
-        conflict = true;
+        notDuplicate = false;
         // remove the old row from row buffer
         rows.remove(oldRow);
         // remove the old row's relationship
@@ -79,7 +87,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
     // add new row
     rows.add(row);
 
-    return !conflict;
+    return notDuplicate;
   }
 
   @Override
