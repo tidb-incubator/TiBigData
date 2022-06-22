@@ -20,6 +20,7 @@ import static java.util.Objects.requireNonNull;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import io.tidb.bigdata.jdbc.TiDBDriver;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -28,6 +29,8 @@ public class JdbcConnectionProviderFactory {
 
   public static JdbcConnectionProvider createJdbcConnectionProvider(ClientConfig config) {
     try {
+      /** load JDBC drivers and register to DriverManager {@link com.mysql.cj.jdbc.Driver} */
+      TiDBDriver.driverForUrl(config.getDatabaseUrl());
       Class<?> provideClass = Class.forName(config.getJdbcConnectionProviderImpl());
       return (JdbcConnectionProvider)
           provideClass.getConstructor(ClientConfig.class).newInstance(config);

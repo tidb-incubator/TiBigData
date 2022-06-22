@@ -78,11 +78,13 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink.version}</version>
+      <scope>${flink.jdbc.connector.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink.version}</version>
+      <scope>${flink.kafka.connector.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
@@ -93,7 +95,7 @@
       <groupId>mysql</groupId>
       <artifactId>mysql-connector-java</artifactId>
       <version>${dep.mysql.jdbc.version}</version>
-      <scope>${flink.scope}</scope>
+      <scope>${mysql.driver.scope}</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
