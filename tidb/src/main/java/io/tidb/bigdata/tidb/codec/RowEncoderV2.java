@@ -199,7 +199,7 @@ public class RowEncoderV2 {
       case TypeShort:
       case TypeTiny:
         // TODO: encode consider unsigned
-        encodeInt(cdo, (long) value);
+        encodeInt(cdo, Long.parseLong(value.toString()));
         break;
       case TypeFloat:
       case TypeDouble:
@@ -236,7 +236,7 @@ public class RowEncoderV2 {
         break;
       case TypeDuration:
       case TypeYear:
-        encodeInt(cdo, (long) value);
+        encodeInt(cdo, Long.parseLong(value.toString()));
         break;
       case TypeEnum:
         encodeEnum(cdo, value, tp.getElems());
@@ -301,6 +301,8 @@ public class RowEncoderV2 {
         s <<= 8;
         s |= b;
       }
+    } else if (value instanceof Boolean) {
+      s = (boolean) value ? 1 : 0;
     } else {
       throw new CodecException("invalid bytes type " + value.getClass());
     }
