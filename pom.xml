@@ -168,6 +168,7 @@
     <module>trino</module>
     <module>hive</module>
     <module>bigdata-test</module>
+    <module>bigdata-telemetry</module>
   </modules>
 
   <build>
