@@ -250,6 +250,7 @@ TiDB 与 Flink 的类型映射关系可参考下表：
 | tidb.cluster-jks-key-password               | _                                                                              | JKS 密钥库的密码。                                                                                                                                                                                                                                                                                          |
 | tidb.cluster-jks-trust-path                 | _                                                                              | JKS 信任证书库路径，用于验证远端服务器。示例：`/home/TiBigData/.ci/config/cert/jks/server-cert-store`。                                                                                                                                                                                                                    |
 | tidb.cluster-jks-trust-password             | _                                                                              | JKS 信任证书库密码。                                                                                                                                                                                                                                                                                         |
+| tidb.telemetry.enable                       | true                                                                           | TiBigData 默认开启遥测数据收集，可以主动设置为`false`来关闭遥测。                                                                                                                                                                                                                                                            |
 
 ### TLS 配置项说明
 
@@ -311,6 +312,54 @@ CREATE TABLE `people`(
 );
 SELECT * FROM people;
 ```
+
+## 遥测说明
+
+目前，TiBigData 中的 flink-tidb-connector（仅包括 flink-tidb-connector-1.14 和 flink-tidb-connector-1.13 版本） 会默认收集使用情况信息，并将这些信息分享给 PingCAP。
+用户可以主动通过配置 `tidb.telemetry.enable = false` 来关闭遥测。
+
+当 TiBigData 遥测功能开启时，TiBigData 会在初始化 `catalog` 时向 PingCAP 发送使用情况信息，包括但不限于：
+- 随机生成的标示符
+- 操作系统和硬件信息
+- 部分 TiBigData 配置信息。
+
+你可以通过日志查看遥测收集的具体数据。
+
+```
+2022-05-13 18:20:55,021 [INFO] [ForkJoinPool.commonPool-worker-1] io.tidb.bigdata.telemetry.Telemetry: Telemetry report: {"track_id":"4cec54a944bce9663f19115557c86884","time":"2022-05-13 18:20:54","subName":"flink-1.14","hardware":{"memory":"Available: 931.7 MiB/15.4 GiB","os":"Ubuntu","disks":[{"size":"512110190592","name":"/dev/nvme0n1"}],"cpu":{"logicalCores":"8","model":"11th Gen Intel(R) Core(TM) i7-1160G7 @ 1.20GHz","physicalCores":"4"},"version":"20.04.4 LTS (Focal Fossa) build 5.13.0-41-generic"},"instance":{"TiDBVersion":"v6.0.0","TiBigDataFlinkVersion":"0.0.5-SNAPSHOT","FlinkVersion":"1.14.0"},"content":{"tidb.write_mode":"append","tidb.catalog.load-mode":"eager","tikv.sink.deduplicate":"false","tidb.replica-read":"leader","tikv.sink.buffer-size":"1000","tidb.filter-push-down":"false","sink.buffer-flush.interval":"1s","tidb.sink.impl":"JDBC","tikv.sink.row-id-allocator.step":"30000","sink.buffer-flush.max-rows":"100","tikv.sink.ignore-autoincrement-column-value":"false","tikv.sink.transaction":"MINIBATCH"}}
+```
+
+遥测数据字段说明如下表格所示。
+
+| Field name                                            | Description             |
+|-------------------------------------------------------|-------------------------|
+| trackId                                               | 随机生成的标示符                |
+| time                                                  | 遥测时间戳                   |
+| subName                                               | 应用名称                    |
+| hardware.os                                           | 操作系统                    |
+| hardware.version                                      | 操作系统版本                  |
+| hardware.cpu.model                                    | CPU 型号                  |
+| hardware.cpu.logicalCores                             | CPU 逻辑核心数               |
+| hardware.cpu.physicalCores                            | CPU 物理核心数               |
+| hardware.disks.name                                   | 磁盘名称                    |
+| hardware.disks.size                                   | 磁盘容量                    |
+| hardware.memory                                       | 内存容量                    |
+| instance.TiDBVersion                                  | TiDB 版本                 |
+| instance.TiBigDataFlinkVersion                        | flink-tidb-connector 版本 |
+| instance.FlinkVersion                                 | Flink 版本                |
+| content.{tidb.write_mode}                             | flink-tidb-connector 配置 |
+| content.{tidb.catalog.load-mode}                      | flink-tidb-connector 配置 |
+| content.{tikv.sink.deduplicate}                       | flink-tidb-connector 配置 |
+| content.{tidb.replica-read}                           | flink-tidb-connector 配置 |
+| content.{tikv.sink.buffer-size}                       | flink-tidb-connector 配置 |
+| content.{tidb.filter-push-down}                       | flink-tidb-connector 配置 |
+| content.{sink.buffer-flush.interval}                  | flink-tidb-connector 配置 |
+| content.{tidb.sink.impl}                              | flink-tidb-connector 配置 |
+| content.{tikv.sink.row-id-allocator.step}             | flink-tidb-connector 配置 |
+| content.{sink.buffer-flush.max-rows}                  | flink-tidb-connector 配置 |
+| content.{tikv.sink.ignore-autoincrement-column-value} | flink-tidb-connector 配置 |
+| content.{tikv.sink.transaction}                       | flink-tidb-connector 配置 |
+
 
 ## 常见问题
 
