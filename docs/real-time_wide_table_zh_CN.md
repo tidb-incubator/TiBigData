@@ -64,20 +64,29 @@ CREATE TABLE `order_wide_table`
 );
 ```
 
-使用 flink sql client 在 `实时宽表` 场景下写入数据. `mock_${value}` 不会被使用，只是作为一个占位符存在:
+使用 flink sql client 在 `实时宽表` 场景下写入数据. 你可以给所有 `tidb.sink.update-columns` 不包含的列设置一个任意值，因为这些值不会被使用，只是作为一个占位符存在:
 
 ```sql
 // 第一个数据源
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */
-VALUES(100, 001, '手机','张三', 2021-12-06 12:01:01, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, mock_exp_id, mock_address, mock_recipient, mock_exp_ts)
+VALUES(100, 
+    001, '手机','张三', 2021-12-06 12:01:01, 
+    -1, -1, 'unknown', 1999-11-11 11:11:11,
+    -1, "hell", 'god', 1999-11-11 11:11:11)
 
 // 第二个数据源
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, pay_id, pay_amount, pay_status, ps_ts') */
-VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, 2002, 399, '已支付', 2021-12-06 12:02:01, mock_exp_id, mock_address, mock_recipient, mock_exp_ts)
+VALUES(100, 
+    -1, 'soul', 'adam', 1999-11-11 11:11:11,
+    2002, 399, '已支付', 2021-12-06 12:02:01, 
+    -1, "hell", 'god', 1999-11-11 11:11:11))
 
 // 第三个数据源
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, exp_id, address, recipient, exp_ts') */
-VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, 3002, '上海市黄浦区外滩SOHO C座', '张三', 2021-12-06 15:01:01)
+VALUES(100, 
+    -1, 'soul', 'adam', 1999-11-11 11:11:11,
+    -1, -1, 'unknown', 1999-11-11 11:11:11,
+    3002, '上海市黄浦区外滩SOHO C座', '张三', 2021-12-06 15:01:01)
 ```
 
 > **NOTE:**
@@ -89,7 +98,24 @@ VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, 这是因为 Fli
 
 ## 约束
 
-为了避免产生不可预期的结果，我们默认会执行一些严格的约束检查。你可以指定 `tidb.sink.skip-check-update-columns` 为 true 来跳过约束检查。
+为了达到实时宽表 join 的效果，我们默认会执行一些约束检查。
+
+### 对目的表的约束
+
+目的表应该包含且只包含一个非空唯一索引。
+- 联合索引情况下，全部索引应为非空。
+
+由于该文档 [insert-on-duplicate](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 中提到的原因, 我们应该避免在 ON DUPLICATE KEY UPDATE 语句中使用多个唯一索引。如果关闭该约束，用户需要保证源数据能满足不会与表内的多行数据产生唯一索引冲突的条件。
+由于 `NULL` 表示 “a missing unknown value” [working-with-null](https://dev.mysql.com/doc/refman/8.0/en/working-with-null.html), 换一句话说, `NULL` 不会等于 `NULL`，因此语句会从 update 转化为 insert。如果关闭该约束，用户需要保证源数据的唯一键不会为 `NULL`。
+
+### 对更新列的约束
+
+更新列需要包含唯一索引列。
+
+### 跳过检查
+
+你可以指定 `tidb.sink.skip-check-update-columns` 为 true 来跳过约束检查，但我们不推荐这么做。
+当你设置 `tidb.sink.skip-check-update-columns` 时，语句就会退化成 `ON DUPLICATE KEY UPDATE` 语义。在这种情况下，不一定能保证 join。
 
 ```sql
 CREATE
@@ -103,14 +129,3 @@ WITH (
 );
 ```
 
-### 对目的表的约束
-
-目的表应该包含且只包含一个非空唯一索引。
-- 联合索引情况下，全部索引应为非空。
-
-由于该文档 [insert-on-duplicate](https://dev.mysql.com/doc/refman/8.0/en/insert-on-duplicate.html) 中提到的原因, 我们应该避免在 ON DUPLICATE KEY UPDATE 语句中使用多个唯一索引。如果关闭该约束，用户需要保证源数据能满足不会与表内的多行数据产生唯一索引冲突的条件。
-由于 `NULL` 表示 “a missing unknown value” [working-with-null](https://dev.mysql.com/doc/refman/8.0/en/working-with-null.html), 换一句话说, `NULL` 不会等于 `NULL`，因此语句会从 update 转化为 insert。如果关闭该约束，用户需要保证源数据的唯一键不会为 `NULL`。
-
-### 对更新列的约束
-
-更新列需要包含唯一索引列。
