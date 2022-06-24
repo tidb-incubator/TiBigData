@@ -22,7 +22,12 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_TRANSACTION;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
+import static org.hamcrest.CoreMatchers.isA;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasProperty;
 
+import com.google.common.collect.Lists;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
@@ -37,8 +42,10 @@ import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -73,10 +80,14 @@ public class TiKVDeduplicateNullableIndexTest extends FlinkTestBase {
   private static final String TABLE_UK_NULLABLE =
       "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
           + "("
-          + "  `id` bigint(20) primary Key,\n"
-          + "  `age` int(11) NULL DEFAULT NULL,\n"
-          + "  unique key(`id`)"
+          + "  `id`   bigint(20),\n"
+          + "  `age`  int(11) NULL DEFAULT NULL,\n"
+          + "  `name` varchar(10),\n"
+          + "  unique key(`id`),"
+          + "  unique key(`age`)"
           + ")";
+
+  @Rule public ExpectedException exceptionRule = ExpectedException.none();
 
   @Test
   public void testDeduplicateWithNullUniqueIndex() throws Exception {
@@ -99,10 +110,55 @@ public class TiKVDeduplicateNullableIndexTest extends FlinkTestBase {
     tableEnvironment.sqlUpdate(
         String.format(
             "INSERT INTO `tidb`.`%s`.`%s` "
-                + "VALUES(1, cast(null as int)), (2, cast(null as int))",
+                + "VALUES(1, cast(null as int), 'tony'), (2, cast(null as int), 'mike')",
             DATABASE_NAME, dstTable));
     tableEnvironment.execute("test");
 
-    Assert.assertEquals(2, tiDBCatalog.queryTableCount(DATABASE_NAME, dstTable));
+    checkRowResult(
+        tableEnvironment, Lists.newArrayList("+I[1, null, tony]", "+I[2, null, mike]"), dstTable);
+  }
+
+  @Test
+  public void testDeduplicateWithNullUniqueIndexAndConflictIndex() throws Exception {
+    // If deduplicate is off, we expect a IllegalStateException.
+    if (!deduplicate) {
+      exceptionRule.expectCause(
+          hasProperty(
+              "cause",
+              allOf(
+                  isA(IllegalStateException.class),
+                  hasProperty(
+                      "message",
+                      containsString("Duplicate index in one batch, please enable deduplicate")))));
+    }
+
+    dstTable = "flink_deduplicate_dst_test" + RandomUtils.randomString();
+
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
+    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+    env.setParallelism(1);
+    TableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
+    String dstTable = RandomUtils.randomString();
+    Map<String, String> properties = defaultProperties();
+    properties.put(SINK_IMPL.key(), TIKV.name());
+    properties.put(SINK_TRANSACTION.key(), transaction.name());
+    properties.put(DEDUPLICATE.key(), Boolean.toString(deduplicate));
+    properties.put(WRITE_MODE.key(), writeMode.name());
+
+    TiDBCatalog tiDBCatalog =
+        initTiDBCatalog(dstTable, TABLE_UK_NULLABLE, tableEnvironment, properties);
+
+    tableEnvironment.sqlUpdate(
+        String.format(
+            "INSERT INTO `tidb`.`%s`.`%s` "
+                + "VALUES(1, cast(null as int), 'tony'), (1, cast(null as int), 'mike')",
+            DATABASE_NAME, dstTable));
+    tableEnvironment.execute("test");
+
+    // If deduplicate is on, only one row will be sinked.
+    if (deduplicate) {
+      Assert.assertEquals(
+          1, testDatabase.getClientSession().queryTableCount(DATABASE_NAME, dstTable));
+    }
   }
 }

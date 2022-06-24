@@ -68,8 +68,7 @@ public class DeduplicateRowBuffer extends RowBuffer {
 
       // Since NULL != NULL, we don't deduplicate key with NULL.
       if (indexValue.contains(null)) {
-        rows.add(row);
-        return true;
+        continue;
       }
 
       UniqueKeyColumns uniqueKeyColumns = new UniqueKeyColumns(indexInfo, indexValue);
