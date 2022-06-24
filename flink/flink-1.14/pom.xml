@@ -103,6 +103,12 @@
       <version>${dep.junit.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- telemetry -->
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-telemetry</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -122,6 +128,14 @@
                 <relocation>
                   <pattern>com.google.common</pattern>
                   <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>oshi</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.oshi</shadedPattern>
                 </relocation>
               </relocations>
               <finalName>${project.artifactId}-${project.version}</finalName>

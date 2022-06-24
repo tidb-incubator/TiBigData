@@ -234,6 +234,7 @@ TiBigDate/Flink does not support the following features:
 | tidb.cluster-jks-key-password               | _                                                                              | The key of JKS key store.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | tidb.cluster-jks-trust-path                 | _                                                                              | The path of the JKS trust certificates store, which is used to authenticate remote service. e.g. `/home/TiBigData/.ci/config/cert/jks/server-cert-store`.                                                                                                                                                                                                                                                                                                 |
 | tidb.cluster-jks-trust-password             | _                                                                              | The key of JKS trust certificates store.                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| tidb.telemetry.enable                       | true                                                                           | Whether to enable telemetry collection in TiBigData. Telemetry can be off by setting `false`.                                                                                                                                                                                                                                                                                                                                                             |
 
 ### TLS NOTE
 
@@ -294,3 +295,51 @@ CREATE TABLE `people`(
 );
 SELECT * FROM people;
 ```
+
+## Telemetry
+
+Currently, flink-tidb-connector in TiBigData (only flink-tidb-connector-1.14 and flink-tidb-connector-1.13 versions) will collect usage information by default and share this information with PingCAP.
+Users can actively turn off telemetry by configuring `tidb.telemetry.enable = false`.
+
+When TiBigData telemetry is enabled, TiBigData will send usage information to PingCAP when initializing `catalog`, including but not limited to:
+
+- Randomly generated identifiers
+- Operating system and hardware information
+- Part of TiBigData configuration information.
+
+Here is an example of telemetry information.
+
+```
+2022-05-13 18:20:55,021 [INFO] [ForkJoinPool.commonPool-worker-1] io.tidb.bigdata.telemetry.Telemetry: Telemetry report: {"track_id":"4cec54a944bce9663f19115557c86884","time":"2022-05-13 18:20:54","subName":"flink-1.14","hardware":{"memory":"Available: 931.7 MiB/15.4 GiB","os":"Ubuntu","disks":[{"size":"512110190592","name":"/dev/nvme0n1"}],"cpu":{"logicalCores":"8","model":"11th Gen Intel(R) Core(TM) i7-1160G7 @ 1.20GHz","physicalCores":"4"},"version":"20.04.4 LTS (Focal Fossa) build 5.13.0-41-generic"},"instance":{"TiDBVersion":"v6.0.0","TiBigDataFlinkVersion":"0.0.5-SNAPSHOT","FlinkVersion":"1.14.0"},"content":{"tidb.write_mode":"append","tidb.catalog.load-mode":"eager","tikv.sink.deduplicate":"false","tidb.replica-read":"leader","tikv.sink.buffer-size":"1000","tidb.filter-push-down":"false","sink.buffer-flush.interval":"1s","tidb.sink.impl":"JDBC","tikv.sink.row-id-allocator.step":"30000","sink.buffer-flush.max-rows":"100","tikv.sink.ignore-autoincrement-column-value":"false","tikv.sink.transaction":"MINIBATCH"}}
+```
+
+An entry table of telemetry is shown here.
+
+| Field name                                            | Description                         |
+|-------------------------------------------------------|-------------------------------------|
+| trackId                                               | ID of the telemetry                 |
+| time                                                  | The time point of reporting         |
+| subName                                               | application name                    |
+| hardware.os                                           | Operating system name               |
+| hardware.version                                      | Operating system version            |
+| hardware.cpu.model                                    | CPU model                           |
+| hardware.cpu.logicalCores                             | Number of CPU logical cores         |
+| hardware.cpu.physicalCores                            | Number of CPU physical cores        |
+| hardware.disks.name                                   | Disks name                          |
+| hardware.disks.size                                   | Disks capacity                      |
+| hardware.memory                                       | Memory capacity                     |
+| instance.TiDBVersion                                  | TiDB Version                        |
+| instance.TiBigDataFlinkVersion                        | flink-tidb-connector Version        |
+| instance.FlinkVersion                                 | Flink Version                       |
+| content.{tidb.write_mode}                             | flink-tidb-connector configuration  |
+| content.{tidb.catalog.load-mode}                      | flink-tidb-connector configuration  |
+| content.{tikv.sink.deduplicate}                       | flink-tidb-connector configuration  |
+| content.{tidb.replica-read}                           | flink-tidb-connector configuration  |
+| content.{tikv.sink.buffer-size}                       | flink-tidb-connector configuration  |
+| content.{tidb.filter-push-down}                       | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.interval}                  | flink-tidb-connector configuration  |
+| content.{tidb.sink.impl}                              | flink-tidb-connector configuration  |
+| content.{tikv.sink.row-id-allocator.step}             | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.max-rows}                  | flink-tidb-connector configuration  |
+| content.{tikv.sink.ignore-autoincrement-column-value} | flink-tidb-connector configuration  |
+| content.{tikv.sink.transaction}                       | flink-tidb-connector configuration  |
