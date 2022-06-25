@@ -1,0 +1,50 @@
+name: Flink Stream Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  stream-test:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          cache: maven
+
+      - name: deploy TiUP
+        run: wget https://www.apache.org/dyn/closer.cgi?path=/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+
+      - name: deploy TiDB
+        run: tiup playground --without-monitor
+
+      - name: deploy kafka
+        run: |
+          wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+          mv kafka_2.12-3.2.0 kafka/
+          kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties
+          sleep 10
+          kafka/bin/kafka-server-start.sh kafka/config/server.properties
+
+      - name: deploy ticdc
+        run:  tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc
+
+      - name: create cdc changefeed
+        run: |
+          tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=default"
+          sleep 10
+          tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=craft"
+          sleep 10
+          tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_json?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json&enable-tidb-extension=true"
+
+      - name: test flink-connector-1.14 stream
+        run: mvn test -am -pl flink/flink-1.14 -D test=TiKVDeleteTest -DfailIfNoTests=false
