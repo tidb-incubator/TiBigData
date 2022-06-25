@@ -29,7 +29,7 @@ jobs:
 
       - name: deploy kafka
         run: |
-          wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+          wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz | tar xz
           mv kafka_2.12-3.2.0 kafka/
           kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
           sleep 10
