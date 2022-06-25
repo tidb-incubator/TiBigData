@@ -25,18 +25,18 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
 
       - name: deploy TiDB
-        run: /home/runner/.tiup/bin/tiup playground --without-monitor
+        run: /home/runner/.tiup/bin/tiup playground --without-monitor &
 
       - name: deploy kafka
         run: |
           wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz
           mv kafka_2.12-3.2.0 kafka/
-          kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties
+          kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
           sleep 10
-          kafka/bin/kafka-server-start.sh kafka/config/server.properties
+          kafka/bin/kafka-server-start.sh kafka/config/server.properties &
 
       - name: deploy ticdc
-        run:  /home/runner/.tiup/bin/tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc
+        run:  /home/runner/.tiup/bin/tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
 
       - name: create cdc changefeed
         run: |
