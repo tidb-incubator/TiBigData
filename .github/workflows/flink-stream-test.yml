@@ -22,7 +22,7 @@ jobs:
           cache: maven
 
       - name: deploy TiUP
-        run: wget https://www.apache.org/dyn/closer.cgi?path=/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+        run: curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
 
       - name: deploy TiDB
         run: tiup playground --without-monitor
