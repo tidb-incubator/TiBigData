@@ -48,4 +48,4 @@ jobs:
           /home/runner/.tiup/bin/tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_json?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json&enable-tidb-extension=true"
 
       - name: test flink-connector-1.14 stream
-        run: mvn test -am -pl flink/flink-1.14 -DfailIfNoTests=false
+        run: mvn clean compile test -B -am -pl flink/flink-1.14 -DfailIfNoTests=false
