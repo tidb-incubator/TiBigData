@@ -111,11 +111,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                     def pd_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/pd/${PD_BRANCH}/sha1").trim()
                                     sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/pd/${pd_sha1}/centos7/pd-server.tar.gz | tar xz"
                                     //ticdc
-                                    def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
-                                    sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
+                                    //def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
+                                    //sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
                                     // kafka
-                                    sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
-                                    sh "mv ${kafka_version} kafka/"
+                                    //sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
+                                    //sh "mv ${kafka_version} kafka/"
 
                                     sh """
                                         set -e
@@ -138,27 +138,27 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                         curl -s 127.0.0.1:2379/pd/api/v1/status
                                     """
 
-                                    sh """
-                                        rm -rf /tmp/zookeeper
-                                        rm -rf /tmp/kafka-logs
-                                        kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
-                                        sleep 10
-                                        kafka/bin/kafka-server-start.sh kafka/config/server.properties &
-                                        sleep 10
-                                        kafka/bin/kafka-topics.sh --create --topic tidb_test --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
-                                        kafka/bin/kafka-topics.sh --describe --topic tidb_test --bootstrap-server localhost:9092
-                                    """
+//                                    sh """
+//                                        rm -rf /tmp/zookeeper
+//                                        rm -rf /tmp/kafka-logs
+//                                        kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
+//                                        sleep 10
+//                                        kafka/bin/kafka-server-start.sh kafka/config/server.properties &
+//                                        sleep 10
+//                                        kafka/bin/kafka-topics.sh --create --topic tidb_test --partitions 3 --replication-factor 1 --bootstrap-server localhost:9092
+//                                        kafka/bin/kafka-topics.sh --describe --topic tidb_test --bootstrap-server localhost:9092
+//                                    """
 
-                                    sh """
-                                        cd ticdc-linux-amd64
-                                        ./bin/cdc server --pd="http://127.0.0.1:2379"  --log-file=ticdc.log --addr="0.0.0.0:8301" --advertise-addr="127.0.0.1:8301" &
-                                        sleep 10
-                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test" --no-confirm
-                                        sleep 10
-                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?protocol=craft" --no-confirm
-                                        sleep 10
-                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?protocol=canal-json&enable-tidb-extension=true" --no-confirm
-                                    """
+//                                    sh """
+//                                        cd ticdc-linux-amd64
+//                                        ./bin/cdc server --pd="http://127.0.0.1:2379"  --log-file=ticdc.log --addr="0.0.0.0:8301" --advertise-addr="127.0.0.1:8301" &
+//                                        sleep 10
+//                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test" --no-confirm
+//                                        sleep 10
+//                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?protocol=craft" --no-confirm
+//                                        sleep 10
+//                                        ./bin/cdc cli changefeed create --pd="http://127.0.0.1:2379" --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?protocol=canal-json&enable-tidb-extension=true" --no-confirm
+//                                    """
                                 }
 
                                 java_home = ""
@@ -187,8 +187,8 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                 sh "cat _run/pd.log"
                                 sh "cat _run/tikv.log"
                                 sh "cat _run/tidb.log"
-                                sh "cat _run/kafka/logs/server.log"
-                                sh "cat _run/ticdc-linux-amd64/ticdc.log"
+//                                sh "cat _run/kafka/logs/server.log"
+//                                sh "cat _run/ticdc-linux-amd64/ticdc.log"
                                 throw err
                             }
 
