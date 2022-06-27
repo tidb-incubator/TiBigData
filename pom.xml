@@ -193,8 +193,7 @@
             <useUnlimitedThreads>true</useUnlimitedThreads>
             <forkMode>always</forkMode>
             <!-- Skip the Integration tests as part of surefire run -->
-            <excludedGroups>io.tidb.bigdata.test.IntegrationTest</excludedGroups>
-            <excludedGroups>io.tidb.bigdata.test.StreamIntegrationTest</excludedGroups>
+            <excludedGroups>io.tidb.bigdata.test.IntegrationTest,io.tidb.bigdata.test.StreamIntegrationTest</excludedGroups>
           </configuration>
           <version>3.0.0-M3</version>
         </plugin>
