@@ -1,3 +1,4 @@
+// we test stream in github action, so we don't deploy kafka and cdc here
 def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPullDescription, credentialsId) {
 
     def TIDB_BRANCH = "master"
@@ -111,11 +112,11 @@ def call(ghprbActualCommit, ghprbPullId, ghprbPullTitle, ghprbPullLink, ghprbPul
                                     def pd_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/pd/${PD_BRANCH}/sha1").trim()
                                     sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/pd/${pd_sha1}/centos7/pd-server.tar.gz | tar xz"
                                     //ticdc
-                                    //def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
-                                    //sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
+//                                    def ticdc_sha1 = sh(returnStdout: true, script: "curl ${FILE_SERVER_URL}/download/refs/pingcap/ticdc/${TICDC_BRANCH}/sha1").trim()
+//                                    sh "curl ${FILE_SERVER_URL}/download/builds/pingcap/ticdc/${ticdc_sha1}/centos7/ticdc-linux-amd64.tar.gz | tar xz"
                                     // kafka
-                                    //sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
-                                    //sh "mv ${kafka_version} kafka/"
+//                                    sh "curl ${FILE_SERVER_URL}/download/${kafka_version}.tgz | tar xz"
+//                                    sh "mv ${kafka_version} kafka/"
 
                                     sh """
                                         set -e
