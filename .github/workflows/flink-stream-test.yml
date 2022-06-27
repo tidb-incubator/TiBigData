@@ -1,0 +1,51 @@
+name: Flink Stream Test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  stream-test:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          cache: maven
+
+      - name: deploy TiUP
+        run: curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
+
+      - name: deploy TiDB
+        run: /home/runner/.tiup/bin/tiup playground --without-monitor &
+
+      - name: deploy kafka
+        run: |
+          wget https://dlcdn.apache.org/kafka/3.2.0/kafka_2.12-3.2.0.tgz
+          tar -zxvf kafka_2.12-3.2.0.tgz
+          mv kafka_2.12-3.2.0 kafka/
+          kafka/bin/zookeeper-server-start.sh kafka/config/zookeeper.properties &
+          sleep 10
+          kafka/bin/kafka-server-start.sh kafka/config/server.properties &
+
+      - name: deploy ticdc
+        run:  /home/runner/.tiup/bin/tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
+
+      - name: create cdc changefeed
+        run: |
+          /home/runner/.tiup/bin/tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=default"
+          sleep 10
+          /home/runner/.tiup/bin/tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=craft"
+          sleep 10
+          /home/runner/.tiup/bin/tiup cdc cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json&enable-tidb-extension=true"
+
+      - name: test flink-connector-1.14 stream
+        run: mvn clean test-compile failsafe:integration-test failsafe:verify -B -am -pl flink/flink-1.14 -DIntegrationTestsGroup=io.tidb.bigdata.test.StreamIntegrationTest
