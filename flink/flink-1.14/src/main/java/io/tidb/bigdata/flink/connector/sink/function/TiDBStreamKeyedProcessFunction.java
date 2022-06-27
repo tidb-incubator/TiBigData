@@ -79,6 +79,12 @@ public class TiDBStreamKeyedProcessFunction extends KeyedProcessFunction<List<Ob
   public void processElement(
       Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx, Collector<Row> out)
       throws Exception {
+    // Since NULL != NULL, we don't deduplicate key with NULL.
+    if (ctx.getCurrentKey().contains(null)) {
+      out.collect(row);
+      return;
+    }
+
     CheckpointEntry value = checkpointEntryValueState.value();
     if (value == null || !value.equals(checkpointEntry)) {
       checkpointEntryValueState.update(checkpointEntry.copy());

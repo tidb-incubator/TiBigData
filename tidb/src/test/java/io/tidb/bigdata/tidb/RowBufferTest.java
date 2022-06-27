@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
+import io.tidb.bigdata.tidb.buffer.RowBuffer;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.ObjectRowImpl;
 import io.tidb.bigdata.tidb.row.Row;
