@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.tidb.delete;
+package io.tidb.bigdata.flink.tidb.stream.delete;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DELETE_ENABLE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_PARSE_ERRORS;
