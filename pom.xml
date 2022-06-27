@@ -59,7 +59,7 @@
     <mysql.driver.scope>test</mysql.driver.scope>
     <failsafe.version>3.0.0-M3</failsafe.version>
     <skipIntegrationTests>false</skipIntegrationTests>
-    <IntegrationTestsInclude>**/*.java</IntegrationTestsInclude>
+    <IntegrationTestsGroup>io.tidb.bigdata.test.IntegrationTest</IntegrationTestsGroup>
   </properties>
 
   <repositories>
@@ -212,9 +212,9 @@
             <trimStackTrace>false</trimStackTrace>
             <useFile>false</useFile>
             <skip>${skipIntegrationTests}</skip>
-            <groups>io.tidb.bigdata.test.IntegrationTest</groups>
+            <groups>${IntegrationTestsGroup}</groups>
             <includes>
-              <include>${IntegrationTestsInclude}</include>
+              <include>**/*.java</include>
             </includes>
           </configuration>
           <executions>

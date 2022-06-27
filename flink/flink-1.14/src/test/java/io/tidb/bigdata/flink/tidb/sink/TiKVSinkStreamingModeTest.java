@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.tidb.bigdata.flink.tidb.stream;
+package io.tidb.bigdata.flink.tidb.sink;
 
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DEDUPLICATE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
