@@ -29,6 +29,7 @@ import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
+import io.tidb.bigdata.test.StreamIntegrationTest;
 import java.util.Map;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -44,7 +45,7 @@ import org.junit.experimental.categories.Category;
  * column type - MYSQLTYPE: int - TypeLong, bit-TypeBit, tinyint-TypeTiny, smallint-TypeShort
  * mediumint-TypeInt24, year-TypeYear
  */
-@Category(IntegrationTest.class)
+@Category(StreamIntegrationTest.class)
 public class TiKVSinkTypeTest extends FlinkTestBase {
 
   private String srcTable;
