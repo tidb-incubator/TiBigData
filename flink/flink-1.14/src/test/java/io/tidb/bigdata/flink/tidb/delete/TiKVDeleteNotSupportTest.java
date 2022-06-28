@@ -31,8 +31,8 @@ import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
-import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
+import io.tidb.bigdata.test.StreamIntegrationTest;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,7 +47,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameters;
 
 /** append mode will throw exception Global is not tested for it can't work with streaming */
-@Category(IntegrationTest.class)
+@Category(StreamIntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteNotSupportTest extends FlinkTestBase {
 
