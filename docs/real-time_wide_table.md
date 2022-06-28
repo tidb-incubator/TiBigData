@@ -46,14 +46,13 @@ mysql --host 127.0.0.1 --port 4000 -uroot --database test
 CREATE TABLE `order_wide_table`
 (
     `id`   int not null,
-    `name` varchar(256),
     `item_id` int, 
     `item_name` varchar(256), 
     `user_id` varchar(256), 
     `ts` timestamp,
     `pay_id` int, 
     `pay_amount` int, 
-    `pay_status` int, 
+    `pay_status` varchar(256), 
     `ps_ts` timestamp,
     `exp_id` int, 
     `address` varchar(256), 
@@ -63,44 +62,41 @@ CREATE TABLE `order_wide_table`
 );
 ```
 
-Using flink sql client to sink in `Real-time wide table` scenario. The `mock_${value}` will never be used，just a placeholder:
+Using flink sql client to sink in `Real-time wide table` scenario. You can set an arbitrary value to the column which does not exist in `'tidb.sink.update-columns'`, since they will never be used, just as a placeholder:
 
 ```sql
 // the first source
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */
-VALUES(100, 001, '手机','张三', 2021-12-06 12:01:01, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, mock_exp_id, mock_address, mock_recipient, mock_exp_ts)
+VALUES(100, 
+    001, '手机','张三', cast('2021-12-06 12:01:01' as timestamp), 
+    -1, -1, 'unknown', cast('1999-11-11 11:11:11' as timestamp),
+    -1, "hell", 'god', cast('1999-11-11 11:11:11' as timestamp))
 
 // the second source
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, pay_id, pay_amount, pay_status, ps_ts') */
-VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, 2002, 399, '已支付', 2021-12-06 12:02:01, mock_exp_id, mock_address, mock_recipient, mock_exp_ts)
+VALUES(100, 
+    -1, 'soul', 'adam', cast('1999-11-11 11:11:11' as timestamp),
+    2002, 399, '已支付', cast('2021-12-06 12:02:01' as timestamp), 
+    -1, "hell", 'god', cast('1999-11-11 11:11:11' as timestamp))
 
 // the third source
 INSERT INTO `tidb`.`dstDatabase`.`order_wide_table` /*+ OPTIONS('tidb.sink.update-columns'='id, exp_id, address, recipient, exp_ts') */
-VALUES(100, mock_item_id, mock_item_name, mock_user_id, mock_ts, mock_pay_id, mock_pay_amount, mock_pay_status, mock_ps_ts, 3002, '上海市黄浦区外滩SOHO C座', '张三', 2021-12-06 15:01:01)
+VALUES(100, 
+    -1, 'soul', 'adam', cast('1999-11-11 11:11:11' as timestamp),
+    -1, -1, 'unknown', cast('1999-11-11 11:11:11' as timestamp),
+    3002, '上海市黄浦区外滩SOHO C座', '张三', cast('2021-12-06 15:01:01' as timestamp))
 ```
 
 > **NOTE:**
 > Currently we don't support ```INSERT INTO `tidb`.`dstDatabase`.`dstTable` /*+ OPTIONS('tidb.sink.update-columns'='id, item_id, item_name, user_id, ts') */ (id, item_id, item_name, user_id, ts)
-VALUES(100, 001, '手机'，'张三'，2021-12-06 12:01:01)```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
+VALUES(100, 001, '手机'，'张三'，cast('2021-12-06 15:01:01' as timestamp))```, since there is a [bug](https://issues.apache.org/jira/browse/FLINK-27683) in Flink SQL.
 
 > **NOTE:**
 > `tidb.sink.update-columns` is only working in SQL hints. If you set this in catalog properties, it will raise an `IllegalArgumentException`.
 
 ## Constraints
 
-To avoid unexpected results, we default check some constraints. You can set `tidb.sink.skip-check-update-columns` true to force skip check.
-
-```sql
-CREATE
-CATALOG `tidb`
-WITH (
-    'type' = 'tidb',
-    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
-    'tidb.username' = 'root',
-    'tidb.password' = '',
-    'tidb.sink.skip-check-update-columns' = 'true'
-);
-```
+To achieve real-time wide table joining, we default check some constraints.
 
 ### Constraints on the destination table
 
@@ -113,3 +109,20 @@ Due to `NULL` meaning "a missing unknown value" [working-with-null](https://dev.
 ### Constraints on the update columns
 
 The update columns should contain the unique key column(including the primary key).
+
+### Skip the constraints
+
+You can set `tidb.sink.skip-check-update-columns` true to force skip check, but we don't recommend you to do it.
+With setting `tidb.sink.skip-check-update-columns`, it will regress to `ON DUPLICATE KEY UPDATE` semantics, in which there is no join guarantee.
+
+```sql
+CREATE
+CATALOG `tidb`
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = '',
+    'tidb.sink.skip-check-update-columns' = 'true'
+);
+```
