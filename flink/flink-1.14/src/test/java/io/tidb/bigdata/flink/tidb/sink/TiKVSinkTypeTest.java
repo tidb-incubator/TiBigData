@@ -27,7 +27,6 @@ import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
 import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
-import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.test.StreamIntegrationTest;
 import java.util.Map;
