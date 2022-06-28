@@ -65,6 +65,12 @@ public class TiDBBatchKeyedProcessFunction extends KeyedProcessFunction<List<Obj
   public void processElement(
       Row row, KeyedProcessFunction<List<Object>, Row, Row>.Context ctx, Collector<Row> out)
       throws Exception {
+    // Since NULL != NULL, we don't deduplicate key with NULL.
+    if (ctx.getCurrentKey().contains(null)) {
+      out.collect(row);
+      return;
+    }
+
     if (existState.value() == null) {
       existState.update(true);
       out.collect(row);
