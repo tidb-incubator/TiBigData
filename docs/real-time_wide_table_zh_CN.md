@@ -18,7 +18,7 @@
 ## 支持与限制
 
 - 只有当 `tidb.write_mode` 为 `upsert` 时才能正常工作。
-- 只有懂 `tidb.sink.impl` 为 `JDBC` 时才能正常工作。
+- 只有当 `tidb.sink.impl` 为 `JDBC` 时才能正常工作。
 - 同时适用于 `batch` 和 `streaming` 执行模式。
 
 ## 使用指南
