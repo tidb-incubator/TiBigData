@@ -199,7 +199,7 @@ public class RowEncoderV2 {
       case TypeShort:
       case TypeTiny:
         // TODO: encode consider unsigned
-        encodeInt(cdo, Long.parseLong(value.toString()));
+        encodeInt(cdo, ((Number) value).longValue());
         break;
       case TypeFloat:
       case TypeDouble:
@@ -236,7 +236,7 @@ public class RowEncoderV2 {
         break;
       case TypeDuration:
       case TypeYear:
-        encodeInt(cdo, Long.parseLong(value.toString()));
+        encodeInt(cdo, ((Number) value).longValue());
         break;
       case TypeEnum:
         encodeEnum(cdo, value, tp.getElems());

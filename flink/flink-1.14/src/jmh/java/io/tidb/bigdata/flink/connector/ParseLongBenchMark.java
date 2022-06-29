@@ -35,7 +35,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @State(Scope.Thread)
 public class ParseLongBenchMark {
 
-  @Param({"1","1000000"})
+  @Param({"1000000"})
   public int data;
 
   @Benchmark
@@ -44,7 +44,7 @@ public class ParseLongBenchMark {
   @Warmup(iterations = 2)
   @OutputTimeUnit(TimeUnit.NANOSECONDS)
   public void parseLong(Blackhole blackhole){
-    Object obj = new Long(data);
+    Object obj = new Integer(data);
     long ans = Long.parseLong(obj.toString());
     blackhole.consume(ans);
   }
@@ -55,8 +55,9 @@ public class ParseLongBenchMark {
   @Warmup(iterations = 2)
   @OutputTimeUnit(TimeUnit.NANOSECONDS)
   public void convertLong(Blackhole blackhole){
-    Object obj = new Long(data);
-    long ans = (long)obj;
+    Object obj = new Integer(data);
+    Number number = (Number)obj;
+    long ans = number.longValue();
     blackhole.consume(ans);
   }
 
