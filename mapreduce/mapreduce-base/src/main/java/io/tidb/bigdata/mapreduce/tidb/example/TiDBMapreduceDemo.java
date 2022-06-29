@@ -29,6 +29,7 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Map;
 import org.apache.hadoop.conf.Configuration;
@@ -159,6 +160,7 @@ public class TiDBMapreduceDemo {
             values[fieldIndex] = resultSet.getTime(i);
             break;
           case TIMESTAMP:
+          case DATETIME:
             values[fieldIndex] = resultSet.getTimestamp(i);
             break;
           case DATE:
@@ -204,6 +206,7 @@ public class TiDBMapreduceDemo {
     STRING(String.class.getName()),
     BYTES(byte[].class.getName()),
     DATE(Date.class.getName()),
+    DATETIME(LocalDateTime.class.getName()),
     TIMESTAMP(Timestamp.class.getName()),
     TIME(Time.class.getName()),
     ARRAY(Array.class.getName()),

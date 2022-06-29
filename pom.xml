@@ -51,7 +51,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <javadoc.skip>true</javadoc.skip>
-    <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
+    <dep.mysql.jdbc.version>8.0.28</dep.mysql.jdbc.version>
     <dep.junit.version>4.13.1</dep.junit.version>
     <gpg.keyname>fake gpg keyname</gpg.keyname>
     <gpg.skip>true</gpg.skip>
