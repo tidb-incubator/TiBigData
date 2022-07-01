@@ -132,9 +132,9 @@ WITH (
   'tidb.streaming.kafka.topic' = 'test_cdc',
   'tidb.streaming.kafka.group.id' = 'test_cdc_group',
   'tidb.streaming.ignore-parse-errors' = 'true',
-  'tidb.sink.impl' = 'TIKV',
+  'tidb.sink.impl' = 'tikv',
   'tidb.write_mode' = 'upsert',
-  'tikv.sink.transaction' = 'MINIBATCH',
+  'tikv.sink.transaction' = 'minibatch',
   'tikv.sink.delete_enable' = 'true'
 );
 
