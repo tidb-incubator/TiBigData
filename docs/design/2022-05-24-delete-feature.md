@@ -39,7 +39,7 @@ Pk is easy to understand, a valid uk means:
 
 In summary, Here are the goals:
 - Delete will bypass TiDB.
-- Delete is only supported in streaming mode, which means delete can only work in `minibatch` because `GLOBAL` transaction is for batch mode. If you work in `GLOBAL` transaction, an exception will be thrown.
+- Delete is only supported in streaming mode, which means delete can only work in `minibatch` because `global` transaction is for batch mode. If you work in `GLOBAL` transaction, an exception will be thrown.
 - Delete is only supported in upsert mode, for append mode does not have delete semantics. If you work in append mode, an exception will be thrown.
 - Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown.
 
