@@ -173,12 +173,26 @@ public class TiDBRowConverter implements Serializable {
         case TypeNull:
           break;
         case TypeBit:
+          tiRow.set(i, type, rowData.getBoolean(i));
+          break;
         case TypeTiny:
+          tiRow.set(i, type, rowData.getByte(i));
+          break;
         case TypeShort:
+          tiRow.set(i, type, rowData.getShort(i));
+          break;
         case TypeInt24:
-        case TypeLong:
+          tiRow.set(i, type, rowData.getInt(i));
+          break;
         case TypeYear:
-          tiRow.set(i, type, rowData.getLong(i));
+          tiRow.set(i, type, rowData.getInt(i));
+          break;
+        case TypeLong:
+          if (unsigned) {
+            tiRow.set(i, type, rowData.getLong(i));
+          } else {
+            tiRow.set(i, type, rowData.getInt(i));
+          }
           break;
         case TypeDatetime:
         case TypeTimestamp:

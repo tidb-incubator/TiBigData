@@ -57,6 +57,7 @@ import org.junit.runners.Parameterized.Parameters;
 @Category(StreamIntegrationTest.class)
 @RunWith(org.junit.runners.Parameterized.class)
 public class TiKVDeleteCodecTest extends FlinkTestBase {
+
   private String srcTable;
 
   private String dstTable;
