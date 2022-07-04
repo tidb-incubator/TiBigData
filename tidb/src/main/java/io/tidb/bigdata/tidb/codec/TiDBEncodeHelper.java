@@ -118,7 +118,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
   private Handle extractHandle(Row tiRow) {
     if (tiTableInfo.isPkHandle()) {
-      return new IntHandle((long) tiRow.get(handleCol.getOffset(), handleCol.getType()));
+      return new IntHandle(
+          ((Number) tiRow.get(handleCol.getOffset(), handleCol.getType())).longValue());
     } else if (isCommonHandle) {
       List<DataType> dataTypes = new ArrayList<>();
       List<Object> data = new ArrayList<>();

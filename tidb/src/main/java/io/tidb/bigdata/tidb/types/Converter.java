@@ -158,6 +158,8 @@ public class Converter {
       return Long.parseLong(val.toString());
     } else if (val instanceof Handle) {
       return ((Handle) val).intValue();
+    } else if (val instanceof Boolean) {
+      return (boolean) val ? 1 : 0;
     }
     throw new TypeException(
         String.format("Cannot cast %s to long", val.getClass().getSimpleName()));
