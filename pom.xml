@@ -51,7 +51,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <javadoc.skip>true</javadoc.skip>
-    <dep.mysql.jdbc.version>8.0.21</dep.mysql.jdbc.version>
+    <dep.mysql.jdbc.version>8.0.28</dep.mysql.jdbc.version>
     <dep.junit.version>4.13.1</dep.junit.version>
     <gpg.keyname>fake gpg keyname</gpg.keyname>
     <gpg.skip>true</gpg.skip>
@@ -59,6 +59,7 @@
     <mysql.driver.scope>test</mysql.driver.scope>
     <failsafe.version>3.0.0-M3</failsafe.version>
     <skipIntegrationTests>false</skipIntegrationTests>
+    <IntegrationTestsGroup>io.tidb.bigdata.test.IntegrationTest</IntegrationTestsGroup>
   </properties>
 
   <repositories>
@@ -192,7 +193,7 @@
             <useUnlimitedThreads>true</useUnlimitedThreads>
             <forkMode>always</forkMode>
             <!-- Skip the Integration tests as part of surefire run -->
-            <excludedGroups>io.tidb.bigdata.test.IntegrationTest</excludedGroups>
+            <excludedGroups>io.tidb.bigdata.test.IntegrationTest,io.tidb.bigdata.test.StreamIntegrationTest</excludedGroups>
           </configuration>
           <version>3.0.0-M3</version>
         </plugin>
@@ -211,7 +212,7 @@
             <trimStackTrace>false</trimStackTrace>
             <useFile>false</useFile>
             <skip>${skipIntegrationTests}</skip>
-            <groups>io.tidb.bigdata.test.IntegrationTest</groups>
+            <groups>${IntegrationTestsGroup}</groups>
             <includes>
               <include>**/*.java</include>
             </includes>
