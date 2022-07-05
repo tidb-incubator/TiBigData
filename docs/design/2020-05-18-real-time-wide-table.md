@@ -123,7 +123,7 @@ public class DuplicateKeyUpdateOutputRowData implements RowData {
 ## Compatibility
 
 - This feature works in both batch and streaming mode.
-- This feature only works when `tidb.sink.impl` is `JDBC` and `tidb.write_mode` is `upsert`.
+- This feature only works when `tidb.sink.impl` is `jdbc` and `tidb.write_mode` is `upsert`.
 
 ## Test Design
 

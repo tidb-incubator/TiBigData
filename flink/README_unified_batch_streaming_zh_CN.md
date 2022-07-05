@@ -132,9 +132,9 @@ WITH (
   'tidb.streaming.kafka.topic' = 'test_cdc',
   'tidb.streaming.kafka.group.id' = 'test_cdc_group',
   'tidb.streaming.ignore-parse-errors' = 'true',
-  'tidb.sink.impl' = 'TIKV',
+  'tidb.sink.impl' = 'tikv',
   'tidb.write_mode' = 'upsert',
-  'tikv.sink.transaction' = 'MINIBATCH',
+  'tikv.sink.transaction' = 'minibatch',
   'tikv.sink.delete_enable' = 'true'
 );
 
@@ -156,7 +156,7 @@ DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 ```
 
 关键点
-- 删除只支持在流模式中运行，因此它只能在 MINIBATCH 下工作，如果在 GLOBAL 下工作，则会抛出异常。
+- 删除只支持在流模式中运行，因此它只能在 minibatch 下工作，如果在 global 下工作，则会抛出异常。
 - 删除只能在 upsert 模式下运行，如果你运行在 append 模式下，则会抛出异常。
 - 删除只能在含有至少一个主键或合法唯一索引的表下运行，否则将会抛出异常，合法的唯一索引是指:
   - 唯一索引的值不为 null

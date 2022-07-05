@@ -39,7 +39,7 @@ Pk is easy to understand, a valid uk means:
 
 In summary, Here are the goals:
 - Delete will bypass TiDB.
-- Delete is only supported in streaming mode, which means delete can only work in `MINIBATCH` because `GLOBAL` transaction is for batch mode. If you work in `GLOBAL` transaction, an exception will be thrown.
+- Delete is only supported in streaming mode, which means delete can only work in `minibatch` because `global` transaction is for batch mode. If you work in `GLOBAL` transaction, an exception will be thrown.
 - Delete is only supported in upsert mode, for append mode does not have delete semantics. If you work in append mode, an exception will be thrown.
 - Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown.
 
@@ -48,13 +48,13 @@ In summary, Here are the goals:
 We introduce a new config `sink.tikv.delete-enable` to control delete.
 - The config is a boolean type with the default value `false`, which will disable the delete feature.
 - It is a config for streaming. When you work in batch mode and set this config, an exception will be thrown.
-- The config works with `tidb.sink.impl=TIKV`, it will not work when `tidb.sink.impl=JDBC`.
+- The config works with `tidb.sink.impl=tikv`, it will not work when `tidb.sink.impl=jdbc`.
 
 ### Main Steps
 
 Here are the main steps to support the delete feature:
 - Add the configuration to open delete.
-- Check if delete is enabled. If you are not in MINIBATCH transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`.
+- Check if delete is enabled. If you are not in minibatch transaction or upsert mode, delete will be disabled even you configure `sink.tikv.delete-enable` to `true`.
 - Use a new class TiRow to distinguish between delete RowKind and insert/update RowKind in MiniBatch.
 - Exclude delete RowKind to upsert when flush rows buffer.
 - Use delete RowKind to delete when flush rows buffer.

@@ -131,9 +131,9 @@ WITH (
   'tidb.streaming.kafka.topic' = 'test_cdc',
   'tidb.streaming.kafka.group.id' = 'test_cdc_group',
   'tidb.streaming.ignore-parse-errors' = 'true',
-  'tidb.sink.impl' = 'TIKV',
+  'tidb.sink.impl' = 'tikv',
   'tidb.write_mode' = 'upsert',
-  'tikv.sink.transaction' = 'MINIBATCH',
+  'tikv.sink.transaction' = 'minibatch',
   'tikv.sink.delete_enable' = 'true'
 );
 
@@ -155,7 +155,7 @@ DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 ```
 
 Keypoints
-- Delete is only supported in streaming mode, which means delete can only work in MINIBATCH because GLOBAL transaction is for batch mode. If you work in GLOBAL transaction, an exception will be thrown.
+- Delete is only supported in streaming mode, which means delete can only work in minibatch because global transaction is for batch mode. If you work in GLOBAL transaction, an exception will be thrown.
 - Delete is only supported in upsert mode, If you work in append mode, an exception will be thrown.
 - Delete is only supported in tables with at least one pk or valid uk, or an exception will be thrown. valid uk means:
   - The uk's value should not be null.
