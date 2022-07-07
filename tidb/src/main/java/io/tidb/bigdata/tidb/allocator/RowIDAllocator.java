@@ -133,24 +133,27 @@ public final class RowIDAllocator implements Serializable {
     if (!iterator.hasNext()) {
       return;
     }
-    TwoPhaseCommitter twoPhaseCommitter = new TwoPhaseCommitter(session, timestamp.getVersion());
-    BytePairWrapper primaryPair = pairs.get(0);
-    twoPhaseCommitter.prewritePrimaryKey(
-        ConcreteBackOffer.newCustomBackOff(2000), primaryPair.getKey(), primaryPair.getValue());
-
-    if (!iterator.hasNext()) {
-      twoPhaseCommitter.prewriteSecondaryKeys(primaryPair.getKey(), iterator, 20000);
-    }
-
-    twoPhaseCommitter.commitPrimaryKey(
-        ConcreteBackOffer.newCustomBackOff(5000),
-        primaryPair.getKey(),
-        session.getTimestamp().getVersion());
-
+    TwoPhaseCommitter twoPhaseCommitter = new TwoPhaseCommitter(session, timestamp.getVersion(),
+        1000L);
     try {
-      twoPhaseCommitter.close();
-    } catch (Throwable ignored) {
-      // ignore
+      BytePairWrapper primaryPair = pairs.get(0);
+      twoPhaseCommitter.prewritePrimaryKey(
+          ConcreteBackOffer.newCustomBackOff(1000), primaryPair.getKey(), primaryPair.getValue());
+
+      if (!iterator.hasNext()) {
+        twoPhaseCommitter.prewriteSecondaryKeys(primaryPair.getKey(), iterator, 1000);
+      }
+
+      twoPhaseCommitter.commitPrimaryKey(
+          ConcreteBackOffer.newCustomBackOff(1000),
+          primaryPair.getKey(),
+          session.getTimestamp().getVersion());
+    } finally {
+      try {
+        twoPhaseCommitter.close();
+      } catch (Throwable ignored) {
+        // ignore
+      }
     }
   }
 
@@ -266,7 +269,9 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
-  /** read current row id from TiKV according to database id and table id. */
+  /**
+   * read current row id from TiKV according to database id and table id.
+   */
   public static long getAllocateId(long dbId, long tableId, Snapshot snapshot) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       ByteString dbKey = MetaCodec.encodeDatabaseID(dbId);
