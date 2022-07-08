@@ -133,8 +133,8 @@ public final class RowIDAllocator implements Serializable {
     if (!iterator.hasNext()) {
       return;
     }
-    TwoPhaseCommitter twoPhaseCommitter = new TwoPhaseCommitter(session, timestamp.getVersion(),
-        1000L);
+    TwoPhaseCommitter twoPhaseCommitter =
+        new TwoPhaseCommitter(session, timestamp.getVersion(), 1000L);
     try {
       BytePairWrapper primaryPair = pairs.get(0);
       twoPhaseCommitter.prewritePrimaryKey(
@@ -269,9 +269,7 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
-  /**
-   * read current row id from TiKV according to database id and table id.
-   */
+  /** read current row id from TiKV according to database id and table id. */
   public static long getAllocateId(long dbId, long tableId, Snapshot snapshot) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       ByteString dbKey = MetaCodec.encodeDatabaseID(dbId);

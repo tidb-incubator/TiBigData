@@ -39,8 +39,8 @@ public class RowIDAllocatorTest {
     int count = threads * 10;
     int step = 10000;
     ExecutorService executorService = null;
-    try (ClientSession session = ClientSession.create(
-        new ClientConfig(ConfigUtils.defaultProperties()))) {
+    try (ClientSession session =
+        ClientSession.create(new ClientConfig(ConfigUtils.defaultProperties()))) {
       executorService = Executors.newFixedThreadPool(threads);
       String databaseName = "test";
       String tableName = "test_row_id_allocator";
@@ -51,8 +51,7 @@ public class RowIDAllocatorTest {
 
       for (int i = 1; i <= count; i++) {
         FutureTask<RowIDAllocator> task =
-            new FutureTask<>(
-                () -> session.createRowIdAllocator(databaseName, tableName, step));
+            new FutureTask<>(() -> session.createRowIdAllocator(databaseName, tableName, step));
         tasks.add(task);
         executorService.submit(task);
       }
@@ -67,6 +66,5 @@ public class RowIDAllocatorTest {
         executorService.shutdownNow();
       }
     }
-
   }
 }
