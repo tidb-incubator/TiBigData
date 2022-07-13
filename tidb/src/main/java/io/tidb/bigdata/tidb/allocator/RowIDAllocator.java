@@ -151,8 +151,8 @@ public final class RowIDAllocator implements Serializable {
     } finally {
       try {
         twoPhaseCommitter.close();
-      } catch (Throwable ignored) {
-        // ignore
+      } catch (Throwable t) {
+        LOG.warn("Closing twoPhaseCommitter failed.", t);
       }
     }
   }
