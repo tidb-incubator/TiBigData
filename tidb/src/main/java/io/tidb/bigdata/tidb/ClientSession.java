@@ -71,6 +71,7 @@ import org.tikv.common.TiSession;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.util.KeyRangeUtils;
 import org.tikv.common.util.RangeSplitter;
+import org.tikv.common.util.RangeSplitter.RegionTask;
 import org.tikv.kvproto.Coprocessor;
 import org.tikv.shade.com.google.protobuf.ByteString;
 
@@ -303,6 +304,17 @@ public final class ClientSession implements AutoCloseable {
   public CoprocessorIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
     return CoprocessorIterator.getRowIterator(
         request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
+  }
+
+  public CoprocessorIterator<Row> iterate(
+      TiDAGRequest.Builder request, List<Base64KeyRange> ranges) {
+    List<RegionTask> regionTasks =
+        ranges.stream()
+            .map(this::getRangeRegionTasks)
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
+    return CoprocessorIterator.getRowIterator(
+        request.build(TiDAGRequest.PushDownType.NORMAL), regionTasks, session);
   }
 
   private void loadPdAddresses() {

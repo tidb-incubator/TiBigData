@@ -41,7 +41,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
-/** A RecordReader that reads records from a TiDB table. */
+/**
+ * A RecordReader that reads records from a TiDB table.
+ */
 public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongWritable, T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBRecordReader.class);
@@ -67,8 +69,6 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
   private TiTimestamp timestamp;
 
   private List<SplitInternal> splitInternals;
-
-  private int currentSplitIndex = -1;
 
   private long recordCount;
 
@@ -107,16 +107,16 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
     // do nothing
   }
 
-  private boolean tryNextSplit() {
-    while (true) {
-      currentSplitIndex++;
-      if (currentSplitIndex >= splitInternals.size()) {
-        return false;
-      }
+  @Override
+  public boolean nextKeyValue() {
+    if (key == null) {
+      key = new LongWritable();
+    }
+    if (cursor == null) {
       RecordSetInternal recordSetInternal =
           new RecordSetInternal(
               clientSession,
-              splitInternals.get(currentSplitIndex),
+              splitInternals,
               Arrays.stream(projectedFieldIndexes)
                   .mapToObj(columnHandleInternals::get)
                   .collect(Collectors.toList()),
@@ -124,24 +124,9 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
               Optional.ofNullable(timestamp),
               Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
       cursor = recordSetInternal.cursor();
-      if (!cursor.advanceNextPosition()) {
-        continue;
-      }
-      tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), resultSetMetaData);
-      value = ReflectionUtils.newInstance(inputClass, dfConf.getConf());
-      return true;
     }
-  }
-
-  @Override
-  public boolean nextKeyValue() {
-    if (key == null) {
-      key = new LongWritable();
-    }
-    if (cursor == null || !cursor.advanceNextPosition()) {
-      if (!tryNextSplit()) {
-        return false;
-      }
+    if (!cursor.advanceNextPosition()) {
+      return false;
     }
 
     key.set(recordCount++);
@@ -157,6 +142,10 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
   }
 
   public void updateTiDBResultSet(RecordCursorInternal cursor) {
+    if (tiDBResultSet == null) {
+      tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), resultSetMetaData);
+      value = ReflectionUtils.newInstance(inputClass, dfConf.getConf());
+    }
     for (int index = 0; index < cursor.fieldCount(); index++) {
       Object object = cursor.getObject(index);
       tiDBResultSet.setObject(object, index + 1);

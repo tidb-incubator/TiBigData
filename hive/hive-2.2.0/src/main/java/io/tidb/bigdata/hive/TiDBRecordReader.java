@@ -49,12 +49,10 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
 
   private long pos;
   private ClientSession clientSession;
-  private Integer currentSplitIndex;
-  private RecordCursorInternal currentCursor;
+  private RecordCursorInternal cursor;
   private List<ColumnHandleInternal> columns;
 
   public TiDBRecordReader(InputSplit split, Map<String, String> properties) {
-    this.currentSplitIndex = 0;
     this.tidbInputSplit = (TiDBInputSplit) split;
     this.properties = properties;
     this.splitInternals = tidbInputSplit.getSplitInternals();
@@ -72,8 +70,8 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
     }
   }
 
-  private void initCurrentCursor() {
-    SplitInternal splitInternal = splitInternals.get(currentSplitIndex);
+  private void initCursor() {
+    SplitInternal splitInternal = splitInternals.get(0);
 
     columns =
         clientSession.getTableColumnsMust(
@@ -88,33 +86,30 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
             columns,
             Optional.empty(),
             Optional.ofNullable(timestamp));
-    currentCursor = recordSetInternal.cursor();
+    cursor = recordSetInternal.cursor();
   }
 
   @Override
   public boolean next(LongWritable longWritable, MapWritable mapWritable) throws IOException {
+    if (splitInternals.size() == 0) {
+      return false;
+    }
     initClientSession();
 
-    if (currentCursor == null) {
-      initCurrentCursor();
+    if (cursor == null) {
+      initCursor();
     }
 
-    if (!currentCursor.advanceNextPosition()) {
-      LOG.info("Current split index:" + currentSplitIndex);
-      currentSplitIndex++;
-      if (currentSplitIndex == splitInternals.size()) {
-        return false;
-      }
-      initCurrentCursor();
-      currentCursor.advanceNextPosition();
+    if (!cursor.advanceNextPosition()) {
+      return false;
     }
 
     pos++;
-    for (int i = 0; i < currentCursor.fieldCount(); i++) {
+    for (int i = 0; i < cursor.fieldCount(); i++) {
       ColumnHandleInternal column = columns.get(i);
       String name = column.getName();
       DataType type = column.getType();
-      mapWritable.put(new Text(name), TypeUtils.toWriteable(currentCursor.getObject(i), type));
+      mapWritable.put(new Text(name), TypeUtils.toWriteable(cursor.getObject(i), type));
     }
     return true;
   }
@@ -137,7 +132,7 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   @Override
   public void close() throws IOException {
     try {
-      currentCursor.close();
+      cursor.close();
       clientSession.close();
     } catch (Exception e) {
       LOG.warn("Can not close session");
