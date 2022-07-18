@@ -79,7 +79,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
        */
       futureTask =
           new FutureTask<>(
-              () -> session.createRowIdAllocator(databaseName, tableName, step, 3).getStart());
+              () -> session.createRowIdAllocator(databaseName, tableName, step).getStart());
       threadPool.submit(futureTask);
     }
     if (index >= step) {
