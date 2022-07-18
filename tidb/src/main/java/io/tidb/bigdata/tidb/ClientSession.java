@@ -276,8 +276,12 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public List<Base64KeyRange> getTableRanges(TableHandleInternal tableHandle) {
+    return toBase64KeyRanges(getTableRegionTasks(tableHandle));
+  }
+
+  private List<Base64KeyRange> toBase64KeyRanges(List<RangeSplitter.RegionTask> regionTasks) {
     Base64.Encoder encoder = Base64.getEncoder();
-    return getTableRegionTasks(tableHandle).stream()
+    return regionTasks.stream()
         .flatMap(
             task ->
                 task.getRanges().stream()
@@ -288,6 +292,10 @@ public final class ClientSession implements AutoCloseable {
                           return new Base64KeyRange(taskStart, taskEnd);
                         }))
         .collect(toImmutableList());
+  }
+
+  public List<Base64KeyRange> reSplit(Base64KeyRange range) {
+    return toBase64KeyRanges(getRangeRegionTasks(range));
   }
 
   public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns) {
@@ -306,15 +314,17 @@ public final class ClientSession implements AutoCloseable {
         request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
   }
 
-  public CoprocessorIterator<Row> iterate(
-      TiDAGRequest.Builder request, List<Base64KeyRange> ranges) {
+  public CloseableIterator<Row> iterate(TiDAGRequest.Builder request, List<Base64KeyRange> ranges) {
     List<RegionTask> regionTasks =
         ranges.stream()
             .map(this::getRangeRegionTasks)
             .flatMap(List::stream)
             .collect(Collectors.toList());
-    return CoprocessorIterator.getRowIterator(
-        request.build(TiDAGRequest.PushDownType.NORMAL), regionTasks, session);
+    return config.isStoredRowsInMemory()
+        ? CloseableIterator.create(config, request, ranges)
+        : CloseableIterator.create(
+            CoprocessorIterator.getRowIterator(
+                request.build(TiDAGRequest.PushDownType.NORMAL), regionTasks, session));
   }
 
   private void loadPdAddresses() {

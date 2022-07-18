@@ -41,9 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tikv.common.meta.TiTimestamp;
 
-/**
- * A RecordReader that reads records from a TiDB table.
- */
+/** A RecordReader that reads records from a TiDB table. */
 public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongWritable, T> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TiDBRecordReader.class);

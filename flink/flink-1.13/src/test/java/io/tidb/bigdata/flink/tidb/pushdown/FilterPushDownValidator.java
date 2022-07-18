@@ -135,9 +135,10 @@ public class FilterPushDownValidator extends ExternalResource {
     for (SplitInternal split : splits) {
       RecordSetInternal recordSetInternal =
           new RecordSetInternal(clientSession, split, columns, expression, Optional.empty());
-      RecordCursorInternal cursor = recordSetInternal.cursor();
-      while (cursor.advanceNextPosition()) {
-        rows.add(cursor.getRow());
+      try (RecordCursorInternal cursor = recordSetInternal.cursor()) {
+        while (cursor.advanceNextPosition()) {
+          rows.add(cursor.getRow());
+        }
       }
     }
     return rows;

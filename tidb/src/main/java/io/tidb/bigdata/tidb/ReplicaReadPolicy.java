@@ -43,7 +43,7 @@ public class ReplicaReadPolicy implements ReplicaSelector {
   private final Set<String> blacklist;
   private final List<Role> roles;
 
-  private ReplicaReadPolicy(
+  public ReplicaReadPolicy(
       final Map<String, String> labels,
       final Set<String> whitelist,
       final Set<String> blacklist,
@@ -178,6 +178,22 @@ public class ReplicaReadPolicy implements ReplicaSelector {
 
   protected boolean accept(Store store) {
     return (matchLabels(store) || inWhitelist(store)) && notInBlacklist(store);
+  }
+
+  public Map<String, String> getLabels() {
+    return labels;
+  }
+
+  public Set<String> getWhitelist() {
+    return whitelist;
+  }
+
+  public Set<String> getBlacklist() {
+    return blacklist;
+  }
+
+  public List<Role> getRoles() {
+    return roles;
   }
 
   enum Role {

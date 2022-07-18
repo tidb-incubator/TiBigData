@@ -259,8 +259,8 @@ public class MapReduceTest {
       Assert.assertEquals("{\"a\":1,\"b\":2}", c27);
       Assert.assertEquals("1", c28);
       Assert.assertEquals("a", c29);
+      cursor.close();
     }
-
     clientSession.close();
   }
 

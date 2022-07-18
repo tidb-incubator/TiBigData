@@ -20,23 +20,23 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
-import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
+import java.io.Closeable;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
 
-public class RecordCursorInternal {
+public class RecordCursorInternal implements Closeable {
 
   private final List<ColumnHandleInternal> columnHandles;
-  private final CoprocessorIterator<Row> iterator;
+  private final CloseableIterator<Row> iterator;
   private Row row = null;
 
   public RecordCursorInternal(
-      List<ColumnHandleInternal> columnHandles, CoprocessorIterator<Row> iterator) {
+      List<ColumnHandleInternal> columnHandles, CloseableIterator<Row> iterator) {
     this.columnHandles = columnHandles;
     this.iterator = iterator;
   }
@@ -55,7 +55,10 @@ public class RecordCursorInternal {
     }
   }
 
-  public void close() {}
+  @Override
+  public void close() {
+    iterator.close();
+  }
 
   public Object getObject(int field) {
     return row.get(field, null);

@@ -122,5 +122,7 @@ public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implem
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    getInternal().close();
+  }
 }

@@ -25,12 +25,12 @@ import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.key.Base64KeyRange;
 import io.tidb.bigdata.tidb.meta.TiDAGRequest;
-import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.tikv.common.meta.TiTimestamp;
 
@@ -38,7 +38,7 @@ public final class RecordSetInternal {
 
   private final List<ColumnHandleInternal> columnHandles;
   private final List<DataType> columnTypes;
-  private final CoprocessorIterator<Row> iterator;
+  private final Supplier<CloseableIterator<Row>> iterator;
 
   public RecordSetInternal(
       ClientSession session,
@@ -94,7 +94,7 @@ public final class RecordSetInternal {
                 splitInternal ->
                     new Base64KeyRange(splitInternal.getStartKey(), splitInternal.getEndKey()))
             .collect(Collectors.toList());
-    this.iterator = session.iterate(request, ranges);
+    this.iterator = () -> CloseableIterator.create(session.iterate(request, ranges));
   }
 
   private void checkSplits(Collection<SplitInternal> splits) {
@@ -113,6 +113,6 @@ public final class RecordSetInternal {
   }
 
   public RecordCursorInternal cursor() {
-    return new RecordCursorInternal(columnHandles, iterator);
+    return new RecordCursorInternal(columnHandles, iterator.get());
   }
 }
