@@ -20,15 +20,33 @@ import io.tidb.bigdata.tidb.handle.CommonHandle;
 import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
-import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import io.tidb.bigdata.tidb.row.Row;
+import java.util.Arrays;
 import java.util.List;
 import org.tikv.common.exception.CodecException;
 
 public class TableCodec {
+
+  // MaxOldEncodeValueLen is the maximum len of the old encoding of index value.
+  public static byte MaxOldEncodeValueLen = 9;
+  // IndexVersionFlag is the flag used to decode the index's version info.
   public static byte IndexVersionFlag = 125;
+  // PartitionIDFlag is the flag used to decode the partition ID in global index value.
+  public static byte PartitionIDFlag = 126;
+  // CommonHandleFlag is the flag used to decode the common handle in an unique index value.
   public static byte CommonHandleFlag = 127;
+  // RestoreDataFlag is the flag that RestoreData begin with.
+  // See rowcodec.Encoder.Encode and rowcodec.row.toBytes
+  public static byte RestoreDataFlag = (byte) RowV2.CODEC_VER;
+
+  public static class IndexValueSegments {
+
+    byte[] commonHandle;
+    byte[] partitionID;
+    byte[] restoredValues;
+    byte[] intHandle;
+  }
 
   public static byte[] encodeRow(
       List<TiColumnInfo> columnInfos,
@@ -59,22 +77,57 @@ public class TableCodec {
   }
 
   public static Handle decodeHandle(byte[] value, boolean isCommonHandle) {
-    if (isCommonHandle) {
-      return new CommonHandle(value);
+    if (!isCommonHandle) {
+      if (value.length <= MaxOldEncodeValueLen) {
+        return new IntHandle(new CodecDataInput(value).readLong());
+      }
+      int tailLen = value[0];
+      byte[] encode = Arrays.copyOfRange(value, value.length - tailLen, value.length);
+      return new IntHandle(new CodecDataInput(encode).readLong());
     }
-    return new IntHandle(new CodecDataInput(value).readLong());
+    CodecDataInput codecDataInput = new CodecDataInput(value);
+    if (getIndexVersion(value) == 1) {
+      IndexValueSegments segments = splitIndexValueForClusteredIndexVersion1(codecDataInput);
+      return new CommonHandle(segments.commonHandle);
+    }
+    int handleLen = ((int) value[2]) << 8 + value[3];
+    byte[] encode = Arrays.copyOfRange(value, 4, handleLen + 4);
+    return new CommonHandle(encode);
+  }
+
+  private static int getIndexVersion(byte[] value) {
+    int tailLen = value[0];
+    if ((tailLen == 0 || tailLen == 1) && value[1] == IndexVersionFlag) {
+      return value[2];
+    }
+    return 0;
+  }
+
+  public static byte[] genIndexValue(Handle handle, boolean distinct) {
+    if (!handle.isInt()) {
+      // TODO
+      // We need to implement the encoding of the index value version 0 when handle is not int.
+      return TableCodec.genIndexValueForClusteredIndexVersion1(handle, distinct);
+    }
+    // When handle is int, the index encode is version 0.
+    if (distinct) {
+      CodecDataOutput valueCdo = new CodecDataOutput();
+      valueCdo.writeLong(handle.intValue());
+      return valueCdo.toBytes();
+    }
+    return new byte[] {'0'};
   }
 
   /* only for unique index */
-  public static byte[] genIndexValueForClusteredIndexVersion1(TiIndexInfo index, Handle handle) {
+  public static byte[] genIndexValueForClusteredIndexVersion1(Handle handle, boolean distinct) {
     CodecDataOutput cdo = new CodecDataOutput();
     cdo.writeByte(0);
     cdo.writeByte(IndexVersionFlag);
     cdo.writeByte(1);
 
-    assert (index.isUnique());
-    encodeCommonHandle(cdo, handle);
-
+    if (distinct) {
+      encodeCommonHandle(cdo, handle);
+    }
     return cdo.toBytes();
   }
 
@@ -84,5 +137,32 @@ public class TableCodec {
     int hLen = encoded.length;
     cdo.writeShort(hLen);
     cdo.write(encoded);
+  }
+
+  public static IndexValueSegments splitIndexValueForClusteredIndexVersion1(
+      CodecDataInput codecDataInput) {
+    int tailLen = codecDataInput.readByte();
+    // read IndexVersionFlag
+    codecDataInput.readByte();
+    // read IndexVersion
+    codecDataInput.readByte();
+    IndexValueSegments segments = new IndexValueSegments();
+    if (codecDataInput.available() > 0 && codecDataInput.peekByte() == CommonHandleFlag) {
+      codecDataInput.readByte();
+      int handleLen = codecDataInput.readShort();
+      segments.commonHandle = new byte[handleLen];
+      codecDataInput.readFully(segments.commonHandle, 0, handleLen);
+    }
+    if (codecDataInput.available() > 0 && codecDataInput.peekByte() == PartitionIDFlag) {
+      codecDataInput.readByte();
+      segments.partitionID = new byte[9];
+      codecDataInput.readFully(segments.partitionID, 0, 9);
+    }
+    if (codecDataInput.available() > 0 && codecDataInput.peekByte() == RestoreDataFlag) {
+      codecDataInput.readByte();
+      segments.restoredValues = new byte[codecDataInput.available() - tailLen];
+      codecDataInput.readFully(segments.restoredValues, 0, codecDataInput.available() - tailLen);
+    }
+    return segments;
   }
 }
