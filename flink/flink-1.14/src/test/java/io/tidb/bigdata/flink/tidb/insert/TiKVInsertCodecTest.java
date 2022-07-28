@@ -22,6 +22,7 @@ import org.junit.Test;
 
 public class TiKVInsertCodecTest extends FlinkTestBase {
   String table;
+
   @Test
   public void testInsertCodec() throws Exception {
     table = "flink_insert_dst_test" + RandomUtils.randomString();
