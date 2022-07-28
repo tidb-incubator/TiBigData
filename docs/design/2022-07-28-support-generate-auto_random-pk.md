@@ -74,7 +74,7 @@ the primary key of the table is auto_random.
 
 We use the `java.util.Random` and set the seed with the startTimestamp.
 After getting random int64, we use the [MurmurHash3 algorithm](https://stackoverflow.com/questions/11899616/murmurhash-what-is-it) 
-to reduce the collation, which is according to [TiDB code](https://github.com/pingcap/tidb/blob/1a89decdb192cbdce6a7b0020d71128bc964d30f/sessionctx/variable/session.go#L212-L216)
+to make sure the bits of shardSeed >= 15, which is according to [TiDB code](https://github.com/pingcap/tidb/blob/1a89decdb192cbdce6a7b0020d71128bc964d30f/sessionctx/variable/session.go#L212-L216)
 
 ### Use IGNORE_AUTO_RANDOM_COLUMN_VALUE to ignore the explicit primary key.
 
