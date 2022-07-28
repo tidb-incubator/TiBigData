@@ -6,7 +6,6 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
-import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.RandomUtils;
@@ -35,7 +34,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
             + "    UNIQUE KEY(`c2`) \n"
             + ")";
     Map<String, String> properties = defaultProperties();
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
     TableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
@@ -70,7 +69,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
             + "    UNIQUE KEY(`c2`) \n"
             + ")";
 
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
+    EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
     TableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
@@ -78,6 +77,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     properties.put(SINK_IMPL.key(), TIKV.name());
     properties.put(SINK_TRANSACTION.key(), SinkTransaction.MINIBATCH.name());
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
+
     // init catalog and create table
     initTiDBCatalog(table, createTable, tableEnvironment, properties);
 
