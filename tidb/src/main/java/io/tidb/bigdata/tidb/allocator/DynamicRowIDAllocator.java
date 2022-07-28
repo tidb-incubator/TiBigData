@@ -22,7 +22,6 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
@@ -49,7 +48,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   private ThreadPoolExecutor threadPool;
   private FutureTask<Long> futureTask;
   private int index;
-  private long currentShard;
+  private long currentShardSeed;
 
   public DynamicRowIDAllocator(
       ClientSession session,
@@ -76,6 +75,13 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     this.type = getType();
     this.shardBits = getShardBits();
     this.isUnsigned = isUnsigned();
+    initRandomGenerator();
+  }
+
+  private void initRandomGenerator() {
+    long version = startTimestamp.getVersion();
+    Random random = RANDOM_THREAD_LOCAL.get();
+    random.setSeed(version);
   }
 
   private boolean isUnsigned() {
@@ -159,12 +165,9 @@ public class DynamicRowIDAllocator implements AutoCloseable {
       return;
     }
 
-    long version = startTimestamp.getVersion();
     Random random = RANDOM_THREAD_LOCAL.get();
-    random.setSeed(version);
-    // Use MurmurHash3 to reduce the probability of collision. Since shardBits < 16
-    // hash32() is enough.
-    currentShard = MurmurHash3.hash32(ThreadLocalRandom.current().nextLong());
+    // Use MurmurHash3 to make sure the bits of shardSeed >= 15
+    currentShardSeed = MurmurHash3.hash32(random.nextLong());
   }
 
   public long getImplicitRowId() {
@@ -176,7 +179,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   public long getAutoRandomId() {
     checkUpdate();
     index++;
-    return RowIDAllocator.getShardRowId(shardBits, currentShard, index + start, isUnsigned);
+    return RowIDAllocator.getShardRowId(shardBits, currentShardSeed, index + start, isUnsigned);
   }
 
   public long getAutoIncId() {

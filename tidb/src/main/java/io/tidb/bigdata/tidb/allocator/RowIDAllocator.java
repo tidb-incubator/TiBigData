@@ -84,7 +84,7 @@ public final class RowIDAllocator implements Serializable {
   }
 
   public static long getShardRowId(
-      long shardBits, long partitionIndex, long rowID, boolean isUnsigned) {
+      long shardBits, long shardSeed, long rowID, boolean isUnsigned) {
     if (shardBits <= 0 || shardBits >= 16) {
       return rowID;
     }
@@ -92,7 +92,7 @@ public final class RowIDAllocator implements Serializable {
     int signBitLength = isUnsigned ? 0 : 1;
     // assert rowID < Math.pow(2, 64 - shardBits)
 
-    long partition = partitionIndex & ((1L << shardBits) - 1);
+    long partition = shardSeed & ((1L << shardBits) - 1);
     return rowID | (partition << (64 - shardBits - signBitLength));
   }
 
