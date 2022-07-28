@@ -174,7 +174,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (remove) {
       value = EMPTY_BYTES;
     } else {
-      value = TableCodec.genIndexValue(handle, distinct);
+      value = TableCodec.genIndexValue(handle, tiTableInfo.getCommonHandleVersion(),distinct);
     }
     return new BytePairWrapper(key, value);
   }
