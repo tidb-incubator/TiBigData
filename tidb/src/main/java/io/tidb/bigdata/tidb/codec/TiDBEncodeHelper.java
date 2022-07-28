@@ -174,7 +174,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (remove) {
       value = EMPTY_BYTES;
     } else {
-      value = TableCodec.genIndexValue(handle, tiTableInfo.getCommonHandleVersion(),distinct);
+      value = TableCodec.genIndexValue(handle, tiTableInfo.getCommonHandleVersion(), distinct);
     }
     return new BytePairWrapper(key, value);
   }
@@ -246,7 +246,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (uniqueIndexKeyPair.second) {
       byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
       if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Handle oldHandle = TableCodec.decodeHandle(oldValue,!handle.isInt());
+        Handle oldHandle = TableCodec.decodeHandle(oldValue, !handle.isInt());
         byte[] oldRowValue =
             snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
         Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);

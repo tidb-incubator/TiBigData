@@ -115,7 +115,7 @@ public class TiTableInfo implements Serializable {
     // TODO: Use more precise predication according to types
     this.pkIsHandle = pkIsHandle;
     this.isCommonHandle = isCommonHandle;
-    this.commonHandleVersion=commonHandleVersion;
+    this.commonHandleVersion = commonHandleVersion;
     this.indices = indices != null ? ImmutableList.copyOf(indices) : ImmutableList.of();
     this.indicesWithoutHiddenAndInvisible =
         this.indices.stream()
@@ -252,7 +252,11 @@ public class TiTableInfo implements Serializable {
   public boolean isCommonHandle() {
     return isCommonHandle;
   }
-  public int getCommonHandleVersion(){return commonHandleVersion;}
+
+  public int getCommonHandleVersion() {
+    return commonHandleVersion;
+  }
+
   public List<TiIndexInfo> getIndices() {
     return getIndices(false);
   }

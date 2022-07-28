@@ -176,7 +176,7 @@ public class TableCodec {
       valueCdo.writeLong(handle.intValue());
       return valueCdo.toBytes();
     }
-    return new byte[]{'0'};
+    return new byte[] {'0'};
   }
 
   private static byte[] genIndexValueForClusteredIndexVersion1(Handle handle, boolean distinct) {
