@@ -43,7 +43,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     properties.put(SINK_TRANSACTION.key(), SinkTransaction.MINIBATCH.name());
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
     // init catalog and create table
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(table, createTable, tableEnvironment, properties);
+    initTiDBCatalog(table, createTable, tableEnvironment, properties);
     tableEnvironment.sqlUpdate(
         String.format(
             "insert into `tidb`.`%s`.`%s` values('1','1'),('2',cast(null as varchar))",
@@ -79,7 +79,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     properties.put(SINK_TRANSACTION.key(), SinkTransaction.MINIBATCH.name());
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
     // init catalog and create table
-    TiDBCatalog tiDBCatalog = initTiDBCatalog(table, createTable, tableEnvironment, properties);
+    initTiDBCatalog(table, createTable, tableEnvironment, properties);
 
     tableEnvironment.sqlUpdate(
         String.format(
