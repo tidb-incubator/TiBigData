@@ -148,12 +148,12 @@ public class TableCodec {
   //    |     Global Index and New Collation in not support now.
   public static byte[] genIndexValue(Handle handle, int commonHandleVersion, boolean distinct) {
     if (!handle.isInt() && commonHandleVersion == 1) {
-      return TableCodec.genIndexValueForClusteredIndexVersion1(handle, distinct);
+      return TableCodec.genIndexValueForCommonHandleVersion1(handle, distinct);
     }
-    return genIndexValueVersion0(handle, distinct);
+    return genIndexValueForClusterIndexVersion0(handle, distinct);
   }
 
-  private static byte[] genIndexValueVersion0(Handle handle, boolean distinct) {
+  private static byte[] genIndexValueForClusterIndexVersion0(Handle handle, boolean distinct) {
     if (!handle.isInt()) {
       CodecDataOutput cdo = new CodecDataOutput();
       int tailLen = 0;
@@ -179,7 +179,7 @@ public class TableCodec {
     return new byte[] {'0'};
   }
 
-  private static byte[] genIndexValueForClusteredIndexVersion1(Handle handle, boolean distinct) {
+  private static byte[] genIndexValueForCommonHandleVersion1(Handle handle, boolean distinct) {
     CodecDataOutput cdo = new CodecDataOutput();
     // add tailLen to cdo, the tailLen is always zero in tibigdata.
     cdo.writeByte(0);
