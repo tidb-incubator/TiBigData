@@ -83,8 +83,7 @@ public final class RowIDAllocator implements Serializable {
     return getShardRowId(maxShardRowIDBits, index, index + getStart(), isUnsigned);
   }
 
-  public static long getShardRowId(
-      long shardBits, long shardSeed, long rowID, boolean isUnsigned) {
+  public static long getShardRowId(long shardBits, long shardSeed, long rowID, boolean isUnsigned) {
     if (shardBits <= 0 || shardBits >= 16) {
       return rowID;
     }
