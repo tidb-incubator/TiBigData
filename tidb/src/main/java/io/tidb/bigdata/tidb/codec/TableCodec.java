@@ -87,7 +87,7 @@ public class TableCodec {
     }
     CodecDataInput codecDataInput = new CodecDataInput(value);
     if (getIndexVersion(value) == 1) {
-      IndexValueSegments segments = splitIndexValueForClusteredIndexVersion1(codecDataInput);
+      IndexValueSegments segments = splitIndexValueForCommonHandleVersion1(codecDataInput);
       return new CommonHandle(segments.commonHandle);
     }
     int handleLen = ((int) value[2] << 8) + value[3];
@@ -200,7 +200,7 @@ public class TableCodec {
     cdo.write(encoded);
   }
 
-  public static IndexValueSegments splitIndexValueForClusteredIndexVersion1(
+  public static IndexValueSegments splitIndexValueForCommonHandleVersion1(
       CodecDataInput codecDataInput) {
     int tailLen = codecDataInput.readByte();
     // read IndexVersionFlag
