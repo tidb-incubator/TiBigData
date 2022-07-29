@@ -8,6 +8,7 @@ import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
 import java.util.Map;
@@ -18,7 +19,9 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class TiKVInsertCodecTest extends FlinkTestBase {
   String table;
 
