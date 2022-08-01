@@ -102,7 +102,7 @@ public class RowIDAllocatorTest {
       }
       long sum = 0;
       for (FutureTask<RowIDAllocator> task : tasks) {
-        RowIDAllocator rowIDAllocator = task.get(40, TimeUnit.SECONDS);
+        RowIDAllocator rowIDAllocator = task.get(120, TimeUnit.SECONDS);
         sum += rowIDAllocator.getEnd() - rowIDAllocator.getStart();
       }
       Assert.assertEquals(step * count, sum);
