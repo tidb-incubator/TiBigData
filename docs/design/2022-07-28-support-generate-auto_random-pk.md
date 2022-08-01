@@ -40,7 +40,7 @@ Firstly, we will introduce the mechanism of shard and then discuss how we get sh
 
 ### the mechanism of shard
 
-Firstly, we need to generate the shardSeed, whose bits' length must be greater than or equal to 16.
+Firstly, we need to generate the shardSeed, whose bits' length must be greater than 16.
 Then we take the low n bits of the shardSeed as the shard mask.
 
 ```java
