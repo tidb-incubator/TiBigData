@@ -36,11 +36,11 @@ of which the mechanism of the latter is similar to the auto_random, so we can re
 
 ## Detailed Design
 
-Firstly, we will introduce the mechanism of shard and then discuss how wo get shardBits and get the shardSeed with good collision resistance.
+Firstly, we will introduce the mechanism of shard and then discuss how we get shardBits and get the shardSeed with good collision resistance.
 
 ### the mechanism of shard
 
-Firstly, we need to generate the shardSeed, whose bits' length must be greater than and equal to 16.
+Firstly, we need to generate the shardSeed, whose bits' length must be greater than or equal to 16.
 Then we take the low n bits of the shardSeed as the shard mask.
 
 ```java
@@ -89,7 +89,7 @@ If it is false, we will use the explicit primary key passed by the user, and thu
 ## Test Design
 
 ### Functional Tests
-- insert into a table with auto_random bigint unsigned primary key with explicit value(ignore the value).
+- insert into a table with auto_random bigint signed primary key with explicit value(ignore the value).
 - insert into a table with auto_random bigint unsigned primary key with explicit value(ignore the value).
 
 ### Scenario Tests
