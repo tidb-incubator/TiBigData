@@ -100,7 +100,6 @@ public final class RowIDAllocator implements Serializable {
       } catch (AllocateRowIDOverflowException | IllegalArgumentException e) {
         throw e;
       } catch (Exception e) {
-        LOG.warn("error during allocating row id", e);
         backOffer.doBackOff(BackOffFunction.BackOffFuncType.BoServerBusy, e);
       }
     }
