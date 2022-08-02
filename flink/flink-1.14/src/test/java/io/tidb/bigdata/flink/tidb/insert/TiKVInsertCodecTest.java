@@ -22,12 +22,18 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
+import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.test.RandomUtils;
+import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
@@ -43,6 +49,15 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
 
   @Test
   public void testInsertCodec() throws Exception {
+    Map<String, String> properties = defaultProperties();
+    ClientSession session = ClientSession.create(new ClientConfig(properties));
+    List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
+        session.getTiSession().getPDClient());
+    Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
+    if(!minimumTiKVVersion.isPresent()||!minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0"))){
+      // not test when TiDB version is smaller than 5.0.0
+      return;
+    }
     table = "flink_insert_dst_test" + RandomUtils.randomString();
     String createTable =
         "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
@@ -52,7 +67,7 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
             + "    PRIMARY KEY (`c1`) CLUSTERED, \n"
             + "    UNIQUE KEY(`c2`) \n"
             + ")";
-    Map<String, String> properties = defaultProperties();
+    ;
     EnvironmentSettings settings = EnvironmentSettings.newInstance().inBatchMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
@@ -78,6 +93,15 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
 
   @Test
   public void testUniqueIndexValueEncode() throws Exception {
+    Map<String, String> properties = defaultProperties();
+    ClientSession session = ClientSession.create(new ClientConfig(properties));
+    List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
+        session.getTiSession().getPDClient());
+    Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
+    if(!minimumTiKVVersion.isPresent()||!minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0"))){
+      // not test when TiDB version is smaller than 5.0.0
+      return;
+    }
     table = "flink_insert_dst_test" + RandomUtils.randomString();
     String createTable =
         "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
@@ -92,7 +116,6 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     env.setParallelism(1);
     TableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    Map<String, String> properties = defaultProperties();
     properties.put(SINK_IMPL.key(), TIKV.name());
     properties.put(SINK_TRANSACTION.key(), SinkTransaction.MINIBATCH.name());
     properties.put(WRITE_MODE.key(), TiDBWriteMode.UPSERT.name());
