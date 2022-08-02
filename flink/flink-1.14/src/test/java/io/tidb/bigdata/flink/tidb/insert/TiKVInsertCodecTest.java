@@ -40,6 +40,7 @@ import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -54,10 +55,8 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
         session.getTiSession().getPDClient());
     Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
-    if(!minimumTiKVVersion.isPresent()||!minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0"))){
-      // not test when TiDB version is smaller than 5.0.0
-      return;
-    }
+    Assume.assumeTrue(minimumTiKVVersion.isPresent());
+    Assume.assumeTrue(minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0")));
     table = "flink_insert_dst_test" + RandomUtils.randomString();
     String createTable =
         "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
@@ -98,10 +97,8 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
     List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
         session.getTiSession().getPDClient());
     Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
-    if(!minimumTiKVVersion.isPresent()||!minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0"))){
-      // not test when TiDB version is smaller than 5.0.0
-      return;
-    }
+    Assume.assumeTrue(minimumTiKVVersion.isPresent());
+    Assume.assumeTrue(minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0")));
     table = "flink_insert_dst_test" + RandomUtils.randomString();
     String createTable =
         "CREATE TABLE IF NOT EXISTS `%s`.`%s`\n"
