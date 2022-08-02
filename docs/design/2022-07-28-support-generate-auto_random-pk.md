@@ -4,12 +4,12 @@
 - Tracking Issue: https://github.com/tidb-incubator/TiBigData/issues/235
 
 ## Table of Contents
-* [Real-time wide table](#real-time-wide-table)
+* [Support allocating auto_random primary key](#support-allocating-auto_random-primary-key)
   * [Table of Contents](#table-of-contents)
   * [Introduction](#introduction)
   * [Motivation or Background](#motivation-or-background)
   * [Detailed Design](#detailed-design)
-    * [the mechanism of shard](#the-mechanism-of-shard)
+    * [The mechanism of shard](#the-mechanism-of-shard)
     * [Get the shardBits](#get-the-shardbits)
     * [Generate the currentShard with startTimestamp](#generate-the-currentshard-with-starttimestamp)
     * [Use IGNORE_AUTO_RANDOM_COLUMN_VALUE to ignore the explicit primary key.](#use-ignore_auto_random_column_value-to-ignore-the-explicit-primary-key)
@@ -38,13 +38,13 @@ of which the mechanism of the latter is similar to the auto_random, so we can re
 
 Firstly, we will introduce the mechanism of shard and then discuss how we get shardBits and get the shardSeed with good collision resistance.
 
-### the mechanism of shard
+### The mechanism of shard
 
 Firstly, we need to generate the shardSeed, whose bits' length must be greater than 16.
 Then we take the low n bits of the shardSeed as the shard mask.
 
 ```java
-long shardSeed = 0xffffL;
+long shardSeed = 0xaaaaL;
 long shardBits = 6L; 
 //((1L << shardBits) - 1) = 0b111111L ,shardMask = 0b101010L
 long shardMask = shardSeed & ((1L << shardBits) - 1);
