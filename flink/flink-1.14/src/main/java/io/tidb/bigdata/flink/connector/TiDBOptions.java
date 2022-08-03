@@ -106,7 +106,7 @@ public class TiDBOptions {
           .defaultValue(false)
           .withDescription(
               "If true, "
-                  + "for autorandom column, we will generate value instead of the the actual value. "
+                  + "for autorandom column, we will generate value instead of the actual value. "
                   + "And if false, the value of autorandom column can not be null");
   public static final ConfigOption<Boolean> DEDUPLICATE =
       ConfigOptions.key("tikv.sink.deduplicate")
