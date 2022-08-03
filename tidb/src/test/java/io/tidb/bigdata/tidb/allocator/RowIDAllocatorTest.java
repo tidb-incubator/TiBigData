@@ -46,12 +46,12 @@ public class RowIDAllocatorTest {
           {"CREATE TABLE `%s`.`%s`(id bigint)", RowIDAllocatorType.IMPLICIT_ROWID, false},
           {
             "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT)",
-            RowIDAllocatorType.AUTO_INC,
+            RowIDAllocatorType.AUTO_INCREMENT,
             false
           },
           {
             "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT)",
-            RowIDAllocatorType.AUTO_INC,
+            RowIDAllocatorType.AUTO_INCREMENT,
             false
           },
           {

@@ -57,12 +57,12 @@ public class IgnoreAutoColumnTest extends FlinkTestBase {
         new Object[][] {
           {
             "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
-            RowIDAllocatorType.AUTO_INC,
+            RowIDAllocatorType.AUTO_INCREMENT,
             false
           },
           {
             "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
-            RowIDAllocatorType.AUTO_INC,
+            RowIDAllocatorType.AUTO_INCREMENT,
             false
           },
           {

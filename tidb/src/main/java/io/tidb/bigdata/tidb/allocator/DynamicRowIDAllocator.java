@@ -87,7 +87,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   private boolean isUnsigned() {
     TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
     switch (type) {
-      case AUTO_INC:
+      case AUTO_INCREMENT:
         return tableInfo.isAutoIncrementColUnsigned();
       case AUTO_RANDOM:
         return tableInfo.isAutoRandomColUnsigned();
@@ -104,7 +104,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     if (tableInfo.hasAutoRandomColumn()) {
       return RowIDAllocatorType.AUTO_RANDOM;
     } else if (tableInfo.hasAutoIncrementColumn()) {
-      return RowIDAllocatorType.AUTO_INC;
+      return RowIDAllocatorType.AUTO_INCREMENT;
     } else {
       return RowIDAllocatorType.IMPLICIT_ROWID;
     }
@@ -113,7 +113,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   private long getShardBits() {
     TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
     switch (type) {
-      case AUTO_INC:
+      case AUTO_INCREMENT:
         // AUTO_INC doesn't have shard bits.
         return 0L;
       case AUTO_RANDOM:
@@ -194,7 +194,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   }
 
   public enum RowIDAllocatorType {
-    AUTO_INC,
+    AUTO_INCREMENT,
     AUTO_RANDOM,
     IMPLICIT_ROWID
   }
