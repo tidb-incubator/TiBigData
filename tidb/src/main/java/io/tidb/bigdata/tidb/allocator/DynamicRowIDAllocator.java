@@ -88,7 +88,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
     switch (type) {
       case AUTO_INC:
-        return tableInfo.isAutoIncColUnsigned();
+        return tableInfo.isAutoIncrementColUnsigned();
       case AUTO_RANDOM:
         return tableInfo.isAutoRandomColUnsigned();
       case IMPLICIT_ROWID:
@@ -182,7 +182,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     return RowIDAllocator.getShardRowId(shardBits, currentShardSeed, index + start, isUnsigned);
   }
 
-  public long getAutoIncId() {
+  public long getAutoIncrementId() {
     checkUpdate();
     index++;
     return index + start;

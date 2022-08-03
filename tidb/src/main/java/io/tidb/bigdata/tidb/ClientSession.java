@@ -507,7 +507,7 @@ public final class ClientSession implements AutoCloseable {
     boolean isUnsigned = false;
     switch (type) {
       case AUTO_INC:
-        isUnsigned = table.isAutoIncColUnsigned();
+        isUnsigned = table.isAutoIncrementColUnsigned();
         // AUTO_INC doesn't have shard bits.
         break;
       case AUTO_RANDOM:

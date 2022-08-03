@@ -197,7 +197,7 @@ public class TiTableInfo implements Serializable {
     return null;
   }
 
-  public boolean isAutoIncColUnsigned() {
+  public boolean isAutoIncrementColUnsigned() {
     TiColumnInfo col = getAutoIncrementColInfo();
     return col.getType().isUnsigned();
   }

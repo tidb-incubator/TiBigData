@@ -323,7 +323,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (autoIncrementColumnIndex.isPresent()) {
       int index = autoIncrementColumnIndex.get();
       if (ignoreAutoincrementColumn) {
-        row.set(index, columns.get(index).getType(), rowIdAllocator.getAutoIncId());
+        row.set(index, columns.get(index).getType(), rowIdAllocator.getAutoIncrementId());
       } else if (row.isNull(index)) {
         throw new IllegalStateException("Auto increment column can not be null");
       }
