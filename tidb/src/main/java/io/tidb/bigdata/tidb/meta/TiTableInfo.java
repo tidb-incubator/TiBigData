@@ -184,9 +184,26 @@ public class TiTableInfo implements Serializable {
     return null;
   }
 
-  public boolean isAutoIncColUnsigned() {
+  public TiColumnInfo getAutoRandomColInfo() {
+    if (!hasAutoRandomColumn()) {
+      return null;
+    }
+
+    for (TiColumnInfo tiColumnInfo : getColumns(true)) {
+      if (tiColumnInfo.isPrimaryKey()) {
+        return tiColumnInfo;
+      }
+    }
+    return null;
+  }
+
+  public boolean isAutoIncrementColUnsigned() {
     TiColumnInfo col = getAutoIncrementColInfo();
-    if (col == null) return false;
+    return col.getType().isUnsigned();
+  }
+
+  public boolean isAutoRandomColUnsigned() {
+    TiColumnInfo col = getAutoRandomColInfo();
     return col.getType().isUnsigned();
   }
 

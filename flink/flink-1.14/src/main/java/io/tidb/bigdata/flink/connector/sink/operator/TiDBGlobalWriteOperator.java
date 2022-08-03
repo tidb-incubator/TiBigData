@@ -19,6 +19,7 @@ package io.tidb.bigdata.flink.connector.sink.operator;
 import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import io.tidb.bigdata.tidb.buffer.RowBuffer;
 import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
 
+  private final TiTimestamp tiTimestamp;
+  private DynamicRowIDAllocator rowIDAllocator;
+
   public TiDBGlobalWriteOperator(
       String databaseName,
       String tableName,
@@ -36,7 +40,8 @@ public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
       TiTimestamp tiTimestamp,
       TiDBSinkOptions sinkOption,
       byte[] primaryKey) {
-    super(databaseName, tableName, properties, tiTimestamp, sinkOption, primaryKey);
+    super(databaseName, tableName, properties, sinkOption, primaryKey);
+    this.tiTimestamp = tiTimestamp;
   }
 
   @Override
@@ -44,6 +49,9 @@ public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
     this.buffer = RowBuffer.createDefault(sinkOptions.getBufferSize());
     this.tiDBWriteHelper =
         new TiDBWriteHelper(session.getTiSession(), tiTimestamp.getVersion(), primaryKey);
+    this.rowIDAllocator =
+        new DynamicRowIDAllocator(
+            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep(), tiTimestamp);
     this.tiDBEncodeHelper =
         new TiDBEncodeHelper(
             session,
@@ -51,6 +59,7 @@ public class TiDBGlobalWriteOperator extends TiDBWriteOperator {
             databaseName,
             tableName,
             sinkOptions.isIgnoreAutoincrementColumn(),
+            sinkOptions.isIgnoreAutoRandomColumn(),
             sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
             rowIDAllocator);
   }

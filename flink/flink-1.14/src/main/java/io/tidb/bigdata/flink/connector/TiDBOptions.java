@@ -100,6 +100,14 @@ public class TiDBOptions {
               "If true, "
                   + "for autoincrement column, we will generate value instead of the the actual value. "
                   + "And if false, the value of autoincrement column can not be null");
+  public static final ConfigOption<Boolean> IGNORE_AUTO_RANDOM_COLUMN_VALUE =
+      ConfigOptions.key("tikv.sink.ignore-autorandom-column-value")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription(
+              "If true, "
+                  + "for autorandom column, we will generate value instead of the actual value. "
+                  + "And if false, the value of autorandom column can not be null");
   public static final ConfigOption<Boolean> DEDUPLICATE =
       ConfigOptions.key("tikv.sink.deduplicate")
           .booleanType()

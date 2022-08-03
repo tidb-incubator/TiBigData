@@ -89,7 +89,7 @@ public class ClusteredIndexTest extends FlinkTestBase {
 
   @BeforeClass
   public static void setUp() {
-    org.junit.Assume.assumeTrue(testDatabase.getClientSession().supportClusteredIndex());
+    org.junit.Assume.assumeTrue(testDatabase.getClientSession().isSupportClusteredIndex());
   }
 
   private String srcTable;
