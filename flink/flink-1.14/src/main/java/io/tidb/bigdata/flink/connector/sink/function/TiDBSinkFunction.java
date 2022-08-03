@@ -65,8 +65,6 @@ public class TiDBSinkFunction
 
   private transient ClientSession session;
 
-  private transient DynamicRowIDAllocator rowIDAllocator;
-
   public TiDBSinkFunction(
       TypeSerializer<TiDBTransactionState> transactionSerializer,
       TypeSerializer<TiDBTransactionContext> contextSerializer,
@@ -90,9 +88,6 @@ public class TiDBSinkFunction
     }
     this.session = ClientSession.create(new ClientConfig(properties));
     this.init = true;
-    this.rowIDAllocator =
-        new DynamicRowIDAllocator(
-            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep(), null);
   }
 
   @Override
@@ -148,6 +143,9 @@ public class TiDBSinkFunction
     TiTimestamp timestamp = session.getSnapshotVersion();
     TiDBWriteHelper tiDBWriteHelper =
         new TiDBWriteHelper(session.getTiSession(), timestamp.getVersion());
+    DynamicRowIDAllocator rowIDAllocator =
+        new DynamicRowIDAllocator(
+            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep(), null, timestamp);
     TiDBEncodeHelper tiDBEncodeHelper =
         new TiDBEncodeHelper(
             session,
@@ -155,6 +153,7 @@ public class TiDBSinkFunction
             databaseName,
             tableName,
             sinkOptions.isIgnoreAutoincrementColumn(),
+            sinkOptions.isIgnoreAutoRandomColumn(),
             sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
             rowIDAllocator);
     tiDBWriteHelpers.put(transactionId, tiDBWriteHelper);

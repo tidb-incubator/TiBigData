@@ -20,7 +20,10 @@ import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ConfigUtils;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,9 +32,50 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameters;
 
+@RunWith(org.junit.runners.Parameterized.class)
 @Category(IntegrationTest.class)
 public class RowIDAllocatorTest {
+
+  @Parameters(name = "{index}: RowIDAllocatorType={1}, isUnsigned={2}")
+  public static Collection<Object[]> data() {
+    return Arrays.asList(
+        new Object[][] {
+          {"CREATE TABLE `%s`.`%s`(id bigint)", RowIDAllocatorType.IMPLICIT_ROWID, false},
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT)",
+            RowIDAllocatorType.AUTO_INCREMENT,
+            false
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT)",
+            RowIDAllocatorType.AUTO_INCREMENT,
+            false
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint unsigned PRIMARY KEY AUTO_RANDOM)",
+            RowIDAllocatorType.AUTO_RANDOM,
+            false
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint unsigned PRIMARY KEY AUTO_RANDOM)",
+            RowIDAllocatorType.AUTO_RANDOM,
+            false
+          }
+        });
+  }
+
+  private final String createTableSql;
+  private final RowIDAllocatorType type;
+  private final boolean isUnsigned;
+
+  public RowIDAllocatorTest(String createTableSql, RowIDAllocatorType type, boolean isUnsigned) {
+    this.createTableSql = createTableSql;
+    this.type = type;
+    this.isUnsigned = isUnsigned;
+  }
 
   @Test
   public void testCreateRowIDAllocator() throws Exception {
@@ -46,12 +90,13 @@ public class RowIDAllocatorTest {
       String tableName = "test_row_id_allocator";
       session.sqlUpdate(
           String.format("DROP TABLE IF EXISTS `%s`.`%s`", databaseName, tableName),
-          String.format("CREATE TABLE `%s`.`%s`(id bigint)", databaseName, tableName));
+          String.format(createTableSql, databaseName, tableName));
       List<FutureTask<RowIDAllocator>> tasks = new ArrayList<>();
 
       for (int i = 1; i <= count; i++) {
         FutureTask<RowIDAllocator> task =
-            new FutureTask<>(() -> session.createRowIdAllocator(databaseName, tableName, step));
+            new FutureTask<>(
+                () -> session.createRowIdAllocator(databaseName, tableName, step, type));
         tasks.add(task);
         executorService.submit(task);
       }

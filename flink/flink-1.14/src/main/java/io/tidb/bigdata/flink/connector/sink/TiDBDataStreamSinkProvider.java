@@ -136,7 +136,6 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
   private DataStreamSink<?> doConsumeDataStream(
       DataStream<RowData> dataStream, ClientSession clientSession) {
     final byte[] primaryKey;
-    final int parallelism = dataStream.getParallelism();
     final TiTimestamp timestamp = clientSession.getSnapshotVersion();
     final SinkTransaction sinkTransaction = sinkOptions.getSinkTransaction();
     TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
@@ -176,8 +175,7 @@ public class TiDBDataStreamSinkProvider implements DataStreamSinkProvider {
 
       // mini batch use row buffer deduplicate
       TiDBWriteOperator tiDBWriteOperator =
-          new TiDBMiniBatchWriteOperator(
-              databaseName, tableName, properties, timestamp, sinkOptions);
+          new TiDBMiniBatchWriteOperator(databaseName, tableName, properties, sinkOptions);
       SingleOutputStreamOperator<Void> transform =
           tiRowDataStream.transform("PRE_WRITE", Types.VOID, tiDBWriteOperator);
 

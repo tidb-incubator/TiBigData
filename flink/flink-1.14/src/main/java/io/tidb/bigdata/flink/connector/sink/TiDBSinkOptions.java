@@ -19,6 +19,7 @@ package io.tidb.bigdata.flink.connector.sink;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DEDUPLICATE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.DELETE_ENABLE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_AUTOINCREMENT_COLUMN_VALUE;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_AUTO_RANDOM_COLUMN_VALUE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.ROW_ID_ALLOCATOR_STEP;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_BUFFER_SIZE;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.SINK_IMPL;
@@ -47,6 +48,7 @@ public class TiDBSinkOptions implements Serializable {
   private final String updateColumns;
   private final boolean skipCheckForUpdateColumns;
   private final boolean deleteEnable;
+  private final boolean ignoreAutoRandomColumn;
 
   public TiDBSinkOptions(ReadableConfig config) {
     this.sinkImpl = config.get(SINK_IMPL);
@@ -54,6 +56,7 @@ public class TiDBSinkOptions implements Serializable {
     this.bufferSize = config.get(SINK_BUFFER_SIZE);
     this.rowIdAllocatorStep = config.get(ROW_ID_ALLOCATOR_STEP);
     this.ignoreAutoincrementColumn = config.get(IGNORE_AUTOINCREMENT_COLUMN_VALUE);
+    this.ignoreAutoRandomColumn = config.get(IGNORE_AUTO_RANDOM_COLUMN_VALUE);
     this.deduplicate = config.get(DEDUPLICATE);
     this.writeMode = TiDBWriteMode.fromString(config.get(WRITE_MODE));
     this.taskStartInterval = config.get(TASK_START_INTERVAL);
@@ -104,5 +107,9 @@ public class TiDBSinkOptions implements Serializable {
 
   public boolean isDeleteEnable() {
     return deleteEnable;
+  }
+
+  public boolean isIgnoreAutoRandomColumn() {
+    return ignoreAutoRandomColumn;
   }
 }
