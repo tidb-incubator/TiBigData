@@ -57,15 +57,18 @@ public final class RowIDAllocator implements Serializable {
   private final long maxShardRowIDBits;
   private final long dbId;
   private final long step;
+  private final boolean isUnsigned;
   private long end;
 
   private static final Logger LOG = LoggerFactory.getLogger(RowIDAllocator.class);
 
-  private RowIDAllocator(long maxShardRowIDBits, long dbId, long step, TiSession session) {
+  private RowIDAllocator(
+      long maxShardRowIDBits, long dbId, long step, TiSession session, boolean isUnsigned) {
     this.maxShardRowIDBits = maxShardRowIDBits;
     this.dbId = dbId;
     this.step = step;
     this.session = session;
+    this.isUnsigned = isUnsigned;
   }
 
   public long getAutoIncId(long index) {
@@ -77,43 +80,53 @@ public final class RowIDAllocator implements Serializable {
    * @return
    */
   public long getShardRowId(long index) {
-    return getShardRowId(maxShardRowIDBits, index, index + getStart());
+    return getShardRowId(maxShardRowIDBits, index, index + getStart(), isUnsigned);
   }
 
-  public static long getShardRowId(long maxShardRowIDBits, long partitionIndex, long rowID) {
-    if (maxShardRowIDBits <= 0 || maxShardRowIDBits >= 16) {
+  public static long getShardRowId(long shardBits, long shardSeed, long rowID, boolean isUnsigned) {
+    if (shardBits <= 0 || shardBits >= 16) {
       return rowID;
     }
 
-    // assert rowID < Math.pow(2, 64 - maxShardRowIDBits)
+    int signBitLength = isUnsigned ? 0 : 1;
+    // assert rowID < Math.pow(2, 64 - shardBits)
 
-    long partition = partitionIndex & ((1L << maxShardRowIDBits) - 1);
-    return rowID | (partition << (64 - maxShardRowIDBits - 1));
+    long partition = shardSeed & ((1L << shardBits) - 1);
+    return rowID | (partition << (64 - shardBits - signBitLength));
   }
 
   public static RowIDAllocator create(
-      long dbId, TiTableInfo table, TiSession session, boolean unsigned, long step) {
+      long dbId,
+      TiTableInfo table,
+      TiSession session,
+      boolean isUnsigned,
+      long step,
+      long shardBits) {
     BackOffer backOffer = ConcreteBackOffer.newCustomBackOff(40000);
     while (true) {
       try {
-        return doCreate(dbId, table, session, unsigned, step);
+        return doCreate(dbId, table, session, isUnsigned, step, shardBits);
       } catch (AllocateRowIDOverflowException | IllegalArgumentException e) {
         throw e;
       } catch (Exception e) {
-        LOG.warn("error during allocating row id", e);
         backOffer.doBackOff(BackOffFunction.BackOffFuncType.BoServerBusy, e);
       }
     }
   }
 
   private static RowIDAllocator doCreate(
-      long dbId, TiTableInfo table, TiSession session, boolean unsigned, long step) {
+      long dbId,
+      TiTableInfo table,
+      TiSession session,
+      boolean unsigned,
+      long step,
+      long shardBits) {
     RowIDAllocator allocator =
-        new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session);
+        new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session, unsigned);
     if (unsigned) {
-      allocator.initUnsigned(session.createSnapshot(), table.getId(), table.getMaxShardRowIDBits());
+      allocator.initUnsigned(session.createSnapshot(), table.getId(), shardBits);
     } else {
-      allocator.initSigned(session.createSnapshot(), table.getId(), table.getMaxShardRowIDBits());
+      allocator.initSigned(session.createSnapshot(), table.getId(), shardBits);
     }
 
     return allocator;

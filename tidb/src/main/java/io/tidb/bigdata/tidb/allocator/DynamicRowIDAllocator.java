@@ -17,33 +17,46 @@
 package io.tidb.bigdata.tidb.allocator;
 
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Optional;
+import java.util.Random;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
+import org.apache.commons.codec.digest.MurmurHash3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.tikv.common.meta.TiTimestamp;
 
 public class DynamicRowIDAllocator implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DynamicRowIDAllocator.class);
+  private static final ThreadLocal<Random> RANDOM_THREAD_LOCAL =
+      ThreadLocal.withInitial(Random::new);
 
   private final ClientSession session;
   private final String databaseName;
   private final String tableName;
   private final int step;
-  private final long maxShardRowIDBits;
-
+  private final long shardBits;
+  private final TiTimestamp startTimestamp;
+  private final RowIDAllocatorType type;
+  private final boolean isUnsigned;
   private Long start;
   private ThreadPoolExecutor threadPool;
   private FutureTask<Long> futureTask;
   private int index;
+  private long currentShardSeed;
 
   public DynamicRowIDAllocator(
-      ClientSession session, String databaseName, String tableName, int step) {
-    this(session, databaseName, tableName, step, null);
+      ClientSession session,
+      String databaseName,
+      String tableName,
+      int step,
+      TiTimestamp startTimestamp) {
+    this(session, databaseName, tableName, step, null, startTimestamp);
   }
 
   public DynamicRowIDAllocator(
@@ -51,18 +64,71 @@ public class DynamicRowIDAllocator implements AutoCloseable {
       String databaseName,
       String tableName,
       int step,
-      @Nullable Long start) {
+      @Nullable Long start,
+      TiTimestamp startTimestamp) {
     this.session = session;
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.step = step;
     this.start = start;
-    this.maxShardRowIDBits = session.getTableMust(databaseName, tableName).getMaxShardRowIDBits();
+    this.startTimestamp = startTimestamp;
+    this.type = getType();
+    this.shardBits = getShardBits();
+    this.isUnsigned = isUnsigned();
+    initRandomGenerator();
+  }
+
+  private void initRandomGenerator() {
+    long version = startTimestamp.getVersion();
+    Random random = RANDOM_THREAD_LOCAL.get();
+    random.setSeed(version);
+  }
+
+  private boolean isUnsigned() {
+    TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
+    switch (type) {
+      case AUTO_INCREMENT:
+        return tableInfo.isAutoIncrementColUnsigned();
+      case AUTO_RANDOM:
+        return tableInfo.isAutoRandomColUnsigned();
+      case IMPLICIT_ROWID:
+        // IMPLICIT_ROWID is always signed.
+        return false;
+      default:
+        throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + type);
+    }
+  }
+
+  private RowIDAllocatorType getType() {
+    TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
+    if (tableInfo.hasAutoRandomColumn()) {
+      return RowIDAllocatorType.AUTO_RANDOM;
+    } else if (tableInfo.hasAutoIncrementColumn()) {
+      return RowIDAllocatorType.AUTO_INCREMENT;
+    } else {
+      return RowIDAllocatorType.IMPLICIT_ROWID;
+    }
+  }
+
+  private long getShardBits() {
+    TiTableInfo tableInfo = session.getTableMust(databaseName, tableName);
+    switch (type) {
+      case AUTO_INCREMENT:
+        // AUTO_INC doesn't have shard bits.
+        return 0L;
+      case AUTO_RANDOM:
+        return tableInfo.getAutoRandomBits();
+      case IMPLICIT_ROWID:
+        return tableInfo.getMaxShardRowIDBits();
+      default:
+        throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + type);
+    }
   }
 
   private void checkUpdate() {
     if (start == null) {
-      start = session.createRowIdAllocator(databaseName, tableName, step).getStart();
+      start = session.createRowIdAllocator(databaseName, tableName, step, type).getStart();
+      updateCurrentShard();
     }
     if (index == (int) (step * 0.8)) {
       if (threadPool == null) {
@@ -79,12 +145,13 @@ public class DynamicRowIDAllocator implements AutoCloseable {
        */
       futureTask =
           new FutureTask<>(
-              () -> session.createRowIdAllocator(databaseName, tableName, step).getStart());
+              () -> session.createRowIdAllocator(databaseName, tableName, step, type).getStart());
       threadPool.submit(futureTask);
     }
     if (index >= step) {
       try {
         start = futureTask.get();
+        updateCurrentShard();
         futureTask = null;
         index = 0;
       } catch (Exception e) {
@@ -93,13 +160,29 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     }
   }
 
-  public long getSharedRowId() {
-    checkUpdate();
-    index++;
-    return RowIDAllocator.getShardRowId(maxShardRowIDBits, index, index + start);
+  private void updateCurrentShard() {
+    if (type != RowIDAllocatorType.AUTO_RANDOM) {
+      return;
+    }
+
+    Random random = RANDOM_THREAD_LOCAL.get();
+    // Use MurmurHash3 to make sure the bits of shardSeed >= 15
+    currentShardSeed = MurmurHash3.hash32(random.nextLong());
   }
 
-  public long getAutoIncId() {
+  public long getImplicitRowId() {
+    checkUpdate();
+    index++;
+    return RowIDAllocator.getShardRowId(shardBits, index, index + start, isUnsigned);
+  }
+
+  public long getAutoRandomId() {
+    checkUpdate();
+    index++;
+    return RowIDAllocator.getShardRowId(shardBits, currentShardSeed, index + start, isUnsigned);
+  }
+
+  public long getAutoIncrementId() {
     checkUpdate();
     index++;
     return index + start;
@@ -108,5 +191,11 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   @Override
   public void close() {
     Optional.ofNullable(threadPool).ifPresent(ThreadPoolExecutor::shutdownNow);
+  }
+
+  public enum RowIDAllocatorType {
+    AUTO_INCREMENT,
+    AUTO_RANDOM,
+    IMPLICIT_ROWID
   }
 }

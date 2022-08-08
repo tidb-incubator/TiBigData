@@ -31,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Streams;
 import io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.JdbcConnectionProvider;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
 import io.tidb.bigdata.tidb.allocator.RowIDAllocator;
 import io.tidb.bigdata.tidb.catalog.Catalog;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
@@ -80,7 +81,6 @@ public final class ClientSession implements AutoCloseable {
       ImmutableSet.of("information_schema", "metrics_schema", "performance_schema", "mysql");
 
   static final Logger LOG = LoggerFactory.getLogger(ClientSession.class);
-  private static final int ROW_ID_STEP_DEFAULT = 30000;
   private static final String TIDB_ENABLE_CLUSTERED_INDEX = "select @@tidb_enable_clustered_index";
 
   private final ClientConfig config;
@@ -373,7 +373,7 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
-  public boolean supportClusteredIndex() {
+  public boolean isSupportClusteredIndex() {
     try (Connection connection = jdbcConnectionProvider.getConnection();
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery(TIDB_ENABLE_CLUSTERED_INDEX)) {
@@ -511,14 +511,29 @@ public final class ClientSession implements AutoCloseable {
     return session;
   }
 
-  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName, int step) {
+  public RowIDAllocator createRowIdAllocator(
+      String databaseName, String tableName, int step, RowIDAllocatorType type) {
     long dbId = catalog.getDatabase(databaseName).getId();
     TiTableInfo table = getTableMust(databaseName, tableName);
-    return RowIDAllocator.create(dbId, table, session, table.isAutoIncColUnsigned(), step);
-  }
-
-  public RowIDAllocator createRowIdAllocator(String databaseName, String tableName) {
-    return createRowIdAllocator(databaseName, tableName, ROW_ID_STEP_DEFAULT);
+    long shardBits = 0;
+    boolean isUnsigned = false;
+    switch (type) {
+      case AUTO_INCREMENT:
+        isUnsigned = table.isAutoIncrementColUnsigned();
+        // AUTO_INC doesn't have shard bits.
+        break;
+      case AUTO_RANDOM:
+        isUnsigned = table.isAutoRandomColUnsigned();
+        shardBits = table.getAutoRandomBits();
+        break;
+      case IMPLICIT_ROWID:
+        // IMPLICIT_ROWID is always signed.
+        shardBits = table.getMaxShardRowIDBits();
+        break;
+      default:
+        throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + type);
+    }
+    return RowIDAllocator.create(dbId, table, session, isUnsigned, step, shardBits);
   }
 
   public boolean isClusteredIndex(String databaseName, String tableName) {

@@ -58,10 +58,10 @@ public class TiDBWriteHelperTest extends FlinkTestBase {
   private void writeData(ClientSession clientSession, String tableName) {
     TiTimestamp timestamp = clientSession.getSnapshotVersion();
     DynamicRowIDAllocator rowIDAllocator =
-        new DynamicRowIDAllocator(clientSession, DATABASE_NAME, tableName, 100);
+        new DynamicRowIDAllocator(clientSession, DATABASE_NAME, tableName, 100, timestamp);
     TiDBEncodeHelper tiDBEncodeHelper =
         new TiDBEncodeHelper(
-            clientSession, timestamp, DATABASE_NAME, tableName, false, true, rowIDAllocator);
+            clientSession, timestamp, DATABASE_NAME, tableName, false, false, true, rowIDAllocator);
     TiDBWriteHelper tiDBWriteHelper =
         new TiDBWriteHelper(clientSession.getTiSession(), timestamp.getVersion());
     List<BytePairWrapper> pairs =

@@ -44,6 +44,7 @@ public class TiTableInfo implements Serializable {
   private final List<TiIndexInfo> indices;
   private final boolean pkIsHandle;
   private final boolean isCommonHandle;
+  private final int commonHandleVersion;
   private final String comment;
   private final long autoIncId;
   private final long maxColumnId;
@@ -75,6 +76,7 @@ public class TiTableInfo implements Serializable {
       @JsonProperty("collate") String collate,
       @JsonProperty("pk_is_handle") boolean pkIsHandle,
       @JsonProperty("is_common_handle") boolean isCommonHandle,
+      @JsonProperty("common_handle_version") int commonHandleVersion,
       @JsonProperty("cols") List<TiColumnInfo> columns,
       @JsonProperty("index_info") List<TiIndexInfo> indices,
       @JsonProperty("comment") String comment,
@@ -113,6 +115,7 @@ public class TiTableInfo implements Serializable {
     // TODO: Use more precise predication according to types
     this.pkIsHandle = pkIsHandle;
     this.isCommonHandle = isCommonHandle;
+    this.commonHandleVersion = commonHandleVersion;
     this.indices = indices != null ? ImmutableList.copyOf(indices) : ImmutableList.of();
     this.indicesWithoutHiddenAndInvisible =
         this.indices.stream()
@@ -184,9 +187,26 @@ public class TiTableInfo implements Serializable {
     return null;
   }
 
-  public boolean isAutoIncColUnsigned() {
+  public TiColumnInfo getAutoRandomColInfo() {
+    if (!hasAutoRandomColumn()) {
+      return null;
+    }
+
+    for (TiColumnInfo tiColumnInfo : getColumns(true)) {
+      if (tiColumnInfo.isPrimaryKey()) {
+        return tiColumnInfo;
+      }
+    }
+    return null;
+  }
+
+  public boolean isAutoIncrementColUnsigned() {
     TiColumnInfo col = getAutoIncrementColInfo();
-    if (col == null) return false;
+    return col.getType().isUnsigned();
+  }
+
+  public boolean isAutoRandomColUnsigned() {
+    TiColumnInfo col = getAutoRandomColInfo();
     return col.getType().isUnsigned();
   }
 
@@ -248,6 +268,10 @@ public class TiTableInfo implements Serializable {
 
   public boolean isCommonHandle() {
     return isCommonHandle;
+  }
+
+  public int getCommonHandleVersion() {
+    return commonHandleVersion;
   }
 
   public List<TiIndexInfo> getIndices() {
@@ -369,6 +393,7 @@ public class TiTableInfo implements Serializable {
           getCollate(),
           true,
           isCommonHandle,
+          commonHandleVersion,
           newColumns.build(),
           getIndices(true),
           getComment(),
