@@ -77,7 +77,7 @@ INSERT INTO `people`(`id`,`name`) VALUES (1,'zs');
 Create the TiDB mapping table in Hive, where the columns are arbitrary and TiBigData will automatically correct the columns.
 
 ```sql
-CREATE TABLE `people`(
+CREATE TEMPORARY TABLE `people`(
  `fake_column` int
 )
 STORED BY
