@@ -22,7 +22,6 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.SinkImpl.TIKV;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.WRITE_MODE;
 import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 
-import io.tidb.bigdata.flink.connector.TiDBCatalog;
 import io.tidb.bigdata.flink.connector.TiDBOptions.SinkTransaction;
 import io.tidb.bigdata.flink.connector.utils.StoreVersion;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
@@ -52,9 +51,10 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
   public void testInsertCodec() throws Exception {
     Map<String, String> properties = defaultProperties();
     ClientSession session = ClientSession.create(new ClientConfig(properties));
-    List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
-        session.getTiSession().getPDClient());
-    Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
+    List<StoreVersion> storeVersions =
+        StoreVersion.fetchTiKVVersions(session.getTiSession().getPDClient());
+    Optional<StoreVersion> minimumTiKVVersion =
+        storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
     Assume.assumeTrue(minimumTiKVVersion.isPresent());
     Assume.assumeTrue(minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0")));
     table = "flink_insert_dst_test" + RandomUtils.randomString();
@@ -94,9 +94,10 @@ public class TiKVInsertCodecTest extends FlinkTestBase {
   public void testUniqueIndexValueEncode() throws Exception {
     Map<String, String> properties = defaultProperties();
     ClientSession session = ClientSession.create(new ClientConfig(properties));
-    List<StoreVersion> storeVersions = StoreVersion.fetchTiKVVersions(
-        session.getTiSession().getPDClient());
-    Optional<StoreVersion> minimumTiKVVersion =storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
+    List<StoreVersion> storeVersions =
+        StoreVersion.fetchTiKVVersions(session.getTiSession().getPDClient());
+    Optional<StoreVersion> minimumTiKVVersion =
+        storeVersions.stream().reduce((a, b) -> a.greatThan(b) ? b : a);
     Assume.assumeTrue(minimumTiKVVersion.isPresent());
     Assume.assumeTrue(minimumTiKVVersion.get().greatThan(new StoreVersion("5.0.0")));
     table = "flink_insert_dst_test" + RandomUtils.randomString();
