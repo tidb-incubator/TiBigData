@@ -78,6 +78,7 @@ public class TiDBRowConverterBenchMarkTest {
             "",
             true,
             false,
+            1,
             columns,
             null,
             "",

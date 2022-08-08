@@ -24,7 +24,6 @@ import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;
 import io.tidb.bigdata.tidb.key.IndexKey;
 import io.tidb.bigdata.tidb.key.IndexKey.EncodeIndexDataResult;
-import io.tidb.bigdata.tidb.key.Key;
 import io.tidb.bigdata.tidb.key.RowKey;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
@@ -165,60 +164,25 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
-  private Pair<byte[], Boolean> buildUniqueIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
+  private Pair<byte[], Boolean> buildIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
     EncodeIndexDataResult encodeIndexDataResult =
-        IndexKey.encodeIndexDataValues(
-            tiRow,
-            index.getIndexColumns(),
-            handle,
-            index.isUnique() && !index.isPrimary(),
-            tiTableInfo);
-    Key[] keys = encodeIndexDataResult.keys;
-    IndexKey indexKey = IndexKey.toIndexKey(tiTableInfo.getId(), index.getId(), keys);
-    return new Pair<>(indexKey.getBytes(), encodeIndexDataResult.appendHandle);
+        IndexKey.genIndexKey(tiTableInfo.getId(), tiRow, index, handle, tiTableInfo);
+    return new Pair<>(encodeIndexDataResult.indexKey, encodeIndexDataResult.distinct);
   }
 
-  private BytePairWrapper generateUniqueIndexKeyValue(
+  private BytePairWrapper generateIndexKeyValue(
       Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
-    Pair<byte[], Boolean> pair = buildUniqueIndexKey(tiRow, handle, index);
+    Pair<byte[], Boolean> pair = buildIndexKey(tiRow, handle, index);
 
     byte[] key = pair.first;
-    boolean needToAppendHandle = pair.second;
+    boolean distinct = pair.second;
     byte[] value;
     if (remove) {
       value = EMPTY_BYTES;
     } else {
-      if (needToAppendHandle) {
-        value = ZERO_BYTES;
-      } else {
-        if (handle.isInt()) {
-          CodecDataOutput codecDataOutput = new CodecDataOutput();
-          codecDataOutput.writeLong(handle.intValue());
-          value = codecDataOutput.toBytes();
-        } else {
-          // clustered index
-          value = TableCodec.genIndexValueForClusteredIndexVersion1(index, handle);
-        }
-      }
+      value = TableCodec.genIndexValue(handle, tiTableInfo.getCommonHandleVersion(), distinct);
     }
     return new BytePairWrapper(key, value);
-  }
-
-  private BytePairWrapper generateSecondaryIndexKeyValue(
-      Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
-    Key[] keys =
-        IndexKey.encodeIndexDataValues(tiRow, index.getIndexColumns(), handle, false, tiTableInfo)
-            .keys;
-    CodecDataOutput codecDataOutput = new CodecDataOutput();
-    codecDataOutput.write(IndexKey.toIndexKey(tiTableInfo.getId(), index.getId(), keys).getBytes());
-    codecDataOutput.write(handle.encodedAsKey());
-    byte[] value;
-    if (remove) {
-      value = EMPTY_BYTES;
-    } else {
-      value = ZERO_BYTES;
-    }
-    return new BytePairWrapper(codecDataOutput.toBytes(), value);
   }
 
   private BytePairWrapper generateRecordKeyValue(Row tiRow, Handle handle, boolean remove) {
@@ -237,14 +201,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, Handle handle, boolean remove) {
     return tiTableInfo.getIndices().stream()
         .filter(tiIndexInfo -> !(isCommonHandle && tiIndexInfo.isPrimary()))
-        .map(
-            tiIndexInfo -> {
-              if (tiIndexInfo.isUnique()) {
-                return generateUniqueIndexKeyValue(tiRow, handle, tiIndexInfo, remove);
-              } else {
-                return generateSecondaryIndexKeyValue(tiRow, handle, tiIndexInfo, remove);
-              }
-            })
+        .map(tiIndexInfo -> generateIndexKeyValue(tiRow, handle, tiIndexInfo, remove))
         .collect(Collectors.toList());
   }
 
@@ -291,11 +248,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
   public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
       TiIndexInfo index, Handle handle, Row tiRow) {
-    Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
-    if (!uniqueIndexKeyPair.second) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiRow, handle, index);
+    if (uniqueIndexKeyPair.second) {
       byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
       if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
+        Handle oldHandle = TableCodec.decodeHandle(oldValue, !handle.isInt());
         byte[] oldRowValue =
             snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
         Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
