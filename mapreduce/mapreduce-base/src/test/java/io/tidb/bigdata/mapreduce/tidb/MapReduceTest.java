@@ -342,4 +342,40 @@ public class MapReduceTest {
     Assert.assertTrue(job.waitForCompletion(true));
     Assert.assertEquals(10000, getMapInputRecords(job));
   }
+
+  @Test
+  public void testEmptyRegions() throws Exception {
+    String tableName = "test_empty_regions";
+    String dbTable = String.format("`%s`.`%s`", DATABASE_NAME, tableName);
+    try (ClientSession clientSession = getSingleConnection()) {
+      clientSession.sqlUpdate(
+          "DROP TABLE IF EXISTS " + dbTable,
+          String.format(
+              "CREATE TABLE IF NOT EXISTS %s (`id` INT PRIMARY KEY AUTO_INCREMENT)", dbTable));
+    }
+    List<String> options = new ArrayList<>();
+    ClientConfig clientConfig = new ClientConfig(ConfigUtils.defaultProperties());
+    // database url
+    options.add("-du");
+    options.add(clientConfig.getDatabaseUrl());
+    // database
+    options.add("-dn");
+    options.add(DATABASE_NAME);
+    // table
+    options.add("-t");
+    options.add(tableName);
+    // user
+    options.add("-u");
+    options.add(clientConfig.getUsername());
+    // password
+    options.add("-p");
+    options.add(clientConfig.getPassword());
+    // fields
+    options.add("-f");
+    options.add("id");
+
+    Job job = TiDBMapreduceDemo.createJob(options.toArray(new String[0]));
+    Assert.assertTrue(job.waitForCompletion(true));
+    Assert.assertEquals(0, getMapInputRecords(job));
+  }
 }
