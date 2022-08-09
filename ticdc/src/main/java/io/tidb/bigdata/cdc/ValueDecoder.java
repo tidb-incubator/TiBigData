@@ -24,18 +24,16 @@ import io.tidb.bigdata.cdc.json.JsonParser;
 import io.tidb.bigdata.cdc.json.JsonValueDecoder;
 import java.util.Iterator;
 
-/**
- * TiCDC open protocol event value decoder, parse bits into event value instances.
- */
+/** TiCDC open protocol event value decoder, parse bits into event value instances. */
 public interface ValueDecoder extends Iterator<Value> {
 
-  static ValueDecoder json(final byte[] value,
-      final ParserFactory<JsonParser, JsonNode> parserFactory) {
+  static ValueDecoder json(
+      final byte[] value, final ParserFactory<JsonParser, JsonNode> parserFactory) {
     return new JsonValueDecoder(value, parserFactory.createParser());
   }
 
-  static ValueDecoder craft(final byte[] payload,
-      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+  static ValueDecoder craft(
+      final byte[] payload, final ParserFactory<CraftParser, CraftParserState> parserFactory) {
     return new CraftValueDecoder(payload, parserFactory.createParser());
   }
 

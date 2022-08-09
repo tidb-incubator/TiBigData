@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
@@ -14,7 +15,8 @@
   <url>https://github.com/pingcap-incubator/TiBigData</url>
 
   <properties>
-    <dep.flink.version>1.11.0</dep.flink.version>
+    <dep.flink-base.version>1.11.0</dep.flink-base.version>
+    <flink-base.scope>provided</flink-base.scope>
   </properties>
 
   <dependencies>
@@ -40,50 +42,44 @@
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-clients_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-streaming-java_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-api-java-bridge_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner-blink_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-table-planner_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
-      <version>${dep.flink.version}</version>
-      <scope>${flink.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
+      <version>${dep.flink-base.version}</version>
+      <scope>${flink-base.scope}</scope>
     </dependency>
   </dependencies>
 

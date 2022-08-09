@@ -1,0 +1,31 @@
+@startuml
+
+start
+
+group TiDBEncodeHelper
+: get pk or uk without null value;
+: check pk/uk;
+group TiSession
+: get snapshot;
+endgroup
+if (pkIsHandle or isCommonHandle) then (true)
+   : extractHandle from pk and build rowKey with handle;
+   : get old value from snapshot with rowKey;
+   : ignore delete if the delete row is not exist;
+  else (false)
+   : buildUniqueIndexKey with pk/uk;
+   : get old value from snapshot with uniqueIndexKey;
+   : get old handle with old value;
+   : ignore delete if the delete row is not exist;
+  endif
+: generate Record KeyValue for delete row;
+: generate index KeyValue for delete row;
+endgroup
+group TiDBMiniBatchWriteOperator
+: mix KeyValue of upsert and delete rows;
+: 2PC;
+endgroup
+
+stop
+
+@enduml

@@ -20,6 +20,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toCollection;
 
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -38,24 +39,25 @@ public final class SplitManagerInternal {
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
-    return getSplits(tableHandle, session.getTimestamp());
+    return getSplits(tableHandle, session.getSnapshotVersion());
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
-    List<SplitInternal> splits = session.getTableRanges(tableHandle)
-        .stream()
-        .map(range -> new SplitInternal(tableHandle, range, timestamp))
-        .collect(toCollection(ArrayList::new));
+    List<SplitInternal> splits =
+        session.getTableRanges(tableHandle).stream()
+            .map(range -> new SplitInternal(tableHandle, range, timestamp))
+            .collect(toCollection(ArrayList::new));
     Collections.shuffle(splits);
-    LOG.info("The number of split for table `{}`.`{}` is {}", tableHandle.getSchemaName(),
-        tableHandle.getTableName(), splits.size());
+    LOG.info(
+        "The number of split for table `{}`.`{}` is {}",
+        tableHandle.getSchemaName(),
+        tableHandle.getTableName(),
+        splits.size());
     return Collections.unmodifiableList(splits);
   }
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("session", session)
-        .toString();
+    return toStringHelper(this).add("session", session).toString();
   }
 }

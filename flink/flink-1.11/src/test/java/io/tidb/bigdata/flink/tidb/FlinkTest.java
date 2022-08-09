@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 TiDB Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.tidb.bigdata.flink.tidb;
 
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
@@ -9,6 +25,7 @@ import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
 import static io.tidb.bigdata.tidb.ClientConfig.USERNAME;
 import static java.lang.String.format;
 
+import io.tidb.bigdata.test.IntegrationTest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +45,9 @@ import org.apache.flink.types.Row;
 import org.apache.flink.util.CloseableIterator;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class FlinkTest {
 
   public static final String TIDB_HOST = "TIDB_HOST";
@@ -158,9 +177,10 @@ public class FlinkTest {
 
   public Map<String, String> getDefaultProperties() {
     Map<String, String> properties = new HashMap<>();
-    properties.put(DATABASE_URL,
+    properties.put(
+        DATABASE_URL,
         String.format(
-            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false",
+            "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
             tidbHost, tidbPort));
     properties.put(USERNAME, tidbUser);
     properties.put(PASSWORD, tidbPassword);
@@ -170,8 +190,8 @@ public class FlinkTest {
   }
 
   public TableEnvironment getTableEnvironment() {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inBatchMode().build();
+    EnvironmentSettings settings =
+        EnvironmentSettings.newInstance().useBlinkPlanner().inBatchMode().build();
     return TableEnvironment.create(settings);
   }
 
@@ -245,22 +265,25 @@ public class FlinkTest {
     properties.put("timestamp-format.c2", "yyyy-MM-dd HH:mm");
     testTableFactoryWithTimestampFormat(properties);
   }
-  
-  private void testTableFactoryWithTimestampFormat(Map<String, String> properties){
+
+  private void testTableFactoryWithTimestampFormat(Map<String, String> properties) {
     // env
     TableEnvironment tableEnvironment = getTableEnvironment();
     // create test database and table
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
     tiDBCatalog.sqlUpdate("DROP TABLE IF EXISTS `test_timestamp`");
-    tiDBCatalog.sqlUpdate("CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
+    tiDBCatalog.sqlUpdate(
+        "CREATE TABLE `test_timestamp`(`c1` VARCHAR(255), `c2` timestamp)",
         "INSERT INTO `test_timestamp` VALUES('2020-01-01 12:00:01','2020-01-01 12:00:02')");
-    String propertiesString = properties.entrySet().stream()
-        .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue())).collect(
-            Collectors.joining(",\n"));
-    String createTableSql = format(
-        "CREATE TABLE `test_timestamp`(`c1` timestamp, `c2` string) WITH (\n%s\n)",
-        propertiesString);
+    String propertiesString =
+        properties.entrySet().stream()
+            .map(entry -> format("'%s' = '%s'", entry.getKey(), entry.getValue()))
+            .collect(Collectors.joining(",\n"));
+    String createTableSql =
+        format(
+            "CREATE TABLE `test_timestamp`(`c1` timestamp, `c2` string) WITH (\n%s\n)",
+            propertiesString);
     tableEnvironment.executeSql(createTableSql);
     Row row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
     Row row1 = new Row(2);
@@ -269,8 +292,8 @@ public class FlinkTest {
     Assert.assertEquals(row, row1);
 
     tableEnvironment.executeSql("DROP TABLE `test_timestamp`");
-    createTableSql = format(
-        "CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
+    createTableSql =
+        format("CREATE TABLE `test_timestamp`(`c2` string) WITH (\n%s\n)", propertiesString);
     tableEnvironment.executeSql(createTableSql);
     row = tableEnvironment.executeSql("SELECT * FROM `test_timestamp`").collect().next();
     row1 = new Row(1);
@@ -293,32 +316,34 @@ public class FlinkTest {
 
   @Test
   public void testLookupTableSource() throws Exception {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inStreamingMode().build();
+    EnvironmentSettings settings =
+        EnvironmentSettings.newInstance().useBlinkPlanner().inStreamingMode().build();
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     Map<String, String> properties = getDefaultProperties();
     TiDBCatalog tiDBCatalog = new TiDBCatalog(properties);
     tiDBCatalog.open();
     String tableName = getRandomTableName();
-    String createTableSql1 = String
-        .format("CREATE TABLE `%s`.`%s` (c1 int, c2 varchar(255), PRIMARY KEY(`c1`))",
+    String createTableSql1 =
+        String.format(
+            "CREATE TABLE `%s`.`%s` (c1 int, c2 varchar(255), PRIMARY KEY(`c1`))",
             DATABASE_NAME, tableName);
-    String insertDataSql = String
-        .format("INSERT INTO `%s`.`%s` VALUES (1,'data1'),(2,'data2'),(3,'data3'),(4,'data4')",
+    String insertDataSql =
+        String.format(
+            "INSERT INTO `%s`.`%s` VALUES (1,'data1'),(2,'data2'),(3,'data3'),(4,'data4')",
             DATABASE_NAME, tableName);
     tiDBCatalog.sqlUpdate(createTableSql1, insertDataSql);
     tableEnvironment.registerCatalog("tidb", tiDBCatalog);
-    List<Row> rows = IntStream.range(1, 11).mapToObj(Row::of)
-        .collect(Collectors.toList());
+    List<Row> rows = IntStream.range(1, 11).mapToObj(Row::of).collect(Collectors.toList());
     TableSchema tableSchema = TableSchema.builder().field("c1", DataTypes.INT().notNull()).build();
     Table table = tableEnvironment.fromValues(tableSchema.toRowDataType(), rows);
     tableEnvironment.registerTable("data", table);
-    String sql = String.format(
-        "SELECT * FROM (SELECT c1,PROCTIME() AS proctime FROM data) AS `datagen` "
-            + "LEFT JOIN `%s`.`%s`.`%s` FOR SYSTEM_TIME AS OF datagen.proctime AS `dim_table` "
-            + "ON datagen.c1 = dim_table.c1 ",
-        "tidb", DATABASE_NAME, tableName);
+    String sql =
+        String.format(
+            "SELECT * FROM (SELECT c1,PROCTIME() AS proctime FROM data) AS `datagen` "
+                + "LEFT JOIN `%s`.`%s`.`%s` FOR SYSTEM_TIME AS OF datagen.proctime AS `dim_table` "
+                + "ON datagen.c1 = dim_table.c1 ",
+            "tidb", DATABASE_NAME, tableName);
     CloseableIterator<Row> iterator = tableEnvironment.executeSql(sql).collect();
     while (iterator.hasNext()) {
       Row row = iterator.next();
@@ -329,5 +354,4 @@ public class FlinkTest {
       Assert.assertEquals(row, row1);
     }
   }
-
 }

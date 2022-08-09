@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-       xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>io.tidb</groupId>
@@ -45,6 +46,12 @@
     <!-- flink -->
     <dependency>
       <groupId>org.apache.flink</groupId>
+      <artifactId>flink-json</artifactId>
+      <version>${dep.flink.version}</version>
+      <scope>${flink.scope}</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.flink</groupId>
       <artifactId>flink-java</artifactId>
       <version>${dep.flink.version}</version>
       <scope>${flink.scope}</scope>
@@ -83,23 +90,19 @@
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-jdbc_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink.version}</version>
+      <scope>${flink.jdbc.connector.scope}</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-connector-kafka_${dep.scala.binary.version}</artifactId>
       <version>${dep.flink.version}</version>
+      <scope>${flink.kafka.connector.scope}</scope>
     </dependency>
+    <!-- telemetry -->
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${dep.mysql.jdbc.version}</version>
-      <scope>${flink.scope}</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-telemetry</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
@@ -120,6 +123,14 @@
                 <relocation>
                   <pattern>com.google.common</pattern>
                   <shadedPattern>shade.bigdata.com.google.common</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>oshi</pattern>
+                  <shadedPattern>io.tidb.bigdata.telemetry.shade.oshi</shadedPattern>
                 </relocation>
               </relocations>
               <finalName>${project.artifactId}-${project.version}</finalName>

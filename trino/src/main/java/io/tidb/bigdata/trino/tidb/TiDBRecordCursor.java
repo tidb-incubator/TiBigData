@@ -21,6 +21,7 @@ import static java.lang.String.format;
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.Wrapper;
+import io.tidb.bigdata.tidb.types.DataType;
 import io.tidb.bigdata.trino.tidb.TypeHelper.BooleanRecordCursorReader;
 import io.tidb.bigdata.trino.tidb.TypeHelper.DoubleRecordCursorReader;
 import io.tidb.bigdata.trino.tidb.TypeHelper.LongRecordCursorReader;
@@ -29,7 +30,6 @@ import io.tidb.bigdata.trino.tidb.TypeHelper.SliceRecordCursorReader;
 import io.trino.spi.connector.RecordCursor;
 import io.trino.spi.type.Type;
 import java.util.List;
-import org.tikv.common.types.DataType;
 
 public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implements RecordCursor {
 
@@ -40,7 +40,9 @@ public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implem
 
   private TiDBColumnHandle[] columnHandles;
 
-  public TiDBRecordCursor(List<TiDBColumnHandle> columnHandles, List<DataType> columnTypes,
+  public TiDBRecordCursor(
+      List<TiDBColumnHandle> columnHandles,
+      List<DataType> columnTypes,
       RecordCursorInternal internal) {
     super(internal);
     int numColumns = columnHandles.size();
@@ -120,6 +122,5 @@ public final class TiDBRecordCursor extends Wrapper<RecordCursorInternal> implem
   }
 
   @Override
-  public void close() {
-  }
+  public void close() {}
 }

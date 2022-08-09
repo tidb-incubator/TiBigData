@@ -61,6 +61,18 @@ public class TiDBOptions {
           .booleanType()
           .defaultValue(Boolean.parseBoolean(ClientConfig.TIDB_FILTER_PUSH_DOWN_DEFAULT));
 
+  public static final ConfigOption<String> DNS_SEARCH = optional(ClientConfig.TIDB_DNS_SEARCH);
+
+  public static final ConfigOption<String> SNAPSHOT_TIMESTAMP =
+      optional(ClientConfig.SNAPSHOT_TIMESTAMP);
+
+  public static final ConfigOption<String> SNAPSHOT_VERSION =
+      optional(ClientConfig.SNAPSHOT_VERSION);
+
+  // split or offset
+  public static final ConfigOption<String> SOURCE_FAILOVER =
+      optional("tidb.source.failover", "split");
+
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
   public static final String STREAMING_SOURCE_KAFKA = "kafka";
@@ -71,8 +83,41 @@ public class TiDBOptions {
 
   public static final String STREAMING_CODEC_JSON = "json";
   public static final String STREAMING_CODEC_CRAFT = "craft";
+  public static final String STREAMING_CODEC_CANAL_JSON = "canal-json";
   public static final Set<String> VALID_STREAMING_CODECS =
-      ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON);
+      ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON, STREAMING_CODEC_CANAL_JSON);
+
+  // Options for catalog
+  public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS =
+      ConfigOptions.key("tidb.streaming.ignore-parse-errors")
+          .booleanType()
+          .defaultValue(false)
+          .withDescription(
+              "Optional flag to skip change events with parse errors instead of failing;\n"
+                  + "fields are set to null in case of errors, false by default.");
+
+  // Options for TLS
+  public static final ConfigOption<String> CLUSTER_TLS_ENABLE =
+      optional(ClientConfig.CLUSTER_TLS_ENABLE);
+  public static final ConfigOption<String> CLUSTER_TLS_CA = optional(ClientConfig.CLUSTER_TLS_CA);
+  public static final ConfigOption<String> CLUSTER_TLS_KEY = optional(ClientConfig.CLUSTER_TLS_KEY);
+  public static final ConfigOption<String> CLUSTER_TLS_CERT =
+      optional(ClientConfig.CLUSTER_TLS_CERT);
+  public static final ConfigOption<String> CLUSTER_JKS_ENABLE =
+      optional(ClientConfig.CLUSTER_JKS_ENABLE);
+  public static final ConfigOption<String> CLUSTER_JKS_KEY_PATH =
+      optional(ClientConfig.CLUSTER_JKS_KEY_PATH);
+  public static final ConfigOption<String> CLUSTER_JKS_KEY_PASSWORD =
+      optional(ClientConfig.CLUSTER_JKS_KEY_PASSWORD);
+  public static final ConfigOption<String> CLUSTER_JKS_TRUST_PATH =
+      optional(ClientConfig.CLUSTER_JKS_TRUST_PATH);
+  public static final ConfigOption<String> CLUSTER_JKS_TRUST_PASSWORD =
+      optional(ClientConfig.CLUSTER_JKS_TRUST_PASSWORD);
+
+  // For example:
+  // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
+  public static final String METADATA_INCLUDED = "tidb.metadata.included";
+  public static final String METADATA_INCLUDED_ALL = "*";
 
   public static Set<ConfigOption<?>> requiredOptions() {
     return withMoreRequiredOptions();
@@ -90,12 +135,23 @@ public class TiDBOptions {
   }
 
   public static Set<ConfigOption<?>> withMoreOptionalOptions(ConfigOption<?>... options) {
-    return ImmutableSet.<ConfigOption<?>>builder().add(
-        PASSWORD,
-        MAX_POOL_SIZE,
-        MIN_IDLE_SIZE,
-        STREAMING_SOURCE,
-        WRITE_MODE)
+    return ImmutableSet.<ConfigOption<?>>builder()
+        .add(
+            PASSWORD,
+            MAX_POOL_SIZE,
+            MIN_IDLE_SIZE,
+            STREAMING_SOURCE,
+            WRITE_MODE,
+            SOURCE_FAILOVER,
+            CLUSTER_TLS_ENABLE,
+            CLUSTER_TLS_CA,
+            CLUSTER_TLS_KEY,
+            CLUSTER_TLS_CERT,
+            CLUSTER_JKS_ENABLE,
+            CLUSTER_JKS_KEY_PATH,
+            CLUSTER_JKS_KEY_PASSWORD,
+            CLUSTER_JKS_TRUST_PATH,
+            CLUSTER_JKS_TRUST_PASSWORD)
         .add(options)
         .build();
   }

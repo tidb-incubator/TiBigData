@@ -1,42 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>io.tidb</groupId>
-        <artifactId>bigdata</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
-    </parent>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.tidb</groupId>
+    <artifactId>bigdata</artifactId>
+    <version>0.0.5-SNAPSHOT</version>
+  </parent>
 
-    <artifactId>flink-tidb-connector</artifactId>
-    <packaging>pom</packaging>
-    <name>Flink Connector</name>
-    <url>https://github.com/pingcap-incubator/TiBigData</url>
+  <artifactId>flink-tidb-connector</artifactId>
+  <packaging>pom</packaging>
+  <name>Flink Connector</name>
+  <url>https://github.com/pingcap-incubator/TiBigData</url>
 
-    <properties>
-        <dep.scala.binary.version>2.11</dep.scala.binary.version>
-        <dep.jackson.version>2.11.0</dep.jackson.version>
-        <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
-        <flink.scope>provided</flink.scope>
-    </properties>
+  <properties>
+    <dep.scala.binary.version>2.11</dep.scala.binary.version>
+    <dep.jackson.version>2.11.0</dep.jackson.version>
+    <dep.apache.commons.version>1.9.4</dep.apache.commons.version>
+    <flink.jdbc.connector.scope>provided</flink.jdbc.connector.scope>
+    <flink.kafka.connector.scope>provided</flink.kafka.connector.scope>
+    <flink.scope>provided</flink.scope>
+    <dep.jmh.version>1.35</dep.jmh.version>
+  </properties>
 
     <modules>
         <module>flink-base</module>
         <module>flink-1.11</module>
         <module>flink-1.12</module>
         <module>flink-1.13</module>
+        <module>flink-1.14</module>
     </modules>
 
-    <profiles>
-        <profile>
-            <id>local-debug</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <properties>
-                <flink.scope>compile</flink.scope>
-            </properties>
-        </profile>
-    </profiles>
+  <dependencies>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-test</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest-library</artifactId>
+      <version>1.3</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <profiles>
+    <profile>
+      <id>local-debug</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <properties>
+        <flink.scope>compile</flink.scope>
+        <flink.jdbc.connector.scope>compile</flink.jdbc.connector.scope>
+        <flink.kafka.connector.scope>compile</flink.kafka.connector.scope>
+        <mysql.driver.scope>compile</mysql.driver.scope>
+      </properties>
+    </profile>
+  </profiles>
 
 </project>

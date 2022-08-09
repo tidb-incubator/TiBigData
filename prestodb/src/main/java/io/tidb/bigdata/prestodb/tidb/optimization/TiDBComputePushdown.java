@@ -42,9 +42,9 @@ import io.tidb.bigdata.prestodb.tidb.TiDBSession;
 import io.tidb.bigdata.prestodb.tidb.TiDBTableHandle;
 import io.tidb.bigdata.prestodb.tidb.TiDBTableLayoutHandle;
 import io.tidb.bigdata.tidb.Expressions;
+import io.tidb.bigdata.tidb.expression.Expression;
 import java.util.Optional;
 import java.util.Set;
-import org.tikv.common.expression.Expression;
 
 public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
 
@@ -66,13 +66,12 @@ public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
     requireNonNull(functionResolution, "functionResolution is null");
     this.session = requireNonNull(session, "session is null");
     this.expressionOptimizer = requireNonNull(expressionOptimizer, "expressionOptimizer is null");
-    this.predicateTranslator = new PredicateTranslator(
-        functionMetadataManager,
-        buildFunctionTranslator(functionTranslators));
-    this.logicalRowExpressions = new LogicalRowExpressions(
-        determinismEvaluator,
-        functionResolution,
-        functionMetadataManager);
+    this.predicateTranslator =
+        new PredicateTranslator(
+            functionMetadataManager, buildFunctionTranslator(functionTranslators));
+    this.logicalRowExpressions =
+        new LogicalRowExpressions(
+            determinismEvaluator, functionResolution, functionMetadataManager);
   }
 
   @Override
@@ -84,8 +83,7 @@ public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
     return maxSubplan.accept(new Visitor(session, idAllocator), null);
   }
 
-  private class Visitor
-      extends PlanVisitor<PlanNode, Void> {
+  private class Visitor extends PlanVisitor<PlanNode, Void> {
 
     private final ConnectorSession session;
     private final PlanNodeIdAllocator idAllocator;
@@ -121,21 +119,27 @@ public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
 
       TableScanNode oldTableScanNode = (TableScanNode) node.getSource();
       TableHandle oldTableHandle = oldTableScanNode.getTable();
-      RowExpression predicate = expressionOptimizer
-          .optimize(node.getPredicate(), OPTIMIZED, session);
+      RowExpression predicate =
+          expressionOptimizer.optimize(node.getPredicate(), OPTIMIZED, session);
       predicate = logicalRowExpressions.convertToConjunctiveNormalForm(predicate);
 
-      TranslatedExpression<Expression> translatedExpression = translateWith(predicate,
-          predicateTranslator, oldTableScanNode.getAssignments());
+      TranslatedExpression<Expression> translatedExpression =
+          translateWith(predicate, predicateTranslator, oldTableScanNode.getAssignments());
 
       TiDBTableHandle oldConnectorTable = (TiDBTableHandle) oldTableHandle.getConnectorHandle();
 
       Optional<Expression> translated = translatedExpression.getTranslated();
-      Optional<Expression> tupleDomain = oldTableHandle.getLayout().flatMap(layout -> {
-        TiDBTableLayoutHandle tidbLayout = (TiDBTableLayoutHandle) layout;
-        return TupleDomainTranslator.translate(TiDBComputePushdown.this.session, oldConnectorTable,
-            tidbLayout.getTupleDomain().get());
-      });
+      Optional<Expression> tupleDomain =
+          oldTableHandle
+              .getLayout()
+              .flatMap(
+                  layout -> {
+                    TiDBTableLayoutHandle tidbLayout = (TiDBTableLayoutHandle) layout;
+                    return TupleDomainTranslator.translate(
+                        TiDBComputePushdown.this.session,
+                        oldConnectorTable,
+                        tidbLayout.getTupleDomain().get());
+                  });
 
       Optional<Expression> additionalPredicate = Expressions.and(tupleDomain, translated);
 
@@ -143,24 +147,25 @@ public final class TiDBComputePushdown implements ConnectorPlanOptimizer {
         return node;
       }
 
-      TiDBTableLayoutHandle newTableLayoutHandle = new TiDBTableLayoutHandle(
-          oldConnectorTable,
-          Optional.empty(),
-          additionalPredicate.map(Expressions::serialize));
+      TiDBTableLayoutHandle newTableLayoutHandle =
+          new TiDBTableLayoutHandle(
+              oldConnectorTable, Optional.empty(), additionalPredicate.map(Expressions::serialize));
 
-      TableHandle tableHandle = new TableHandle(
-          oldTableHandle.getConnectorId(),
-          oldTableHandle.getConnectorHandle(),
-          oldTableHandle.getTransaction(),
-          Optional.of(newTableLayoutHandle));
+      TableHandle tableHandle =
+          new TableHandle(
+              oldTableHandle.getConnectorId(),
+              oldTableHandle.getConnectorHandle(),
+              oldTableHandle.getTransaction(),
+              Optional.of(newTableLayoutHandle));
 
-      TableScanNode newTableScanNode = new TableScanNode(
-          idAllocator.getNextId(),
-          tableHandle,
-          oldTableScanNode.getOutputVariables(),
-          oldTableScanNode.getAssignments(),
-          oldTableScanNode.getCurrentConstraint(),
-          oldTableScanNode.getEnforcedConstraint());
+      TableScanNode newTableScanNode =
+          new TableScanNode(
+              idAllocator.getNextId(),
+              tableHandle,
+              oldTableScanNode.getOutputVariables(),
+              oldTableScanNode.getAssignments(),
+              oldTableScanNode.getCurrentConstraint(),
+              oldTableScanNode.getEnforcedConstraint());
 
       return new FilterNode(idAllocator.getNextId(), newTableScanNode, node.getPredicate());
     }

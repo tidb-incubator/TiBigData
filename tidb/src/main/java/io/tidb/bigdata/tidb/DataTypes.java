@@ -16,7 +16,7 @@
 
 package io.tidb.bigdata.tidb;
 
-import org.tikv.common.types.DataType;
+import io.tidb.bigdata.tidb.types.DataType;
 
 public final class DataTypes {
 

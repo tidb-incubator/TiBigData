@@ -26,13 +26,15 @@ import java.util.Iterator;
 
 public interface EventDecoder extends Iterable<Event>, Iterator<Event> {
 
-  static EventDecoder json(final byte[] key, final byte[] value,
+  static EventDecoder json(
+      final byte[] key,
+      final byte[] value,
       final ParserFactory<JsonParser, JsonNode> parserFactory) {
     return new JsonEventDecoder(key, value, parserFactory.createParser());
   }
 
-  static EventDecoder craft(final byte[] value,
-      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+  static EventDecoder craft(
+      final byte[] value, final ParserFactory<CraftParser, CraftParserState> parserFactory) {
     return new CraftEventDecoder(value, parserFactory.createParser());
   }
 }

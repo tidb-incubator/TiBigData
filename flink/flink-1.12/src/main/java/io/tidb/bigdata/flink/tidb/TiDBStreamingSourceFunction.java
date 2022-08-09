@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 TiDB Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.tidb.bigdata.flink.tidb;
 
 import io.tidb.bigdata.cdc.Key;
@@ -37,8 +53,11 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
   private final StreamingReadableMetadata[] metadata;
   private final long version;
 
-  public TiDBStreamingSourceFunction(TiDBRowDataInputFormat inputFormat,
-      StreamingReadableMetadata[] metadata, long version, ScanRuntimeProvider streamingProvider) {
+  public TiDBStreamingSourceFunction(
+      TiDBRowDataInputFormat inputFormat,
+      StreamingReadableMetadata[] metadata,
+      long version,
+      ScanRuntimeProvider streamingProvider) {
     this.inputFormat = inputFormat;
     this.metadata = metadata;
     this.version = version;
@@ -112,11 +131,11 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
     checkpointedFunction.initializeState(functionInitializationContext);
   }
 
-  private void runBatchSplitWithMetadata(SourceContext<RowData> sourceContext,
-      Object[] realMetadata) throws IOException  {
+  private void runBatchSplitWithMetadata(
+      SourceContext<RowData> sourceContext, Object[] realMetadata) throws IOException {
     while (!inputFormat.reachedEnd()) {
-      GenericRowData row = inputFormat.nextRecordWithFactory(
-          s -> new GenericRowData(s + realMetadata.length));
+      GenericRowData row =
+          inputFormat.nextRecordWithFactory(s -> new GenericRowData(s + realMetadata.length));
       int field = row.getArity() - realMetadata.length;
       for (Object meta : realMetadata) {
         row.setField(field++, meta);
@@ -125,7 +144,7 @@ public class TiDBStreamingSourceFunction extends RichSourceFunction<RowData>
     }
   }
 
-  private void runBatchSplit(SourceContext<RowData> sourceContext) throws IOException  {
+  private void runBatchSplit(SourceContext<RowData> sourceContext) throws IOException {
     while (!inputFormat.reachedEnd()) {
       sourceContext.collect(inputFormat.nextRecord(null));
     }

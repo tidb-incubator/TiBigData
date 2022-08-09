@@ -1,366 +1,346 @@
 # Flink-TiDB-Connector
 
-## Component
+## Table of Contents
 
-| Name                     | Supported | Description                                                  |
-| ------------------------ | --------- | ------------------------------------------------------------ |
-| `DynamicTableSource` | true      | Implemented by `tikv-java-client`                            |
-| `DynamicTableSink`   | true      | Implemented by `JdbcDynamicTableSink` now, and it will be implemented by `tikv-java-client` in the future. |
-| `TableFactory`       | true      |                                                              |
-| `CatalogFactory`     | true      |                                                              |
+* [1 Environment](#1-environment)
+* [2 Compile Flink Connector](#2-compile-flink-connector)
+* [3 Deploy Flink](#3-deploy-flink)
+  * [Download Flink](#download-flink)
+  * [Install TiBigData and start Flink cluster](#install-tibigdata-and-start-flink-cluster)
+* [Read &amp; Write](#read--write)
+* [Real-time wide table](#real-time-wide-table)
+* [Supports and Limitations](#supports-and-limitations)
+* [DataTypes supported](#datatypes-supported)
+* [Configuration](#configuration)
+* [TableFactory(deprecated)](#tablefactorydeprecated)
 
-## Version
+## 1 Environment
 
-`Flink-1.11` and `Flink-1.12` are supported.
+| Component | Version                           |
+|-----------|-----------------------------------|
+| JDK       | 8                                 |
+| Maven     | 3.6+                              |
+| Flink     | 1.11.x / 1.12.x / 1.13.x / 1.14.x |
 
-## Build
+## 2 Compile Flink Connector
 
 ```bash
-git clone git@github.com:pingcap-incubator/TiBigData.git
+# clone
+git clone git@github.com:tidb-incubator/TiBigData.git
 cd TiBigData
-mvn clean package -DskipTests -am -pl flink/flink-${FLINK_VERSION}
-cp flink/flink-${FLINK_VERSION}/target/flink-tidb-connector-${FLINK_VERSION}-0.0.4-SNAPSHOT.jar ${FLINK_HOME}/lib
+
+# compile flink connector, using Flink-1.14.3 as an example
+mvn clean package -DskipTests -am -pl flink/flink-1.14 -Ddep.flink.version=1.14.3 -Dmysql.driver.scope=compile -Dflink.jdbc.connector.scope=compile -Dflink.kafka.connector.scope=compile
 ```
 
-Then restart your Flink cluster.
+The following parameters are available for compiling:
 
-## Demo
+| parameter                     | default | description                                                |
+|-------------------------------|---------|------------------------------------------------------------|
+| -Ddep.flink.version           | 1.14.0  | The version of Flink                                       |
+| -Dmysql.driver.scope          | test    | Whether the dependency `mysql-jdbc-driver` is included     |
+| -Dflink.jdbc.connector.scope  | test    | Whether the dependency `flink-jdbc-connector` is included  |
+| -Dflink.kafka.connector.scope | test    | Whether the dependency `flink-kafka-connector` is included |
+
+
+## 3 Deploy Flink
+
+We only present the standalone cluster for testing. If you want to use Flink in production environment, please refer to the [Flink official documentation](https://flink.apache.org/).
+
+We recommend using Flink 1.14, the following steps are based on Flink 1.14 for example, other versions of Flink installation steps are more or less the same.
+
+### Download Flink
+
+Please go to [Flink Download Page](https://flink.apache.org/downloads.html) to download the corresponding version of the installation package. Only the latest version of Flink is kept on this page, the historical version can be downloaded here: [Flink Historical Versions](http://archive.apache.org/dist/flink).
+
+### Install TiBigData and start Flink cluster
 
 ```bash
-bin/flink run -c io.tidb.bigdata.flink.tidb.examples.TiDBCatalogDemo lib/flink-tidb-connector-${FLINK_VERSION}-0.0.4-SNAPSHOT.jar --tidb.database.url ${DATABASE_URL} --tidb.username ${USERNAME} --tidb.password ${PASSWORD} --tidb.database.name ${TIDB_DATABASE} --tidb.table.name ${TABLE_NAME}
+tar -zxf flink-1.14.3-bin-scala_2.11.tgz
+cd flink-1.14.3
+cp ${TIBIGDATA_HOME}/flink/flink-1.14/target/flink-tidb-connector-1.14-${TIBIGDATA_VERSION}.jar lib
+bin/start-cluster.sh
+```
+
+You should be able to navigate to the web UI at http://localhost:8081 to view the Flink dashboard and see that the cluster is up and running.
+
+## Read & Write
+
+TiBigData supports **Batch Mode** and **Unified Batch & Streaming Mode**. The subsequent content of this article only introduces reading TiDB in **Batch Mode**，For **Unified Batch & Streaming Mode**, please refer to [TiBigData Unified Batch & Streaming](./README_unified_batch_streaming.md).
+
+After the Flink cluster is deployed, you could use Flink sql-client to read and write data from TiDB.
+
+```bash
+ # start flink sql client
+ bin/sql-client.sh
+```
+
+Create a catalog in flink sql client:
+
+```sql
+CREATE CATALOG `tidb`
+WITH (
+    'type' = 'tidb',
+    'tidb.database.url' = 'jdbc:mysql://localhost:4000/test',
+    'tidb.username' = 'root',
+    'tidb.password' = ''
+);
+```
+Using mysql client to create a table in TiDB:
+
+```bash
+# connect to TiDB
+mysql --host 127.0.0.1 --port 4000 -uroot --database test
+```
+
+```sql
+CREATE TABLE `people`(
+  `id` int,
+  `name` varchar(16)
+);
+```
+
+Using flink sql client to query TiDB schema:
+
+```sql
+DESC `tidb`.`test`.`people`;
 ```
 
 The output can be found in console, like:
-
-```bash
-Job has been submitted with JobID 3a64ea7affe969eef77790048923b5b6
-+----------------------+--------------------------------+--------------------------------+
-|                   id |                           name |                            sex |
-+----------------------+--------------------------------+--------------------------------+
-|                    1 |                           java |                              1 |
-|                    2 |                          scala |                              2 |
-|                    3 |                         python |                              1 |
-+----------------------+--------------------------------+--------------------------------+
-3 rows in set
+```sql
+Flink SQL> DESC `tidb`.`test`.`people`;
++------+--------+------+-----+--------+-----------+
+| name |   type | null | key | extras | watermark |
++------+--------+------+-----+--------+-----------+
+|   id |    INT | true |     |        |           |
+| name | STRING | true |     |        |           |
++------+--------+------+-----+--------+-----------+
+2 rows in set
 ```
 
-## DataTypes
+Using flink sql client to insert and select data from TiDB：
 
-|    TiDB    |     Flink(Catalog)     |
-| :--------: | :-------------------: |
-|  TINYINT   |  TINYINT  |
-|  SMALLINT  | SMALLINT  |
-| MEDIUMINT  |    INT    |
-|    INT     |    INT    |
-|   BIGINT   |  BIGINT   |
-|    CHAR    |  STRING   |
-|  VARCHAR   |  STRING   |
-|  TINYTEXT  |  STRING   |
-| MEDIUMTEXT |  STRING   |
-|    TEXT    |  STRING   |
-|  LONGTEXT  |  STRING   |
-|   BINARY   |   BYTES   |
-| VARBINARY  |   BYTES   |
-|  TINYBLOB  |   BYTES   |
-| MEDIUMBLOB |   BYTES   |
-|    BLOB    |   BYTES   |
-|  LONGBLOB  |   BYTES   |
-|   FLOAT    |   FLOAT   |
-|   DOUBLE   |  DOUBLE   |
-| DECIMAL(p,s) |  DECIMAL(p,s)  |
-|    DATE    |   DATE    |
-|    TIME    |   TIME    |
-|  DATETIME  | TIMESTAMP |
-| TIMESTAMP  | TIMESTAMP |
-|    YEAR    | SMALLINT  |
-|    BOOL    |  BOOLEAN  |
-|    JSON    |  STRING   |
-|    ENUM    |  STRING   |
-|    SET     |  STRING   |
+```sql
+SET sql-client.execution.result-mode=tableau;
+INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+SELECT * FROM `tidb`.`test`.`people`;
+```
 
-If you want to specify the type by yourself, please use `Flink SQL`. It supports most type conversions, such as INT to BIGINT, STRING to LONG.
+output：
+
+```sql
+Flink SQL> SET sql-client.execution.result-mode=tableau;
+[INFO] Session property has been set.
+
+Flink SQL> INSERT INTO `tidb`.`test`.`people`(`id`,`name`) VALUES(1,'zs');
+[INFO] Submitting SQL update statement to the cluster...
+[INFO] SQL update statement has been successfully submitted to the cluster:
+Job ID: a3944d4656785e36cf03fa419533b12c
+
+Flink SQL> SELECT * FROM `tidb`.`test`.`people`;
++----+-------------+--------------------------------+
+| op |          id |                           name |
++----+-------------+--------------------------------+
+| +I |           1 |                             zs |
++----+-------------+--------------------------------+
+Received a total of 1 row
+```
+
+## Real-time wide table
+
+See [Real-time wide table](../docs/real-time_wide_table.md)
+
+## Supports and Limitations
+
+TiBigDate/Flink supports writing data to and reading from clustered index tables, which is a new feature in TiDB-5.0.0.
+
+TiBigDate/Flink does not support the following features: 
+- bypass-write tables with auto random column
+- partition table
+
+## DataTypes supported
+
+|     TiDB     |    Flink     |
+|:------------:|:------------:|
+|   TINYINT    |   TINYINT    |
+|   SMALLINT   |   SMALLINT   |
+|  MEDIUMINT   |     INT      |
+|     INT      |     INT      |
+|    BIGINT    |    BIGINT    |
+|     CHAR     |    STRING    |
+|   VARCHAR    |    STRING    |
+|   TINYTEXT   |    STRING    |
+|  MEDIUMTEXT  |    STRING    |
+|     TEXT     |    STRING    |
+|   LONGTEXT   |    STRING    |
+|    BINARY    |    BYTES     |
+|  VARBINARY   |    BYTES     |
+|   TINYBLOB   |    BYTES     |
+|  MEDIUMBLOB  |    BYTES     |
+|     BLOB     |    BYTES     |
+|   LONGBLOB   |    BYTES     |
+|    FLOAT     |    FLOAT     |
+|    DOUBLE    |    DOUBLE    |
+| DECIMAL(p,s) | DECIMAL(p,s) |
+|     DATE     |     DATE     |
+|     TIME     |     TIME     |
+|   DATETIME   |  TIMESTAMP   |
+|  TIMESTAMP   |  TIMESTAMP   |
+|     YEAR     |   SMALLINT   |
+|     BOOL     |   BOOLEAN    |
+|     JSON     |    STRING    |
+|     ENUM     |    STRING    |
+|     SET      |    STRING    |
 
 ## Configuration
 
-| Configration                   |  Default Value | Description                                                  |
-| :----------------------------- |  :------------ | :----------------------------------------------------------- |
-| tidb.database.url              |  -             | TiDB connector has a built-in JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP), you should provide your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and pick one  randomly when establishing connections. |
-| tidb.username                  | -             | JDBC username.                                               |
-| tidb.password                  |null          | JDBC password.                                               |
-| tidb.maximum.pool.size         | 10            | Connection pool size.                                        |
-| tidb.minimum.idle.size         | 10            | The minimum number of idle connections that HikariCP tries to maintain in the pool. |
-| tidb.write_mode                | append        | TiDB sink write mode: `upsert` or `append`. |
-| tidb.replica-read              | leader | Read data from specified role. The optional roles are leader, follower and learner. You can also specify multiple roles, and we will pick the roles you specify in order. |
-| tidb.replica-read.label        | null          | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y |
-| tidb.replica-read.whitelist    | null          | Only select TiKV store with given ip addresses. |
-| tidb.replica-read.blacklist    | null          | Do not select TiKV store with given ip addresses. |
-| tidb.database.name             | null          | Database name. It is required for table factory, no need for catalog. |
-| tidb.table.name                | null          | Table name. It is required for table factory, no need for catalog. |
-| tidb.timestamp-format.${columnName} | null          | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog. |
-| timestamp-format.${columnName}   ***- deprecated*** | null | It is equivalent to the `tidb.timestamp-format.${columnName}` configuration. This is a deprecated configuration for downward compatibility only, and is in effect for `flink-1.11`, `flink-1.12`, `flink-1.13`. This configuration will no longer be supported in future `flink-1.14` releases. |
-| sink.buffer-flush.max-rows     | 100           | The max size of buffered records before flush. Can be set to zero to disable it. |
-| sink.buffer-flush.interval     | 1s            | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions. |
-| sink.max-retries               | 3             | The max retry times if writing records to database failed.   |
-| tidb.filter-push-down          | false         | Support filter push down. It is only available for version 1.12. |
-| tidb.snapshot_timestamp        | null          | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`. |
-| tidb.dns.search | null | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN. |
-| tidb.catalog.load-mode | eager | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened. |
+| Configuration                               | Default Value                                                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|:--------------------------------------------|:-------------------------------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.database.url                           | -                                                                              | You should provide your own TiDB server address with a jdbc url format:  `jdbc:mysql://host:port/database` or `jdbc:tidb://host:port/database`. If you have multiple TiDB server addresses and the amount of data to be inserted is huge, it would be better to use TiDB jdbc driver rather then MySQL jdbc driver. TiDB driver is a load-balancing driver, it will query all TiDB server addresses and pick one  randomly when establishing connections. |
+| tidb.username                               | -                                                                              | JDBC username.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| tidb.password                               | null                                                                           | JDBC password.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| tidb.jdbc.connection-provider-impl          | io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider | JDBC connection provider implements: set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.HikariDataSourceJdbcConnectionProvider', TiBigData will use JDBC connection pool implemented by [HikariCP](https://github.com/brettwooldridge/HikariCP) to provider connection; set 'io.tidb.bigdata.tidb.JdbcConnectionProviderFactory.BasicJdbcConnectionProvider', connection pool will not be used.                                                      |
+| tidb.maximum.pool.size                      | 10                                                                             | Connection pool size.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| tidb.minimum.idle.size                      | 10                                                                             | The minimum number of idle connections that HikariCP tries to maintain in the pool.                                                                                                                                                                                                                                                                                                                                                                       |
+| tidb.write_mode                             | append                                                                         | TiDB sink write mode: `upsert` or `append`.                                                                                                                                                                                                                                                                                                                                                                                                               |
+| tidb.replica-read                           | leader                                                                         | Read data from specified role. The optional roles are leader, follower and learner. You can also specify multiple roles, and we will pick the roles you specify in order.                                                                                                                                                                                                                                                                                 |
+| tidb.replica-read.label                     | null                                                                           | Only select TiKV store match specified labels. Format: label_x=value_x,label_y=value_y                                                                                                                                                                                                                                                                                                                                                                    |
+| tidb.replica-read.whitelist                 | null                                                                           | Only select TiKV store with given ip addresses.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| tidb.replica-read.blacklist                 | null                                                                           | Do not select TiKV store with given ip addresses.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| tidb.database.name                          | null                                                                           | Database name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                     |
+| tidb.table.name                             | null                                                                           | Table name. It is required for table factory, no need for catalog.                                                                                                                                                                                                                                                                                                                                                                                        |
+| tidb.timestamp-format.${columnName}         | null                                                                           | For each column, you could specify timestamp format in two cases: 1. TiDB `timestamp` is mapped to Flink `string`; 2. TiDB `varchar` is mapped to Flink `timestamp`. Format of timestamp may refer to `java.time.format.DateTimeFormatter`, like `yyyy-MM-dd HH:mm:ss.SSS`. It is optional for table factory, no need for catalog.                                                                                                                        |
+| sink.buffer-flush.max-rows                  | 100                                                                            | The max size of buffered records before flush. Can be set to zero to disable it.                                                                                                                                                                                                                                                                                                                                                                          |
+| sink.buffer-flush.interval                  | 1s                                                                             | The flush interval mills, over this time, asynchronous threads will flush data. Can be set to `'0'` to disable it. Note, `'sink.buffer-flush.max-rows'` can be set to `'0'` with the flush interval set allowing for complete async processing of buffered actions.                                                                                                                                                                                       |
+| tidb.catalog.load-mode                      | eager                                                                          | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened.                                                                                                                                                                                                                                                      |
+| tidb.sink.skip-check-update-columns         | false                                                                          | See [Real-time wide table](../docs/real-time_wide_table.md)                                                                                                                                                                                                                                                                                                                                                                                               |
+| sink.max-retries                            | 3                                                                              | The max retry times if writing records to database failed.                                                                                                                                                                                                                                                                                                                                                                                                |
+| tidb.filter-push-down                       | false                                                                          | Support filter push down. It is only available for version 1.13+. More details see [Flink Filter Push Down Description](../docs/flink_push_down.md)                                                                                                                                                                                                                                                                                                       |
+| tidb.snapshot_timestamp                     | null                                                                           | It is available for TiDB connector to read snapshot. You could configure it in table properties. The format of timestamp may refer to `java.time.format.DateTimeFormatter#ISO_ZONED_DATE_TIME`.                                                                                                                                                                                                                                                           |
+| tidb.dns.search                             | null                                                                           | Append dns search suffix to host names. It's especially necessary to map K8S cluster local name to FQDN.                                                                                                                                                                                                                                                                                                                                                  |
+| tidb.catalog.load-mode                      | eager                                                                          | TiDB catalog load mode: `eager` or `lazy`. If you set this configuration to lazy, catalog would establish a connection to tidb when the data is actually queried rather than when catalog is opened.                                                                                                                                                                                                                                                      |
+| tidb.sink.impl                              | jdbc                                                                           | The value can be `jdbc` or `tikv`. If you set this configuration to `tikv`, flink will write data bypass TiDB. It is only available for version 1.14+.                                                                                                                                                                                                                                                                                                    |
+| tikv.sink.transaction                       | minibatch                                                                      | Only work when sink option is `tikv`. The value can be `minibatch` or `global`.`global` only works with bounded stream, all data will be submit in one transaction. When writing conflicts happen frequently, you can `minibatch`, it will split data to many transactions.                                                                                                                                                                               |
+| tikv.sink.buffer-size                       | 1000                                                                           | Only work when sink option is `tikv`. The max size of buffered records before flush. Notice: On mode `minibatch`, each flush will be executed in one transaction.                                                                                                                                                                                                                                                                                         |
+| tikv.sink.row-id-allocator.step             | 30000                                                                          | Only work when sink option is `tikv`. The size of row-ids each time allocator query for.                                                                                                                                                                                                                                                                                                                                                                  |
+| tikv.sink.ignore-autoincrement-column-value | false                                                                          | Only work when sink option is `tikv`. If value is `true`, for autoincrement column, we will generate value instead of the the actual value. And if `false`, the value of autoincrement column can not be null.                                                                                                                                                                                                                                            |
+| tikv.sink.ignore-autorandom-column-value    | false                                                                          | Only work when sink option is `tikv`. If value is `true`, for autorandom column, we will generate value instead of the the actual value. And if `false`, the value of autorandom column can not be null.                                                                                                                                                                                                                                                  |
+| tikv.sink.deduplicate                       | false                                                                          | Only work when sink option is `tikv`. If value is `true`, duplicate row will be de-duplicated. If `false`, you should make sure each row is unique otherwise exception will be thrown.                                                                                                                                                                                                                                                                    |
+| tidb.cluster-tls-enable                     | false                                                                          | Whether to enable TLS between TiBigData and TiKV.                                                                                                                                                                                                                                                                                                                                                                                                         |
+| tidb.cluster-tls-ca                         | _                                                                              | Trusted certificates for verifying the remote endpoint's certificate, e.g. `/home/TiBigData/.ci/config/cert/pem/root.pem`. The file should contain an X.509 certificate collection in PEM format.                                                                                                                                                                                                                                                         |
+| tidb.cluster-tls-key                        | _                                                                              | A PKCS#8 private key file in PEM format. e.g. `/home/TiBigData/.ci/config/cert/pem/client.pem`.                                                                                                                                                                                                                                                                                                                                                           |
+| tidb.cluster-tls-cert                       | _                                                                              | An X.509 certificate chain file in PEM format, e.g. `/home/TiBigData/.ci/config/cert/pem/client-pkcs8.key`.                                                                                                                                                                                                                                                                                                                                               |
+| tidb.cluster-jks-enable                     | false                                                                          | Whether to use JKS keystore.                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| tidb.cluster-jks-key-path                   | _                                                                              | The path of the JKS key store, which is used by the remote service to authenticate this node. The key encryption is PKCS#12. e.g. `/home/TiBigData/.ci/config/cert/jks/client-keystore.p12`.                                                                                                                                                                                                                                                              |
+| tidb.cluster-jks-key-password               | _                                                                              | The key of JKS key store.                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| tidb.cluster-jks-trust-path                 | _                                                                              | The path of the JKS trust certificates store, which is used to authenticate remote service. e.g. `/home/TiBigData/.ci/config/cert/jks/server-cert-store`.                                                                                                                                                                                                                                                                                                 |
+| tidb.cluster-jks-trust-password             | _                                                                              | The key of JKS trust certificates store.                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| tidb.telemetry.enable                       | true                                                                           | Whether to enable telemetry collection in TiBigData. Telemetry can be off by setting `false`.                                                                                                                                                                                                                                                                                                                                                             |
 
-TiDB Flink sink supports all sink properties of  [`flink-connector-jdbc`](https://ci.apache.org/projects/flink/flink-docs-release-1.12/dev/table/connectors/jdbc.html), because it is implemented by `JdbcDynamicTableSink`.
+### TLS NOTE
 
-## Usage
+TiBigData supports enabling TLS when connecting with a TiDB cluster. If you want to fully enable TLS, you need to enable TLS for JDBC and TiKV-client respectively.
 
-### TiDBCatalog
-The above demo is implemented by TiDBCatalog.
+#### JDBC TLS
 
-```java
-public class TiDBCatalogDemo {
+To enable JDBC TLS in TiBigData, just add the TLS configuration to the `tidb.database.url` configuration.
 
-  public static void main(String[] args) {
-    // properties
-    ParameterTool parameterTool = ParameterTool.fromArgs(args);
-    final Map<String, String> properties = parameterTool.toMap();
-    final String databaseName = parameterTool.getRequired("tidb.database.name");
-    final String tableName = parameterTool.getRequired("tidb.table.name");
-    // env
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inBatchMode().build();
-    TableEnvironment tableEnvironment = TableEnvironment.create(settings);
-    // register TiDBCatalog
-    TiDBCatalog catalog = new TiDBCatalog(properties);
-    catalog.open();
-    tableEnvironment.registerCatalog("tidb", catalog);
-    // query and print
-    String sql = String.format("SELECT * FROM `tidb`.`%s`.`%s` LIMIT 100", databaseName, tableName);
-    System.out.println("Flink SQL: " + sql);
-    TableResult tableResult = tableEnvironment.executeSql(sql);
-    System.out.println("TableSchema: \n" + tableResult.getTableSchema());
-    tableResult.print();
-  }
-}
+```
+&useSSL=true&requireSSL=true&verifyServerCertificate=false
 ```
 
-You could submit DDL  by TiDBCatalog, such as create table, drop table:
+More JDBC TLS configurations can be found [here](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-connp-props-security.html).
 
-```java
-public class TestCreateTable {
+For how to open JDBC TLS, see [here](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-using-ssl.html).
 
-  public static void main(String[] args) throws Exception {
-    Map<String, String> properties = new HashMap<>();
-    properties.put("tidb.database.url", "jdbc:mysql://host:port/database");
-    properties.put("tidb.username", "root");
-    properties.put("tidb.password", "123456");
-    TiDBCatalog catalog = new TiDBCatalog(properties);
-    catalog.open();
-    String sql = "CREATE TABLE IF NOT EXISTS people(id INT, name VARCHAR(255), sex ENUM('1','2'))";
-    catalog.sqlUpdate(sql);
-    catalog.close();
-  }
-}
-```
+For how to open TiDB TLS, see [here](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between-clients-and-servers).
 
-### FlinkTableFactory
+#### TiKV-Client TLS
 
-You could use `FlinkTableFactory` like:
+TiKV-Client is the client used by TiBigData to link TiKV clusters. To enable TiKV-Client TLS, you need to specify `tidb.cluster-tls-enable=true` in the configuration.
 
-```java
-public class TestFlinkSql {
+Currently, TiKV-Client supports two specified certificate forms:
 
-  public static void main(String[] args) {
-    EnvironmentSettings settings = EnvironmentSettings.newInstance().useBlinkPlanner()
-        .inStreamingMode().build();
-    StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-    StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
-    tableEnvironment.executeSql("CREATE TABLE tidb(\n"
-        + " c1     tinyint,\n"
-        + " c2     smallint,\n"
-        + " c3     int,\n"
-        + " c4     int,\n"
-        + " c5     bigint,\n"
-        + " c6     char(10),\n"
-        + " c7     varchar(20),\n"
-        + " c8     string,\n"
-        + " c9     string,\n"
-        + " c10    string,\n"
-        + " c11    string,\n"
-        + " c12    string,\n"
-        + " c13    string,\n"
-        + " c14    string,\n"
-        + " c15    string,\n"
-        + " c16    string,\n"
-        + " c17    string,\n"
-        + " c18    float,\n"
-        + " c19    double,\n"
-        + " c20    decimal(6,3),\n"
-        + " c21    date,\n"
-        + " c22    time,\n"
-        + " c23    timestamp,\n"
-        + " c24    timestamp,\n"
-        + " c25    smallint,\n"
-        + " c26    boolean,\n"
-        + " c27    string,\n"
-        + " c28    string,\n"
-        + " c29    string\n"
-        + ") WITH (\n"
-        + "  'connector' = 'tidb',\n"
-        + "  'tidb.database.url' = 'jdbc:mysql://host:port/database',\n"
-        + "  'tidb.username' = 'root',\n"
-        + "  'tidb.password' = '123456',\n"
-        + "  'tidb.database.name' = 'database',\n"
-        + "  'tidb.table.name' = 'test_tidb_type'\n"
-        + ")"
-    );
-    tableEnvironment.executeSql("SELECT * FROM tidb LIMIT 100").print();
-  }
-```
+1. An X.509 certificate collection in PEM format needs three configurations.
+  - tidb.cluster-tls-ca
+  - tidb.cluster-tls-key
+  - tidb.cluster-tls-cert
+2. A JKS store with five configurations.
+  - tidb.cluster-jks-enable
+  - tidb.cluster-jks-key-path
+  - tidb.cluster-jks-key-password
+  - tidb.cluster-jks-trust-path
+  - tidb.cluster-jks-trust-password
 
-### Flink SQL Client
+To enable TiKV-Client TLS, you need to enable TLS for the internal components of the TiDB cluster in advance. For details, please refer to [Enable TLS Between TiDB Components](https://docs.pingcap.com/zh/tidb/stable/enable-tls-between -components).
 
-You could create a sample tidb table which contains most tidb types by the following script.
+## TableFactory(deprecated)
+
+Attention: TableFactory is deprecated, only support before Flink 1.13(included).
+
+TiBigData also implements the Flink TableFactory API, but we don't recommend you to use it, it will introduce difficulties related to data type conversion and column alignment, which will increase the cost of using it. We stop supporting it in Flink-1.14, so this section is only a brief introduction.
+
+You can use the following SQL to create a TiDB mapping table in Flink and query it.
 
 ```sql
-CREATE TABLE `default`.`test_tidb_type`(
- c1     tinyint,
- c2     smallint,
- c3     mediumint,
- c4     int,
- c5     bigint,
- c6     char(10),
- c7     varchar(20),
- c8     tinytext,
- c9     mediumtext,
- c10    text,
- c11    longtext,
- c12    binary(20),
- c13    varbinary(20),
- c14    tinyblob,
- c15    mediumblob,
- c16    blob,
- c17    longblob,
- c18    float,
- c19    double,
- c20    decimal(6,3),
- c21    date,
- c22    time,
- c23    datetime,
- c24    timestamp,
- c25    year,
- c26    boolean,
- c27    json,
- c28    enum('1','2','3'),
- c29    set('a','b','c')
-);
-```
-
-On the one hand, you can create mapping table by yourself:
-
-```sql
--- run flink sql client
-bin/sql-client.sh embedded
--- create a flink table mapping to tidb table
-CREATE TABLE tidb(
- c1     tinyint,
- c2     smallint,
- c3     int,
- c4     int,
- c5     bigint,
- c6     char(10),
- c7     varchar(20),
- c8     string,
- c9     string,
- c10    string,
- c11    string,
- c12    string,
- c13    string,
- c14    string,
- c15    string,
- c16    string,
- c17    string,
- c18    float,
- c19    double,
- c20    decimal(6,3),
- c21    date,
- c22    time,
- c23    timestamp,
- c24    timestamp,
- c25    smallint,
- c26    boolean,
- c27    string,
- c28    string,
- c29    string
+CREATE TABLE `people`(
+  `id` INT,
+  `name` STRING
 ) WITH (
   'connector' = 'tidb',
-  'tidb.database.url' = 'jdbc:mysql://host:port/database',
+  'tidb.database.url' = 'jdbc:mysql://localhost:4000/',
   'tidb.username' = 'root',
-  'tidb.password' = '123456',
-  'tidb.database.name' = 'database',
-  'tidb.maximum.pool.size' = '1',
-  'tidb.minimum.idle.size' = '1',
-  'tidb.table.name' = 'test_tidb_type',
-  'tidb.write_mode' = 'upsert',
-  'sink.buffer-flush.max-rows' = '0'
+  'tidb.password' = '',
+  'tidb.database.name' = 'test',
+  'tidb.table.name' = 'people'
 );
--- insert data
-INSERT INTO tidb
-VALUES (
- cast(1 as tinyint) ,
- cast(1 as smallint) ,
- cast(1 as int) ,
- cast(1 as int) ,
- cast(1 as bigint) ,
- cast('chartype' as char(10)),
- cast('varchartype' as varchar(20)),
- cast('tinytexttype' as string),
- cast('mediumtexttype' as string),
- cast('texttype' as string),
- cast('longtexttype' as string),
- cast('binarytype' as string),
- cast('varbinarytype' as string),
- cast('tinyblobtype' as string),
- cast('mediumblobtype' as string),
- cast('blobtype' as string),
- cast('longblobtype' as string),
- cast(1.234 as float),
- cast(2.456789 as double),
- cast(123.456 as decimal(6,3)),
- cast('2020-08-10' as date),
- cast('15:30:29' as time),
- cast('2020-08-10 15:30:29' as timestamp),
- cast('2020-08-10 16:30:29' as timestamp),
- cast(2020 as smallint),
- true,
- cast('{"a":1,"b":2}' as string),
- cast('1' as string),
- cast('a' as string)
-);
--- set result format
-SET execution.result-mode=tableau;
--- query
-SELECT * FROM tidb LIMIT 100;
+SELECT * FROM people;
 ```
 
-On the other hand, you can also use TiDBCatalog in flink sql client by environment file:  `env.yaml`.
+## Telemetry
 
-```yaml
-catalogs:
-   - name: tidb
-     type: tidb
-     tidb.database.url: jdbc:mysql://host:port/database
-     tidb.username: root
-     tidb.password: 123456
+Currently, flink-tidb-connector in TiBigData (only flink-tidb-connector-1.14 and flink-tidb-connector-1.13 versions) will collect usage information by default and share this information with PingCAP.
+Users can actively turn off telemetry by configuring `tidb.telemetry.enable = false`.
 
-execution:
-        planner: blink
-        type: batch
-        parallelism: 1
+When TiBigData telemetry is enabled, TiBigData will send usage information to PingCAP when initializing `catalog`, including but not limited to:
+
+- Randomly generated identifiers
+- Operating system and hardware information
+- Part of TiBigData configuration information.
+
+Here is an example of telemetry information.
+
+```
+2022-05-13 18:20:55,021 [INFO] [ForkJoinPool.commonPool-worker-1] io.tidb.bigdata.telemetry.Telemetry: Telemetry report: {"track_id":"4cec54a944bce9663f19115557c86884","time":"2022-05-13 18:20:54","subName":"flink-1.14","hardware":{"memory":"Available: 931.7 MiB/15.4 GiB","os":"Ubuntu","disks":[{"size":"512110190592","name":"/dev/nvme0n1"}],"cpu":{"logicalCores":"8","model":"11th Gen Intel(R) Core(TM) i7-1160G7 @ 1.20GHz","physicalCores":"4"},"version":"20.04.4 LTS (Focal Fossa) build 5.13.0-41-generic"},"instance":{"TiDBVersion":"v6.0.0","TiBigDataFlinkVersion":"0.0.5-SNAPSHOT","FlinkVersion":"1.14.0"},"content":{"tidb.write_mode":"append","tidb.catalog.load-mode":"eager","tikv.sink.deduplicate":"false","tidb.replica-read":"leader","tikv.sink.buffer-size":"1000","tidb.filter-push-down":"false","sink.buffer-flush.interval":"1s","tidb.sink.impl":"JDBC","tikv.sink.row-id-allocator.step":"30000","sink.buffer-flush.max-rows":"100","tikv.sink.ignore-autoincrement-column-value":"false","tikv.sink.transaction":"minibatch"}}
 ```
 
-then run sql-client and query tidb table:
+An entry table of telemetry is shown here.
 
-```sql
-bin/sql-client.sh embedded -e env.yaml
--- set result format
-SET execution.result-mode=tableau;
--- query
-SELECT * FROM `tidb`.`default`.`test_tidb_type` LIMIT 100;
-```
+| Field name                                            | Description                         |
+|-------------------------------------------------------|-------------------------------------|
+| trackId                                               | ID of the telemetry                 |
+| time                                                  | The time point of reporting         |
+| subName                                               | application name                    |
+| hardware.os                                           | Operating system name               |
+| hardware.version                                      | Operating system version            |
+| hardware.cpu.model                                    | CPU model                           |
+| hardware.cpu.logicalCores                             | Number of CPU logical cores         |
+| hardware.cpu.physicalCores                            | Number of CPU physical cores        |
+| hardware.disks.name                                   | Disks name                          |
+| hardware.disks.size                                   | Disks capacity                      |
+| hardware.memory                                       | Memory capacity                     |
+| instance.TiDBVersion                                  | TiDB Version                        |
+| instance.TiBigDataFlinkVersion                        | flink-tidb-connector Version        |
+| instance.FlinkVersion                                 | Flink Version                       |
+| content.{tidb.write_mode}                             | flink-tidb-connector configuration  |
+| content.{tidb.catalog.load-mode}                      | flink-tidb-connector configuration  |
+| content.{tikv.sink.deduplicate}                       | flink-tidb-connector configuration  |
+| content.{tidb.replica-read}                           | flink-tidb-connector configuration  |
+| content.{tikv.sink.buffer-size}                       | flink-tidb-connector configuration  |
+| content.{tidb.filter-push-down}                       | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.interval}                  | flink-tidb-connector configuration  |
+| content.{tidb.sink.impl}                              | flink-tidb-connector configuration  |
+| content.{tikv.sink.row-id-allocator.step}             | flink-tidb-connector configuration  |
+| content.{sink.buffer-flush.max-rows}                  | flink-tidb-connector configuration  |
+| content.{tikv.sink.ignore-autoincrement-column-value} | flink-tidb-connector configuration  |
+| content.{tikv.sink.transaction}                       | flink-tidb-connector configuration  |

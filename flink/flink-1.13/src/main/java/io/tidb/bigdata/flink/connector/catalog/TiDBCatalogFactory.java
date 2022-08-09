@@ -22,46 +22,41 @@ import java.util.Set;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.factories.CatalogFactory;
-import org.apache.flink.table.factories.FactoryUtil;
 
-/**
- * Factory for {@link TiDBCatalog}
- */
+/** Factory for {@link TiDBCatalog} */
 public class TiDBCatalogFactory implements CatalogFactory {
-  
+
   public static final String IDENTIFIER = "tidb";
-  
+
   @Override
   public String factoryIdentifier() {
     return IDENTIFIER;
   }
-  
+
   @Override
   public Set<ConfigOption<?>> requiredOptions() {
-    return ImmutableSet.of(
-        TiDBOptions.DATABASE_URL,
-        TiDBOptions.USERNAME
-    );
+    return ImmutableSet.of(TiDBOptions.DATABASE_URL, TiDBOptions.USERNAME);
   }
-  
+
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
+    // The options may less than real properties which tidb supported,
+    // just use it by create catalog sql, we will not verify properties by flink api.
     return ImmutableSet.of(
         TiDBOptions.PASSWORD,
         TiDBOptions.MAX_POOL_SIZE,
         TiDBOptions.MIN_IDLE_SIZE,
         TiDBOptions.WRITE_MODE,
         TiDBOptions.REPLICA_READ,
-        TiDBOptions.FILTER_PUSH_DOWN
-    );
+        TiDBOptions.FILTER_PUSH_DOWN,
+        TiDBOptions.DNS_SEARCH,
+        TiDBOptions.SNAPSHOT_TIMESTAMP,
+        TiDBOptions.SNAPSHOT_VERSION,
+        TiDBOptions.SOURCE_FAILOVER);
   }
-  
+
   @Override
   public Catalog createCatalog(Context context) {
-    final FactoryUtil.CatalogFactoryHelper helper =
-        FactoryUtil.createCatalogFactoryHelper(this, context);
-    helper.validate();
     return new TiDBCatalog(context.getName(), context.getOptions());
   }
-  
 }

@@ -40,9 +40,7 @@ import org.apache.flink.table.data.RowData;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.TopicPartition;
 
-/**
- * @see org.apache.flink.connector.kafka.source.KafkaSourceBuilder
- */
+/** @see org.apache.flink.connector.kafka.source.KafkaSourceBuilder */
 public class KafkaCDCSourceBuilder
     extends CDCSourceBuilder<KafkaPartitionSplit, KafkaSourceEnumState> {
   private final KafkaSourceBuilder<RowData> builder = KafkaSource.builder();
@@ -61,15 +59,15 @@ public class KafkaCDCSourceBuilder
   }
 
   @Override
-  protected CDCSource<KafkaPartitionSplit, KafkaSourceEnumState>
-      doBuild(DeserializationSchema<RowData> schema) {
+  protected CDCSource<KafkaPartitionSplit, KafkaSourceEnumState> doBuild(
+      DeserializationSchema<RowData> schema) {
     setDeserializer(schema);
     return new CDCSource<>(builder.build());
   }
 
   @Override
-  protected CDCSource<KafkaPartitionSplit, KafkaSourceEnumState>
-      doBuild(KafkaDeserializationSchema<RowData> schema) {
+  protected CDCSource<KafkaPartitionSplit, KafkaSourceEnumState> doBuild(
+      KafkaDeserializationSchema<RowData> schema) {
     setDeserializer(schema);
     return new CDCSource<>(builder.build());
   }
@@ -101,8 +99,7 @@ public class KafkaCDCSourceBuilder
     return this;
   }
 
-  public KafkaCDCSourceBuilder setStartingOffsets(
-      OffsetsInitializer startingOffsetsInitializer) {
+  public KafkaCDCSourceBuilder setStartingOffsets(OffsetsInitializer startingOffsetsInitializer) {
     builder.setStartingOffsets(startingOffsetsInitializer);
     return this;
   }

@@ -25,17 +25,15 @@ import org.apache.flink.table.connector.source.InputFormatProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
 
-public class TiDBBatchDynamicTableSource extends TiDBDynamicTableSource implements
-    SupportsLimitPushDown, SupportsProjectionPushDown {
+public class TiDBBatchDynamicTableSource extends TiDBDynamicTableSource
+    implements SupportsLimitPushDown, SupportsProjectionPushDown {
 
   protected long limit = Long.MAX_VALUE;
 
   protected int[][] projectedFields = null;
 
   public TiDBBatchDynamicTableSource(
-      TableSchema tableSchema,
-      Map<String, String> properties,
-      JdbcLookupOptions lookupOptions) {
+      TableSchema tableSchema, Map<String, String> properties, JdbcLookupOptions lookupOptions) {
     super(tableSchema, properties, lookupOptions);
   }
 

@@ -58,8 +58,13 @@ public final class TiDBSplit implements ConnectorSplit {
   }
 
   TiDBSplit(SplitInternal from, Optional<String> additionalPredicate) {
-    this(new TiDBTableHandle(from.getTable()), from.getStartKey(), from.getEndKey(),
-        from.getTimestamp().getPhysical(), from.getTimestamp().getLogical(), additionalPredicate);
+    this(
+        new TiDBTableHandle(from.getTable()),
+        from.getStartKey(),
+        from.getEndKey(),
+        from.getTimestamp().getPhysical(),
+        from.getTimestamp().getLogical(),
+        additionalPredicate);
   }
 
   @Override
@@ -102,7 +107,6 @@ public final class TiDBSplit implements ConnectorSplit {
     return logicalTimestamp;
   }
 
-
   @JsonProperty
   public Optional<String> getAdditionalPredicate() {
     return additionalPredicate;
@@ -144,5 +148,3 @@ public final class TiDBSplit implements ConnectorSplit {
         .toString();
   }
 }
-
-

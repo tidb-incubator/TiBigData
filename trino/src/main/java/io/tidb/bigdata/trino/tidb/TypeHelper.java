@@ -21,10 +21,10 @@ import static java.util.Objects.requireNonNull;
 
 import io.airlift.slice.Slice;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
+import io.tidb.bigdata.tidb.types.DataType;
 import io.trino.spi.type.Type;
 import java.util.Objects;
 import java.util.function.Function;
-import org.tikv.common.types.DataType;
 
 public final class TypeHelper {
 
@@ -33,7 +33,10 @@ public final class TypeHelper {
   private final RecordCursorReader cursorReader;
   private final Function toTiDBConverter;
 
-  private TypeHelper(DataType tidbType, Type prestoType, RecordCursorReader cursorReader,
+  private TypeHelper(
+      DataType tidbType,
+      Type prestoType,
+      RecordCursorReader cursorReader,
       Function toTiDBConverter) {
     this.prestoType = requireNonNull(prestoType, "prestoType is null");
     this.cursorReader = requireNonNull(cursorReader, "cursorReader is null");
@@ -41,43 +44,55 @@ public final class TypeHelper {
     this.toTiDBConverter = requireNonNull(toTiDBConverter, "toTiDBConverter is null");
   }
 
-  static TypeHelper booleanHelper(DataType tidbType, Type prestoType,
-      BooleanRecordCursorReader cursorReader, Function<Boolean, Object> toTiDBConverter) {
+  static TypeHelper booleanHelper(
+      DataType tidbType,
+      Type prestoType,
+      BooleanRecordCursorReader cursorReader,
+      Function<Boolean, Object> toTiDBConverter) {
     return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
   }
 
-  static TypeHelper booleanHelper(DataType tidbType, Type prestoType,
-      BooleanRecordCursorReader cursorReader) {
+  static TypeHelper booleanHelper(
+      DataType tidbType, Type prestoType, BooleanRecordCursorReader cursorReader) {
     return booleanHelper(tidbType, prestoType, cursorReader, f -> f);
   }
 
-  static TypeHelper longHelper(DataType tidbType, Type prestoType,
-      LongRecordCursorReader cursorReader, Function<Long, Object> toTiDBConverter) {
+  static TypeHelper longHelper(
+      DataType tidbType,
+      Type prestoType,
+      LongRecordCursorReader cursorReader,
+      Function<Long, Object> toTiDBConverter) {
     return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
   }
 
-  static TypeHelper longHelper(DataType tidbType, Type prestoType,
-      LongRecordCursorReader cursorReader) {
+  static TypeHelper longHelper(
+      DataType tidbType, Type prestoType, LongRecordCursorReader cursorReader) {
     return longHelper(tidbType, prestoType, cursorReader, f -> f);
   }
 
-  static TypeHelper doubleHelper(DataType tidbType, Type prestoType,
-      DoubleRecordCursorReader cursorReader, Function<Double, Object> toTiDBConverter) {
+  static TypeHelper doubleHelper(
+      DataType tidbType,
+      Type prestoType,
+      DoubleRecordCursorReader cursorReader,
+      Function<Double, Object> toTiDBConverter) {
     return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
   }
 
-  static TypeHelper doubleHelper(DataType tidbType, Type prestoType,
-      DoubleRecordCursorReader cursorReader) {
+  static TypeHelper doubleHelper(
+      DataType tidbType, Type prestoType, DoubleRecordCursorReader cursorReader) {
     return doubleHelper(tidbType, prestoType, cursorReader, f -> f);
   }
 
-  static TypeHelper sliceHelper(DataType tidbType, Type prestoType,
-      SliceRecordCursorReader cursorReader, Function<Slice, Object> toTiDBConverter) {
+  static TypeHelper sliceHelper(
+      DataType tidbType,
+      Type prestoType,
+      SliceRecordCursorReader cursorReader,
+      Function<Slice, Object> toTiDBConverter) {
     return new TypeHelper(tidbType, prestoType, cursorReader, toTiDBConverter);
   }
 
-  static TypeHelper sliceHelper(DataType tidbType, Type prestoType,
-      SliceRecordCursorReader cursorReader) {
+  static TypeHelper sliceHelper(
+      DataType tidbType, Type prestoType, SliceRecordCursorReader cursorReader) {
     return sliceHelper(tidbType, prestoType, cursorReader, Slice::toStringUtf8);
   }
 
@@ -132,30 +147,24 @@ public final class TypeHelper {
         .toString();
   }
 
-  static interface RecordCursorReader {
+  static interface RecordCursorReader {}
 
-  }
-
-  static interface BooleanRecordCursorReader
-      extends RecordCursorReader {
+  static interface BooleanRecordCursorReader extends RecordCursorReader {
 
     boolean read(RecordCursorInternal cursor, int index);
   }
 
-  static interface DoubleRecordCursorReader
-      extends RecordCursorReader {
+  static interface DoubleRecordCursorReader extends RecordCursorReader {
 
     double read(RecordCursorInternal cursor, int index);
   }
 
-  static interface LongRecordCursorReader
-      extends RecordCursorReader {
+  static interface LongRecordCursorReader extends RecordCursorReader {
 
     long read(RecordCursorInternal cursor, int index);
   }
 
-  static interface SliceRecordCursorReader
-      extends RecordCursorReader {
+  static interface SliceRecordCursorReader extends RecordCursorReader {
 
     Slice read(RecordCursorInternal cursor, int index);
   }

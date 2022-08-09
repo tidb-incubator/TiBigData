@@ -21,8 +21,7 @@ import io.prestosql.spi.Plugin;
 import io.prestosql.spi.connector.ConnectorFactory;
 import io.tidb.bigdata.prestosql.tidb.TiDBConnectorFactory;
 
-public class ConnectorsPlugin
-    implements Plugin {
+public class ConnectorsPlugin implements Plugin {
 
   @Override
   public Iterable<ConnectorFactory> getConnectorFactories() {

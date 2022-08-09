@@ -20,8 +20,7 @@ import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.types.DataType;
 
 public enum StreamingReadableMetadata {
-  COMMIT_TIMESTAMP("commit_timestamp",
-      DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull()),
+  COMMIT_TIMESTAMP("commit_timestamp", DataTypes.TIMESTAMP_WITH_LOCAL_TIME_ZONE(3).notNull()),
   COMMIT_VERSION("commit_version", DataTypes.BIGINT().notNull());
 
   final String key;

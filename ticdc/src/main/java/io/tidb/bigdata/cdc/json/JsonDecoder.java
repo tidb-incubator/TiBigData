@@ -42,16 +42,17 @@ public class JsonDecoder implements Iterator<JsonNode> {
 
   @Override
   public JsonNode next() {
-    return uncheckedRun(() -> {
-      final long length = input.readLong();
-      final byte[] bits;
-      if (length == 0) {
-        bits = EMPTY;
-      } else {
-        bits = new byte[(int) length];
-        input.readFully(bits);
-      }
-      return parser.parse(bits);
-    });
+    return uncheckedRun(
+        () -> {
+          final long length = input.readLong();
+          final byte[] bits;
+          if (length == 0) {
+            bits = EMPTY;
+          } else {
+            bits = new byte[(int) length];
+            input.readFully(bits);
+          }
+          return parser.parse(bits);
+        });
   }
 }

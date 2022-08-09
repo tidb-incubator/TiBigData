@@ -16,9 +16,22 @@
 
 package io.tidb.bigdata.flink.connector.table;
 
+import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
+import io.tidb.bigdata.flink.connector.source.TiDBOptions;
+import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.TiDBSourceBuilder;
+import io.tidb.bigdata.flink.connector.utils.FilterPushDownHelper;
+import io.tidb.bigdata.flink.connector.utils.LookupTableSourceHelper;
+import io.tidb.bigdata.flink.connector.utils.StoreVersion;
+import io.tidb.bigdata.tidb.ClientConfig;
+import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.expression.Expression;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.connector.ChangelogMode;
@@ -27,28 +40,46 @@ import org.apache.flink.table.connector.source.LookupTableSource;
 import org.apache.flink.table.connector.source.ScanTableSource;
 import org.apache.flink.table.connector.source.SourceProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsFilterPushDown;
+import org.apache.flink.table.connector.source.abilities.SupportsLimitPushDown;
 import org.apache.flink.table.connector.source.abilities.SupportsProjectionPushDown;
+import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata;
 import org.apache.flink.table.expressions.ResolvedExpression;
+import org.apache.flink.table.types.DataType;
+import org.apache.flink.util.Preconditions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSource,
-    SupportsProjectionPushDown, SupportsFilterPushDown {
+public class TiDBDynamicTableSource
+    implements ScanTableSource,
+        LookupTableSource,
+        SupportsProjectionPushDown,
+        SupportsFilterPushDown,
+        SupportsLimitPushDown,
+        SupportsReadingMetadata {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TiDBDynamicTableSource.class);
+
   private final ResolvedCatalogTable table;
   private final ChangelogMode changelogMode;
   private final LookupTableSourceHelper lookupTableSourceHelper;
+  private TiDBSchemaAdapter schema;
   private FilterPushDownHelper filterPushDownHelper;
-  private int[] projectedFields;
+  private Integer limit;
+  private Expression expression;
 
-  public TiDBDynamicTableSource(ResolvedCatalogTable table,
-      ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
+  public TiDBDynamicTableSource(
+      ResolvedCatalogTable table, ChangelogMode changelogMode, JdbcLookupOptions lookupOptions) {
     this(table, changelogMode, new LookupTableSourceHelper(lookupOptions));
   }
 
-  private TiDBDynamicTableSource(ResolvedCatalogTable table,
-      ChangelogMode changelogMode, LookupTableSourceHelper lookupTableSourceHelper) {
+  private TiDBDynamicTableSource(
+      ResolvedCatalogTable table,
+      ChangelogMode changelogMode,
+      LookupTableSourceHelper lookupTableSourceHelper) {
     this.table = table;
     this.changelogMode = changelogMode;
     this.lookupTableSourceHelper = lookupTableSourceHelper;
-    this.filterPushDownHelper = new FilterPushDownHelper(table);
+    this.schema = new TiDBSchemaAdapter(table);
   }
 
   @Override
@@ -58,18 +89,15 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
 
   @Override
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext scanContext) {
-    /* Disable metadata as it doesn't work with projection push down at this time */
-    return SourceProvider.of(
-        new TiDBSourceBuilder(table, scanContext::createTypeInformation, null, projectedFields)
-            .build());
+    return SourceProvider.of(new TiDBSourceBuilder(table, schema, expression, limit).build());
   }
 
   @Override
   public DynamicTableSource copy() {
     TiDBDynamicTableSource otherSource =
         new TiDBDynamicTableSource(table, changelogMode, lookupTableSourceHelper);
-    otherSource.projectedFields = this.projectedFields;
     otherSource.filterPushDownHelper = this.filterPushDownHelper;
+    otherSource.schema = this.schema;
     return otherSource;
   }
 
@@ -90,11 +118,49 @@ public class TiDBDynamicTableSource implements ScanTableSource, LookupTableSourc
 
   @Override
   public void applyProjection(int[][] projectedFields) {
-    this.projectedFields = Arrays.stream(projectedFields).mapToInt(f -> f[0]).toArray();
+    schema.applyProjectedFields(Arrays.stream(projectedFields).mapToInt(f -> f[0]).toArray());
   }
 
   @Override
   public Result applyFilters(List<ResolvedExpression> filters) {
-    return filterPushDownHelper.applyFilters(filters);
+    ClientConfig clientConfig = new ClientConfig(table.getOptions());
+    if (clientConfig.isFilterPushDown() && filterPushDownHelper == null) {
+      String databaseName = getRequiredProperties(TiDBOptions.DATABASE_NAME.key());
+      String tableName = getRequiredProperties(TiDBOptions.TABLE_NAME.key());
+      TiTableInfo tiTableInfo;
+      try (ClientSession clientSession = ClientSession.create(clientConfig)) {
+        tiTableInfo = clientSession.getTableMust(databaseName, tableName);
+
+        List<io.tidb.bigdata.flink.connector.utils.StoreVersion> tiKVVersions =
+            StoreVersion.fetchTiKVVersions(clientSession.getTiSession().getPDClient());
+        this.filterPushDownHelper = new FilterPushDownHelper(tiTableInfo, tiKVVersions);
+      } catch (Exception e) {
+        throw new IllegalStateException("can not get table", e);
+      }
+      LOG.info("Flink filters: " + filters);
+      this.expression = filterPushDownHelper.toTiDBExpression(filters).orElse(null);
+      LOG.info("TiDB filters: " + expression);
+    }
+    return Result.of(Collections.emptyList(), filters);
+  }
+
+  private String getRequiredProperties(String key) {
+    return Preconditions.checkNotNull(table.getOptions().get(key), key + " can not be null");
+  }
+
+  @Override
+  public void applyLimit(long limit) {
+    this.limit = limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit;
+  }
+
+  @Override
+  public Map<String, DataType> listReadableMetadata() {
+    return Arrays.stream(TiDBMetadata.values())
+        .collect(Collectors.toMap(TiDBMetadata::getKey, TiDBMetadata::getType));
+  }
+
+  @Override
+  public void applyReadableMetadata(List<String> metadataKeys, DataType producedDataType) {
+    schema.applyReadableMetadata(metadataKeys, producedDataType);
   }
 }

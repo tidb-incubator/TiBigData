@@ -16,12 +16,10 @@
 
 package io.tidb.bigdata.jdbc;
 
-/**
- * jdbc:tidb://host:port/database
- */
+/** jdbc:tidb://host:port/database */
 public class TiDBDriver extends LoadBalancingDriver {
 
-  private static final String TIDB_URL_PREFIX = "jdbc:tidb://";
+  public static final String TIDB_URL_PREFIX = "jdbc:tidb://";
 
   static {
     ExceptionHelper.uncheckedRun(() -> java.sql.DriverManager.registerDriver(new TiDBDriver()));

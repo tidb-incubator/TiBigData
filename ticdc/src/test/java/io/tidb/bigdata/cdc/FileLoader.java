@@ -32,8 +32,7 @@ public class FileLoader {
     return "json";
   }
 
-  protected static FileWithCodec getFile(final Codec codec, final String path,
-      boolean required) {
+  protected static FileWithCodec getFile(final Codec codec, final String path, boolean required) {
     final String format = getFormat(codec);
     final URL url = FileLoader.class.getClassLoader().getResource(format + "/" + path);
     if (required) {
@@ -62,13 +61,12 @@ public class FileLoader {
 
   protected static EventDecoder decode(final Codec codec, final String fileName)
       throws IOException {
-    return decode(codec, getFile(codec, "key/" + fileName, false),
-        getFile(codec, "value/" + fileName, true));
+    return decode(
+        codec, getFile(codec, "key/" + fileName, false), getFile(codec, "value/" + fileName, true));
   }
 
-  protected static EventDecoder decode(final Codec codec,
-      final FileWithCodec key, final FileWithCodec value)
-      throws IOException {
+  protected static EventDecoder decode(
+      final Codec codec, final FileWithCodec key, final FileWithCodec value) throws IOException {
     return codec.decode(getFileContent(key), getFileContent(value));
   }
 
@@ -105,7 +103,8 @@ public class FileLoader {
     }
 
     private FileWithCodec[] listFilesWithFormat() {
-      return Arrays.stream(listFiles()).map(f -> new FileWithCodec(codec, f))
+      return Arrays.stream(listFiles())
+          .map(f -> new FileWithCodec(codec, f))
           .toArray(FileWithCodec[]::new);
     }
 

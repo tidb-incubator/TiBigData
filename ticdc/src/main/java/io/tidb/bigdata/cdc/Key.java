@@ -30,8 +30,12 @@ public final class Key {
   private final long partition;
   private final Type type;
 
-  public Key(final String schema, final String table, final long partition,
-      final int type, final long ts) {
+  public Key(
+      final String schema,
+      final String table,
+      final long partition,
+      final int type,
+      final long ts) {
     this.schema = schema;
     this.table = table;
     this.partition = partition;
@@ -110,12 +114,13 @@ public final class Key {
   }
 
   public String toJson(JacksonFactory factory) {
-    return factory.toJson(factory.createObject()
-        .put("ts", getTs())
-        .put("scm", getSchema())
-        .put("tbl", getTable())
-        .put("t", getType().code())
-    );
+    return factory.toJson(
+        factory
+            .createObject()
+            .put("ts", getTs())
+            .put("scm", getSchema())
+            .put("tbl", getTable())
+            .put("t", getType().code()));
   }
 
   public enum Type {

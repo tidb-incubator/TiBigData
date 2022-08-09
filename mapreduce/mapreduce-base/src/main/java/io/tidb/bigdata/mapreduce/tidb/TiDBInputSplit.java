@@ -16,52 +16,32 @@
 
 package io.tidb.bigdata.mapreduce.tidb;
 
+import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
+import org.tikv.common.meta.TiTimestamp;
 
 public class TiDBInputSplit extends InputSplit implements Writable {
-  private String startKey;
-  private String endKey;
-  private String connectorId;
-  private String schemaName;
-  private String tableName;
 
-  public static final String [] EMPTY_STRING_ARRAY = new String[0];
+  private List<SplitInternal> splitInternals;
 
-  public TiDBInputSplit() {
+  public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
+  public TiDBInputSplit() {}
+
+  public TiDBInputSplit(List<SplitInternal> splitInternals) {
+    this.splitInternals = splitInternals;
   }
 
-  public TiDBInputSplit(String startKey, String endKey, String connectorId,
-      String schemaName, String tableName) {
-    this.startKey = startKey;
-    this.endKey = endKey;
-    this.connectorId = connectorId;
-    this.schemaName = schemaName;
-    this.tableName = tableName;
-  }
-
-  public String getStartKey() {
-    return startKey;
-  }
-
-  public String getEndKey() {
-    return endKey;
-  }
-
-  public String getConnectorId() {
-    return connectorId;
-  }
-
-  public String getSchemaName() {
-    return schemaName;
-  }
-
-  public String getTableName() {
-    return tableName;
+  public List<SplitInternal> getSplitInternals() {
+    return splitInternals;
   }
 
   @Override
@@ -75,20 +55,38 @@ public class TiDBInputSplit extends InputSplit implements Writable {
   }
 
   @Override
-  public void write(DataOutput out) throws IOException {
-    out.writeUTF(startKey);
-    out.writeUTF(endKey);
-    out.writeUTF(connectorId);
-    out.writeUTF(schemaName);
-    out.writeUTF(tableName);
+  public void write(DataOutput dataOutput) throws IOException {
+    dataOutput.writeInt(splitInternals.size());
+    for (SplitInternal splitInternal : splitInternals) {
+      dataOutput.writeUTF(splitInternal.getTable().getSchemaName());
+      dataOutput.writeUTF(splitInternal.getTable().getTableName());
+      dataOutput.writeUTF(splitInternal.getStartKey());
+      dataOutput.writeUTF(splitInternal.getEndKey());
+      dataOutput.writeLong(splitInternal.getTimestamp().getPhysical());
+      dataOutput.writeLong(splitInternal.getTimestamp().getLogical());
+    }
   }
 
   @Override
-  public void readFields(DataInput in) throws IOException {
-    this.startKey = in.readUTF();
-    this.endKey = in.readUTF();
-    this.connectorId = in.readUTF();
-    this.schemaName = in.readUTF();
-    this.tableName = in.readUTF();
+  public void readFields(DataInput dataInput) throws IOException {
+    int size = dataInput.readInt();
+    List<SplitInternal> splitInternalList = new ArrayList<>(size);
+    for (int i = 0; i < size; i++) {
+      String databaseName = dataInput.readUTF();
+      String tableName = dataInput.readUTF();
+      String startKey = dataInput.readUTF();
+      String endKey = dataInput.readUTF();
+      long physicalTimestamp = dataInput.readLong();
+      long logicalTimestamp = dataInput.readLong();
+
+      SplitInternal splitInternal =
+          new SplitInternal(
+              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              startKey,
+              endKey,
+              new TiTimestamp(physicalTimestamp, logicalTimestamp));
+      splitInternalList.add(splitInternal);
+    }
+    this.splitInternals = splitInternalList;
   }
 }

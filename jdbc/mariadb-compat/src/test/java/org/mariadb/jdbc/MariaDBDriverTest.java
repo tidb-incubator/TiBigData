@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 TiKV Project Authors.
+ * Copyright 2021 TiDB Project Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
 
 package org.mariadb.jdbc;
 
-import io.tidb.bigdata.jdbc.impl.RandomShuffleUrlMapper;
-import io.tidb.bigdata.jdbc.impl.DiscovererImpl;
-import io.tidb.bigdata.jdbc.impl.RoundRobinUrlMapper;
+import io.tidb.bigdata.test.IntegrationTest;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
+@Category(IntegrationTest.class)
 public class MariaDBDriverTest {
 
   public static final String JDBC_DRIVER = "org.mariadb.jdbc.Driver";

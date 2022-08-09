@@ -24,19 +24,16 @@ import io.tidb.bigdata.cdc.json.JsonNode;
 import io.tidb.bigdata.cdc.json.JsonParser;
 import java.util.Iterator;
 
-/**
- * TiCDC open protocol event key decoder, parse bits into event key instances.
- */
+/** TiCDC open protocol event key decoder, parse bits into event key instances. */
 public interface KeyDecoder extends Iterator<Key> {
 
-  static KeyDecoder json(final byte[] key,
-      final ParserFactory<JsonParser, JsonNode> parserFactory) {
+  static KeyDecoder json(
+      final byte[] key, final ParserFactory<JsonParser, JsonNode> parserFactory) {
     return new JsonKeyDecoder(key, parserFactory.createParser());
   }
 
-  static KeyDecoder craft(final byte[] payload,
-      final ParserFactory<CraftParser, CraftParserState> parserFactory) {
+  static KeyDecoder craft(
+      final byte[] payload, final ParserFactory<CraftParser, CraftParserState> parserFactory) {
     return new CraftKeyDecoder(payload, parserFactory.createParser());
   }
 }
-

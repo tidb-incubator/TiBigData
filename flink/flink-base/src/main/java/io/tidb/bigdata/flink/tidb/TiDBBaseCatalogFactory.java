@@ -16,10 +16,20 @@
 
 package io.tidb.bigdata.flink.tidb;
 
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_JKS_ENABLE;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_JKS_KEY_PASSWORD;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_JKS_KEY_PATH;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_JKS_TRUST_PASSWORD;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_JKS_TRUST_PATH;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_TLS_CA;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_TLS_CERT;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_TLS_ENABLE;
+import static io.tidb.bigdata.tidb.ClientConfig.CLUSTER_TLS_KEY;
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
 import static io.tidb.bigdata.tidb.ClientConfig.MAX_POOL_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.MIN_IDLE_SIZE;
 import static io.tidb.bigdata.tidb.ClientConfig.PASSWORD;
+import static io.tidb.bigdata.tidb.ClientConfig.TIDB_DNS_SEARCH;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_FILTER_PUSH_DOWN;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_REPLICA_READ;
 import static io.tidb.bigdata.tidb.ClientConfig.TIDB_WRITE_MODE;
@@ -39,10 +49,7 @@ public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
 
   @Override
   public Map<String, String> requiredContext() {
-    return ImmutableMap.of(
-        CATALOG_TYPE, CATALOG_TYPE_VALUE_TIDB,
-        CATALOG_PROPERTY_VERSION, "1"
-    );
+    return ImmutableMap.of(CATALOG_TYPE, CATALOG_TYPE_VALUE_TIDB, CATALOG_PROPERTY_VERSION, "1");
   }
 
   @Override
@@ -55,7 +62,16 @@ public abstract class TiDBBaseCatalogFactory implements CatalogFactory {
         MIN_IDLE_SIZE,
         TIDB_WRITE_MODE,
         TIDB_REPLICA_READ,
-        TIDB_FILTER_PUSH_DOWN
-    );
+        TIDB_FILTER_PUSH_DOWN,
+        TIDB_DNS_SEARCH,
+        CLUSTER_TLS_ENABLE,
+        CLUSTER_TLS_CA,
+        CLUSTER_TLS_KEY,
+        CLUSTER_TLS_CERT,
+        CLUSTER_JKS_ENABLE,
+        CLUSTER_JKS_KEY_PATH,
+        CLUSTER_JKS_KEY_PASSWORD,
+        CLUSTER_JKS_TRUST_PATH,
+        CLUSTER_JKS_TRUST_PASSWORD);
   }
 }

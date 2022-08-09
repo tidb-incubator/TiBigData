@@ -19,6 +19,8 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
+import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.key.Base64KeyRange;
 import java.io.Serializable;
 import java.util.Objects;
 import org.tikv.common.meta.TiTimestamp;
@@ -31,20 +33,14 @@ public final class SplitInternal implements Serializable {
   private final TiTimestamp timestamp;
 
   public SplitInternal(
-      TableHandleInternal table,
-      String startKey,
-      String endKey,
-      TiTimestamp timestamp) {
+      TableHandleInternal table, String startKey, String endKey, TiTimestamp timestamp) {
     this.table = requireNonNull(table, "table is null");
     this.startKey = requireNonNull(startKey, "startKey is null");
     this.endKey = requireNonNull(endKey, "endKey is null");
     this.timestamp = requireNonNull(timestamp, "timestamp is null");
   }
 
-  public SplitInternal(
-      TableHandleInternal table,
-      Base64KeyRange range,
-      TiTimestamp timestamp) {
+  public SplitInternal(TableHandleInternal table, Base64KeyRange range, TiTimestamp timestamp) {
     this(table, range.getStartKey(), range.getEndKey(), timestamp);
   }
 

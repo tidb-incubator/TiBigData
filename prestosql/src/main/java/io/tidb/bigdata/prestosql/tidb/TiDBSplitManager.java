@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.inject.Inject;
 
-public final class TiDBSplitManager
-    extends Wrapper<SplitManagerInternal>
+public final class TiDBSplitManager extends Wrapper<SplitManagerInternal>
     implements ConnectorSplitManager {
 
   @Inject

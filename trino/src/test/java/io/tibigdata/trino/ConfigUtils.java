@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 TiDB Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.tibigdata.trino;
 
 import static io.tidb.bigdata.tidb.ClientConfig.DATABASE_URL;
@@ -41,10 +57,13 @@ public class ConfigUtils {
 
   public static Map<String, String> getProperties() {
     return ImmutableMap.<String, String>builder()
-        .put(DATABASE_URL, String.format("jdbc:mysql://%s:%s/test", tidbHost, tidbPort))
+        .put(
+            DATABASE_URL,
+            String.format(
+                "jdbc:mysql://%s:%s/test?serverTimezone=Asia/Shanghai&zeroDateTimeBehavior=CONVERT_TO_NULL&tinyInt1isBit=false&enabledTLSProtocols=TLSv1,TLSv1.1,TLSv1.2",
+                tidbHost, tidbPort))
         .put(USERNAME, tidbUser)
         .put(PASSWORD, tidbPassword)
         .build();
   }
-
 }

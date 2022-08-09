@@ -31,8 +31,8 @@ import org.apache.flink.table.connector.source.SourceFunctionProvider;
 import org.apache.flink.table.connector.source.abilities.SupportsReadingMetadata;
 import org.apache.flink.table.types.DataType;
 
-public class TiDBStreamingDynamicTableSource
-    extends TiDBDynamicTableSource implements SupportsReadingMetadata {
+public class TiDBStreamingDynamicTableSource extends TiDBDynamicTableSource
+    implements SupportsReadingMetadata {
 
   private final ScanTableSource streamingSource;
   private StreamingReadableMetadata[] metadata;
@@ -52,15 +52,23 @@ public class TiDBStreamingDynamicTableSource
   @Override
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext ctx) {
     return SourceFunctionProvider.of(
-        new TiDBStreamingSourceFunction(getInputFormat(ctx, metadata != null ? metadata.length : 0),
-            metadata, version, streamingSource.getScanRuntimeProvider(ctx)), false);
+        new TiDBStreamingSourceFunction(
+            getInputFormat(ctx, metadata != null ? metadata.length : 0),
+            metadata,
+            version,
+            streamingSource.getScanRuntimeProvider(ctx)),
+        false);
   }
 
   @Override
   public DynamicTableSource copy() {
     TiDBStreamingDynamicTableSource tableSource =
-        new TiDBStreamingDynamicTableSource(tableSchema, properties, lookupOptions,
-            (ScanTableSource) this.streamingSource.copy(), this.version);
+        new TiDBStreamingDynamicTableSource(
+            tableSchema,
+            properties,
+            lookupOptions,
+            (ScanTableSource) this.streamingSource.copy(),
+            this.version);
     copyTo(tableSource);
     return tableSource;
   }
@@ -80,10 +88,11 @@ public class TiDBStreamingDynamicTableSource
 
   @Override
   public void applyReadableMetadata(List<String> list, DataType dataType) {
-    metadata = list.stream()
-        .map(String::toUpperCase)
-        .map(StreamingReadableMetadata::valueOf)
-        .toArray(StreamingReadableMetadata[]::new);
+    metadata =
+        list.stream()
+            .map(String::toUpperCase)
+            .map(StreamingReadableMetadata::valueOf)
+            .toArray(StreamingReadableMetadata[]::new);
     if (streamingSource instanceof SupportsReadingMetadata) {
       SupportsReadingMetadata support = (SupportsReadingMetadata) streamingSource;
       support.applyReadableMetadata(

@@ -21,8 +21,7 @@ import io.tidb.bigdata.trino.tidb.TiDBConnectorFactory;
 import io.trino.spi.Plugin;
 import io.trino.spi.connector.ConnectorFactory;
 
-public class ConnectorsPlugin
-    implements Plugin {
+public class ConnectorsPlugin implements Plugin {
 
   @Override
   public Iterable<ConnectorFactory> getConnectorFactories() {

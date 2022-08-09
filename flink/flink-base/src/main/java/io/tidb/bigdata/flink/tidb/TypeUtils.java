@@ -16,11 +16,13 @@
 
 package io.tidb.bigdata.flink.tidb;
 
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeDatetime;
+import static io.tidb.bigdata.tidb.types.MySQLType.TypeTimestamp;
 import static java.lang.String.format;
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
-import static org.tikv.common.types.MySQLType.TypeDatetime;
-import static org.tikv.common.types.MySQLType.TypeTimestamp;
 
+import io.tidb.bigdata.tidb.types.MySQLType;
+import io.tidb.bigdata.tidb.types.StringType;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -42,16 +44,13 @@ import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
-import org.tikv.common.types.MySQLType;
-import org.tikv.common.types.StringType;
 
 public class TypeUtils {
-  
+
   public static final String TIMESTAMP_FORMAT_PREFIX = "tidb.timestamp-format.";
-  
+
   // maintain compatibility with flink-1.11, 1.12, will remove this configuration in flink-1.14
   public static final String OLD_TIMESTAMP_FORMAT_PREFIX = "timestamp-format.";
- 
 
   /**
    * a default mapping: TiKV DataType -> Flink DataType
@@ -59,12 +58,18 @@ public class TypeUtils {
    * @param dataType TiKV DataType
    * @return Flink DataType
    */
-  public static DataType getFlinkType(org.tikv.common.types.DataType dataType) {
+  public static DataType getFlinkType(io.tidb.bigdata.tidb.types.DataType dataType) {
     boolean unsigned = dataType.isUnsigned();
     int length = (int) dataType.getLength();
     switch (dataType.getType()) {
       case TypeBit:
-        return DataTypes.BOOLEAN();
+        // Only Convert Bit(1) to Boolean
+        if (dataType.getLength() == 1) {
+          return DataTypes.BOOLEAN();
+        } else {
+          // TODO : it's better to convert `BIT(n)` to type `Binary(ceilDiv(n, 8)``
+          return DataTypes.BIGINT();
+        }
       case TypeTiny:
         return unsigned ? DataTypes.SMALLINT() : DataTypes.TINYINT();
       case TypeYear:
@@ -114,7 +119,6 @@ public class TypeUtils {
     }
   }
 
-
   /**
    * transform TiKV java object to Flink java object by given Flink Datatype
    *
@@ -122,8 +126,11 @@ public class TypeUtils {
    * @param flinkType Flink datatype
    * @param tidbType TiDB datatype
    */
-  public static Optional<Object> getObjectWithDataType(@Nullable Object object, DataType flinkType,
-      org.tikv.common.types.DataType tidbType, @NotNull DateTimeFormatter formatter) {
+  public static Optional<Object> getObjectWithDataType(
+      @Nullable Object object,
+      DataType flinkType,
+      io.tidb.bigdata.tidb.types.DataType tidbType,
+      @NotNull DateTimeFormatter formatter) {
     if (object == null) {
       return Optional.empty();
     }
@@ -148,8 +155,9 @@ public class TypeUtils {
         }
         break;
       case "Integer":
-        object = (int) (long) getObjectWithDataType(object, DataTypes.BIGINT(), tidbType, formatter)
-            .get();
+        object =
+            (int)
+                (long) getObjectWithDataType(object, DataTypes.BIGINT(), tidbType, formatter).get();
         break;
       case "Long":
         if (object instanceof LocalDate) {
@@ -190,9 +198,7 @@ public class TypeUtils {
     return Optional.of(object);
   }
 
-  /**
-   * transform Row to GenericRowData
-   */
+  /** transform Row to GenericRowData */
   public static Optional<GenericRowData> toRowData(Row row) {
     if (row == null) {
       return Optional.empty();
@@ -204,9 +210,7 @@ public class TypeUtils {
     return Optional.of(rowData);
   }
 
-  /**
-   * transform Row type to GenericRowData type
-   */
+  /** transform Row type to GenericRowData type */
   public static Object toRowDataType(Object object) {
     Object result = object;
     if (object == null) {
@@ -218,8 +222,7 @@ public class TypeUtils {
         break;
       case "BigDecimal":
         BigDecimal bigDecimal = (BigDecimal) object;
-        result = DecimalData
-            .fromBigDecimal(bigDecimal, bigDecimal.precision(), bigDecimal.scale());
+        result = DecimalData.fromBigDecimal(bigDecimal, bigDecimal.precision(), bigDecimal.scale());
         break;
       case "LocalDate":
         LocalDate localDate = (LocalDate) object;
@@ -238,41 +241,39 @@ public class TypeUtils {
     }
     return result;
   }
-  
+
   /**
-   * extracts the DateTimeFormatter of table field name according to
-   * the configuration in properties, which will used in conversion of
-   * tikv date type to flink date type.
+   * extracts the DateTimeFormatter of table field name according to the configuration in
+   * properties, which will used in conversion of tikv date type to flink date type.
    *
    * @param fieldNames table field names
-   * @param confProps  tidb-connector configuration
+   * @param confProps tidb-connector configuration
    * @param downwardCompatible whether to be compatible with old configurations
    * @return DateTimeFormatter DateTimeFormatter Objects
    */
   @Nonnull
   public static DateTimeFormatter[] extractDateTimeFormatter(
-      String[] fieldNames,
-      @Nonnull Map<String, String> confProps,
-      boolean downwardCompatible) {
+      String[] fieldNames, @Nonnull Map<String, String> confProps, boolean downwardCompatible) {
     if (fieldNames == null) {
       return new DateTimeFormatter[0];
     }
     assert (confProps != null);
     if (downwardCompatible) {
       return Arrays.stream(fieldNames)
-          .map(fieldName -> Optional
-              .ofNullable(confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
-              .orElseGet(() -> confProps.get(OLD_TIMESTAMP_FORMAT_PREFIX + fieldName)))
+          .map(
+              fieldName ->
+                  Optional.ofNullable(confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName))
+                      .orElseGet(() -> confProps.get(OLD_TIMESTAMP_FORMAT_PREFIX + fieldName)))
           .map(pattern -> pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern))
           .toArray(DateTimeFormatter[]::new);
     } else {
       return Arrays.stream(fieldNames)
-          .map(fieldName -> {
-            String pattern = confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName);
-            return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
-          }).toArray(DateTimeFormatter[]::new);
+          .map(
+              fieldName -> {
+                String pattern = confProps.get(TIMESTAMP_FORMAT_PREFIX + fieldName);
+                return pattern == null ? ISO_LOCAL_DATE : DateTimeFormatter.ofPattern(pattern);
+              })
+          .toArray(DateTimeFormatter[]::new);
     }
   }
-  
-  
 }

@@ -19,14 +19,15 @@ package io.tidb.bigdata.tidb;
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 
+import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
+import io.tidb.bigdata.tidb.row.Row;
+import io.tidb.bigdata.tidb.types.DataType;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
-import org.tikv.common.operation.iterator.CoprocessorIterator;
-import org.tikv.common.row.Row;
-import org.tikv.common.types.DataType;
 
 public class RecordCursorInternal {
 
@@ -34,8 +35,8 @@ public class RecordCursorInternal {
   private final CoprocessorIterator<Row> iterator;
   private Row row = null;
 
-  public RecordCursorInternal(List<ColumnHandleInternal> columnHandles,
-      CoprocessorIterator<Row> iterator) {
+  public RecordCursorInternal(
+      List<ColumnHandleInternal> columnHandles, CoprocessorIterator<Row> iterator) {
     this.columnHandles = columnHandles;
     this.iterator = iterator;
   }
@@ -54,8 +55,7 @@ public class RecordCursorInternal {
     }
   }
 
-  public void close() {
-  }
+  public void close() {}
 
   public Object getObject(int field) {
     return row.get(field, null);
@@ -121,14 +121,16 @@ public class RecordCursorInternal {
     return row.getBytes(field);
   }
 
+  public Row getRow() {
+    return row;
+  }
+
   public int fieldCount() {
     return row.fieldCount();
   }
 
   @Override
   public String toString() {
-    return toStringHelper(this)
-        .add("columns", columnHandles)
-        .toString();
+    return toStringHelper(this).add("columns", columnHandles).toString();
   }
 }

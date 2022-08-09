@@ -34,15 +34,21 @@ public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements R
   private final List<TiDBColumnHandle> columnHandles;
   private final List<Type> columnTypes;
 
-  public TiDBRecordSet(TiDBSession session, TiDBSplit split, List<TiDBColumnHandle> columnHandles,
+  public TiDBRecordSet(
+      TiDBSession session,
+      TiDBSplit split,
+      List<TiDBColumnHandle> columnHandles,
       Optional<TiTimestamp> timestamp) {
-    super(new RecordSetInternal(session.getInternal(), split.toInternal(),
-        internalHandles(columnHandles),
-        split.getAdditionalPredicate().map(Expressions::deserialize),
-        timestamp));
+    super(
+        new RecordSetInternal(
+            session.getInternal(),
+            split.toInternal(),
+            internalHandles(columnHandles),
+            split.getAdditionalPredicate().map(Expressions::deserialize),
+            timestamp));
     this.columnHandles = columnHandles;
-    this.columnTypes = columnHandles.stream().map(TiDBColumnHandle::getPrestoType)
-        .collect(toImmutableList());
+    this.columnTypes =
+        columnHandles.stream().map(TiDBColumnHandle::getPrestoType).collect(toImmutableList());
   }
 
   @Override
@@ -52,7 +58,7 @@ public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements R
 
   @Override
   public RecordCursor cursor() {
-    return new TiDBRecordCursor(columnHandles, getInternal().getColumnTypes(),
-        getInternal().cursor());
+    return new TiDBRecordCursor(
+        columnHandles, getInternal().getColumnTypes(), getInternal().cursor());
   }
 }

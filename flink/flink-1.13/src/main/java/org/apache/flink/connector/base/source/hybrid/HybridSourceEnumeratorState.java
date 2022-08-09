@@ -1,11 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
+ * Copyright 2022 TiDB Project Authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -20,19 +18,26 @@ package org.apache.flink.connector.base.source.hybrid;
 
 /** The state of hybrid source enumerator. */
 public class HybridSourceEnumeratorState {
-    private final int currentSourceIndex;
-    private final Object wrappedState;
+  private final int currentSourceIndex;
+  private byte[] wrappedStateBytes;
+  private final int wrappedStateSerializerVersion;
 
-    HybridSourceEnumeratorState(int currentSourceIndex, Object wrappedState) {
-        this.currentSourceIndex = currentSourceIndex;
-        this.wrappedState = wrappedState;
-    }
+  HybridSourceEnumeratorState(
+      int currentSourceIndex, byte[] wrappedStateBytes, int serializerVersion) {
+    this.currentSourceIndex = currentSourceIndex;
+    this.wrappedStateBytes = wrappedStateBytes;
+    this.wrappedStateSerializerVersion = serializerVersion;
+  }
 
-    public int getCurrentSourceIndex() {
-        return this.currentSourceIndex;
-    }
+  public int getCurrentSourceIndex() {
+    return this.currentSourceIndex;
+  }
 
-    public Object getWrappedState() {
-        return wrappedState;
-    }
+  public byte[] getWrappedState() {
+    return wrappedStateBytes;
+  }
+
+  public int getWrappedStateSerializerVersion() {
+    return wrappedStateSerializerVersion;
+  }
 }

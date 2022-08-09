@@ -47,18 +47,6 @@
       <version>${dep.airlift.version}</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>${dep.junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
-      <version>${dep.mysql.jdbc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>io.trino</groupId>
       <artifactId>trino-main</artifactId>
       <version>${dep.trino.version}</version>
@@ -68,6 +56,12 @@
       <groupId>io.trino</groupId>
       <artifactId>trino-tests</artifactId>
       <version>${dep.trino.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.tidb</groupId>
+      <artifactId>bigdata-test</artifactId>
+      <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -103,10 +97,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-clean-plugin</artifactId>
         <version>2.4.1</version>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
       </plugin>
       <plugin>
         <artifactId>maven-assembly-plugin</artifactId>
