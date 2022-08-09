@@ -14,7 +14,13 @@ TiBigData project is under the Apache 2.0 license. See the [LICENSE](./LICENSE) 
 
 ## 代码风格
 
-[Google Code Style](https://github.com/google/styleguide).
+TiBigData 使用 [Google Code Style](https://github.com/google/styleguide).
+
+使用以下命令格式化代码：
+
+```bash
+mvn com.coveo:fmt-maven-plugin:format
+```
 
 ## 快速开始
 

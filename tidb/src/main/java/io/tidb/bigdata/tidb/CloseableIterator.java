@@ -53,9 +53,7 @@ public interface CloseableIterator<T> extends Iterator<T>, Closeable {
     }
   }
 
-  /**
-   * Fetch all rows in memory for each region.
-   */
+  /** Fetch all rows in memory for each region. */
   class MemoryCoprocessorIterator implements CloseableIterator<Row> {
 
     static final Logger LOG = LoggerFactory.getLogger(MemoryCoprocessorIterator.class);
@@ -92,10 +90,7 @@ public interface CloseableIterator<T> extends Iterator<T>, Closeable {
           .collect(Collectors.toList());
     }
 
-    /**
-     *
-     * It is able to retry for all roles, because we stored all rows for each region.
-     */
+    /** It is able to retry for all roles, because we stored all rows for each region. */
     private List<Row> fetchAllRows(Base64KeyRange range) {
       Exception lastException = null;
       for (ClientSession session : sessions) {
