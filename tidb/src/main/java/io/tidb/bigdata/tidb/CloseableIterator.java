@@ -92,6 +92,10 @@ public interface CloseableIterator<T> extends Iterator<T>, Closeable {
           .collect(Collectors.toList());
     }
 
+    /**
+     *
+     * It is able to retry for all roles, because we stored all rows for each region.
+     */
     private List<Row> fetchAllRows(Base64KeyRange range) {
       Exception lastException = null;
       for (ClientSession session : sessions) {
@@ -114,6 +118,7 @@ public interface CloseableIterator<T> extends Iterator<T>, Closeable {
     private List<Row> tryIterateNextRange() {
       ClientSession session = sessions.get(0);
       Base64KeyRange range = ranges.removeFirst();
+      // Ensure that each range corresponds to a region.
       List<Base64KeyRange> newRanges = session.reSplit(range);
       if (newRanges.size() == 0) {
         return ImmutableList.of();
@@ -139,6 +144,7 @@ public interface CloseableIterator<T> extends Iterator<T>, Closeable {
     public boolean hasNext() {
       boolean hasNext = iterator.hasNext() || nextIterator();
       if (!hasNext) {
+        // Make sure it is closed.
         close();
       }
       return hasNext;

@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -49,9 +51,7 @@ public class MemoryCoprocessorIteratorTest {
         }
       }
       rows.sort(Comparator.naturalOrder());
-      Assert.assertEquals(10000, rows.size());
-      Assert.assertEquals(1, (int) rows.get(0));
-      Assert.assertEquals(10000, (int) rows.get(9999));
+      Assert.assertEquals(IntStream.range(1, 10001).boxed().collect(Collectors.toList()), rows);
     }
   }
 }
