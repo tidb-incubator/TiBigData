@@ -20,6 +20,7 @@ import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.flink.connector.utils.TiRow;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
 import io.tidb.bigdata.tidb.TiDBWriteMode;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import io.tidb.bigdata.tidb.buffer.RowBuffer;
 import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import java.util.ArrayList;
@@ -43,9 +44,8 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
       String databaseName,
       String tableName,
       Map<String, String> properties,
-      TiTimestamp tiTimestamp,
       TiDBSinkOptions sinkOption) {
-    super(databaseName, tableName, properties, tiTimestamp, sinkOption, null);
+    super(databaseName, tableName, properties, sinkOption, null);
   }
 
   @Override
@@ -64,6 +64,9 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
 
     // start a new transaction
     TiTimestamp timestamp = session.getSnapshotVersion();
+    DynamicRowIDAllocator rowIDAllocator =
+        new DynamicRowIDAllocator(
+            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep(), timestamp);
     tiDBEncodeHelper =
         new TiDBEncodeHelper(
             session,
@@ -71,6 +74,7 @@ public class TiDBMiniBatchWriteOperator extends TiDBWriteOperator {
             databaseName,
             tableName,
             sinkOptions.isIgnoreAutoincrementColumn(),
+            sinkOptions.isIgnoreAutoRandomColumn(),
             sinkOptions.getWriteMode() == TiDBWriteMode.UPSERT,
             rowIDAllocator);
     TiDBWriteHelper tiDBWriteHelper =

@@ -59,9 +59,6 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
   }
 
   private void initClientSession() {
-    if (clientSession != null) {
-      return;
-    }
     try {
       LOG.info("Init client session");
       clientSession = ClientSession.create(new ClientConfig(properties));
@@ -72,17 +69,16 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
 
   private void initCursor() {
     SplitInternal splitInternal = splitInternals.get(0);
-
     columns =
         clientSession.getTableColumnsMust(
             splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
     TiTimestamp timestamp =
         getOptionalVersion()
-            .orElseGet(() -> getOptionalTimestamp().orElseGet(() -> splitInternal.getTimestamp()));
+            .orElseGet(() -> getOptionalTimestamp().orElseGet(splitInternal::getTimestamp));
     RecordSetInternal recordSetInternal =
         new RecordSetInternal(
             clientSession,
-            splitInternal,
+            splitInternals,
             columns,
             Optional.empty(),
             Optional.ofNullable(timestamp));
@@ -94,8 +90,9 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
     if (splitInternals.size() == 0) {
       return false;
     }
-    initClientSession();
-
+    if (clientSession == null) {
+      initClientSession();
+    }
     if (cursor == null) {
       initCursor();
     }

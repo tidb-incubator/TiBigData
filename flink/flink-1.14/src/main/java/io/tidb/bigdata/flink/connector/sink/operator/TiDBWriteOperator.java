@@ -20,7 +20,6 @@ import io.tidb.bigdata.flink.connector.sink.TiDBSinkOptions;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.TiDBWriteHelper;
-import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator;
 import io.tidb.bigdata.tidb.buffer.RowBuffer;
 import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
@@ -31,7 +30,6 @@ import org.apache.flink.streaming.api.operators.AbstractStreamOperator;
 import org.apache.flink.streaming.api.operators.BoundedOneInput;
 import org.apache.flink.streaming.api.operators.OneInputStreamOperator;
 import org.apache.flink.streaming.runtime.streamrecord.StreamRecord;
-import org.tikv.common.meta.TiTimestamp;
 
 /**
  * Base operator for flushing rows to TiDB. When the row size is larger than the threshold, it will
@@ -43,7 +41,6 @@ public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void>
   protected final String databaseName;
   protected final String tableName;
   private final Map<String, String> properties;
-  protected final TiTimestamp tiTimestamp;
   protected final TiDBSinkOptions sinkOptions;
 
   protected byte[] primaryKey;
@@ -53,19 +50,16 @@ public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void>
   protected transient TiDBWriteHelper tiDBWriteHelper;
   protected transient TiTableInfo tiTableInfo;
   protected transient RowBuffer buffer;
-  protected transient DynamicRowIDAllocator rowIDAllocator;
 
   public TiDBWriteOperator(
       String databaseName,
       String tableName,
       Map<String, String> properties,
-      TiTimestamp tiTimestamp,
       TiDBSinkOptions sinkOption,
       byte[] primaryKey) {
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.properties = properties;
-    this.tiTimestamp = tiTimestamp;
     this.sinkOptions = sinkOption;
     this.primaryKey = primaryKey;
   }
@@ -74,13 +68,6 @@ public abstract class TiDBWriteOperator extends AbstractStreamOperator<Void>
   public void open() throws Exception {
     this.session = ClientSession.create(new ClientConfig(properties));
     this.tiTableInfo = session.getTableMust(databaseName, tableName);
-    this.rowIDAllocator =
-        new DynamicRowIDAllocator(
-            session, databaseName, tableName, sinkOptions.getRowIdAllocatorStep());
-
-    // Start operator orderly in order to avoid rowID allocation conflict.
-    Thread.sleep(
-        sinkOptions.getTaskStartInterval() * this.getRuntimeContext().getIndexOfThisSubtask());
     openInternal();
   }
 

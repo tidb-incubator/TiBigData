@@ -24,7 +24,6 @@ import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.IntHandle;
 import io.tidb.bigdata.tidb.key.IndexKey;
 import io.tidb.bigdata.tidb.key.IndexKey.EncodeIndexDataResult;
-import io.tidb.bigdata.tidb.key.Key;
 import io.tidb.bigdata.tidb.key.RowKey;
 import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
@@ -66,11 +65,13 @@ public class TiDBEncodeHelper implements AutoCloseable {
   private final List<TiColumnInfo> columns;
   private final List<String> columnNames;
   private final Optional<Integer> autoIncrementColumnIndex;
+  private final Optional<Integer> autoRandomColumnIndex;
   private final List<TiIndexInfo> uniqueIndices;
   private final TiColumnInfo handleCol;
   private final boolean isCommonHandle;
   private final boolean enableNewRowFormat;
   private final boolean ignoreAutoincrementColumn;
+  private final boolean ignoreAutoRandomColumn;
   private final DynamicRowIDAllocator rowIdAllocator;
   private final boolean replace;
 
@@ -80,6 +81,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       String databaseName,
       String tableName,
       boolean ignoreAutoincrementColumn,
+      boolean ignoreAutoRandomColumn,
       boolean replace,
       DynamicRowIDAllocator rowIDAllocator) {
     this.session = session;
@@ -87,18 +89,21 @@ public class TiDBEncodeHelper implements AutoCloseable {
     this.databaseName = databaseName;
     this.tableName = tableName;
     this.ignoreAutoincrementColumn = ignoreAutoincrementColumn;
+    this.ignoreAutoRandomColumn = ignoreAutoRandomColumn;
     this.tiTableInfo = session.getTableMust(databaseName, tableName);
     this.snapshot = session.getTiSession().createSnapshot(timestamp);
     this.columns = tiTableInfo.getColumns();
     this.columnNames = columns.stream().map(TiColumnInfo::getName).collect(Collectors.toList());
     this.autoIncrementColumnIndex =
         Optional.ofNullable(tiTableInfo.getAutoIncrementColInfo()).map(TiColumnInfo::getOffset);
+    this.autoRandomColumnIndex =
+        Optional.ofNullable(tiTableInfo.getAutoRandomColInfo()).map(TiColumnInfo::getOffset);
     this.uniqueIndices =
         tiTableInfo.getIndices().stream()
             .filter(TiIndexInfo::isUnique)
             .collect(Collectors.toList());
     this.handleCol = tiTableInfo.getPKIsHandleColumn();
-    this.isCommonHandle = session.isClusteredIndex(databaseName, tableName);
+    this.isCommonHandle = tiTableInfo.isCommonHandle();
     if (StoreVersion.minTiKVVersion(VERSION, session.getTiSession().getPDClient())) {
       this.enableNewRowFormat = session.getRowFormatVersion() == 2;
     } else {
@@ -159,60 +164,25 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
-  private Pair<byte[], Boolean> buildUniqueIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
+  private Pair<byte[], Boolean> buildIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
     EncodeIndexDataResult encodeIndexDataResult =
-        IndexKey.encodeIndexDataValues(
-            tiRow,
-            index.getIndexColumns(),
-            handle,
-            index.isUnique() && !index.isPrimary(),
-            tiTableInfo);
-    Key[] keys = encodeIndexDataResult.keys;
-    IndexKey indexKey = IndexKey.toIndexKey(tiTableInfo.getId(), index.getId(), keys);
-    return new Pair<>(indexKey.getBytes(), encodeIndexDataResult.appendHandle);
+        IndexKey.genIndexKey(tiTableInfo.getId(), tiRow, index, handle, tiTableInfo);
+    return new Pair<>(encodeIndexDataResult.indexKey, encodeIndexDataResult.distinct);
   }
 
-  private BytePairWrapper generateUniqueIndexKeyValue(
+  private BytePairWrapper generateIndexKeyValue(
       Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
-    Pair<byte[], Boolean> pair = buildUniqueIndexKey(tiRow, handle, index);
+    Pair<byte[], Boolean> pair = buildIndexKey(tiRow, handle, index);
 
     byte[] key = pair.first;
-    boolean needToAppendHandle = pair.second;
+    boolean distinct = pair.second;
     byte[] value;
     if (remove) {
       value = EMPTY_BYTES;
     } else {
-      if (needToAppendHandle) {
-        value = ZERO_BYTES;
-      } else {
-        if (handle.isInt()) {
-          CodecDataOutput codecDataOutput = new CodecDataOutput();
-          codecDataOutput.writeLong(handle.intValue());
-          value = codecDataOutput.toBytes();
-        } else {
-          // clustered index
-          value = TableCodec.genIndexValueForClusteredIndexVersion1(index, handle);
-        }
-      }
+      value = TableCodec.genIndexValue(handle, tiTableInfo.getCommonHandleVersion(), distinct);
     }
     return new BytePairWrapper(key, value);
-  }
-
-  private BytePairWrapper generateSecondaryIndexKeyValue(
-      Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
-    Key[] keys =
-        IndexKey.encodeIndexDataValues(tiRow, index.getIndexColumns(), handle, false, tiTableInfo)
-            .keys;
-    CodecDataOutput codecDataOutput = new CodecDataOutput();
-    codecDataOutput.write(IndexKey.toIndexKey(tiTableInfo.getId(), index.getId(), keys).getBytes());
-    codecDataOutput.write(handle.encodedAsKey());
-    byte[] value;
-    if (remove) {
-      value = EMPTY_BYTES;
-    } else {
-      value = ZERO_BYTES;
-    }
-    return new BytePairWrapper(codecDataOutput.toBytes(), value);
   }
 
   private BytePairWrapper generateRecordKeyValue(Row tiRow, Handle handle, boolean remove) {
@@ -231,14 +201,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, Handle handle, boolean remove) {
     return tiTableInfo.getIndices().stream()
         .filter(tiIndexInfo -> !(isCommonHandle && tiIndexInfo.isPrimary()))
-        .map(
-            tiIndexInfo -> {
-              if (tiIndexInfo.isUnique()) {
-                return generateUniqueIndexKeyValue(tiRow, handle, tiIndexInfo, remove);
-              } else {
-                return generateSecondaryIndexKeyValue(tiRow, handle, tiIndexInfo, remove);
-              }
-            })
+        .map(tiIndexInfo -> generateIndexKeyValue(tiRow, handle, tiIndexInfo, remove))
         .collect(Collectors.toList());
   }
 
@@ -285,11 +248,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
 
   public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
       TiIndexInfo index, Handle handle, Row tiRow) {
-    Pair<byte[], Boolean> uniqueIndexKeyPair = buildUniqueIndexKey(tiRow, handle, index);
-    if (!uniqueIndexKeyPair.second) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiRow, handle, index);
+    if (uniqueIndexKeyPair.second) {
       byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
       if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
-        Handle oldHandle = TableCodec.decodeHandle(oldValue, false);
+        Handle oldHandle = TableCodec.decodeHandle(oldValue, !handle.isInt());
         byte[] oldRowValue =
             snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
         Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
@@ -317,15 +280,19 @@ public class TiDBEncodeHelper implements AutoCloseable {
     if (autoIncrementColumnIndex.isPresent()) {
       int index = autoIncrementColumnIndex.get();
       if (ignoreAutoincrementColumn) {
-        row.set(index, columns.get(index).getType(), rowIdAllocator.getAutoIncId());
+        row.set(index, columns.get(index).getType(), rowIdAllocator.getAutoIncrementId());
       } else if (row.isNull(index)) {
         throw new IllegalStateException("Auto increment column can not be null");
       }
     }
 
-    if (isCommonHandle && !session.supportClusteredIndex()) {
-      throw new TiBatchWriteException(
-          "Current TiDB version does not support clustered index, please make sure TiDB version is greater than or equal to v5.0");
+    if (autoRandomColumnIndex.isPresent()) {
+      int index = autoRandomColumnIndex.get();
+      if (ignoreAutoRandomColumn) {
+        row.set(index, columns.get(index).getType(), rowIdAllocator.getAutoRandomId());
+      } else if (row.isNull(index)) {
+        throw new IllegalStateException("Auto random column can not be null");
+      }
     }
 
     Handle handle;
@@ -336,7 +303,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
       if (isCommonHandle || tiTableInfo.isPkHandle()) {
         handle = extractHandle(row);
       } else {
-        handle = new IntHandle(rowIdAllocator.getSharedRowId());
+        handle = new IntHandle(rowIdAllocator.getImplicitRowId());
       }
       // get deletion row
       conflictRowDeletionPairs = fetchConflictedRowDeletionPairs(row, handle);
@@ -345,7 +312,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
             "Unique index conflicts, please use upsert mode, row = " + row);
       }
     } else {
-      handle = new IntHandle(rowIdAllocator.getSharedRowId());
+      handle = new IntHandle(rowIdAllocator.getImplicitRowId());
     }
     keyValues.add(generateRecordKeyValue(row, handle, false));
     keyValues.addAll(generateIndexKeyValues(row, handle, false));
