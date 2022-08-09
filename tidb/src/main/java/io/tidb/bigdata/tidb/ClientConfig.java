@@ -84,8 +84,8 @@ public final class ClientConfig {
       BasicJdbcConnectionProvider.class.getName();
 
   // Whether fetch all rows in memory for each region.
-  public static final String TIDB_STORED_ROWS_IN_MEMORY = "tidb.stored-rows-in-memory";
-  public static final String TIDB_STORED_ROWS_IN_MEMORY_DEFAULT = "false";
+  public static final String TIDB_CACHED_ROWS_IN_MEMORY = "tidb.cached-rows-in-memory";
+  public static final String TIDB_CACHED_ROWS_IN_MEMORY_DEFAULT = "false";
 
   private String pdAddresses;
 
@@ -133,7 +133,7 @@ public final class ClientConfig {
 
   private String jdbcConnectionProviderImpl;
 
-  private boolean storedRowsInMemory;
+  private boolean cachedRowsInMemory;
 
   public ClientConfig() {
     this(
@@ -234,7 +234,7 @@ public final class ClientConfig {
       long scanTimeout,
       boolean buildInDatabaseVisible,
       String jdbcConnectionProviderImpl,
-      boolean storedRowsInMemory) {
+      boolean cachedRowsInMemory) {
     this.databaseUrl = databaseUrl;
     this.username = username;
     this.password = password;
@@ -257,7 +257,7 @@ public final class ClientConfig {
     this.scanTimeout = scanTimeout;
     this.buildInDatabaseVisible = buildInDatabaseVisible;
     this.jdbcConnectionProviderImpl = jdbcConnectionProviderImpl;
-    this.storedRowsInMemory = storedRowsInMemory;
+    this.cachedRowsInMemory = cachedRowsInMemory;
   }
 
   public ClientConfig(Map<String, String> properties) {
@@ -291,7 +291,7 @@ public final class ClientConfig {
             TIDB_JDBC_CONNECTION_PROVIDER_IMPL, TIDB_JDBC_CONNECTION_PROVIDER_IMPL_DEFAULT),
         Boolean.parseBoolean(
             properties.getOrDefault(
-                TIDB_STORED_ROWS_IN_MEMORY, TIDB_STORED_ROWS_IN_MEMORY_DEFAULT)));
+                TIDB_CACHED_ROWS_IN_MEMORY, TIDB_CACHED_ROWS_IN_MEMORY_DEFAULT)));
   }
 
   public ClientConfig(ClientConfig config) {
@@ -318,7 +318,7 @@ public final class ClientConfig {
         config.getScanTimeout(),
         config.isBuildInDatabaseVisible(),
         config.getJdbcConnectionProviderImpl(),
-        config.isStoredRowsInMemory());
+        config.isCachedRowsInMemory());
   }
 
   public boolean isFilterPushDown() {
@@ -509,12 +509,12 @@ public final class ClientConfig {
     this.jdbcConnectionProviderImpl = jdbcConnectionProviderImpl;
   }
 
-  public boolean isStoredRowsInMemory() {
-    return storedRowsInMemory;
+  public boolean isCachedRowsInMemory() {
+    return cachedRowsInMemory;
   }
 
-  public void setStoredRowsInMemory(boolean storedRowsInMemory) {
-    this.storedRowsInMemory = storedRowsInMemory;
+  public void setCachedRowsInMemory(boolean cachedRowsInMemory) {
+    this.cachedRowsInMemory = cachedRowsInMemory;
   }
 
   @Override
@@ -548,7 +548,8 @@ public final class ClientConfig {
         && Objects.equals(writeMode, that.writeMode)
         && Objects.equals(replicaReadPolicy, that.replicaReadPolicy)
         && Objects.equals(dnsSearch, that.dnsSearch)
-        && Objects.equals(jdbcConnectionProviderImpl, that.jdbcConnectionProviderImpl);
+        && Objects.equals(jdbcConnectionProviderImpl, that.jdbcConnectionProviderImpl)
+        && Objects.equals(cachedRowsInMemory, that.cachedRowsInMemory);
   }
 
   @Override
@@ -576,7 +577,8 @@ public final class ClientConfig {
         timeout,
         scanTimeout,
         buildInDatabaseVisible,
-        jdbcConnectionProviderImpl);
+        jdbcConnectionProviderImpl,
+        cachedRowsInMemory);
   }
 
   @Override
@@ -643,6 +645,8 @@ public final class ClientConfig {
         + buildInDatabaseVisible
         + ", jdbcConnectionProviderImpl="
         + jdbcConnectionProviderImpl
+        + ", cachedRowsInMemory="
+        + cachedRowsInMemory
         + '}';
   }
 }

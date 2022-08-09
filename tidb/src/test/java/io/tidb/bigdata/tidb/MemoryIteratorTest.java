@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
-public class MemoryCoprocessorIteratorTest {
+public class MemoryIteratorTest {
 
   @Test
   public void testRead() throws Exception {
@@ -25,7 +25,7 @@ public class MemoryCoprocessorIteratorTest {
     String tableName = "test_multiple_regions";
     String dbTable = String.format("`%s`.`%s`", databaseName, tableName);
     Map<String, String> properties = ConfigUtils.defaultProperties();
-    properties.put(ClientConfig.TIDB_STORED_ROWS_IN_MEMORY, "true");
+    properties.put(ClientConfig.TIDB_CACHED_ROWS_IN_MEMORY, "true");
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
       session.sqlUpdate(
           "DROP TABLE IF EXISTS " + dbTable,

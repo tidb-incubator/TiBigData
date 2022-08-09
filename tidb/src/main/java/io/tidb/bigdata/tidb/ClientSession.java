@@ -317,7 +317,7 @@ public final class ClientSession implements AutoCloseable {
             .map(this::getRangeRegionTasks)
             .flatMap(List::stream)
             .collect(Collectors.toList());
-    return config.isStoredRowsInMemory()
+    return config.isCachedRowsInMemory()
         ? CloseableIterator.create(config, request, ranges)
         : CloseableIterator.create(
             CoprocessorIterator.getRowIterator(
