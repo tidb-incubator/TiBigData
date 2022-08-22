@@ -18,6 +18,7 @@ package io.tidb.bigdata.tidb.codec;
 
 import static io.tidb.bigdata.tidb.codec.TiDBEncodeHelper.VERSION;
 
+import io.tidb.bigdata.test.IntegrationTest;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ConfigUtils;
@@ -33,10 +34,12 @@ import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.tikv.common.Snapshot;
 import org.tikv.common.StoreVersion;
 import org.tikv.common.meta.TiTimestamp;
 
+@Category(IntegrationTest.class)
 public class TiDBEncodeHelperTest {
 
   private String databaseName = "test";
