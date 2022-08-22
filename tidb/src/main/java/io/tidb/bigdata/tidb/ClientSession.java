@@ -71,6 +71,7 @@ import org.tikv.common.TiSession;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.util.KeyRangeUtils;
 import org.tikv.common.util.RangeSplitter;
+import org.tikv.common.util.RangeSplitter.RegionTask;
 import org.tikv.kvproto.Coprocessor;
 import org.tikv.shade.com.google.protobuf.ByteString;
 
@@ -300,6 +301,17 @@ public final class ClientSession implements AutoCloseable {
   public CoprocessorIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
     return CoprocessorIterator.getRowIterator(
         request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
+  }
+
+  public CoprocessorIterator<Row> iterate(
+      TiDAGRequest.Builder request, List<Base64KeyRange> ranges) {
+    List<RegionTask> regionTasks =
+        ranges.stream()
+            .map(this::getRangeRegionTasks)
+            .flatMap(List::stream)
+            .collect(Collectors.toList());
+    return CoprocessorIterator.getRowIterator(
+        request.build(TiDAGRequest.PushDownType.NORMAL), regionTasks, session);
   }
 
   private void loadPdAddresses() {
@@ -560,6 +572,31 @@ public final class ClientSession implements AutoCloseable {
     } catch (SQLException e) {
       throw new IllegalStateException(e);
     }
+  }
+
+  // Please only use it for test
+  public List<Row> fetchAllRows(String databaseName, String tableName, TiTimestamp timestamp) {
+    List<SplitInternal> splits =
+        new SplitManagerInternal(this)
+            .getSplits(new TableHandleInternal("", databaseName, tableName));
+    RecordSetInternal recordSetInternal =
+        new RecordSetInternal(
+            this,
+            splits,
+            getTableColumnsMust(databaseName, tableName),
+            Optional.empty(),
+            Optional.ofNullable(timestamp));
+    RecordCursorInternal cursor = recordSetInternal.cursor();
+    List<Row> rows = new ArrayList<>();
+    while (cursor.advanceNextPosition()) {
+      rows.add(cursor.getRow());
+    }
+    return rows;
+  }
+
+  // Please only use it for test
+  public List<Row> fetchAllRows(String databaseName, String tableName) {
+    return fetchAllRows(databaseName, tableName, null);
   }
 
   @Override

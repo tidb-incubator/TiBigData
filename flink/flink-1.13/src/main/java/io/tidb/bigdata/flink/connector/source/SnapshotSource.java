@@ -95,7 +95,7 @@ public class SnapshotSource
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
       this.splits =
           splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
-              .map(split -> new TiDBSourceSplit(split, 0))
+              .map(TiDBSourceSplit::new)
               .collect(Collectors.toList());
     } catch (Exception e) {
       throw new IllegalStateException(e);

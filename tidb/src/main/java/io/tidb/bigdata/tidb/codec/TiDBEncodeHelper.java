@@ -113,19 +113,52 @@ public class TiDBEncodeHelper implements AutoCloseable {
     this.replace = replace;
   }
 
-  private boolean isNullUniqueIndexValue(byte[] value) {
+  private static boolean isNullUniqueIndexValue(byte[] value) {
     return Arrays.equals(value, ZERO_BYTES);
   }
 
-  private boolean isEmptyArray(byte[] array) {
+  private static boolean isEmptyArray(byte[] array) {
     return array == null || array.length == 0;
   }
 
-  private Handle extractHandle(Row tiRow) {
+  public static TiIndexInfo checkAndGetUniqueKeyNotNull(TiTableInfo tiTableInfo) {
+    TiIndexInfo uniqueIndex =
+        tiTableInfo.getIndices().stream()
+            .filter(tiIndexInfo -> !tiIndexInfo.isPrimary() && tiIndexInfo.isUnique())
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "There is no unique key for table: " + tiTableInfo.getName()));
+    // check not null
+    for (TiIndexColumn indexColumn : uniqueIndex.getIndexColumns()) {
+      if (!tiTableInfo.getColumns().get(indexColumn.getOffset()).getType().isNotNull()) {
+        throw new IllegalStateException(
+            "Unique key column: " + indexColumn.getName() + " can not be null");
+      }
+    }
+    return uniqueIndex;
+  }
+
+  public static byte[] encodeRowKeyWithNotNullUniqueIndex(
+      Snapshot snapshot, TiTableInfo tiTableInfo, Row row) {
+    if (tiTableInfo.isCommonHandle() || tiTableInfo.isPkHandle()) {
+      Handle handle = extractHandle(row, tiTableInfo, tiTableInfo.getPKIsHandleColumn());
+      return RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+    }
+    TiIndexInfo uniqueIndex = checkAndGetUniqueKeyNotNull(tiTableInfo);
+    Handle handle =
+        getOldRowWithUniqueIndexKey(snapshot, tiTableInfo, uniqueIndex, new IntHandle(0), row)
+            .map(pair -> pair.second)
+            .orElseThrow(() -> new IllegalStateException("Can not find row id by unique index"));
+    return RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+  }
+
+  private static Handle extractHandle(Row tiRow, TiTableInfo tiTableInfo, TiColumnInfo handleCol) {
     if (tiTableInfo.isPkHandle()) {
       return new IntHandle(
           ((Number) tiRow.get(handleCol.getOffset(), handleCol.getType())).longValue());
-    } else if (isCommonHandle) {
+    } else if (tiTableInfo.isCommonHandle()) {
       List<DataType> dataTypes = new ArrayList<>();
       List<Object> data = new ArrayList<>();
       List<TiIndexColumn> indexColumns = new ArrayList<>();
@@ -150,6 +183,10 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
+  private Handle extractHandle(Row tiRow) {
+    return extractHandle(tiRow, tiTableInfo, handleCol);
+  }
+
   private byte[] encodeTiRow(Row tiRow) {
     Object[] objects = new Object[columns.size()];
     for (int i = 0; i < objects.length; i++) {
@@ -164,10 +201,15 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
-  private Pair<byte[], Boolean> buildIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
+  private static Pair<byte[], Boolean> buildIndexKey(
+      TiTableInfo tiTableInfo, Row tiRow, Handle handle, TiIndexInfo index) {
     EncodeIndexDataResult encodeIndexDataResult =
         IndexKey.genIndexKey(tiTableInfo.getId(), tiRow, index, handle, tiTableInfo);
     return new Pair<>(encodeIndexDataResult.indexKey, encodeIndexDataResult.distinct);
+  }
+
+  private Pair<byte[], Boolean> buildIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
+    return buildIndexKey(tiTableInfo, tiRow, handle, index);
   }
 
   private BytePairWrapper generateIndexKeyValue(
@@ -246,9 +288,9 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return deletionKeyValue;
   }
 
-  public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
-      TiIndexInfo index, Handle handle, Row tiRow) {
-    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiRow, handle, index);
+  private static Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
+      Snapshot snapshot, TiTableInfo tiTableInfo, TiIndexInfo index, Handle handle, Row tiRow) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiTableInfo, tiRow, handle, index);
     if (uniqueIndexKeyPair.second) {
       byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
       if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
@@ -260,6 +302,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
     return Optional.empty();
+  }
+
+  public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
+      TiIndexInfo index, Handle handle, Row tiRow) {
+    return getOldRowWithUniqueIndexKey(snapshot, tiTableInfo, index, handle, tiRow);
   }
 
   public Optional<Pair<Row, Handle>> getOldRowWithClusterIndex(Handle handle, Snapshot snapshot) {

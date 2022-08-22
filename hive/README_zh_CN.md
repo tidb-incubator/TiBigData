@@ -81,7 +81,7 @@ INSERT INTO `people`(`id`,`name`) VALUES (1,'zs');
 ```sql
 -- 如果没有将依赖拷贝进 Hive 的 lib 目录，需要使用 ADD JAR 先添加依赖
 -- ADD JAR hdfs:///tmp/hive-tidb-storage-handler-2.2.0-0.0.5-SNAPSHOT.jar;
-CREATE TABLE `people`(
+CREATE TEMPORARY TABLE `people`(
  `fake_column` int
 )
 STORED BY

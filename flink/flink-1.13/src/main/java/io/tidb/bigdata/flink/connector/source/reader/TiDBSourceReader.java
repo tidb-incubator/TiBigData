@@ -16,8 +16,9 @@
 
 package io.tidb.bigdata.flink.connector.source.reader;
 
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.SOURCE_FAILOVER;
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.SOURCE_SEMANTIC;
 
+import io.tidb.bigdata.flink.connector.source.SnapshotSourceSemantic;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -25,11 +26,15 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.key.Key;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.row.Row;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +46,7 @@ import org.apache.flink.api.connector.source.SourceReader;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.core.io.InputStatus;
 import org.apache.flink.table.data.RowData;
+import org.tikv.common.Snapshot;
 
 public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> {
 
@@ -51,7 +57,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   private final TiDBSchemaAdapter schema;
   private final Expression expression;
   private final Integer limit;
-  private final FailoverType failoverType;
+  private final SnapshotSourceSemantic semantic;
 
   private ClientSession session;
 
@@ -59,10 +65,9 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
-  private long offset;
   private RecordCursorInternal cursor;
-
   private boolean noMoreSplits;
+  private Row currentRow;
 
   public TiDBSourceReader(
       SourceReaderContext context,
@@ -79,9 +84,9 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     this.limit = limit;
     this.availability = new CompletableFuture<>();
     this.remainingSplits = new ArrayDeque<>();
-    this.failoverType =
-        FailoverType.fromString(
-            properties.getOrDefault(SOURCE_FAILOVER.key(), SOURCE_FAILOVER.defaultValue()));
+    this.semantic =
+        SnapshotSourceSemantic.fromString(
+            properties.getOrDefault(SOURCE_SEMANTIC.key(), SOURCE_SEMANTIC.defaultValue()));
   }
 
   @Override
@@ -111,7 +116,6 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     currentSplit = remainingSplits.poll();
     if (currentSplit != null) {
       SplitInternal split = currentSplit.getSplit();
-      offset = currentSplit.getOffset();
       cursor =
           new RecordSetInternal(
                   session,
@@ -121,12 +125,6 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
                   Optional.ofNullable(split.getTimestamp()),
                   Optional.ofNullable(limit))
               .cursor();
-      // skip offset
-      for (int i = 0; i < offset; i++) {
-        if (!cursor.advanceNextPosition()) {
-          break;
-        }
-      }
       return InputStatus.MORE_AVAILABLE;
     } else if (noMoreSplits) {
       return InputStatus.END_OF_INPUT;
@@ -142,13 +140,33 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   @Override
   public InputStatus pollNext(ReaderOutput<RowData> output) throws Exception {
     if (cursor != null && cursor.advanceNextPosition()) {
-      offset++;
+      currentRow = cursor.getRow();
       output.collect(schema.convert(currentSplit.getSplit().getTimestamp(), cursor));
       return InputStatus.MORE_AVAILABLE;
     } else {
       finishSplit();
     }
     return tryMoveToNextSplit();
+  }
+
+  private TiDBSourceSplit createNewSplit() {
+    SplitInternal splitInternal = currentSplit.getSplit();
+    TiTableInfo tiTableInfo =
+        session.getTableMust(
+            splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
+    Snapshot snapshot = session.getTiSession().createSnapshot(splitInternal.getTimestamp());
+    byte[] bytes =
+        TiDBEncodeHelper.encodeRowKeyWithNotNullUniqueIndex(snapshot, tiTableInfo, currentRow);
+    // get next row key
+    bytes = new Key(bytes).nextPrefix().getBytes();
+    String startKey = Base64.getEncoder().encodeToString(bytes);
+    SplitInternal newSplitInternal =
+        new SplitInternal(
+            splitInternal.getTable(),
+            startKey,
+            splitInternal.getEndKey(),
+            splitInternal.getTimestamp());
+    return new TiDBSourceSplit(newSplitInternal);
   }
 
   @Override
@@ -159,10 +177,10 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     final ArrayList<TiDBSourceSplit> splits = new ArrayList<>(1 + remainingSplits.size());
     if (currentSplit != null) {
       // Add back to snapshot
-      if (failoverType == FailoverType.SPLIT) {
+      if (semantic == SnapshotSourceSemantic.AT_LEAST_ONCE || currentRow == null) {
         splits.add(currentSplit);
       } else {
-        splits.add(new TiDBSourceSplit(currentSplit.getSplit(), offset));
+        splits.add(createNewSplit());
       }
     }
     splits.addAll(remainingSplits);
@@ -195,18 +213,6 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     }
     if (session != null) {
       session.close();
-    }
-  }
-
-  public enum FailoverType {
-    SPLIT,
-    OFFSET;
-
-    public static FailoverType fromString(String s) {
-      return Arrays.stream(values())
-          .filter(value -> value.name().equalsIgnoreCase(s))
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("Unsupported failover type: " + s));
     }
   }
 }
