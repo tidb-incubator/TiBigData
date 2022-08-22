@@ -215,7 +215,7 @@ public class TIKVSourceTest extends FlinkTestBase {
         IntStream.range(0, 2000).mapToObj(i -> "(" + i + ")").collect(Collectors.joining(","));
     clientSession.sqlUpdate(
         "USE " + DATABASE_NAME,
-        String.format("CREATE TABLE `%s` (`c1` int unique key)", tableName),
+        String.format("CREATE TABLE `%s` (`c1` int unique key not null)", tableName),
         String.format("SPLIT TABLE `%s` BETWEEN (0) AND (2000) REGIONS %s", tableName, 2),
         String.format("INSERT INTO `%s` VALUES %s", tableName, values));
     EnvironmentSettings settings =
