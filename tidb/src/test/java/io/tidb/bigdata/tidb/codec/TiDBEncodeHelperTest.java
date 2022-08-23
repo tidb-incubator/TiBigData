@@ -133,7 +133,7 @@ public class TiDBEncodeHelperTest {
         String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
     checkRows(tableName);
 
-    // string primary key
+    // string unique key
     tableName = "table5";
     dbTable = String.format("`%s`.`%s`", databaseName, tableName);
     list =
@@ -144,6 +144,21 @@ public class TiDBEncodeHelperTest {
         "DROP TABLE IF EXISTS " + dbTable,
         String.format(
             "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255) UNIQUE KEY NOT NULL, `c2` VARCHAR(16))",
+            dbTable),
+        String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
+    checkRows(tableName);
+
+    // string primary key
+    tableName = "table6";
+    dbTable = String.format("`%s`.`%s`", databaseName, tableName);
+    list =
+        IntStream.range(1, 101)
+            .mapToObj(i -> String.format("('%s','zs')", UUID.randomUUID()))
+            .collect(Collectors.toList());
+    session.sqlUpdate(
+        "DROP TABLE IF EXISTS " + dbTable,
+        String.format(
+            "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255) PRIMARY KEY NOT NULL, `c2` VARCHAR(16))",
             dbTable),
         String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
     checkRows(tableName);

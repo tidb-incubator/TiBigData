@@ -16,6 +16,8 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SOURCE_SEMANTIC;
+
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumState;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumStateSerializer;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
@@ -25,9 +27,11 @@ import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplitSerializer;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitManagerInternal;
+import io.tidb.bigdata.tidb.codec.TiDBEncodeHelper;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -61,6 +65,7 @@ public class SnapshotSource
   private final List<ColumnHandleInternal> columns;
   private final TiTimestamp timestamp;
   private final List<TiDBSourceSplit> splits;
+  private final SnapshotSourceSemantic semantic;
 
   public SnapshotSource(
       String databaseName,
@@ -89,7 +94,7 @@ public class SnapshotSource
       this.timestamp =
           getOptionalVersion()
               .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
-      session.getTableMust(databaseName, tableName);
+      TiTableInfo tiTableInfo = session.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
           new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
@@ -97,6 +102,12 @@ public class SnapshotSource
           splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
               .map(TiDBSourceSplit::new)
               .collect(Collectors.toList());
+      this.semantic =
+          SnapshotSourceSemantic.fromString(
+              properties.getOrDefault(SOURCE_SEMANTIC.key(), SOURCE_SEMANTIC.defaultValue()));
+      if (semantic == SnapshotSourceSemantic.EXACTLY_ONCE) {
+        TiDBEncodeHelper.checkIndexesForEncodeRowKey(tiTableInfo);
+      }
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -110,7 +121,7 @@ public class SnapshotSource
   @Override
   public SourceReader<RowData, TiDBSourceSplit> createReader(SourceReaderContext context)
       throws Exception {
-    return new TiDBSourceReader(context, properties, columns, schema, expression, limit);
+    return new TiDBSourceReader(context, properties, columns, schema, expression, limit, semantic);
   }
 
   @Override

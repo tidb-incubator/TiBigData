@@ -121,34 +121,49 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return array == null || array.length == 0;
   }
 
-  public static TiIndexInfo checkAndGetUniqueKeyNotNull(TiTableInfo tiTableInfo) {
-    TiIndexInfo uniqueIndex =
-        tiTableInfo.getIndices().stream()
-            .filter(tiIndexInfo -> !tiIndexInfo.isPrimary() && tiIndexInfo.isUnique())
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "There is no unique key for table: " + tiTableInfo.getName()));
-    // check not null
-    for (TiIndexColumn indexColumn : uniqueIndex.getIndexColumns()) {
-      if (!tiTableInfo.getColumns().get(indexColumn.getOffset()).getType().isNotNull()) {
-        throw new IllegalStateException(
-            "Unique key column: " + indexColumn.getName() + " can not be null");
-      }
+  public static void checkIndexesForEncodeRowKey(TiTableInfo tiTableInfo) {
+    if (tiTableInfo.isCommonHandle() || tiTableInfo.isPkHandle()) {
+      return;
     }
-    return uniqueIndex;
+    if (tiTableInfo.getIndices().stream().noneMatch(TiIndexInfo::isUnique)) {
+      throw new IllegalStateException("There is no unique key for table: " + tiTableInfo.getName());
+    }
   }
 
+  /**
+   * Encode an existing row to rowKey. The table must contain unique index, and index columns can
+   * not be null.
+   */
   public static byte[] encodeRowKeyWithNotNullUniqueIndex(
       Snapshot snapshot, TiTableInfo tiTableInfo, Row row) {
+    checkIndexesForEncodeRowKey(tiTableInfo);
     if (tiTableInfo.isCommonHandle() || tiTableInfo.isPkHandle()) {
       Handle handle = extractHandle(row, tiTableInfo, tiTableInfo.getPKIsHandleColumn());
       return RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
     }
-    TiIndexInfo uniqueIndex = checkAndGetUniqueKeyNotNull(tiTableInfo);
+    TiIndexInfo index =
+        tiTableInfo.getIndices().stream()
+            .filter(TiIndexInfo::isUnique)
+            .filter(
+                uniqueIndex -> {
+                  for (TiIndexColumn indexColumn : uniqueIndex.getIndexColumns()) {
+                    List<TiColumnInfo> columns = tiTableInfo.getColumns();
+                    Object value =
+                        row.get(
+                            indexColumn.getOffset(),
+                            columns.get(indexColumn.getOffset()).getType());
+                    if (value == null) {
+                      return false;
+                    }
+                  }
+                  return true;
+                })
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException("Can not find no null unique key to encode row key"));
     Handle handle =
-        getOldRowWithUniqueIndexKey(snapshot, tiTableInfo, uniqueIndex, new IntHandle(0), row)
+        getOldRowWithUniqueIndexKey(snapshot, tiTableInfo, index, new IntHandle(0), row)
             .map(pair -> pair.second)
             .orElseThrow(() -> new IllegalStateException("Can not find row id by unique index"));
     return RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();

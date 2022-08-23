@@ -16,8 +16,6 @@
 
 package io.tidb.bigdata.flink.connector.source.reader;
 
-import static io.tidb.bigdata.flink.connector.TiDBOptions.SOURCE_SEMANTIC;
-
 import io.tidb.bigdata.flink.connector.source.SnapshotSourceSemantic;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
@@ -75,7 +73,8 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
       List<ColumnHandleInternal> columns,
       TiDBSchemaAdapter schema,
       Expression expression,
-      Integer limit) {
+      Integer limit,
+      SnapshotSourceSemantic semantic) {
     this.context = context;
     this.properties = properties;
     this.columns = columns;
@@ -84,9 +83,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     this.limit = limit;
     this.availability = new CompletableFuture<>();
     this.remainingSplits = new ArrayDeque<>();
-    this.semantic =
-        SnapshotSourceSemantic.fromString(
-            properties.getOrDefault(SOURCE_SEMANTIC.key(), SOURCE_SEMANTIC.defaultValue()));
+    this.semantic = semantic;
   }
 
   @Override
