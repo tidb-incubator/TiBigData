@@ -170,8 +170,8 @@ DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 
 | Configuration                          | Default Value | Description                                                                                    |
 |:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------|
-| tidb.source.semantic                   | at-least-once | TiDB 批阶段的消费语义，读取数据失败时才会生效，可选 at-least-once 与 exactly-once。exactly-once 仅支持有唯一索引的表。             |
-| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar.                                             |
+| tidb.source.semantic                   | at-least-once | TiDB 批阶段的消费语义，读取数据失败时才会生效，可选 at-least-once 与 exactly-once。                                     |
+| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar。                                             |
 | tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#8-Codec) |
 | tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                |
 | tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                    |
