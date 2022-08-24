@@ -58,9 +58,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
 
   private ClientSession session;
 
-  /**
-   * The availability future. This reader is available as soon as a split is assigned.
-   */
+  /** The availability future. This reader is available as soon as a split is assigned. */
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
@@ -116,13 +114,13 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
       SplitInternal split = currentSplit.getSplit();
       cursor =
           new RecordSetInternal(
-              session,
-              ImmutableList.of(split),
-              columns,
-              Optional.ofNullable(expression),
-              Optional.ofNullable(split.getTimestamp()),
-              Optional.ofNullable(limit),
-              semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
+                  session,
+                  ImmutableList.of(split),
+                  columns,
+                  Optional.ofNullable(expression),
+                  Optional.ofNullable(split.getTimestamp()),
+                  Optional.ofNullable(limit),
+                  semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
               .cursor();
       return InputStatus.MORE_AVAILABLE;
     } else if (noMoreSplits) {
@@ -175,7 +173,8 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     final ArrayList<TiDBSourceSplit> splits = new ArrayList<>(1 + remainingSplits.size());
     if (currentSplit != null) {
       // Add back to snapshot
-      if (semantic == SnapshotSourceSemantic.AT_LEAST_ONCE || cursor == null
+      if (semantic == SnapshotSourceSemantic.AT_LEAST_ONCE
+          || cursor == null
           || cursor.getRow() == null) {
         splits.add(currentSplit);
       } else {

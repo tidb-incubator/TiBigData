@@ -52,7 +52,7 @@ import org.tikv.common.meta.TiTimestamp;
 
 public class SnapshotSource
     implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
-    ResultTypeQueryable<RowData> {
+        ResultTypeQueryable<RowData> {
 
   private final String databaseName;
   private final String tableName;
