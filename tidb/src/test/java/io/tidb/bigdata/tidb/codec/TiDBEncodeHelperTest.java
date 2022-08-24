@@ -181,8 +181,7 @@ public class TiDBEncodeHelperTest {
     session.sqlUpdate(
         "DROP TABLE IF EXISTS " + dbTable,
         String.format(
-            "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255), `c2` VARCHAR(255))",
-            dbTable),
+            "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255), `c2` VARCHAR(255))", dbTable),
         String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
     checkRows(tableName);
   }
