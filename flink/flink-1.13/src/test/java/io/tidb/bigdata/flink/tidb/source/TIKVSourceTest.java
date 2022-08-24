@@ -20,6 +20,7 @@ import static io.tidb.bigdata.test.ConfigUtils.defaultProperties;
 import static java.lang.String.format;
 
 import io.tidb.bigdata.flink.connector.catalog.TiDBCatalog;
+import io.tidb.bigdata.flink.connector.source.SnapshotSourceSemantic;
 import io.tidb.bigdata.flink.connector.source.TiDBOptions;
 import io.tidb.bigdata.flink.tidb.FlinkTestBase;
 import io.tidb.bigdata.test.ConfigUtils;
@@ -224,7 +225,8 @@ public class TIKVSourceTest extends FlinkTestBase {
     StreamTableEnvironment tableEnvironment = StreamTableEnvironment.create(env, settings);
     env.setParallelism(1);
     properties.put("type", "tidb");
-    properties.put(TiDBOptions.SOURCE_FAILOVER.key(), "offset");
+    properties.put(
+        TiDBOptions.SOURCE_SEMANTIC.key(), SnapshotSourceSemantic.EXACTLY_ONCE.getSemantic());
     String createCatalogSql =
         format("CREATE CATALOG `tidb` WITH ( %s )", TableUtils.toSqlProperties(properties));
     tableEnvironment.executeSql(createCatalogSql);
