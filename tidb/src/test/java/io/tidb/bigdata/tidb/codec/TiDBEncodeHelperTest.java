@@ -171,8 +171,8 @@ public class TiDBEncodeHelperTest {
         String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
     checkRows(tableName);
 
-    // string primary key
-    tableName = "table6";
+    // no primary key and unique key
+    tableName = "table7";
     dbTable = String.format("`%s`.`%s`", databaseName, tableName);
     list =
         IntStream.range(1, 101)
@@ -181,7 +181,7 @@ public class TiDBEncodeHelperTest {
     session.sqlUpdate(
         "DROP TABLE IF EXISTS " + dbTable,
         String.format(
-            "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255) PRIMARY KEY NOT NULL, `c2` VARCHAR(255))",
+            "CREATE TABLE IF NOT EXISTS %s (`c1` VARCHAR(255), `c2` VARCHAR(255))",
             dbTable),
         String.format("INSERT INTO %s VALUES %s", dbTable, String.join(",", list)));
     checkRows(tableName);
