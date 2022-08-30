@@ -153,7 +153,7 @@ public class SnapshotSource
 
   private Optional<TiTimestamp> getOptionalVersion() {
     return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
-        .filter(StringUtils::isNoneEmpty)
+        .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }
