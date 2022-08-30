@@ -20,10 +20,10 @@ import io.tidb.bigdata.cdc.Codec;
 import io.tidb.bigdata.cdc.Key.Type;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.flink.kafka.shaded.org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.util.Collector;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 
 public class JsonDeserializationSchema extends CDCDeserializationSchema
     implements KafkaDeserializationSchema<RowData> {
