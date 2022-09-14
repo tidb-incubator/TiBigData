@@ -168,13 +168,16 @@ Received a total of 1 row
 
 请看[文档](../docs/real-time_wide_table_zh_CN.md)
 
+## 分区表支持
+
+请看[文档](../docs/flink_partition_table_zh_CN.md)
+
 ## 支持和限制
 
 TiBigDate/Flink 支持向聚簇索引表写入数据、读取数据，这是TiDB-5.0.0的一个新特性。
 
 TiBigDate/Flink 暂不支持以下功能：
 - bypass TiDB 写带有 AUTO_RANDOM 列的表
-- 分区表
 
 ## Flink 与 TiDB 的类型映射
 
