@@ -73,10 +73,6 @@ public class PartitionedTable implements Serializable {
         logicalTable, physicalTables, partitionExpr, tableInfo.getPartitionInfo());
   }
 
-  private static long getLogicalTableId() {
-    return 0;
-  }
-
   public static PartitionExpression generatePartitionExpr(TiTableInfo tableInfo) {
     TiPartitionInfo partitionInfo = tableInfo.getPartitionInfo();
     switch (partitionInfo.getType()) {

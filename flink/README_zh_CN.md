@@ -177,7 +177,7 @@ Received a total of 1 row
 TiBigDate/Flink 支持向聚簇索引表写入数据、读取数据，这是TiDB-5.0.0的一个新特性。
 
 TiBigDate/Flink 暂不支持以下功能：
-- bypass TiDB 写带有 AUTO_RANDOM 列的表
+- TiDB 启用 [new collation](https://docs.pingcap.com/tidb/stable/tidb-configuration-file#new_collations_enabled_on_first_bootstrap) 时，无法使用 TiKV sink 的方式读写数据
 
 ## Flink 与 TiDB 的类型映射
 

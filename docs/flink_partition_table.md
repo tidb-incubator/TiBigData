@@ -1,22 +1,6 @@
 # Partition Table Support
 
-Now, Flink 1.14 supports partition table reading and writing when `tidb.sink.impl` is set as `tikv` , but there are some limitations here.
-
-## Reading partition table from TiKV
-
-Flink 1.14 doesn't support a MySQL/TiDB partition table syntax `select col_name from table_name partition(partition_name)`, but you can still use `where` condition to filter the partitions.
-
-Flink 1.14 decides whether to apply partition pruning according to the partition type and the partition expression associated with the table.
-
-Currently, Flink 1.14 partially apply partition pruning on range partition.
-
-The partition pruning is applied when the partition expression of the range partition is one of the following:
-
-- column expression
-
-- `YEAR($argument)` where the argument is a column and its type is datetime or string literal that can be parsed as datetime.
-
-If partition pruning is not applied, Flink 1.14's reading is equivalent to doing a table scan over all partitions.
+Now, Flink 1.14 supports partition table writing when `tidb.sink.impl` is set as `tikv` , but there are some limitations here.
 
 ## Writing partition table into TiKV
 

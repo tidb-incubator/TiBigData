@@ -1,22 +1,6 @@
 # 分区表支持
 
-现在，在`tidb.sink.impl`设置为`tikv`的情况下，Flink 1.14 也支持分区表读写，但是这里有一些限制。
-
-## 从 TiKV 读取分区表
-
-Flink 1.14 不支持 MySQL/TiDB 分区表语法 `select col_name from table_name partition(partition_name)`，但您仍然可以使用 `where` 条件过滤分区。
-
-Flink 1.14 根据分区类型和与表关联的分区表达式来决定是否应用分区剪枝。
-
-目前，Flink 1.14 对范围分区部分应用了分区修剪。
-
-当范围分区的分区表达式为以下之一时，将应用分区修剪：
-
-- 列表达式
-
-- `YEAR($argument)` 其中参数是一个列，它的类型是日期时间或可以被解析为日期时间的字符串文字。
-
-如果不应用分区修剪，Flink 1.14 的读取相当于对所有分区进行表扫描。
+现在，在`tidb.sink.impl`设置为`tikv`的情况下，Flink 1.14 也支持分区表写，但是这里有一些限制。
 
 ## 将分区表写入 TiKV
 
