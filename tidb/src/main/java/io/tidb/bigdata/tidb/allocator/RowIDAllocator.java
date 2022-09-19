@@ -17,6 +17,7 @@
 package io.tidb.bigdata.tidb.allocator;
 
 import com.google.common.primitives.UnsignedLongs;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
 import io.tidb.bigdata.tidb.codec.Codec.IntegerCodec;
 import io.tidb.bigdata.tidb.codec.CodecDataInput;
 import io.tidb.bigdata.tidb.codec.CodecDataOutput;
@@ -59,16 +60,19 @@ public final class RowIDAllocator implements Serializable {
   private final long step;
   private final boolean isUnsigned;
   private long end;
+  private RowIDAllocatorType type;
 
   private static final Logger LOG = LoggerFactory.getLogger(RowIDAllocator.class);
 
   private RowIDAllocator(
-      long maxShardRowIDBits, long dbId, long step, TiSession session, boolean isUnsigned) {
+      long maxShardRowIDBits, long dbId, long step, TiSession session, boolean isUnsigned,
+      RowIDAllocatorType type) {
     this.maxShardRowIDBits = maxShardRowIDBits;
     this.dbId = dbId;
     this.step = step;
     this.session = session;
     this.isUnsigned = isUnsigned;
+    this.type = type;
   }
 
   public long getAutoIncId(long index) {
@@ -101,11 +105,11 @@ public final class RowIDAllocator implements Serializable {
       TiSession session,
       boolean isUnsigned,
       long step,
-      long shardBits) {
+      long shardBits, RowIDAllocatorType type) {
     BackOffer backOffer = ConcreteBackOffer.newCustomBackOff(40000);
     while (true) {
       try {
-        return doCreate(dbId, table, session, isUnsigned, step, shardBits);
+        return doCreate(dbId, table, session, isUnsigned, step, shardBits, type);
       } catch (AllocateRowIDOverflowException | IllegalArgumentException e) {
         throw e;
       } catch (Exception e) {
@@ -120,9 +124,9 @@ public final class RowIDAllocator implements Serializable {
       TiSession session,
       boolean unsigned,
       long step,
-      long shardBits) {
+      long shardBits, RowIDAllocatorType type) {
     RowIDAllocator allocator =
-        new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session, unsigned);
+        new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session, unsigned, type);
     if (unsigned) {
       allocator.initUnsigned(session.createSnapshot(), table.getId(), shardBits);
     } else {
@@ -259,12 +263,12 @@ public final class RowIDAllocator implements Serializable {
    * read current row id from TiKV and write the calculated value back to TiKV. The calculation rule
    * is start(read from TiKV) + step.
    */
-  public long udpateAllocateId(
+  public long updateAllocateId(
       long dbId, long tableId, long step, Snapshot snapshot, long shard, boolean hasSignedBit) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       return updateHash(
           MetaCodec.encodeDatabaseID(dbId),
-          MetaCodec.autoTableIDKey(tableId),
+          getIdField(tableId, type),
           (oldVal) -> {
             long base = 0;
             if (oldVal != null && oldVal.length != 0) {
@@ -282,11 +286,14 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
-  /** read current row id from TiKV according to database id and table id. */
-  public static long getAllocateId(long dbId, long tableId, Snapshot snapshot) {
+  /**
+   * read current row id from TiKV according to database id and table id.
+   */
+  public static long getAllocateId(long dbId, long tableId, Snapshot snapshot,
+      RowIDAllocatorType allocatorType) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       ByteString dbKey = MetaCodec.encodeDatabaseID(dbId);
-      ByteString tblKey = MetaCodec.autoTableIDKey(tableId);
+      ByteString tblKey = getIdField(tableId, allocatorType);
       ByteString val = MetaCodec.hashGet(dbKey, tblKey, snapshot);
       if (val.isEmpty()) {
         return 0L;
@@ -297,9 +304,21 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
+  public static ByteString getIdField(long tableId, RowIDAllocatorType allocatorType) {
+    switch (allocatorType) {
+      case AUTO_INCREMENT:
+      case IMPLICIT_ROWID:
+        return MetaCodec.autoTableIDKey(tableId);
+      case AUTO_RANDOM:
+        return MetaCodec.autoRandomTableIDKey(tableId);
+      default:
+        throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + allocatorType);
+    }
+  }
+
   private void initSigned(Snapshot snapshot, long tableId, long shard) {
     // get new start from TiKV, and calculate new end and set it back to TiKV.
-    long newStart = getAllocateId(dbId, tableId, snapshot);
+    long newStart = getAllocateId(dbId, tableId, snapshot, type);
     long tmpStep = Math.min(Long.MAX_VALUE - newStart, step);
     if (tmpStep != step) {
       throw new TiBatchWriteException("cannot allocate ids for this write");
@@ -307,12 +326,12 @@ public final class RowIDAllocator implements Serializable {
     if (newStart == Long.MAX_VALUE) {
       throw new TiBatchWriteException("cannot allocate more ids since it ");
     }
-    end = udpateAllocateId(dbId, tableId, tmpStep, snapshot, shard, true);
+    end = updateAllocateId(dbId, tableId, tmpStep, snapshot, shard, true);
   }
 
   private void initUnsigned(Snapshot snapshot, long tableId, long shard) {
     // get new start from TiKV, and calculate new end and set it back to TiKV.
-    long newStart = getAllocateId(dbId, tableId, snapshot);
+    long newStart = getAllocateId(dbId, tableId, snapshot, type);
     // for unsigned long, -1L is max value.
     long tmpStep = UnsignedLongs.min(-1L - newStart, step);
     if (tmpStep != step) {
@@ -323,6 +342,6 @@ public final class RowIDAllocator implements Serializable {
       throw new TiBatchWriteException(
           "cannot allocate more ids since the start reaches " + "unsigned long's max value ");
     }
-    end = udpateAllocateId(dbId, tableId, tmpStep, snapshot, shard, false);
+    end = updateAllocateId(dbId, tableId, tmpStep, snapshot, shard, false);
   }
 }
