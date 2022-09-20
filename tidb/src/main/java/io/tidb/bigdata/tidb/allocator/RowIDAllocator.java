@@ -65,7 +65,11 @@ public final class RowIDAllocator implements Serializable {
   private static final Logger LOG = LoggerFactory.getLogger(RowIDAllocator.class);
 
   private RowIDAllocator(
-      long maxShardRowIDBits, long dbId, long step, TiSession session, boolean isUnsigned,
+      long maxShardRowIDBits,
+      long dbId,
+      long step,
+      TiSession session,
+      boolean isUnsigned,
       RowIDAllocatorType type) {
     this.maxShardRowIDBits = maxShardRowIDBits;
     this.dbId = dbId;
@@ -105,7 +109,8 @@ public final class RowIDAllocator implements Serializable {
       TiSession session,
       boolean isUnsigned,
       long step,
-      long shardBits, RowIDAllocatorType type) {
+      long shardBits,
+      RowIDAllocatorType type) {
     BackOffer backOffer = ConcreteBackOffer.newCustomBackOff(40000);
     while (true) {
       try {
@@ -124,7 +129,8 @@ public final class RowIDAllocator implements Serializable {
       TiSession session,
       boolean unsigned,
       long step,
-      long shardBits, RowIDAllocatorType type) {
+      long shardBits,
+      RowIDAllocatorType type) {
     RowIDAllocator allocator =
         new RowIDAllocator(table.getMaxShardRowIDBits(), dbId, step, session, unsigned, type);
     if (unsigned) {
@@ -286,11 +292,9 @@ public final class RowIDAllocator implements Serializable {
     throw new IllegalArgumentException("table or database is not existed");
   }
 
-  /**
-   * read current row id from TiKV according to database id and table id.
-   */
-  public static long getAllocateId(long dbId, long tableId, Snapshot snapshot,
-      RowIDAllocatorType allocatorType) {
+  /** read current row id from TiKV according to database id and table id. */
+  public static long getAllocateId(
+      long dbId, long tableId, Snapshot snapshot, RowIDAllocatorType allocatorType) {
     if (isDBExisted(dbId, snapshot) && isTableExisted(dbId, tableId, snapshot)) {
       ByteString dbKey = MetaCodec.encodeDatabaseID(dbId);
       ByteString tblKey = getIdField(tableId, allocatorType);

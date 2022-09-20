@@ -533,7 +533,7 @@ public final class ClientSession implements AutoCloseable {
       default:
         throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + type);
     }
-    return RowIDAllocator.create(dbId, table, session, isUnsigned, step, shardBits,type);
+    return RowIDAllocator.create(dbId, table, session, isUnsigned, step, shardBits, type);
   }
 
   public boolean isClusteredIndex(String databaseName, String tableName) {

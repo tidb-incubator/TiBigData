@@ -61,37 +61,37 @@ public class AutoGenerateRowIdTest extends FlinkTestBase {
   @Parameters(name = "{index}: RowIDAllocatorType={1}, isUnsigned={2}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
-        new Object[][]{
-            {
-                "CREATE TABLE `%s`.`%s`(id bigint, number bigint) shard_row_id_bits=15",
-                RowIDAllocatorType.IMPLICIT_ROWID,
-                false,
-                15
-            },
-            {
-                "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
-                RowIDAllocatorType.AUTO_INCREMENT,
-                false,
-                0
-            },
-            {
-                "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
-                RowIDAllocatorType.AUTO_INCREMENT,
-                false,
-                0
-            },
-            {
-                "CREATE TABLE `%s`.`%s`(id bigint unsigned PRIMARY KEY AUTO_RANDOM(15), number bigint)",
-                RowIDAllocatorType.AUTO_RANDOM,
-                true,
-                15
-            },
-            {
-                "CREATE TABLE `%s`.`%s`(id bigint PRIMARY KEY AUTO_RANDOM(15), number bigint)",
-                RowIDAllocatorType.AUTO_RANDOM,
-                false,
-                15
-            }
+        new Object[][] {
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint, number bigint) shard_row_id_bits=15",
+            RowIDAllocatorType.IMPLICIT_ROWID,
+            false,
+            15
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
+            RowIDAllocatorType.AUTO_INCREMENT,
+            false,
+            0
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint signed PRIMARY KEY AUTO_INCREMENT, number bigint)",
+            RowIDAllocatorType.AUTO_INCREMENT,
+            false,
+            0
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint unsigned PRIMARY KEY AUTO_RANDOM(15), number bigint)",
+            RowIDAllocatorType.AUTO_RANDOM,
+            true,
+            15
+          },
+          {
+            "CREATE TABLE `%s`.`%s`(id bigint PRIMARY KEY AUTO_RANDOM(15), number bigint)",
+            RowIDAllocatorType.AUTO_RANDOM,
+            false,
+            15
+          }
         });
   }
 
@@ -100,8 +100,8 @@ public class AutoGenerateRowIdTest extends FlinkTestBase {
   private final boolean isUnsigned;
   private final int shardBits;
 
-  public AutoGenerateRowIdTest(String createTableSql, RowIDAllocatorType type, boolean isUnsigned,
-      int sharedBits) {
+  public AutoGenerateRowIdTest(
+      String createTableSql, RowIDAllocatorType type, boolean isUnsigned, int sharedBits) {
     this.createTableSql = createTableSql;
     this.type = type;
     this.isUnsigned = isUnsigned;
@@ -236,11 +236,13 @@ public class AutoGenerateRowIdTest extends FlinkTestBase {
       switch (type) {
         case IMPLICIT_ROWID:
         case AUTO_RANDOM:
-          assertEquals(e.getCause().getCause().getClass().getName(),
+          assertEquals(
+              e.getCause().getCause().getClass().getName(),
               "org.tikv.common.exception.AllocateRowIDOverflowException");
           break;
         case AUTO_INCREMENT:
-          assertEquals(e.getCause().getCause().getCause().getClass().getName(),
+          assertEquals(
+              e.getCause().getCause().getCause().getClass().getName(),
               "org.tikv.common.exception.TiBatchWriteException");
           break;
         default:

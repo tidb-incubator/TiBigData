@@ -37,7 +37,7 @@ public class MetaCodec {
   public static final String ENCODED_DB_PREFIX = "DB";
   public static final String INC_ID_PREFIX = "TID";
   public static final String RANDOM_ID_PREFIX = "TARID";
-  private static final byte[] META_PREFIX = new byte[]{'m'};
+  private static final byte[] META_PREFIX = new byte[] {'m'};
   private static final byte HASH_DATA_FLAG = 'h';
   private static final byte HASH_META_FLAG = 'H';
   private static final byte STR_DATA_FLAG = 's';
