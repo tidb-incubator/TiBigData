@@ -99,7 +99,7 @@ public class PartitionedTable implements Serializable {
     }
 
     Map<String, List<Expression>> column2PartitionExps = new HashMap<>();
-    TiParser parser = new TiParser(tableInfo);
+    TiParser parser = TiParser.createParserForPartitionWrite(tableInfo);
 
     for (int i = 0; i < partitionInfo.getColumns().size(); i++) {
       List<Expression> partExprs = new ArrayList<>();
@@ -121,7 +121,7 @@ public class PartitionedTable implements Serializable {
   }
 
   private static Expression generateOriginExpression(TiTableInfo tableInfo) {
-    TiParser parser = new TiParser(tableInfo);
+    TiParser parser = TiParser.createParserForPartitionWrite(tableInfo);
     // For column, originExpression is like birthday@DATE
     // For function, originExpression is like year(birthday@DATE)
     return parser.parseExpression(tableInfo.getPartitionInfo().getExpr());
@@ -131,7 +131,7 @@ public class PartitionedTable implements Serializable {
     PartitionExpression partitionExpr = new PartitionExpression();
     TiPartitionInfo partitionInfo = tableInfo.getPartitionInfo();
     String originExpr = partitionInfo.getExpr();
-    TiParser parser = new TiParser(tableInfo);
+    TiParser parser = TiParser.createParserForPartitionWrite(tableInfo);
     partitionExpr.setOriginExpression(parser.parseExpression(originExpr));
 
     List<Expression> rangePartitionExps = new ArrayList<>();
@@ -173,8 +173,14 @@ public class PartitionedTable implements Serializable {
       // TODO: support more function partition
       FuncCallExpr partitionFuncExpr = (FuncCallExpr) originalExpr;
       if (partitionFuncExpr.getFuncTp() == YEAR) {
+        Expression expression = partitionFuncExpr.getChildren().get(0);
+        ColumnRef columnRef = (ColumnRef) expression;
+        columnRef.resolve(logicalTable.getTableInfo());
         int result =
-            (int) partitionFuncExpr.eval(Constant.create(row.getDate(0), DateType.DATE)).getValue();
+            (int)
+                partitionFuncExpr
+                    .eval(Constant.create(row.get(columnRef.getColumnOffset(), DateType.DATE)))
+                    .getValue();
         int partitionId = result % physicalTables.length;
         return physicalTables[partitionId];
       } else {

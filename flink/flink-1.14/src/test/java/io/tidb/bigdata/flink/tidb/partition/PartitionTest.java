@@ -52,9 +52,43 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @Category(IntegrationTest.class)
-public class PartitionWriteTest extends FlinkTestBase {
+public class PartitionTest extends FlinkTestBase {
 
   private static final String DST_TABLE = "partition_write_test_table";
+
+  @Test
+  public void testPartitionFuncRead() throws Exception {
+    String createTableSql =
+        String.format(
+            "CREATE TABLE `%s`.`%s` (`birthday` DATE PRIMARY KEY, `name` VARCHAR(16)) "
+                + "PARTITION BY RANGE (TO_DAYS(`birthday`))"
+                + "(PARTITION p0 VALUES LESS THAN (TO_DAYS('1990-01-01')),"
+                + "PARTITION p1 VALUES LESS THAN (TO_DAYS('1995-01-01')),"
+                + "PARTITION p2 VALUES LESS THAN (TO_DAYS('2000-01-01')),"
+                + "PARTITION p3 VALUES LESS THAN (MAXVALUE))",
+            DATABASE_NAME, DST_TABLE);
+    TableEnvironment tableEnvironment = genTableEnvironmentForPartitionTest(createTableSql);
+
+    // insert
+    try (ClientSession clientSession =
+        ClientSession.create(new ClientConfig(defaultProperties())); ) {
+      clientSession.sqlUpdate(
+          String.format(
+              "INSERT INTO `%s`.`%s` VALUES ('1995-10-10', 'Tom')", DATABASE_NAME, DST_TABLE),
+          String.format(
+              "INSERT INTO `%s`.`%s` VALUES ('1985-10-10', 'Jack')", DATABASE_NAME, DST_TABLE),
+          String.format(
+              "INSERT INTO `%s`.`%s` VALUES ('2005-10-10', 'Jerry')", DATABASE_NAME, DST_TABLE));
+    }
+
+    String querySQL =
+        String.format(
+            "SELECT * FROM `tidb`.`%s`.`%s` ORDER BY `birthday`", DATABASE_NAME, DST_TABLE);
+    checkResult(
+        tableEnvironment,
+        Lists.newArrayList("+I[1985-10-10, Jack]", "+I[1995-10-10, Tom]", "+I[2005-10-10, Jerry]"),
+        querySQL);
+  }
 
   @Test
   public void testHashPartition() throws Exception {
