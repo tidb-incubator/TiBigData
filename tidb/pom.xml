@@ -21,6 +21,7 @@
     <protobuf.version>3.5.1</protobuf.version>
     <grpc.version>1.38.0</grpc.version>
     <proto.folder>${basedir}/proto</proto.folder>
+    <lombok.version>1.18.22</lombok.version>
   </properties>
 
   <dependencies>
@@ -77,6 +78,12 @@
       <artifactId>commons-codec</artifactId>
       <version>1.15</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>${lombok.version}</version>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 

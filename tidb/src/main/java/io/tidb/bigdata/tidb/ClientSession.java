@@ -531,7 +531,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public RowIDAllocator createRowIdAllocator(
-      String databaseName, String tableName, int step, RowIDAllocatorType type) {
+      String databaseName, String tableName, long step, RowIDAllocatorType type) {
     long dbId = catalog.getDatabase(databaseName).getId();
     TiTableInfo table = getTableMust(databaseName, tableName);
     long shardBits = 0;
@@ -552,7 +552,7 @@ public final class ClientSession implements AutoCloseable {
       default:
         throw new IllegalArgumentException("Unsupported RowIDAllocatorType: " + type);
     }
-    return RowIDAllocator.create(dbId, table, session, isUnsigned, step, shardBits);
+    return RowIDAllocator.create(dbId, table, session, isUnsigned, step, shardBits, type);
   }
 
   public boolean isClusteredIndex(String databaseName, String tableName) {

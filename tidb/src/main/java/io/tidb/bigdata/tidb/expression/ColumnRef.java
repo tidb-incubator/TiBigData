@@ -26,7 +26,9 @@ import java.util.Objects;
 import org.tikv.common.exception.TiExpressionException;
 
 public class ColumnRef extends Expression {
+
   private final String name;
+  private int columnOffset = -1;
 
   @Deprecated
   public ColumnRef(String name) {
@@ -67,12 +69,21 @@ public class ColumnRef extends Expression {
     return name.toLowerCase();
   }
 
+  public int getColumnOffset() {
+    if (columnOffset < 0) {
+      throw new IllegalStateException("Invalid column offset: " + columnOffset);
+    }
+
+    return columnOffset;
+  }
+
   public void resolve(TiTableInfo table) {
     TiColumnInfo columnInfo = null;
     for (TiColumnInfo col : table.getColumns()) {
       if (col.matchName(name)) {
         this.dataType = col.getType();
         columnInfo = col;
+        this.columnOffset = columnInfo.getOffset();
         break;
       }
     }

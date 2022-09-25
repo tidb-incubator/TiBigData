@@ -35,8 +35,15 @@ public class TiParser extends MySqlParserBaseVisitor {
   }
 
   public TiParser(TiTableInfo tblInfo) {
-    this.tableInfo = tblInfo;
-    astBuilder = new AstBuilder(tableInfo);
+    this(new AstBuilder(tblInfo));
+  }
+
+  public TiParser(AstBuilder astBuilder) {
+    this.astBuilder = astBuilder;
+  }
+
+  public static TiParser createParserForPartitionWrite(TiTableInfo tblInfo) {
+    return new TiParser(new PartitionWriteAstBuilder(tblInfo));
   }
 
   public Expression parseExpression(String command) {

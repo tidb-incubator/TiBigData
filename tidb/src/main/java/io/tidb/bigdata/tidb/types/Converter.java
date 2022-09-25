@@ -114,7 +114,7 @@ public class Converter {
       UnsignedLong unsignedLong = stringToUnsignedLong((String) value);
       result = unsignedLong.longValue();
     } else if (value instanceof BigDecimal) {
-      result = ((BigDecimal) value).longValueExact();
+      result = ((BigDecimal) value).longValue();
     } else {
       throw new ConvertNotSupportException(value.getClass().getName(), "UNSIGNED");
     }
@@ -244,7 +244,11 @@ public class Converter {
     } else if (val instanceof String) {
       // interpret string as in local timezone
       try {
-        return new ExtendedDateTime(strToDateTime((String) val, localDateTimeFormatter));
+        String dateTime = (String) val;
+        return new ExtendedDateTime(
+            strToDateTime(
+                dateTime.startsWith("'") ? dateTime.substring(1, dateTime.length() - 1) : dateTime,
+                localDateTimeFormatter));
       } catch (Exception e) {
         throw new TypeException(String.format("Error parsing string %s to datetime", val), e);
       }

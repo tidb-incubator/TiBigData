@@ -150,13 +150,16 @@ Received a total of 1 row
 
 See [Real-time wide table](../docs/real-time_wide_table.md)
 
+## Partition table supports
+
+See [flink_partition_table](../docs/flink_partition_table.md)
+
 ## Supports and Limitations
 
 TiBigDate/Flink supports writing data to and reading from clustered index tables, which is a new feature in TiDB-5.0.0.
 
 TiBigDate/Flink does not support the following features: 
-- bypass-write tables with auto random column
-- partition table
+- When [new collation](https://docs.pingcap.com/tidb/stable/tidb-configuration-file#new_collations_enabled_on_first_bootstrap) is enabled in TiDB, the TiKV sink cannot be used to read or write data。
 
 ## DataTypes supported
 
