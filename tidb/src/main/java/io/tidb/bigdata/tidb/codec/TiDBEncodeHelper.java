@@ -29,6 +29,7 @@ import io.tidb.bigdata.tidb.meta.TiColumnInfo;
 import io.tidb.bigdata.tidb.meta.TiIndexColumn;
 import io.tidb.bigdata.tidb.meta.TiIndexInfo;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import io.tidb.bigdata.tidb.partition.PartitionedTable;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import java.nio.ByteBuffer;
@@ -74,6 +75,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
   private final boolean ignoreAutoRandomColumn;
   private final DynamicRowIDAllocator rowIdAllocator;
   private final boolean replace;
+  private final Optional<PartitionedTable> partitionedTable;
 
   public TiDBEncodeHelper(
       ClientSession session,
@@ -91,6 +93,11 @@ public class TiDBEncodeHelper implements AutoCloseable {
     this.ignoreAutoincrementColumn = ignoreAutoincrementColumn;
     this.ignoreAutoRandomColumn = ignoreAutoRandomColumn;
     this.tiTableInfo = session.getTableMust(databaseName, tableName);
+    if (tiTableInfo.isPartitionEnabled()) {
+      this.partitionedTable = Optional.ofNullable(PartitionedTable.newPartitionTable(tiTableInfo));
+    } else {
+      this.partitionedTable = Optional.empty();
+    }
     this.snapshot = session.getTiSession().createSnapshot(timestamp);
     this.columns = tiTableInfo.getColumns();
     this.columnNames = columns.stream().map(TiColumnInfo::getName).collect(Collectors.toList());
@@ -164,15 +171,16 @@ public class TiDBEncodeHelper implements AutoCloseable {
     }
   }
 
-  private Pair<byte[], Boolean> buildIndexKey(Row tiRow, Handle handle, TiIndexInfo index) {
+  private Pair<byte[], Boolean> buildIndexKey(
+      Row tiRow, Handle handle, TiIndexInfo index, long physicalTableId) {
     EncodeIndexDataResult encodeIndexDataResult =
-        IndexKey.genIndexKey(tiTableInfo.getId(), tiRow, index, handle, tiTableInfo);
+        IndexKey.genIndexKey(physicalTableId, tiRow, index, handle, tiTableInfo);
     return new Pair<>(encodeIndexDataResult.indexKey, encodeIndexDataResult.distinct);
   }
 
   private BytePairWrapper generateIndexKeyValue(
-      Row tiRow, Handle handle, TiIndexInfo index, boolean remove) {
-    Pair<byte[], Boolean> pair = buildIndexKey(tiRow, handle, index);
+      Row tiRow, Handle handle, TiIndexInfo index, boolean remove, long physicalTableId) {
+    Pair<byte[], Boolean> pair = buildIndexKey(tiRow, handle, index, physicalTableId);
 
     byte[] key = pair.first;
     boolean distinct = pair.second;
@@ -185,23 +193,27 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return new BytePairWrapper(key, value);
   }
 
-  private BytePairWrapper generateRecordKeyValue(Row tiRow, Handle handle, boolean remove) {
+  private BytePairWrapper generateRecordKeyValue(
+      Row tiRow, Handle handle, boolean remove, long physicalTableId) {
     byte[] key;
     byte[] value;
     if (remove) {
-      key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+      key = RowKey.toRowKey(physicalTableId, handle).getBytes();
       value = new byte[0];
     } else {
-      key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+      key = RowKey.toRowKey(physicalTableId, handle).getBytes();
       value = encodeTiRow(tiRow);
     }
     return new BytePairWrapper(key, value);
   }
 
-  private List<BytePairWrapper> generateIndexKeyValues(Row tiRow, Handle handle, boolean remove) {
+  private List<BytePairWrapper> generateIndexKeyValues(
+      Row tiRow, Handle handle, boolean remove, long physicalTableId) {
     return tiTableInfo.getIndices().stream()
         .filter(tiIndexInfo -> !(isCommonHandle && tiIndexInfo.isPrimary()))
-        .map(tiIndexInfo -> generateIndexKeyValue(tiRow, handle, tiIndexInfo, remove))
+        .map(
+            tiIndexInfo ->
+                generateIndexKeyValue(tiRow, handle, tiIndexInfo, remove, physicalTableId))
         .collect(Collectors.toList());
   }
 
@@ -222,23 +234,25 @@ public class TiDBEncodeHelper implements AutoCloseable {
    * </ul>
    */
   private Map<ByteBuffer, BytePairWrapper> fetchConflictedRowDeletionPairs(
-      Row tiRow, Handle handle) {
+      Row tiRow, Handle handle, long physicalTableId) {
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
     if (handleCol != null || isCommonHandle) {
-      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
+      getOldRowWithClusterIndex(handle, snapshot, physicalTableId).ifPresent(deletion::add);
     }
     for (TiIndexInfo index : uniqueIndices) {
       // pk is uk when isCommonHandle, so we need to exclude it
       if (!isCommonHandle || !index.isPrimary()) {
-        getOldRowWithUniqueIndexKey(index, handle, tiRow).ifPresent(deletion::add);
+        getOldRowWithUniqueIndexKey(index, handle, tiRow, physicalTableId).ifPresent(deletion::add);
       }
     }
     Map<ByteBuffer, BytePairWrapper> deletionKeyValue = new HashMap<>();
     for (Pair<Row, Handle> pair : deletion) {
-      BytePairWrapper recordKeyValue = generateRecordKeyValue(pair.first, pair.second, true);
+      BytePairWrapper recordKeyValue =
+          generateRecordKeyValue(pair.first, pair.second, true, physicalTableId);
       deletionKeyValue.put(ByteBuffer.wrap(recordKeyValue.getKey()), recordKeyValue);
-      List<BytePairWrapper> indexKeyValues = generateIndexKeyValues(pair.first, pair.second, true);
+      List<BytePairWrapper> indexKeyValues =
+          generateIndexKeyValues(pair.first, pair.second, true, physicalTableId);
       indexKeyValues.forEach(
           indexKeyValue ->
               deletionKeyValue.put(ByteBuffer.wrap(indexKeyValue.getKey()), indexKeyValue));
@@ -247,14 +261,13 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   public Optional<Pair<Row, Handle>> getOldRowWithUniqueIndexKey(
-      TiIndexInfo index, Handle handle, Row tiRow) {
-    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiRow, handle, index);
+      TiIndexInfo index, Handle handle, Row tiRow, long physicalTableId) {
+    Pair<byte[], Boolean> uniqueIndexKeyPair = buildIndexKey(tiRow, handle, index, physicalTableId);
     if (uniqueIndexKeyPair.second) {
       byte[] oldValue = snapshot.get(uniqueIndexKeyPair.first);
       if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
         Handle oldHandle = TableCodec.decodeHandle(oldValue, !handle.isInt());
-        byte[] oldRowValue =
-            snapshot.get(RowKey.toRowKey(tiTableInfo.getId(), oldHandle).getBytes());
+        byte[] oldRowValue = snapshot.get(RowKey.toRowKey(physicalTableId, oldHandle).getBytes());
         Row oldRow = TableCodec.decodeRow(oldRowValue, oldHandle, tiTableInfo);
         return Optional.of(new Pair<>(oldRow, oldHandle));
       }
@@ -262,8 +275,9 @@ public class TiDBEncodeHelper implements AutoCloseable {
     return Optional.empty();
   }
 
-  public Optional<Pair<Row, Handle>> getOldRowWithClusterIndex(Handle handle, Snapshot snapshot) {
-    byte[] key = RowKey.toRowKey(tiTableInfo.getId(), handle).getBytes();
+  public Optional<Pair<Row, Handle>> getOldRowWithClusterIndex(
+      Handle handle, Snapshot snapshot, long physicalTableId) {
+    byte[] key = RowKey.toRowKey(physicalTableId, handle).getBytes();
     byte[] oldValue = snapshot.get(key);
     if (!isEmptyArray(oldValue) && !isNullUniqueIndexValue(oldValue)) {
       Row oldRow = TableCodec.decodeRow(oldValue, handle, tiTableInfo);
@@ -295,6 +309,9 @@ public class TiDBEncodeHelper implements AutoCloseable {
       }
     }
 
+    // compute physical table id
+    long physicalTableId = getPhysicalTableId(row);
+
     Handle handle;
     Map<ByteBuffer, BytePairWrapper> conflictRowDeletionPairs = new HashMap<>();
     boolean constraintCheckIsNeeded =
@@ -306,7 +323,7 @@ public class TiDBEncodeHelper implements AutoCloseable {
         handle = new IntHandle(rowIdAllocator.getImplicitRowId());
       }
       // get deletion row
-      conflictRowDeletionPairs = fetchConflictedRowDeletionPairs(row, handle);
+      conflictRowDeletionPairs = fetchConflictedRowDeletionPairs(row, handle, physicalTableId);
       if (conflictRowDeletionPairs.size() > 0 && !replace) {
         throw new IllegalStateException(
             "Unique index conflicts, please use upsert mode, row = " + row);
@@ -314,8 +331,8 @@ public class TiDBEncodeHelper implements AutoCloseable {
     } else {
       handle = new IntHandle(rowIdAllocator.getImplicitRowId());
     }
-    keyValues.add(generateRecordKeyValue(row, handle, false));
-    keyValues.addAll(generateIndexKeyValues(row, handle, false));
+    keyValues.add(generateRecordKeyValue(row, handle, false, physicalTableId));
+    keyValues.addAll(generateIndexKeyValues(row, handle, false, physicalTableId));
 
     // if the key needs to be updated, then the deletion pair need to be removed and keep
     // the update pair. Otherwise, the execution order can't be guaranteed, which may cause
@@ -358,27 +375,39 @@ public class TiDBEncodeHelper implements AutoCloseable {
         isCommonHandle || handleCol != null || UniqueIndexKeyWithValue.isPresent(),
         "Delete is only support with pk or uk, and their value should not be null");
 
+    // generate physical table id
+    long physicalTableId = getPhysicalTableId(row);
+
     Snapshot snapshot = session.getTiSession().createSnapshot(timestamp.getPrevious());
     List<Pair<Row, Handle>> deletion = new ArrayList<>();
 
     // get deletion row
     if (handleCol != null || isCommonHandle) {
       Handle handle = extractHandle(row);
-      getOldRowWithClusterIndex(handle, snapshot).ifPresent(deletion::add);
+      getOldRowWithClusterIndex(handle, snapshot, physicalTableId).ifPresent(deletion::add);
     } else {
       // just make buildUniqueIndexKey method works
       Handle fakeHandle = new IntHandle(0L);
-      getOldRowWithUniqueIndexKey(UniqueIndexKeyWithValue.get(), fakeHandle, row)
+      getOldRowWithUniqueIndexKey(UniqueIndexKeyWithValue.get(), fakeHandle, row, physicalTableId)
           .ifPresent(deletion::add);
     }
 
     // generate BytePairWrapper
     List<BytePairWrapper> deletionKeyValue = new ArrayList<>();
     for (Pair<Row, Handle> pair : deletion) {
-      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true));
-      deletionKeyValue.addAll(generateIndexKeyValues(pair.first, pair.second, true));
+      deletionKeyValue.add(generateRecordKeyValue(pair.first, pair.second, true, physicalTableId));
+      deletionKeyValue.addAll(
+          generateIndexKeyValues(pair.first, pair.second, true, physicalTableId));
     }
     return deletionKeyValue;
+  }
+
+  // If table is partition table, transfer the logical table to physical table.
+  // If table is not partition table, the logical table is the same as the physical table.
+  private long getPhysicalTableId(Row row) {
+    return partitionedTable
+        .map(table -> table.locatePartition(row).getPhysicalTableId())
+        .orElseGet(tiTableInfo::getId);
   }
 
   @Override
