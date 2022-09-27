@@ -147,6 +147,11 @@ public final class RecordSetInternal {
     SplitInternal split = splits.get(0);
     List<String> columns =
         columnHandles.stream().map(ColumnHandleInternal::getName).collect(toImmutableList());
+    // Whether generate handle for each tidb row, there are two cases:
+    // 1. _tidb_rowid in table columns, handle is the value of _tidb_rowid;
+    // 2. table is pk handle or common handle, we will recalculate handle by primary key.
+    // If query handle is true, we should add primary key columns or _tidb_rowid query columns
+    // because column pruning may remove these columns.
     if (!queryHandle) {
       Builder request = buildRequest(columns, expression, timestamp, limit);
       return RowHandleIterator.createWrap(session.iterate(request, ranges));
