@@ -129,10 +129,14 @@ public class TiDBEncodeHelper implements AutoCloseable {
   }
 
   private Handle extractHandle(Row tiRow) {
+    return extractHandle(tiRow, tiTableInfo, handleCol);
+  }
+
+  public static Handle extractHandle(Row tiRow, TiTableInfo tiTableInfo, TiColumnInfo handleCol) {
     if (tiTableInfo.isPkHandle()) {
       return new IntHandle(
           ((Number) tiRow.get(handleCol.getOffset(), handleCol.getType())).longValue());
-    } else if (isCommonHandle) {
+    } else if (tiTableInfo.isCommonHandle()) {
       List<DataType> dataTypes = new ArrayList<>();
       List<Object> data = new ArrayList<>();
       List<TiIndexColumn> indexColumns = new ArrayList<>();

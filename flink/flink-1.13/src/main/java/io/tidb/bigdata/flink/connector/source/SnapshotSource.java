@@ -16,6 +16,8 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
+import static io.tidb.bigdata.flink.connector.source.TiDBOptions.SOURCE_SEMANTIC;
+
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumState;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumStateSerializer;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
@@ -61,6 +63,7 @@ public class SnapshotSource
   private final List<ColumnHandleInternal> columns;
   private final TiTimestamp timestamp;
   private final List<TiDBSourceSplit> splits;
+  private final SnapshotSourceSemantic semantic;
 
   public SnapshotSource(
       String databaseName,
@@ -89,14 +92,16 @@ public class SnapshotSource
       this.timestamp =
           getOptionalVersion()
               .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
-      session.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
           new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
       SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
       this.splits =
           splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
-              .map(split -> new TiDBSourceSplit(split, 0))
+              .map(TiDBSourceSplit::new)
               .collect(Collectors.toList());
+      this.semantic =
+          SnapshotSourceSemantic.fromString(
+              properties.getOrDefault(SOURCE_SEMANTIC.key(), SOURCE_SEMANTIC.defaultValue()));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -110,7 +115,7 @@ public class SnapshotSource
   @Override
   public SourceReader<RowData, TiDBSourceSplit> createReader(SourceReaderContext context)
       throws Exception {
-    return new TiDBSourceReader(context, properties, columns, schema, expression, limit);
+    return new TiDBSourceReader(context, properties, columns, schema, expression, limit, semantic);
   }
 
   @Override
@@ -148,7 +153,7 @@ public class SnapshotSource
 
   private Optional<TiTimestamp> getOptionalVersion() {
     return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
-        .filter(StringUtils::isNoneEmpty)
+        .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }

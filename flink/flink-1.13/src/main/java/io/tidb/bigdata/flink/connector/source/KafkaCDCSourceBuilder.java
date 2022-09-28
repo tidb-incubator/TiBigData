@@ -35,10 +35,10 @@ import org.apache.flink.connector.kafka.source.enumerator.KafkaSourceEnumState;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.connector.kafka.source.reader.deserializer.KafkaRecordDeserializationSchema;
 import org.apache.flink.connector.kafka.source.split.KafkaPartitionSplit;
+import org.apache.flink.kafka.shaded.org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.flink.kafka.shaded.org.apache.kafka.common.TopicPartition;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.flink.table.data.RowData;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.TopicPartition;
 
 /** @see org.apache.flink.connector.kafka.source.KafkaSourceBuilder */
 public class KafkaCDCSourceBuilder

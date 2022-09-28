@@ -35,6 +35,7 @@ import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
 import io.tidb.bigdata.tidb.allocator.RowIDAllocator;
 import io.tidb.bigdata.tidb.catalog.Catalog;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import io.tidb.bigdata.tidb.key.Base64KeyRange;
 import io.tidb.bigdata.tidb.key.RowKey;
@@ -70,12 +71,15 @@ import org.tikv.common.TiConfiguration;
 import org.tikv.common.TiSession;
 import org.tikv.common.meta.TiTimestamp;
 import org.tikv.common.util.KeyRangeUtils;
+import org.tikv.common.util.Pair;
 import org.tikv.common.util.RangeSplitter;
 import org.tikv.common.util.RangeSplitter.RegionTask;
 import org.tikv.kvproto.Coprocessor;
 import org.tikv.shade.com.google.protobuf.ByteString;
 
 public final class ClientSession implements AutoCloseable {
+
+  public static final String TIDB_ROW_ID_COLUMN_NAME = "_tidb_rowid";
 
   private static final Set<String> BUILD_IN_DATABASES =
       ImmutableSet.of("information_schema", "metrics_schema", "performance_schema", "mysql");
@@ -160,22 +164,22 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
-  public Optional<TiTableInfo> getTable(TableHandleInternal handle) {
-    return getTable(handle.getSchemaName(), handle.getTableName());
+  public Optional<TiTableInfo> getTable(String schema, String tableName) {
+    return getTable(schema, tableName, false);
   }
 
-  public Optional<TiTableInfo> getTable(String schema, String tableName) {
+  private Optional<TiTableInfo> getTable(String schema, String tableName, boolean showRowId) {
     requireNonNull(schema, "schema is null");
     requireNonNull(tableName, "tableName is null");
-    return Optional.ofNullable(catalog.getTable(schema, tableName));
-  }
-
-  public TiTableInfo getTableMust(TableHandleInternal handle) {
-    return getTableMust(handle.getSchemaName(), handle.getTableName());
+    return Optional.ofNullable(catalog.getTable(schema, tableName, showRowId));
   }
 
   public TiTableInfo getTableMust(String schema, String tableName) {
-    return getTable(schema, tableName)
+    return getTableMust(schema, tableName, false);
+  }
+
+  protected TiTableInfo getTableMust(String schema, String tableName, boolean showRowId) {
+    return getTable(schema, tableName, showRowId)
         .orElseThrow(
             () ->
                 new IllegalStateException(
@@ -208,13 +212,22 @@ public final class ClientSession implements AutoCloseable {
         .collect(toImmutableList());
   }
 
+  private Optional<List<ColumnHandleInternal>> getTableColumns(
+      String schema, String tableName, boolean showRowId) {
+    return getTable(schema, tableName, showRowId).map(ClientSession::getTableColumns);
+  }
+
   public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName) {
-    return getTable(schema, tableName).map(ClientSession::getTableColumns);
+    return getTableColumns(schema, tableName, false);
   }
 
   private Optional<List<ColumnHandleInternal>> getTableColumns(
       String schema, String tableName, Stream<String> columns) {
-    return getTableColumns(schema, tableName).map(r -> selectColumns(r, columns));
+    List<String> columnList = columns.collect(Collectors.toList());
+    boolean showRowId =
+        columnList.stream().anyMatch(column -> column.equalsIgnoreCase(TIDB_ROW_ID_COLUMN_NAME));
+    return getTableColumns(schema, tableName, showRowId)
+        .map(r -> selectColumns(r, columnList.stream()));
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(
@@ -228,7 +241,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle) {
-    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName());
+    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), false);
   }
 
   public Optional<List<ColumnHandleInternal>> getTableColumns(
@@ -236,8 +249,13 @@ public final class ClientSession implements AutoCloseable {
     return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
   }
 
+  public List<ColumnHandleInternal> getTableColumnsMust(
+      String schema, String tableName, boolean showRowId) {
+    return getTableColumns(getTableMust(schema, tableName, showRowId));
+  }
+
   public List<ColumnHandleInternal> getTableColumnsMust(String schema, String tableName) {
-    return getTableColumns(getTableMust(schema, tableName));
+    return getTableColumnsMust(schema, tableName, false);
   }
 
   private List<RangeSplitter.RegionTask> getRangeRegionTasks(
@@ -254,7 +272,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
-    return getTable(tableHandle)
+    return getTable(tableHandle.getSchemaName(), tableHandle.getTableName(), false)
         .map(
             table ->
                 table.isPartitionEnabled()
@@ -288,7 +306,9 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns) {
-    TiTableInfo tableInfo = getTableMust(table);
+    boolean showRowId =
+        columns.stream().anyMatch(column -> column.equalsIgnoreCase(TIDB_ROW_ID_COLUMN_NAME));
+    TiTableInfo tableInfo = getTableMust(table.getSchemaName(), table.getTableName(), showRowId);
     if (columns.isEmpty()) {
       columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
     }
@@ -299,8 +319,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public CoprocessorIterator<Row> iterate(TiDAGRequest.Builder request, Base64KeyRange range) {
-    return CoprocessorIterator.getRowIterator(
-        request.build(TiDAGRequest.PushDownType.NORMAL), getRangeRegionTasks(range), session);
+    return iterate(request, ImmutableList.of(range));
   }
 
   public CoprocessorIterator<Row> iterate(
@@ -574,10 +593,47 @@ public final class ClientSession implements AutoCloseable {
     }
   }
 
+  // Please only use it for test
+  public List<Pair<Row, Handle>> fetchAllRows(
+      String databaseName, String tableName, TiTimestamp timestamp, boolean queryHandle) {
+    List<SplitInternal> splits =
+        new SplitManagerInternal(this)
+            .getSplits(new TableHandleInternal("", databaseName, tableName));
+    RecordSetInternal recordSetInternal =
+        new RecordSetInternal(
+            this,
+            splits,
+            getTableColumnsMust(databaseName, tableName),
+            Optional.empty(),
+            Optional.ofNullable(timestamp),
+            Optional.empty(),
+            queryHandle);
+    RecordCursorInternal cursor = recordSetInternal.cursor();
+    List<Pair<Row, Handle>> pairs = new ArrayList<>();
+    while (cursor.advanceNextPosition()) {
+      pairs.add(new Pair<>(cursor.getRow(), cursor.getHandle().orElse(null)));
+    }
+    return pairs;
+  }
+
+  // Please only use it for test
+  public List<Pair<Row, Handle>> fetchAllRows(String databaseName, String tableName) {
+    return fetchAllRows(databaseName, tableName, null, false);
+  }
+
   @Override
   public synchronized void close() throws Exception {
-    session.close();
-    jdbcConnectionProvider.close();
+    close(catalog, session, jdbcConnectionProvider);
+  }
+
+  private static void close(AutoCloseable... resources) {
+    for (AutoCloseable resource : resources) {
+      try {
+        resource.close();
+      } catch (Exception e) {
+        LOG.warn("Can not close resource", e);
+      }
+    }
   }
 
   public static ClientSession create(ClientConfig config) {

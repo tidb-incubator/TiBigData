@@ -69,9 +69,8 @@ public class TiDBOptions {
   public static final ConfigOption<String> SNAPSHOT_VERSION =
       optional(ClientConfig.SNAPSHOT_VERSION);
 
-  // split or offset
-  public static final ConfigOption<String> SOURCE_FAILOVER =
-      optional("tidb.source.failover", "split");
+  public static final ConfigOption<String> SOURCE_SEMANTIC =
+      optional("tidb.source.semantic", SnapshotSourceSemantic.AT_LEAST_ONCE.getSemantic());
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
@@ -142,7 +141,7 @@ public class TiDBOptions {
             MIN_IDLE_SIZE,
             STREAMING_SOURCE,
             WRITE_MODE,
-            SOURCE_FAILOVER,
+            SOURCE_SEMANTIC,
             CLUSTER_TLS_ENABLE,
             CLUSTER_TLS_CA,
             CLUSTER_TLS_KEY,
