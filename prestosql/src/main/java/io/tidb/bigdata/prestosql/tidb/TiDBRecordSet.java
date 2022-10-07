@@ -19,6 +19,7 @@ package io.tidb.bigdata.prestosql.tidb;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static io.tidb.bigdata.prestosql.tidb.TiDBColumnHandle.internalHandles;
 
+import com.google.common.collect.ImmutableList;
 import io.prestosql.spi.connector.RecordCursor;
 import io.prestosql.spi.connector.RecordSet;
 import io.prestosql.spi.type.Type;
@@ -40,12 +41,15 @@ public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements R
       List<TiDBColumnHandle> columnHandles,
       Optional<TiTimestamp> timestamp) {
     super(
-        new RecordSetInternal(
-            session.getInternal(),
-            split.toInternal(),
-            internalHandles(columnHandles),
-            split.getAdditionalPredicate().map(Expressions::deserialize),
-            timestamp));
+        RecordSetInternal.builder(session.getInternal(), ImmutableList.of(split.toInternal()),
+                internalHandles(columnHandles))
+            .withExpression(
+                split.getAdditionalPredicate().map(Expressions::deserialize).orElse(null))
+            .withTimestamp(timestamp.orElse(null))
+            .withLimit(null)
+            .withQueryHandle(false)
+            .build());
+
     this.columnHandles = columnHandles;
     this.columnTypes =
         columnHandles.stream().map(TiDBColumnHandle::getPrestoType).collect(toImmutableList());

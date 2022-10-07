@@ -18,12 +18,12 @@ package io.tidb.bigdata.hive;
 
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.FileSplit;
 import org.tikv.common.meta.TiTimestamp;
@@ -64,12 +64,13 @@ public class TiDBInputSplit extends FileSplit {
     dataOutput.writeUTF(path.toString());
     dataOutput.writeInt(splitInternals.size());
     for (int i = 0; i < splitInternals.size(); i++) {
-      dataOutput.writeUTF(splitInternals.get(i).getTable().getSchemaName());
-      dataOutput.writeUTF(splitInternals.get(i).getTable().getTableName());
-      dataOutput.writeUTF(splitInternals.get(i).getStartKey());
-      dataOutput.writeUTF(splitInternals.get(i).getEndKey());
-      dataOutput.writeLong(splitInternals.get(i).getTimestamp().getPhysical());
-      dataOutput.writeLong(splitInternals.get(i).getTimestamp().getLogical());
+      SplitInternal splitInternal = splitInternals.get(i);
+      dataOutput.writeUTF(splitInternal.getTable().getSchemaName());
+      dataOutput.writeUTF(splitInternal.getTable().getTiTableInfoBase64StringMust());
+      dataOutput.writeUTF(splitInternal.getStartKey());
+      dataOutput.writeUTF(splitInternal.getEndKey());
+      dataOutput.writeLong(splitInternal.getTimestamp().getPhysical());
+      dataOutput.writeLong(splitInternal.getTimestamp().getLogical());
     }
   }
 
@@ -80,7 +81,7 @@ public class TiDBInputSplit extends FileSplit {
     List<SplitInternal> splitInternalList = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       String databaseName = dataInput.readUTF();
-      String tableName = dataInput.readUTF();
+      TiTableInfo tiTableInfo = TableHandleInternal.decodeTiTableInfo(dataInput.readUTF());
       String startKey = dataInput.readUTF();
       String endKey = dataInput.readUTF();
       Long physicalTimestamp = dataInput.readLong();
@@ -88,7 +89,7 @@ public class TiDBInputSplit extends FileSplit {
 
       SplitInternal splitInternal =
           new SplitInternal(
-              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              new TableHandleInternal(databaseName, tiTableInfo),
               startKey,
               endKey,
               new TiTimestamp(physicalTimestamp, logicalTimestamp));

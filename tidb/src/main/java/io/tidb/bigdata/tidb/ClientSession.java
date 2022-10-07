@@ -205,7 +205,7 @@ public final class ClientSession implements AutoCloseable {
         .collect(Collectors.toList());
   }
 
-  private static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
+  public static List<ColumnHandleInternal> getTableColumns(TiTableInfo table) {
     return Streams.mapWithIndex(
             table.getColumns().stream(),
             (column, i) -> new ColumnHandleInternal(column.getName(), column.getType(), (int) i))
@@ -272,15 +272,18 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
-    return getTable(tableHandle.getSchemaName(), tableHandle.getTableName(), false)
-        .map(
-            table ->
-                table.isPartitionEnabled()
-                    ? table.getPartitionInfo().getDefs().stream()
-                        .map(TiPartitionDef::getId)
-                        .collect(Collectors.toList())
-                    : ImmutableList.of(table.getId()))
-        .orElseGet(ImmutableList::of).stream()
+    TiTableInfo tiTableInfo =
+        tableHandle
+            .getTiTableInfo()
+            .orElseGet(
+                () -> getTableMust(tableHandle.getSchemaName(), tableHandle.getTableName(), false));
+    List<Long> ids =
+        tiTableInfo.isPartitionEnabled()
+            ? tiTableInfo.getPartitionInfo().getDefs().stream()
+                .map(TiPartitionDef::getId)
+                .collect(Collectors.toList())
+            : ImmutableList.of(tiTableInfo.getId());
+    return ids.stream()
         .map(
             tableId ->
                 getRangeRegionTasks(
@@ -308,7 +311,10 @@ public final class ClientSession implements AutoCloseable {
   public TiDAGRequest.Builder request(TableHandleInternal table, List<String> columns) {
     boolean showRowId =
         columns.stream().anyMatch(column -> column.equalsIgnoreCase(TIDB_ROW_ID_COLUMN_NAME));
-    TiTableInfo tableInfo = getTableMust(table.getSchemaName(), table.getTableName(), showRowId);
+    TiTableInfo tableInfo =
+        table
+            .getTiTableInfo()
+            .orElseGet(() -> getTableMust(table.getSchemaName(), table.getTableName(), showRowId));
     if (columns.isEmpty()) {
       columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
     }
@@ -599,16 +605,14 @@ public final class ClientSession implements AutoCloseable {
     List<SplitInternal> splits =
         new SplitManagerInternal(this)
             .getSplits(new TableHandleInternal("", databaseName, tableName));
-    RecordSetInternal recordSetInternal =
-        new RecordSetInternal(
-            this,
-            splits,
-            getTableColumnsMust(databaseName, tableName),
-            Optional.empty(),
-            Optional.ofNullable(timestamp),
-            Optional.empty(),
-            queryHandle);
-    RecordCursorInternal cursor = recordSetInternal.cursor();
+    RecordCursorInternal cursor =
+        RecordSetInternal.builder(this, splits, getTableColumnsMust(databaseName, tableName))
+            .withExpression(null)
+            .withTimestamp(timestamp)
+            .withLimit(null)
+            .withQueryHandle(queryHandle)
+            .build()
+            .cursor();
     List<Pair<Row, Handle>> pairs = new ArrayList<>();
     while (cursor.advanceNextPosition()) {
       pairs.add(new Pair<>(cursor.getRow(), cursor.getHandle().orElse(null)));

@@ -22,6 +22,7 @@ import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
 import static java.lang.String.format;
 
+import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
@@ -216,17 +217,17 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
       return;
     }
     SplitInternal splitInternal = splits.get(split.getSplitNumber());
-    RecordSetInternal recordSetInternal =
-        new RecordSetInternal(
-            clientSession,
-            splitInternal,
-            Arrays.stream(projectedFieldIndexes)
-                .mapToObj(columnHandleInternals::get)
-                .collect(Collectors.toList()),
-            Optional.ofNullable(expression),
-            Optional.ofNullable(timestamp),
-            limit > Integer.MAX_VALUE ? Optional.empty() : Optional.of((int) limit));
-    cursor = recordSetInternal.cursor();
+    List<ColumnHandleInternal> columns = Arrays.stream(projectedFieldIndexes)
+        .mapToObj(columnHandleInternals::get)
+        .collect(Collectors.toList());
+    cursor = RecordSetInternal
+        .builder(clientSession, ImmutableList.of(splitInternal), columns)
+        .withExpression(expression)
+        .withTimestamp(timestamp)
+        .withLimit(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit)
+        .withQueryHandle(false)
+        .build()
+        .cursor();
   }
 
   @Override
@@ -254,10 +255,10 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
           i,
           toRowDataType(
               getObjectWithDataType(
-                      object,
-                      fieldType,
-                      columnHandleInternals.get(projectedFieldIndex).getType(),
-                      formatters[projectedFieldIndex])
+                  object,
+                  fieldType,
+                  columnHandleInternals.get(projectedFieldIndex).getType(),
+                  formatters[projectedFieldIndex])
                   .orElse(null)));
     }
     recordCount++;

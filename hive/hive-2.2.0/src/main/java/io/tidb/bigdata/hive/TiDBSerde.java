@@ -45,6 +45,7 @@ public class TiDBSerde extends AbstractSerDe {
 
   private String databaseName;
   private String tableName;
+  private Properties properties;
   private List<ColumnHandleInternal> columns;
 
   @Override
@@ -55,12 +56,7 @@ public class TiDBSerde extends AbstractSerDe {
     this.databaseName =
         Objects.requireNonNull(
             properties.getProperty(DATABASE_NAME), DATABASE_NAME + " can not be null");
-    Map<String, String> map = new HashMap<>((Map) properties);
-    try (ClientSession clientSession = ClientSession.create(new ClientConfig(map))) {
-      columns = clientSession.getTableColumnsMust(databaseName, tableName);
-    } catch (Exception e) {
-      throw new SerDeException(e);
-    }
+    this.properties = properties;
   }
 
   @Override
@@ -72,6 +68,7 @@ public class TiDBSerde extends AbstractSerDe {
   public Writable serialize(Object o, ObjectInspector objectInspector) throws SerDeException {
     Object[] objects = (Object[]) o;
     MapWritable mapWritable = new MapWritable();
+    List<ColumnHandleInternal> columns = getColumns();
     for (int i = 0; i < columns.size(); i++) {
       ColumnHandleInternal column = columns.get(i);
       String name = column.getName();
@@ -89,6 +86,7 @@ public class TiDBSerde extends AbstractSerDe {
   @Override
   public Object deserialize(Writable writable) throws SerDeException {
     MapWritable mapWritable = (MapWritable) writable;
+    List<ColumnHandleInternal> columns = getColumns();
     Object[] objects = new Object[columns.size()];
     for (int i = 0; i < columns.size(); i++) {
       ColumnHandleInternal column = columns.get(i);
@@ -103,10 +101,23 @@ public class TiDBSerde extends AbstractSerDe {
 
   @Override
   public ObjectInspector getObjectInspector() throws SerDeException {
+    List<ColumnHandleInternal> columns = getColumns();
     List<ObjectInspector> list = new ArrayList<>();
     columns.forEach(column -> list.add(TypeUtils.toObjectInspector(column.getType())));
     List<String> columnNames =
         columns.stream().map(ColumnHandleInternal::getName).collect(Collectors.toList());
     return ObjectInspectorFactory.getStandardStructObjectInspector(columnNames, list);
+  }
+
+  private synchronized List<ColumnHandleInternal> getColumns() {
+    if (columns == null) {
+      Map<String, String> map = new HashMap<>((Map) properties);
+      try (ClientSession clientSession = ClientSession.create(new ClientConfig(map))) {
+        columns = clientSession.getTableColumnsMust(databaseName, tableName);
+      } catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
+    }
+    return columns;
   }
 }

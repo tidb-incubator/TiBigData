@@ -58,7 +58,9 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
 
   private ClientSession session;
 
-  /** The availability future. This reader is available as soon as a split is assigned. */
+  /**
+   * The availability future. This reader is available as soon as a split is assigned.
+   */
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
@@ -112,16 +114,14 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     currentSplit = remainingSplits.poll();
     if (currentSplit != null) {
       SplitInternal split = currentSplit.getSplit();
-      cursor =
-          new RecordSetInternal(
-                  session,
-                  ImmutableList.of(split),
-                  columns,
-                  Optional.ofNullable(expression),
-                  Optional.ofNullable(split.getTimestamp()),
-                  Optional.ofNullable(limit),
-                  semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
-              .cursor();
+      cursor = RecordSetInternal
+          .builder(session, ImmutableList.of(split), columns)
+          .withExpression(expression)
+          .withTimestamp(split.getTimestamp())
+          .withLimit(limit)
+          .withQueryHandle(semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
+          .build()
+          .cursor();
       return InputStatus.MORE_AVAILABLE;
     } else if (noMoreSplits) {
       return InputStatus.END_OF_INPUT;

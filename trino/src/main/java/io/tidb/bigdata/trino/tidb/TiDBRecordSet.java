@@ -19,6 +19,7 @@ package io.tidb.bigdata.trino.tidb;
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static io.tidb.bigdata.trino.tidb.TiDBColumnHandle.internalHandles;
 
+import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.tidb.Expressions;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.Wrapper;
@@ -40,12 +41,15 @@ public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements R
       List<TiDBColumnHandle> columnHandles,
       Optional<TiTimestamp> timestamp) {
     super(
-        new RecordSetInternal(
-            session.getInternal(),
-            split.toInternal(),
-            internalHandles(columnHandles),
-            split.getAdditionalPredicate().map(Expressions::deserialize),
-            timestamp));
+        RecordSetInternal.builder(session.getInternal(), ImmutableList.of(split.toInternal()),
+                internalHandles(columnHandles))
+            .withExpression(
+                split.getAdditionalPredicate().map(Expressions::deserialize).orElse(null))
+            .withTimestamp(timestamp.orElse(null))
+            .withLimit(null)
+            .withQueryHandle(false)
+            .build());
+
     this.columnHandles = columnHandles;
     this.columnTypes =
         columnHandles.stream().map(TiDBColumnHandle::getPrestoType).collect(toImmutableList());

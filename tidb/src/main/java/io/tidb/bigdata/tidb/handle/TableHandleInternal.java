@@ -20,19 +20,47 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
 
 import com.google.common.base.Joiner;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.Base64;
 import java.util.Objects;
+import java.util.Optional;
 
 public class TableHandleInternal implements Serializable {
 
   private final String connectorId;
   private final String schemaName;
+  private final TiTableInfo tiTableInfo;
   private final String tableName;
+  // If we need to encode TiTableInfo to json, we could use base64 to encode it,
+  // since TiTableInfo use tikv shaded jackson package and can not import jackson time module.
+  // Otherwise, ignore this field.
+  // TODO: use it in Presto/Trino API.
+  private final String tiTableInfoBase64String;
 
   public TableHandleInternal(String connectorId, String schemaName, String tableName) {
     this.connectorId = requireNonNull(connectorId, "connectorId is null");
     this.schemaName = requireNonNull(schemaName, "schemaName is null");
     this.tableName = requireNonNull(tableName, "tableName is null");
+    this.tiTableInfoBase64String = null;
+    this.tiTableInfo = null;
+  }
+
+  public TableHandleInternal(String connectorId, String schemaName, TiTableInfo tiTableInfo) {
+    this.connectorId = requireNonNull(connectorId, "connectorId is null");
+    this.schemaName = requireNonNull(schemaName, "schemaName is null");
+    this.tiTableInfo = requireNonNull(tiTableInfo, "tiTableInfo can not be null");
+    this.tableName = tiTableInfo.getName();
+    this.tiTableInfoBase64String = encodeTiTableInfo(tiTableInfo);
+  }
+
+  public TableHandleInternal(String schemaName, TiTableInfo tiTableInfo) {
+    this("", schemaName, tiTableInfo);
   }
 
   public String getSchemaTableName() {
@@ -49,6 +77,22 @@ public class TableHandleInternal implements Serializable {
 
   public String getTableName() {
     return tableName;
+  }
+
+  public Optional<TiTableInfo> getTiTableInfo() {
+    return Optional.ofNullable(tiTableInfo);
+  }
+
+  public TiTableInfo getTiTableInfoMust() {
+    return Objects.requireNonNull(tiTableInfo, "tiTableInfo is null");
+  }
+
+  public Optional<String> getTiTableInfoBase64String() {
+    return Optional.ofNullable(tiTableInfoBase64String);
+  }
+
+  public String getTiTableInfoBase64StringMust() {
+    return Objects.requireNonNull(tiTableInfoBase64String, "tiTableInfoBase64String is null");
   }
 
   @Override
@@ -78,5 +122,25 @@ public class TableHandleInternal implements Serializable {
         .add("schema", schemaName)
         .add("table", tableName)
         .toString();
+  }
+
+  public static String encodeTiTableInfo(TiTableInfo tiTableInfo) {
+    try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+      objectOutputStream.writeObject(tiTableInfo);
+      return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  public static TiTableInfo decodeTiTableInfo(String base64String) {
+    try (ByteArrayInputStream byteArrayInputStream =
+            new ByteArrayInputStream(Base64.getDecoder().decode(base64String));
+        ObjectInputStream objectOutputStream = new ObjectInputStream(byteArrayInputStream)) {
+      return (TiTableInfo) objectOutputStream.readObject();
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

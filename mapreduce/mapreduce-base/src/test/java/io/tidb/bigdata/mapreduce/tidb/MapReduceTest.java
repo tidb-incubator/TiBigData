@@ -18,6 +18,7 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import static java.lang.String.format;
 
+import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
@@ -183,17 +184,17 @@ public class MapReduceTest {
             .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
-      RecordSetInternal recordSetInternal =
-          new RecordSetInternal(
-              clientSession,
-              splitInternal,
-              Arrays.stream(IntStream.range(0, 29).toArray())
-                  .mapToObj(columnHandleInternals::get)
-                  .collect(Collectors.toList()),
-              Optional.empty(),
-              Optional.empty(),
-              Optional.of(Integer.MAX_VALUE));
-      RecordCursorInternal cursor = recordSetInternal.cursor();
+      List<ColumnHandleInternal> columns = Arrays.stream(IntStream.range(0, 29).toArray())
+          .mapToObj(columnHandleInternals::get)
+          .collect(Collectors.toList());
+      RecordCursorInternal cursor = RecordSetInternal
+          .builder(clientSession, ImmutableList.of(splitInternal), columns)
+          .withExpression(null)
+          .withTimestamp(null)
+          .withLimit(null)
+          .withQueryHandle(false)
+          .build()
+          .cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);
       for (int index = 0; index < cursor.fieldCount(); index++) {

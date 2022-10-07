@@ -17,7 +17,6 @@
 package io.tidb.bigdata.hive;
 
 import static io.tidb.bigdata.hive.TiDBConstant.DATABASE_NAME;
-import static io.tidb.bigdata.hive.TiDBConstant.EMPTY_STRING;
 import static io.tidb.bigdata.hive.TiDBConstant.REGIONS_PER_SPLIT;
 import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 
@@ -55,7 +54,8 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
       Integer regionNumPerSplit = jobConf.getInt(REGIONS_PER_SPLIT, 1);
 
       TableHandleInternal tableHandle =
-          new TableHandleInternal(EMPTY_STRING, databaseName, tableName);
+          new TableHandleInternal(
+              databaseName, tableName, clientSession.getTableMust(databaseName, tableName));
       Path path = FileInputFormat.getInputPaths(jobConf)[0];
 
       List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
