@@ -41,7 +41,9 @@ public final class TiDBRecordSet extends Wrapper<RecordSetInternal> implements R
       List<TiDBColumnHandle> columnHandles,
       Optional<TiTimestamp> timestamp) {
     super(
-        RecordSetInternal.builder(session.getInternal(), ImmutableList.of(split.toInternal()),
+        RecordSetInternal.builder(
+                session.getInternal(),
+                ImmutableList.of(split.toInternal()),
                 internalHandles(columnHandles))
             .withExpression(
                 split.getAdditionalPredicate().map(Expressions::deserialize).orElse(null))

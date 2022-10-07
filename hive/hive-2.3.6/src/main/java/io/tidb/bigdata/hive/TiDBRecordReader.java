@@ -73,14 +73,14 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
     TiTimestamp timestamp =
         getOptionalVersion()
             .orElseGet(() -> getOptionalTimestamp().orElseGet(splitInternal::getTimestamp));
-    cursor = RecordSetInternal
-        .builder(clientSession, splitInternals, columns)
-        .withExpression(null)
-        .withTimestamp(timestamp)
-        .withLimit(null)
-        .withQueryHandle(false)
-        .build()
-        .cursor();
+    cursor =
+        RecordSetInternal.builder(clientSession, splitInternals, columns)
+            .withExpression(null)
+            .withTimestamp(timestamp)
+            .withLimit(null)
+            .withQueryHandle(false)
+            .build()
+            .cursor();
   }
 
   @Override

@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -184,17 +183,18 @@ public class MapReduceTest {
             .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
 
     for (SplitInternal splitInternal : splitInternals) {
-      List<ColumnHandleInternal> columns = Arrays.stream(IntStream.range(0, 29).toArray())
-          .mapToObj(columnHandleInternals::get)
-          .collect(Collectors.toList());
-      RecordCursorInternal cursor = RecordSetInternal
-          .builder(clientSession, ImmutableList.of(splitInternal), columns)
-          .withExpression(null)
-          .withTimestamp(null)
-          .withLimit(null)
-          .withQueryHandle(false)
-          .build()
-          .cursor();
+      List<ColumnHandleInternal> columns =
+          Arrays.stream(IntStream.range(0, 29).toArray())
+              .mapToObj(columnHandleInternals::get)
+              .collect(Collectors.toList());
+      RecordCursorInternal cursor =
+          RecordSetInternal.builder(clientSession, ImmutableList.of(splitInternal), columns)
+              .withExpression(null)
+              .withTimestamp(null)
+              .withLimit(null)
+              .withQueryHandle(false)
+              .build()
+              .cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);
       for (int index = 0; index < cursor.fieldCount(); index++) {

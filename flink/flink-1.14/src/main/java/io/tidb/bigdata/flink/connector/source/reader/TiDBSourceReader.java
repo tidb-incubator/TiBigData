@@ -36,7 +36,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
@@ -58,9 +57,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
 
   private ClientSession session;
 
-  /**
-   * The availability future. This reader is available as soon as a split is assigned.
-   */
+  /** The availability future. This reader is available as soon as a split is assigned. */
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
@@ -114,14 +111,14 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     currentSplit = remainingSplits.poll();
     if (currentSplit != null) {
       SplitInternal split = currentSplit.getSplit();
-      cursor = RecordSetInternal
-          .builder(session, ImmutableList.of(split), columns)
-          .withExpression(expression)
-          .withTimestamp(split.getTimestamp())
-          .withLimit(limit)
-          .withQueryHandle(semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
-          .build()
-          .cursor();
+      cursor =
+          RecordSetInternal.builder(session, ImmutableList.of(split), columns)
+              .withExpression(expression)
+              .withTimestamp(split.getTimestamp())
+              .withLimit(limit)
+              .withQueryHandle(semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
+              .build()
+              .cursor();
       return InputStatus.MORE_AVAILABLE;
     } else if (noMoreSplits) {
       return InputStatus.END_OF_INPUT;

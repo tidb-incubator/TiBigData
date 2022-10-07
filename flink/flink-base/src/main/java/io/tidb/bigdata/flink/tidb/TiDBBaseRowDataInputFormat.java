@@ -217,17 +217,18 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
       return;
     }
     SplitInternal splitInternal = splits.get(split.getSplitNumber());
-    List<ColumnHandleInternal> columns = Arrays.stream(projectedFieldIndexes)
-        .mapToObj(columnHandleInternals::get)
-        .collect(Collectors.toList());
-    cursor = RecordSetInternal
-        .builder(clientSession, ImmutableList.of(splitInternal), columns)
-        .withExpression(expression)
-        .withTimestamp(timestamp)
-        .withLimit(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit)
-        .withQueryHandle(false)
-        .build()
-        .cursor();
+    List<ColumnHandleInternal> columns =
+        Arrays.stream(projectedFieldIndexes)
+            .mapToObj(columnHandleInternals::get)
+            .collect(Collectors.toList());
+    cursor =
+        RecordSetInternal.builder(clientSession, ImmutableList.of(splitInternal), columns)
+            .withExpression(expression)
+            .withTimestamp(timestamp)
+            .withLimit(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit)
+            .withQueryHandle(false)
+            .build()
+            .cursor();
   }
 
   @Override
@@ -255,10 +256,10 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
           i,
           toRowDataType(
               getObjectWithDataType(
-                  object,
-                  fieldType,
-                  columnHandleInternals.get(projectedFieldIndex).getType(),
-                  formatters[projectedFieldIndex])
+                      object,
+                      fieldType,
+                      columnHandleInternals.get(projectedFieldIndex).getType(),
+                      formatters[projectedFieldIndex])
                   .orElse(null)));
     }
     recordCount++;

@@ -133,14 +133,14 @@ public class FilterPushDownValidator extends ExternalResource {
             .getSplits(new TableHandleInternal("", database, table));
     List<ColumnHandleInternal> columns = clientSession.getTableColumnsMust(database, table);
     for (SplitInternal split : splits) {
-      RecordCursorInternal cursor = RecordSetInternal
-          .builder(clientSession, ImmutableList.of(split), columns)
-          .withExpression(expression.orElse(null))
-          .withTimestamp(null)
-          .withLimit(null)
-          .withQueryHandle(false)
-          .build()
-          .cursor();
+      RecordCursorInternal cursor =
+          RecordSetInternal.builder(clientSession, ImmutableList.of(split), columns)
+              .withExpression(expression.orElse(null))
+              .withTimestamp(null)
+              .withLimit(null)
+              .withQueryHandle(false)
+              .build()
+              .cursor();
       while (cursor.advanceNextPosition()) {
         rows.add(cursor.getRow());
       }
@@ -156,9 +156,7 @@ public class FilterPushDownValidator extends ExternalResource {
     return objects;
   }
 
-  /**
-   * Test for expressions and rows.
-   */
+  /** Test for expressions and rows. */
   public void doTestFilter(
       List<Row> expectedRows, Expression expectedExpression, String whereCondition) {
     List<ResolvedExpression> filters = FilterPushDownTestUtils.getFilters(whereCondition);
