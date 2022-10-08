@@ -17,7 +17,6 @@
 package io.tidb.bigdata.hive;
 
 import static io.tidb.bigdata.hive.TiDBConstant.DATABASE_NAME;
-import static io.tidb.bigdata.hive.TiDBConstant.EMPTY_STRING;
 import static io.tidb.bigdata.hive.TiDBConstant.REGIONS_PER_SPLIT;
 import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 

@@ -32,6 +32,7 @@ import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,7 +81,8 @@ public class SnapshotSource
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
       TiTableInfo tiTableInfo = session.getTableMust(databaseName, tableName);
       this.columns =
-          ClientSession.getTableColumns(tiTableInfo, schema.getPhysicalFieldNamesWithoutMeta());
+          ClientSession.getTableColumns(
+              tiTableInfo, Arrays.asList(schema.getPhysicalFieldNamesWithoutMeta()));
       this.timestamp =
           getOptionalVersion()
               .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));

@@ -33,8 +33,7 @@ public class TiDBInputSplit extends FileSplit {
   private Path path;
   private List<SplitInternal> splitInternals;
 
-  public TiDBInputSplit() {
-  }
+  public TiDBInputSplit() {}
 
   public TiDBInputSplit(Path path, List<SplitInternal> splitInternals) {
     this.path = path;

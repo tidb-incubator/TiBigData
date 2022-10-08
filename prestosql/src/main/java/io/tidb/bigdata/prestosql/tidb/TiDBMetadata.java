@@ -103,7 +103,8 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
         new SchemaTableName(schemaName, tableName),
         getTableMetadataStream(tableHandle).collect(toImmutableList()),
         ImmutableMap.of(
-            PRIMARY_KEY, join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName)),
+            PRIMARY_KEY,
+            join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName)),
             UNIQUE_KEY,
             getInternal().getUniqueKeyColumns(schemaName, tableName).stream()
                 .flatMap(List::stream)
@@ -149,8 +150,8 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
   public Map<String, ColumnHandle> getColumnHandles(
       ConnectorSession session, ConnectorTableHandle tableHandle) {
     TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
-    return getColumnHandlesStream(handle).collect(
-        toImmutableMap(TiDBColumnHandle::getName, identity()));
+    return getColumnHandlesStream(handle)
+        .collect(toImmutableMap(TiDBColumnHandle::getName, identity()));
   }
 
   @Override

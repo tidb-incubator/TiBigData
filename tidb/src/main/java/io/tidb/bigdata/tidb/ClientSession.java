@@ -54,7 +54,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -215,23 +214,11 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public static List<ColumnHandleInternal> getTableColumns(
-      TiTableInfo table, Stream<String> columns) {
-    return selectColumns(getTableColumns(table), columns);
-  }
-
-  public static List<ColumnHandleInternal> getTableColumns(
-      TiTableInfo table, List<String> columns) {
-    if (columns.size() == 0) {
-      throw new IllegalArgumentException("Columns can not be empty");
+      TiTableInfo table, List<String> selectedColumns) {
+    if (selectedColumns.size() == 0) {
+      throw new IllegalArgumentException("SelectedColumns can not be empty");
     }
-    return selectColumns(getTableColumns(table), columns.stream());
-  }
-
-  public static List<ColumnHandleInternal> getTableColumns(TiTableInfo table, String[] columns) {
-    if (columns.length == 0) {
-      throw new IllegalArgumentException("Columns can not be empty");
-    }
-    return selectColumns(getTableColumns(table), Arrays.stream(columns));
+    return selectColumns(getTableColumns(table), selectedColumns.stream());
   }
 
   private List<RangeSplitter.RegionTask> getRangeRegionTasks(

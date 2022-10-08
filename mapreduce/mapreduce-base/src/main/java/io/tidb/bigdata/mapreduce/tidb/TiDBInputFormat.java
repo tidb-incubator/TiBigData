@@ -31,7 +31,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -64,8 +63,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
 
   private ResultSetMetaData resultSetMetaData;
 
-  public TiDBInputFormat() {
-  }
+  public TiDBInputFormat() {}
 
   /**
    * {@inheritDoc}
@@ -105,8 +103,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
 
     TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
-    this.tableHandleInternal =
-        new TableHandleInternal(databaseName, tiTableInfo);
+    this.tableHandleInternal = new TableHandleInternal(databaseName, tiTableInfo);
 
     String[] fieldNames =
         Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
@@ -120,7 +117,8 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
               .toArray(new String[columnHandleInternals.size()]);
       dbConf.setInputFieldNames(fieldNames);
     } else {
-      this.columnHandleInternals = ClientSession.getTableColumns(tiTableInfo, fieldNames);
+      this.columnHandleInternals =
+          ClientSession.getTableColumns(tiTableInfo, Arrays.asList(fieldNames));
     }
 
     conf.setStrings(
@@ -163,13 +161,13 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
   /**
    * Initializes the map-part of the job with the appropriate input settings.
    *
-   * @param job        The map-reduce job
+   * @param job The map-reduce job
    * @param inputClass the class object implementing TiDBWritable, which is the Java object holding
-   *                   tuple fields.
-   * @param tableName  The table to read data from
+   *     tuple fields.
+   * @param tableName The table to read data from
    * @param fieldNames The field names in the table
-   * @param limit      the limit of per mapper read record
-   * @param snapshot   snapshot time
+   * @param limit the limit of per mapper read record
+   * @param snapshot snapshot time
    * @see #setInput(Job, Class, String, String[], java.lang.Integer, String)
    */
   public static void setInput(
@@ -183,7 +181,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
     dbConf.setInputClass(inputClass);
     dbConf.setInputTableName(tableName);
     if (null == fieldNames || 0 == fieldNames.length) {
-      dbConf.setInputFieldNames(new String[]{"*"});
+      dbConf.setInputFieldNames(new String[] {"*"});
     } else {
       dbConf.setInputFieldNames(fieldNames);
     }

@@ -24,7 +24,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.tikv.common.meta.TiTimestamp;
@@ -35,8 +34,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  public TiDBInputSplit() {
-  }
+  public TiDBInputSplit() {}
 
   public TiDBInputSplit(List<SplitInternal> splitInternals) {
     this.splitInternals = splitInternals;
