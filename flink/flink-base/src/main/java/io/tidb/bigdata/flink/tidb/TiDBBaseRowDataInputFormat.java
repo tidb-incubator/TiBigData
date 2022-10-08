@@ -28,7 +28,6 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
@@ -122,8 +121,7 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
       splitSession.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
           new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
-      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
-      this.splits = splitManagerInternal.getSplits(tableHandleInternal);
+      this.splits = splitSession.getSplits(tableHandleInternal);
       columns =
           splitSession
               .getTableColumns(tableHandleInternal)

@@ -27,7 +27,6 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.IOException;
@@ -175,8 +174,7 @@ public class MapReduceTest {
     ClientSession clientSession = getSingleConnection();
     TableHandleInternal tableHandleInternal =
         new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
-    List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
+    List<SplitInternal> splitInternals = clientSession.getSplits(tableHandleInternal);
     List<ColumnHandleInternal> columnHandleInternals =
         clientSession
             .getTableColumns(tableHandleInternal)

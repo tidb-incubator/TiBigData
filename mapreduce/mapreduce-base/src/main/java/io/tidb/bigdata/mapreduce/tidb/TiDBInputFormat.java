@@ -22,7 +22,6 @@ import static io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration.REGIONS_PER_SPLIT
 import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.sql.Connection;
@@ -73,8 +72,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
    */
   @Override
   public List<InputSplit> getSplits(JobContext job) {
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
-    List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
+    List<SplitInternal> splitInternals = clientSession.getSplits(tableHandleInternal);
     int regionsPerSplit =
         job.getConfiguration().getInt(REGIONS_PER_SPLIT, REGIONS_PER_SPLIT_DEFAULT);
     return Lists.partition(splitInternals, regionsPerSplit).stream()

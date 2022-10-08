@@ -27,7 +27,6 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
@@ -129,8 +128,7 @@ public class FilterPushDownValidator extends ExternalResource {
   private List<Row> scanRows(String database, String table, Optional<Expression> expression) {
     List<Row> rows = new ArrayList<>();
     List<SplitInternal> splits =
-        new SplitManagerInternal(clientSession)
-            .getSplits(new TableHandleInternal("", database, table));
+        clientSession.getSplits(new TableHandleInternal("", database, table));
     List<ColumnHandleInternal> columns = clientSession.getTableColumnsMust(database, table);
     for (SplitInternal split : splits) {
       RecordCursorInternal cursor =

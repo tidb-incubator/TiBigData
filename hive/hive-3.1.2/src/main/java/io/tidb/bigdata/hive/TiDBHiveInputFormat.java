@@ -25,7 +25,6 @@ import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,7 +57,7 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
           new TableHandleInternal(EMPTY_STRING, databaseName, tableName);
       Path path = FileInputFormat.getInputPaths(jobConf)[0];
 
-      List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
+      List<SplitInternal> splits = clientSession.getSplits(tableHandle);
       List<List<SplitInternal>> splitPartition = Lists.partition(splits, regionNumPerSplit);
 
       return splitPartition.stream()

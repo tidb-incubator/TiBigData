@@ -26,6 +26,7 @@ import static io.tidb.bigdata.tidb.SqlUtils.getCreateTableSql;
 import static java.lang.String.format;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toCollection;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -56,6 +57,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -602,11 +604,10 @@ public final class ClientSession implements AutoCloseable {
   // Please only use it for test
   public List<Pair<Row, Handle>> fetchAllRows(
       String databaseName, String tableName, TiTimestamp timestamp, boolean queryHandle) {
-    List<SplitInternal> splits =
-        new SplitManagerInternal(this)
-            .getSplits(new TableHandleInternal("", databaseName, tableName));
+    TiTableInfo tiTableInfo = getTableMust(databaseName, tableName);
+    List<SplitInternal> splits = getSplits(new TableHandleInternal(databaseName, tiTableInfo));
     RecordCursorInternal cursor =
-        RecordSetInternal.builder(this, splits, getTableColumnsMust(databaseName, tableName))
+        RecordSetInternal.builder(this, splits, getTableColumns(tiTableInfo))
             .withExpression(null)
             .withTimestamp(timestamp)
             .withLimit(null)
@@ -623,6 +624,24 @@ public final class ClientSession implements AutoCloseable {
   // Please only use it for test
   public List<Pair<Row, Handle>> fetchAllRows(String databaseName, String tableName) {
     return fetchAllRows(databaseName, tableName, null, false);
+  }
+
+  public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
+    return getSplits(tableHandle, getSnapshotVersion());
+  }
+
+  public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
+    List<SplitInternal> splits =
+        getTableRanges(tableHandle).stream()
+            .map(range -> new SplitInternal(tableHandle, range, timestamp))
+            .collect(toCollection(ArrayList::new));
+    Collections.shuffle(splits);
+    LOG.info(
+        "The number of split for table `{}`.`{}` is {}",
+        tableHandle.getSchemaName(),
+        tableHandle.getTableName(),
+        splits.size());
+    return Collections.unmodifiableList(splits);
   }
 
   @Override
