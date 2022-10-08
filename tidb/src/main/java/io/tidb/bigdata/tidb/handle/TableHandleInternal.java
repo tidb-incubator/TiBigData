@@ -39,7 +39,6 @@ public class TableHandleInternal implements Serializable {
   // If we need to encode TiTableInfo to json, we could use base64 to encode it,
   // since TiTableInfo use tikv shaded jackson package and can not import jackson time module.
   // Otherwise, ignore this field.
-  // TODO: use it in Presto/Trino API.
   private final String tiTableInfoBase64String;
 
   public TableHandleInternal(String connectorId, String schemaName, TiTableInfo tiTableInfo) {
