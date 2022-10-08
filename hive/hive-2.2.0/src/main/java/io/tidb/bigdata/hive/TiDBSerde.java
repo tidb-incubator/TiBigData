@@ -22,6 +22,7 @@ import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -113,7 +114,8 @@ public class TiDBSerde extends AbstractSerDe {
     if (columns == null) {
       Map<String, String> map = new HashMap<>((Map) properties);
       try (ClientSession clientSession = ClientSession.create(new ClientConfig(map))) {
-        columns = clientSession.getTableColumnsMust(databaseName, tableName);
+        TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
+        columns = ClientSession.getTableColumns(tiTableInfo);
       } catch (Exception e) {
         throw new IllegalStateException(e);
       }

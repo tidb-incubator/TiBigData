@@ -69,7 +69,7 @@ public class TiDBRecordReader implements RecordReader<LongWritable, MapWritable>
 
   private void initCursor() {
     SplitInternal splitInternal = splitInternals.get(0);
-    columns = ClientSession.getTableColumns(splitInternal.getTable().getTiTableInfoMust());
+    columns = ClientSession.getTableColumns(splitInternal.getTable().getTiTableInfo());
     TiTimestamp timestamp =
         getOptionalVersion()
             .orElseGet(() -> getOptionalTimestamp().orElseGet(splitInternal::getTimestamp));
