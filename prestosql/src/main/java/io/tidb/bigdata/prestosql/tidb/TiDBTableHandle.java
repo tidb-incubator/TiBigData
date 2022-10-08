@@ -57,4 +57,9 @@ public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
   public String getTableName() {
     return getInternal().getTableName();
   }
+
+  @JsonProperty
+  public String getTiTableInfoBase64String() {
+    return getInternal().getTiTableInfoBase64String();
+  }
 }
