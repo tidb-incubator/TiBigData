@@ -466,9 +466,11 @@ public class TiDBCatalog extends AbstractCatalog {
     return getClientSession().queryIndexCount(databaseName, tableName, indexName);
   }
 
+  // Only use it for testing
   public RowIDAllocator createRowIDAllocator(
       String databaseName, String tableName, long step, RowIDAllocatorType allocatorType) {
-    return getClientSession().createRowIdAllocator(databaseName, tableName, step, allocatorType);
+    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
+    return getClientSession().createRowIdAllocator(databaseName, tiTableInfo, step, allocatorType);
   }
 
   private ClientSession getClientSession() {
