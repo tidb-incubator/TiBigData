@@ -29,6 +29,7 @@ import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -172,13 +173,10 @@ public class MapReduceTest {
   @Test
   public void testReadRecords() throws Exception {
     ClientSession clientSession = getSingleConnection();
-    TableHandleInternal tableHandleInternal =
-        new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
+    TiTableInfo tiTableInfo = clientSession.getTableMust(DATABASE_NAME, TABLE_NAME);
+    TableHandleInternal tableHandleInternal = new TableHandleInternal(DATABASE_NAME, tiTableInfo);
     List<SplitInternal> splitInternals = clientSession.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals =
-        clientSession
-            .getTableColumns(tableHandleInternal)
-            .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    List<ColumnHandleInternal> columnHandleInternals = ClientSession.getTableColumns(tiTableInfo);
 
     for (SplitInternal splitInternal : splitInternals) {
       List<ColumnHandleInternal> columns =

@@ -24,6 +24,7 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
@@ -63,7 +64,8 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
 
   private ResultSetMetaData resultSetMetaData;
 
-  public TiDBInputFormat() {}
+  public TiDBInputFormat() {
+  }
 
   /**
    * {@inheritDoc}
@@ -101,17 +103,16 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
 
     String tableName = dbConf.getInputTableName();
 
-    // check database and table
-    clientSession.getTableMust(databaseName, tableName);
+    TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
     this.tableHandleInternal =
-        new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName);
+        new TableHandleInternal(databaseName, tiTableInfo);
 
     String[] fieldNames =
         Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
 
     if (1 == fieldNames.length && "*".equals(fieldNames[0])) {
-      this.columnHandleInternals = clientSession.getTableColumnsMust(databaseName, tableName);
+      this.columnHandleInternals = ClientSession.getTableColumns(tiTableInfo);
       fieldNames =
           columnHandleInternals.stream()
               .map(ColumnHandleInternal::getName)
@@ -119,10 +120,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
               .toArray(new String[columnHandleInternals.size()]);
       dbConf.setInputFieldNames(fieldNames);
     } else {
-      this.columnHandleInternals =
-          clientSession
-              .getTableColumns(tableHandleInternal, Arrays.asList(fieldNames))
-              .orElseThrow(() -> new IllegalStateException("Can not get columns"));
+      this.columnHandleInternals = ClientSession.getTableColumns(tiTableInfo, fieldNames);
     }
 
     conf.setStrings(
@@ -165,13 +163,13 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
   /**
    * Initializes the map-part of the job with the appropriate input settings.
    *
-   * @param job The map-reduce job
+   * @param job        The map-reduce job
    * @param inputClass the class object implementing TiDBWritable, which is the Java object holding
-   *     tuple fields.
-   * @param tableName The table to read data from
+   *                   tuple fields.
+   * @param tableName  The table to read data from
    * @param fieldNames The field names in the table
-   * @param limit the limit of per mapper read record
-   * @param snapshot snapshot time
+   * @param limit      the limit of per mapper read record
+   * @param snapshot   snapshot time
    * @see #setInput(Job, Class, String, String[], java.lang.Integer, String)
    */
   public static void setInput(
@@ -185,7 +183,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
     dbConf.setInputClass(inputClass);
     dbConf.setInputTableName(tableName);
     if (null == fieldNames || 0 == fieldNames.length) {
-      dbConf.setInputFieldNames(new String[] {"*"});
+      dbConf.setInputFieldNames(new String[]{"*"});
     } else {
       dbConf.setInputFieldNames(fieldNames);
     }

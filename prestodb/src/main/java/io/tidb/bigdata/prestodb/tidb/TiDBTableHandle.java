@@ -31,8 +31,9 @@ public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
   public TiDBTableHandle(
       @JsonProperty("connectorId") String connectorId,
       @JsonProperty("schemaName") String schemaName,
-      @JsonProperty("tableName") String tableName) {
-    super(new TableHandleInternal(connectorId, schemaName, tableName));
+      @JsonProperty("tiTableInfoBase64String") String tiTableInfoBase64String) {
+    super(new TableHandleInternal(connectorId, schemaName,
+        TableHandleInternal.decodeTiTableInfo(tiTableInfoBase64String)));
   }
 
   TiDBTableHandle(TableHandleInternal internal) {

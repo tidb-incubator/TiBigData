@@ -33,7 +33,8 @@ public class TiDBInputSplit extends FileSplit {
   private Path path;
   private List<SplitInternal> splitInternals;
 
-  public TiDBInputSplit() {}
+  public TiDBInputSplit() {
+  }
 
   public TiDBInputSplit(Path path, List<SplitInternal> splitInternals) {
     this.path = path;
@@ -66,7 +67,7 @@ public class TiDBInputSplit extends FileSplit {
     for (int i = 0; i < splitInternals.size(); i++) {
       SplitInternal splitInternal = splitInternals.get(i);
       dataOutput.writeUTF(splitInternal.getTable().getSchemaName());
-      dataOutput.writeUTF(splitInternal.getTable().getTiTableInfoBase64StringMust());
+      dataOutput.writeUTF(splitInternal.getTable().getTiTableInfoBase64String());
       dataOutput.writeUTF(splitInternal.getStartKey());
       dataOutput.writeUTF(splitInternal.getEndKey());
       dataOutput.writeLong(splitInternal.getTimestamp().getPhysical());

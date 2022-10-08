@@ -18,6 +18,7 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -34,7 +35,8 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
   public static final String[] EMPTY_STRING_ARRAY = new String[0];
 
-  public TiDBInputSplit() {}
+  public TiDBInputSplit() {
+  }
 
   public TiDBInputSplit(List<SplitInternal> splitInternals) {
     this.splitInternals = splitInternals;
@@ -59,7 +61,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
     dataOutput.writeInt(splitInternals.size());
     for (SplitInternal splitInternal : splitInternals) {
       dataOutput.writeUTF(splitInternal.getTable().getSchemaName());
-      dataOutput.writeUTF(splitInternal.getTable().getTableName());
+      dataOutput.writeUTF(splitInternal.getTable().getTiTableInfoBase64String());
       dataOutput.writeUTF(splitInternal.getStartKey());
       dataOutput.writeUTF(splitInternal.getEndKey());
       dataOutput.writeLong(splitInternal.getTimestamp().getPhysical());
@@ -73,7 +75,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
     List<SplitInternal> splitInternalList = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       String databaseName = dataInput.readUTF();
-      String tableName = dataInput.readUTF();
+      TiTableInfo tiTableInfo = TableHandleInternal.decodeTiTableInfo(dataInput.readUTF());
       String startKey = dataInput.readUTF();
       String endKey = dataInput.readUTF();
       long physicalTimestamp = dataInput.readLong();
@@ -81,7 +83,7 @@ public class TiDBInputSplit extends InputSplit implements Writable {
 
       SplitInternal splitInternal =
           new SplitInternal(
-              new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName),
+              new TableHandleInternal(databaseName, tiTableInfo),
               startKey,
               endKey,
               new TiTimestamp(physicalTimestamp, logicalTimestamp));

@@ -30,6 +30,7 @@ import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -52,7 +53,7 @@ import org.tikv.common.meta.TiTimestamp;
 
 public class SnapshotSource
     implements Source<RowData, TiDBSourceSplit, TiDBSourceSplitEnumState>,
-        ResultTypeQueryable<RowData> {
+    ResultTypeQueryable<RowData> {
 
   private final String databaseName;
   private final String tableName;
@@ -79,24 +80,17 @@ public class SnapshotSource
     this.expression = expression;
     this.limit = limit;
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
+      TiTableInfo tiTableInfo = session.getTableMust(databaseName, tableName);
       this.columns =
-          session
-              .getTableColumns(databaseName, tableName, schema.getPhysicalFieldNamesWithoutMeta())
-              .orElseThrow(
-                  () ->
-                      new NullPointerException(
-                          "Could not get columns for TiDB table:"
-                              + databaseName
-                              + "."
-                              + tableName));
+          ClientSession
+              .getTableColumns(tiTableInfo, schema.getPhysicalFieldNamesWithoutMeta());
       this.timestamp =
           getOptionalVersion()
               .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
       TableHandleInternal tableHandleInternal =
-          new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
-      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
+          new TableHandleInternal(this.databaseName, tiTableInfo);
       this.splits =
-          splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
+          session.getSplits(tableHandleInternal, timestamp).stream()
               .map(TiDBSourceSplit::new)
               .collect(Collectors.toList());
       this.semantic =

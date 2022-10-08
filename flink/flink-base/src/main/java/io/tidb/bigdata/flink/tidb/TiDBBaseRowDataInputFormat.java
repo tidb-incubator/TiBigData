@@ -31,6 +31,7 @@ import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -40,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -117,15 +117,11 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
     final TiTimestamp splitSnapshotVersion;
     // get split
     try (ClientSession splitSession = ClientSession.create(new ClientConfig(properties))) {
-      // check exist
-      splitSession.getTableMust(databaseName, tableName);
+      TiTableInfo tiTableInfo = splitSession.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
-          new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
+          new TableHandleInternal(this.databaseName, tiTableInfo);
       this.splits = splitSession.getSplits(tableHandleInternal);
-      columns =
-          splitSession
-              .getTableColumns(tableHandleInternal)
-              .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+      columns = ClientSession.getTableColumns(tiTableInfo);
       IntStream.range(0, columns.size())
           .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
       splitSnapshotVersion = splitSession.getSnapshotVersion();

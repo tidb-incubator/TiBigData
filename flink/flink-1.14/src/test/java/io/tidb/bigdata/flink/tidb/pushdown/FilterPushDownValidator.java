@@ -127,9 +127,10 @@ public class FilterPushDownValidator extends ExternalResource {
 
   private List<Row> scanRows(String database, String table, Optional<Expression> expression) {
     List<Row> rows = new ArrayList<>();
+    TiTableInfo tiTableInfo = clientSession.getTableMust(database, table);
     List<SplitInternal> splits =
-        clientSession.getSplits(new TableHandleInternal("", database, table));
-    List<ColumnHandleInternal> columns = clientSession.getTableColumnsMust(database, table);
+        clientSession.getSplits(new TableHandleInternal(database, tiTableInfo));
+    List<ColumnHandleInternal> columns = ClientSession.getTableColumns(tiTableInfo);
     for (SplitInternal split : splits) {
       RecordCursorInternal cursor =
           RecordSetInternal.builder(clientSession, ImmutableList.of(split), columns)

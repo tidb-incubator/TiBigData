@@ -194,7 +194,7 @@ public final class ClientSession implements AutoCloseable {
     return schemaNames.stream().collect(toImmutableMap(identity(), this::getTableNames));
   }
 
-  private List<ColumnHandleInternal> selectColumns(
+  private static List<ColumnHandleInternal> selectColumns(
       List<ColumnHandleInternal> allColumns, Stream<String> columns) {
     final Map<String, ColumnHandleInternal> columnsMap =
         allColumns.stream()
@@ -214,50 +214,24 @@ public final class ClientSession implements AutoCloseable {
         .collect(toImmutableList());
   }
 
-  private Optional<List<ColumnHandleInternal>> getTableColumns(
-      String schema, String tableName, boolean showRowId) {
-    return getTable(schema, tableName, showRowId).map(ClientSession::getTableColumns);
+  public static List<ColumnHandleInternal> getTableColumns(
+      TiTableInfo table, Stream<String> columns) {
+    return selectColumns(getTableColumns(table), columns);
   }
 
-  public Optional<List<ColumnHandleInternal>> getTableColumns(String schema, String tableName) {
-    return getTableColumns(schema, tableName, false);
+  public static List<ColumnHandleInternal> getTableColumns(
+      TiTableInfo table, List<String> columns) {
+    if (columns.size() == 0) {
+      throw new IllegalArgumentException("Columns can not be empty");
+    }
+    return selectColumns(getTableColumns(table), columns.stream());
   }
 
-  private Optional<List<ColumnHandleInternal>> getTableColumns(
-      String schema, String tableName, Stream<String> columns) {
-    List<String> columnList = columns.collect(Collectors.toList());
-    boolean showRowId =
-        columnList.stream().anyMatch(column -> column.equalsIgnoreCase(TIDB_ROW_ID_COLUMN_NAME));
-    return getTableColumns(schema, tableName, showRowId)
-        .map(r -> selectColumns(r, columnList.stream()));
-  }
-
-  public Optional<List<ColumnHandleInternal>> getTableColumns(
-      String schema, String tableName, List<String> columns) {
-    return getTableColumns(schema, tableName, columns.stream());
-  }
-
-  public Optional<List<ColumnHandleInternal>> getTableColumns(
-      String schema, String tableName, String[] columns) {
-    return getTableColumns(schema, tableName, Arrays.stream(columns));
-  }
-
-  public Optional<List<ColumnHandleInternal>> getTableColumns(TableHandleInternal tableHandle) {
-    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), false);
-  }
-
-  public Optional<List<ColumnHandleInternal>> getTableColumns(
-      TableHandleInternal tableHandle, List<String> columns) {
-    return getTableColumns(tableHandle.getSchemaName(), tableHandle.getTableName(), columns);
-  }
-
-  public List<ColumnHandleInternal> getTableColumnsMust(
-      String schema, String tableName, boolean showRowId) {
-    return getTableColumns(getTableMust(schema, tableName, showRowId));
-  }
-
-  public List<ColumnHandleInternal> getTableColumnsMust(String schema, String tableName) {
-    return getTableColumnsMust(schema, tableName, false);
+  public static List<ColumnHandleInternal> getTableColumns(TiTableInfo table, String[] columns) {
+    if (columns.length == 0) {
+      throw new IllegalArgumentException("Columns can not be empty");
+    }
+    return selectColumns(getTableColumns(table), Arrays.stream(columns));
   }
 
   private List<RangeSplitter.RegionTask> getRangeRegionTasks(
@@ -274,11 +248,7 @@ public final class ClientSession implements AutoCloseable {
   }
 
   private List<RangeSplitter.RegionTask> getTableRegionTasks(TableHandleInternal tableHandle) {
-    TiTableInfo tiTableInfo =
-        tableHandle
-            .getTiTableInfo()
-            .orElseGet(
-                () -> getTableMust(tableHandle.getSchemaName(), tableHandle.getTableName(), false));
+    TiTableInfo tiTableInfo = tableHandle.getTiTableInfo();
     List<Long> ids =
         tiTableInfo.isPartitionEnabled()
             ? tiTableInfo.getPartitionInfo().getDefs().stream()
@@ -314,15 +284,16 @@ public final class ClientSession implements AutoCloseable {
     boolean showRowId =
         columns.stream().anyMatch(column -> column.equalsIgnoreCase(TIDB_ROW_ID_COLUMN_NAME));
     TiTableInfo tableInfo =
-        table
-            .getTiTableInfo()
-            .orElseGet(() -> getTableMust(table.getSchemaName(), table.getTableName(), showRowId));
+        showRowId
+            ? getTableMust(table.getSchemaName(), table.getTableName(), true)
+            : table.getTiTableInfo();
     if (columns.isEmpty()) {
-      columns = ImmutableList.of(tableInfo.getColumns().get(0).getName());
+      throw new IllegalArgumentException("Columns can not be empty");
     }
     return TiDAGRequest.Builder.newBuilder()
         .setFullTableScan(tableInfo)
         .addRequiredCols(columns)
+        // add a default ts, and we should overwrite it in next step
         .setStartTs(session.getTimestamp());
   }
 
@@ -539,9 +510,8 @@ public final class ClientSession implements AutoCloseable {
   }
 
   public RowIDAllocator createRowIdAllocator(
-      String databaseName, String tableName, long step, RowIDAllocatorType type) {
+      String databaseName, TiTableInfo table, long step, RowIDAllocatorType type) {
     long dbId = catalog.getDatabase(databaseName).getId();
-    TiTableInfo table = getTableMust(databaseName, tableName);
     long shardBits = 0;
     boolean isUnsigned = false;
     switch (type) {

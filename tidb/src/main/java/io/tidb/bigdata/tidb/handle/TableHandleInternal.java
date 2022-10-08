@@ -29,7 +29,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Base64;
 import java.util.Objects;
-import java.util.Optional;
 
 public class TableHandleInternal implements Serializable {
 
@@ -42,14 +41,6 @@ public class TableHandleInternal implements Serializable {
   // Otherwise, ignore this field.
   // TODO: use it in Presto/Trino API.
   private final String tiTableInfoBase64String;
-
-  public TableHandleInternal(String connectorId, String schemaName, String tableName) {
-    this.connectorId = requireNonNull(connectorId, "connectorId is null");
-    this.schemaName = requireNonNull(schemaName, "schemaName is null");
-    this.tableName = requireNonNull(tableName, "tableName is null");
-    this.tiTableInfoBase64String = null;
-    this.tiTableInfo = null;
-  }
 
   public TableHandleInternal(String connectorId, String schemaName, TiTableInfo tiTableInfo) {
     this.connectorId = requireNonNull(connectorId, "connectorId is null");
@@ -79,20 +70,12 @@ public class TableHandleInternal implements Serializable {
     return tableName;
   }
 
-  public Optional<TiTableInfo> getTiTableInfo() {
-    return Optional.ofNullable(tiTableInfo);
+  public TiTableInfo getTiTableInfo() {
+    return tiTableInfo;
   }
 
-  public TiTableInfo getTiTableInfoMust() {
-    return Objects.requireNonNull(tiTableInfo, "tiTableInfo is null");
-  }
-
-  public Optional<String> getTiTableInfoBase64String() {
-    return Optional.ofNullable(tiTableInfoBase64String);
-  }
-
-  public String getTiTableInfoBase64StringMust() {
-    return Objects.requireNonNull(tiTableInfoBase64String, "tiTableInfoBase64String is null");
+  public String getTiTableInfoBase64String() {
+    return tiTableInfoBase64String;
   }
 
   @Override

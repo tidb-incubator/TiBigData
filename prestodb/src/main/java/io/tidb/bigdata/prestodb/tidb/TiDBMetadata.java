@@ -112,19 +112,21 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     checkArgument(
         tableHandle.getConnectorId().equals(getInternal().getConnectorId()),
         "tableHandle is not for this connector");
-    return getTableMetadata(tableHandle.getSchemaName(), tableHandle.getTableName());
+    return getTableMetadata(tableHandle);
   }
 
-  private ConnectorTableMetadata getTableMetadata(String schemaName, String tableName) {
+  private ConnectorTableMetadata getTableMetadata(TiDBTableHandle tableHandle) {
+    String schemaName = tableHandle.getSchemaName();
+    String tableName = tableHandle.getTableName();
     return new ConnectorTableMetadata(
         new SchemaTableName(schemaName, tableName),
-        getTableMetadataStream(schemaName, tableName).collect(toImmutableList()),
+        getTableMetadataStream(tableHandle).collect(toImmutableList()),
         ImmutableMap.of(
             PRIMARY_KEY, join(",", getInternal().getPrimaryKeyColumns(schemaName, tableName)),
             UNIQUE_KEY,
-                getInternal().getUniqueKeyColumns(schemaName, tableName).stream()
-                    .flatMap(List::stream)
-                    .collect(Collectors.joining(","))));
+            getInternal().getUniqueKeyColumns(schemaName, tableName).stream()
+                .flatMap(List::stream)
+                .collect(Collectors.joining(","))));
   }
 
   @Override
@@ -149,9 +151,9 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     return tables;
   }
 
-  private Stream<TiDBColumnHandle> getColumnHandlesStream(String schemaName, String tableName) {
+  private Stream<TiDBColumnHandle> getColumnHandlesStream(TiDBTableHandle tableHandle) {
     return getInternal()
-        .getColumnHandles(schemaName, tableName)
+        .getColumnHandles(tableHandle.getInternal())
         .map(
             handles ->
                 handles.stream()
@@ -164,8 +166,8 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
   public Map<String, ColumnHandle> getColumnHandles(
       ConnectorSession session, ConnectorTableHandle tableHandle) {
     TiDBTableHandle handle = (TiDBTableHandle) tableHandle;
-    return getColumnHandlesStream(handle.getSchemaName(), handle.getTableName())
-        .collect(toImmutableMap(TiDBColumnHandle::getName, identity()));
+    return getColumnHandlesStream(handle).collect(
+        toImmutableMap(TiDBColumnHandle::getName, identity()));
   }
 
   @Override
@@ -174,17 +176,14 @@ public final class TiDBMetadata extends Wrapper<MetadataInternal> implements Con
     requireNonNull(prefix, "prefix is null");
     ImmutableMap.Builder<SchemaTableName, List<ColumnMetadata>> columns = ImmutableMap.builder();
     for (SchemaTableName tableName : listTables(session, prefix)) {
-      columns.put(tableName, getTableMetadataStream(tableName).collect(toImmutableList()));
+      TiDBTableHandle tableHandle = getTableHandle(session, tableName);
+      columns.put(tableName, getTableMetadataStream(tableHandle).collect(toImmutableList()));
     }
     return columns.build();
   }
 
-  private Stream<ColumnMetadata> getTableMetadataStream(SchemaTableName schemaTable) {
-    return getTableMetadataStream(schemaTable.getSchemaName(), schemaTable.getTableName());
-  }
-
-  private Stream<ColumnMetadata> getTableMetadataStream(String schemaName, String tableName) {
-    return getColumnHandlesStream(schemaName, tableName).map(TiDBMetadata::createColumnMetadata);
+  private Stream<ColumnMetadata> getTableMetadataStream(TiDBTableHandle tableHandle) {
+    return getColumnHandlesStream(tableHandle).map(TiDBMetadata::createColumnMetadata);
   }
 
   @Override
