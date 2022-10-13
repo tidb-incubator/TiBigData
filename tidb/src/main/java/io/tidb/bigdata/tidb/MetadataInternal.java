@@ -44,7 +44,7 @@ public final class MetadataInternal {
   public Optional<TableHandleInternal> getTableHandle(String schemaName, String tableName) {
     return session
         .getTable(schemaName, tableName)
-        .map(t -> new TableHandleInternal(connectorId, schemaName, tableName));
+        .map(tiTableInfo -> new TableHandleInternal(connectorId, schemaName, tiTableInfo));
   }
 
   public Map<String, List<String>> listTables(Optional<String> schemaName) {
@@ -52,12 +52,7 @@ public final class MetadataInternal {
   }
 
   public Optional<List<ColumnHandleInternal>> getColumnHandles(TableHandleInternal tableHandle) {
-    return session.getTableColumns(tableHandle);
-  }
-
-  public Optional<List<ColumnHandleInternal>> getColumnHandles(
-      String schemaName, String tableName) {
-    return session.getTableColumns(schemaName, tableName);
+    return Optional.of(ClientSession.getTableColumns(tableHandle.getTiTableInfo()));
   }
 
   public boolean tableExists(String databaseName, String tableName) {

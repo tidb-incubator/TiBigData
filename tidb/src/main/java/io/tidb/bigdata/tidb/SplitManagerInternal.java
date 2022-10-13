@@ -18,11 +18,8 @@ package io.tidb.bigdata.tidb;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
 import static java.util.Objects.requireNonNull;
-import static java.util.stream.Collectors.toCollection;
 
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,21 +36,11 @@ public final class SplitManagerInternal {
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle) {
-    return getSplits(tableHandle, session.getSnapshotVersion());
+    return session.getSplits(tableHandle);
   }
 
   public List<SplitInternal> getSplits(TableHandleInternal tableHandle, TiTimestamp timestamp) {
-    List<SplitInternal> splits =
-        session.getTableRanges(tableHandle).stream()
-            .map(range -> new SplitInternal(tableHandle, range, timestamp))
-            .collect(toCollection(ArrayList::new));
-    Collections.shuffle(splits);
-    LOG.info(
-        "The number of split for table `{}`.`{}` is {}",
-        tableHandle.getSchemaName(),
-        tableHandle.getTableName(),
-        splits.size());
-    return Collections.unmodifiableList(splits);
+    return session.getSplits(tableHandle, timestamp);
   }
 
   @Override

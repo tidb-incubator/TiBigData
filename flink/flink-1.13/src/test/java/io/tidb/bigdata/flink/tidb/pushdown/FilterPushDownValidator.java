@@ -27,7 +27,6 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
@@ -128,14 +127,19 @@ public class FilterPushDownValidator extends ExternalResource {
 
   private List<Row> scanRows(String database, String table, Optional<Expression> expression) {
     List<Row> rows = new ArrayList<>();
+    TiTableInfo tiTableInfo = clientSession.getTableMust(database, table);
     List<SplitInternal> splits =
-        new SplitManagerInternal(clientSession)
-            .getSplits(new TableHandleInternal("", database, table));
-    List<ColumnHandleInternal> columns = clientSession.getTableColumnsMust(database, table);
+        clientSession.getSplits(new TableHandleInternal(database, tiTableInfo));
+    List<ColumnHandleInternal> columns = ClientSession.getTableColumns(tiTableInfo);
     for (SplitInternal split : splits) {
-      RecordSetInternal recordSetInternal =
-          new RecordSetInternal(clientSession, split, columns, expression, Optional.empty());
-      RecordCursorInternal cursor = recordSetInternal.cursor();
+      RecordCursorInternal cursor =
+          RecordSetInternal.builder(clientSession, ImmutableList.of(split), columns)
+              .withExpression(expression.orElse(null))
+              .withTimestamp(null)
+              .withLimit(null)
+              .withQueryHandle(false)
+              .build()
+              .cursor();
       while (cursor.advanceNextPosition()) {
         rows.add(cursor.getRow());
       }

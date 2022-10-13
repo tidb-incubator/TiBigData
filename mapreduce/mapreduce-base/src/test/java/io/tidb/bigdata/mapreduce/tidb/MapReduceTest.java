@@ -18,6 +18,7 @@ package io.tidb.bigdata.mapreduce.tidb;
 
 import static java.lang.String.format;
 
+import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.mapreduce.tidb.example.TiDBMapreduceDemo;
 import io.tidb.bigdata.test.ConfigUtils;
 import io.tidb.bigdata.test.IntegrationTest;
@@ -26,9 +27,9 @@ import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -41,8 +42,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.hadoop.mapreduce.Job;
@@ -173,27 +172,24 @@ public class MapReduceTest {
   @Test
   public void testReadRecords() throws Exception {
     ClientSession clientSession = getSingleConnection();
-    TableHandleInternal tableHandleInternal =
-        new TableHandleInternal(UUID.randomUUID().toString(), DATABASE_NAME, TABLE_NAME);
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
-    List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
-    List<ColumnHandleInternal> columnHandleInternals =
-        clientSession
-            .getTableColumns(tableHandleInternal)
-            .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+    TiTableInfo tiTableInfo = clientSession.getTableMust(DATABASE_NAME, TABLE_NAME);
+    TableHandleInternal tableHandleInternal = new TableHandleInternal(DATABASE_NAME, tiTableInfo);
+    List<SplitInternal> splitInternals = clientSession.getSplits(tableHandleInternal);
+    List<ColumnHandleInternal> columnHandleInternals = ClientSession.getTableColumns(tiTableInfo);
 
     for (SplitInternal splitInternal : splitInternals) {
-      RecordSetInternal recordSetInternal =
-          new RecordSetInternal(
-              clientSession,
-              splitInternal,
-              Arrays.stream(IntStream.range(0, 29).toArray())
-                  .mapToObj(columnHandleInternals::get)
-                  .collect(Collectors.toList()),
-              Optional.empty(),
-              Optional.empty(),
-              Optional.of(Integer.MAX_VALUE));
-      RecordCursorInternal cursor = recordSetInternal.cursor();
+      List<ColumnHandleInternal> columns =
+          Arrays.stream(IntStream.range(0, 29).toArray())
+              .mapToObj(columnHandleInternals::get)
+              .collect(Collectors.toList());
+      RecordCursorInternal cursor =
+          RecordSetInternal.builder(clientSession, ImmutableList.of(splitInternal), columns)
+              .withExpression(null)
+              .withTimestamp(null)
+              .withLimit(null)
+              .withQueryHandle(false)
+              .build()
+              .cursor();
       cursor.advanceNextPosition();
       TiDBResultSet tiDBResultSet = new TiDBResultSet(cursor.fieldCount(), null);
       for (int index = 0; index < cursor.fieldCount(); index++) {

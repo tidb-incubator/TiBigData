@@ -44,6 +44,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
   private final TiTimestamp startTimestamp;
   private final RowIDAllocatorType type;
   private final boolean isUnsigned;
+  private final TiTableInfo tableInfo;
   private Long start;
   private ThreadPoolExecutor threadPool;
   private FutureTask<Long> futureTask;
@@ -75,6 +76,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
     this.type = getType();
     this.shardBits = getShardBits();
     this.isUnsigned = isUnsigned();
+    this.tableInfo = session.getTableMust(databaseName, tableName);
     initRandomGenerator();
   }
 
@@ -127,7 +129,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
 
   private void checkUpdate() {
     if (start == null) {
-      start = session.createRowIdAllocator(databaseName, tableName, step, type).getStart();
+      start = session.createRowIdAllocator(databaseName, tableInfo, step, type).getStart();
       updateCurrentShard();
     }
     if (index == (int) (step * 0.8)) {
@@ -145,7 +147,7 @@ public class DynamicRowIDAllocator implements AutoCloseable {
        */
       futureTask =
           new FutureTask<>(
-              () -> session.createRowIdAllocator(databaseName, tableName, step, type).getStart());
+              () -> session.createRowIdAllocator(databaseName, tableInfo, step, type).getStart());
       threadPool.submit(futureTask);
     }
     if (index >= step) {

@@ -18,6 +18,7 @@ package io.tidb.bigdata.flink.connector.source.split;
 
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -58,9 +59,8 @@ public class TiDBSourceSplit implements Serializable, SourceSplit {
 
   public void serialize(DataOutputStream dos) throws IOException {
     TableHandleInternal table = split.getTable();
-    dos.writeUTF(table.getConnectorId());
     dos.writeUTF(table.getSchemaName());
-    dos.writeUTF(table.getTableName());
+    dos.writeUTF(table.getTiTableInfoBase64String());
     dos.writeUTF(split.getStartKey());
     dos.writeUTF(split.getEndKey());
     TiTimestamp timestamp = split.getTimestamp();
@@ -69,16 +69,15 @@ public class TiDBSourceSplit implements Serializable, SourceSplit {
   }
 
   public static TiDBSourceSplit deserialize(DataInputStream dis) throws IOException {
-    String connectorId = dis.readUTF();
     String schemaName = dis.readUTF();
-    String tableName = dis.readUTF();
+    TiTableInfo tiTableInfo = TableHandleInternal.decodeTiTableInfo(dis.readUTF());
     String startKey = dis.readUTF();
     String endKey = dis.readUTF();
     long physical = dis.readLong();
     long logical = dis.readLong();
     return new TiDBSourceSplit(
         new SplitInternal(
-            new TableHandleInternal(connectorId, schemaName, tableName),
+            new TableHandleInternal(schemaName, tiTableInfo),
             startKey,
             endKey,
             new TiTimestamp(physical, logical)));
