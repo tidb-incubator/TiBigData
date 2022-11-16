@@ -104,7 +104,8 @@ public class RowColumn {
       final boolean whereHandle,
       final int type,
       final long flags) {
-    this.name = name;
+    // Because tidb is case-insensitive, we use lowercase to compatible with streaming and batch
+    this.name = name.toLowerCase();
     this.whereHandle = whereHandle;
     this.type = Type.findByCode(type);
     this.value = value;
