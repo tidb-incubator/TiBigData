@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.formats.common.TimestampFormat;
@@ -335,5 +336,15 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
         // failOnMissingField
         ignoreParseErrors,
         timestampFormat);
+  }
+
+  @VisibleForTesting
+  protected JsonRowDataDeserializationSchema getJsonDeserializer() {
+    return jsonDeserializer;
+  }
+
+  @VisibleForTesting
+  protected List<String> getFieldNames() {
+    return fieldNames;
   }
 }
