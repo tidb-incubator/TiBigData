@@ -50,8 +50,6 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
 
   private static final long serialVersionUID = 1L;
 
-  private static final String FIELD_OLD = "old";
-  private static final String FIELD_DATA = "data";
   private static final String OP_INSERT = "INSERT";
   private static final String OP_UPDATE = "UPDATE";
   private static final String OP_DELETE = "DELETE";
@@ -137,13 +135,23 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
         return;
       }
       TiTimestamp timestamp = new TiTimestamp(tso >> 18, tso & 0x3FFFF);
+      String schema =
+          Optional.ofNullable(root.get(DATABASE))
+              .map(JsonNode::asText)
+              .map(String::toLowerCase)
+              .orElse(null);
       if (schemas != null && schemas.size() > 0) {
-        if (!schemas.contains(root.get(DATABASE).asText())) {
+        if (!schemas.contains(schema)) {
           return;
         }
       }
+      String table =
+          Optional.ofNullable(root.get(TABLE))
+              .map(JsonNode::asText)
+              .map(String::toLowerCase)
+              .orElse(null);
       if (tables != null && tables.size() > 0) {
-        if (!tables.contains(root.get(TABLE).asText())) {
+        if (!tables.contains(table)) {
           return;
         }
       }
@@ -172,7 +180,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
           // the underlying JSON deserialization schema always produce GenericRowData.
           GenericRowData after = (GenericRowData) data.getRow(i, fieldCount);
           GenericRowData before = (GenericRowData) old.getRow(i, fieldCount);
-          final JsonNode oldField = root.get(FIELD_OLD);
+          final JsonNode oldField = root.get(OLD);
           for (int f = 0; f < fieldCount; f++) {
             if (before.isNullAt(f) && oldField.findValue(fieldNames.get(f)) == null) {
               // fields in "old" (before) means the fields are changed
