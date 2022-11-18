@@ -47,6 +47,7 @@ import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 import org.tikv.common.meta.TiTimestamp;
 
+// TODO: use canal native format, rather than json format, to support canal-json/canal-protobuf
 public final class TiDBCanalJsonDeserializationSchema implements DeserializationSchema<RowData> {
 
   private static final long serialVersionUID = 1L;
@@ -246,6 +247,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
       Iterator<String> names = jsonNode.fieldNames();
       while (names.hasNext()) {
         String name = names.next();
+        // change this fields, we only update JsonDeserializer for a limited number of times
         Integer index = nameIndex.remove(name.toLowerCase());
         if (index == null) {
           continue;
