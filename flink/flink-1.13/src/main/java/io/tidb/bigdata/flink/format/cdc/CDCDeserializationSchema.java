@@ -23,6 +23,7 @@ import io.tidb.bigdata.cdc.RowChangedValue;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -82,6 +83,9 @@ public abstract class CDCDeserializationSchema
   }
 
   private boolean acceptSchemaAndTable(String schema, String table) {
+    // Because tidb is case-insensitive, we use lowercase to compatible with streaming and batch
+    schema = Optional.ofNullable(schema).map(String::toLowerCase).orElse(null);
+    table = Optional.ofNullable(table).map(String::toLowerCase).orElse(null);
     if (schemas != null && !schemas.contains(schema)) {
       return false;
     }
