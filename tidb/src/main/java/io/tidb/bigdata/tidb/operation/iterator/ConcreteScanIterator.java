@@ -70,7 +70,8 @@ public class ConcreteScanIterator extends ScanIterator {
         builder.getRegionManager().getRegionStorePairByKey(current.getKey());
     TiRegion region = pair.first;
     TiStore store = pair.second;
-    BackOffer backOffer = ConcreteBackOffer.newGetBackOff();
+    BackOffer backOffer =
+        ConcreteBackOffer.newGetBackOff(builder.getRegionManager().getPDClient().getClusterId());
     try (RegionStoreClient client = builder.build(region, store)) {
       return client.get(backOffer, current.getKey(), version);
     } catch (Exception e) {
