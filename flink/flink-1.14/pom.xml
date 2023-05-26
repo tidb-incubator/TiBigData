@@ -16,6 +16,7 @@
 
   <properties>
     <dep.flink.version>1.14.0</dep.flink.version>
+    <dep.canal.protocol.version>1.1.6</dep.canal.protocol.version>
   </properties>
 
   <dependencies>
@@ -42,6 +43,26 @@
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
       <version>${dep.apache.commons.version}</version>
+    </dependency>
+    <!-- canal -->
+    <dependency>
+      <groupId>com.alibaba.otter</groupId>
+      <artifactId>canal.protocol</artifactId>
+      <version>${dep.canal.protocol.version}</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>fastjson</artifactId>
+          <groupId>com.alibaba</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>logback-classic</artifactId>
+          <groupId>ch.qos.logback</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>logback-core</artifactId>
+          <groupId>ch.qos.logback</groupId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <!-- flink -->
     <dependency>
@@ -149,6 +170,14 @@
                 <relocation>
                   <pattern>oshi</pattern>
                   <shadedPattern>io.tidb.bigdata.telemetry.shade.oshi</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.protobuf</pattern>
+                  <shadedPattern>io.tidb.bigdata.shade.com.google.protobuf</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.alibaba.otter.canal</pattern>
+                  <shadedPattern>io.tidb.bigdata.shade.com.alibaba.otter.canal</shadedPattern>
                 </relocation>
               </relocations>
               <finalName>${project.artifactId}-${project.version}</finalName>
