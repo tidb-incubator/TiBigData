@@ -20,19 +20,27 @@ import static java.lang.String.format;
 
 import io.tidb.bigdata.flink.connector.source.TiDBMetadata;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import org.apache.flink.annotation.VisibleForTesting;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.formats.json.JsonRowDataDeserializationSchema;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.table.api.DataTypes;
+import org.apache.flink.table.api.DataTypes.Field;
 import org.apache.flink.table.data.ArrayData;
 import org.apache.flink.table.data.GenericRowData;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.RowType;
 import org.apache.flink.types.RowKind;
@@ -43,7 +51,6 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
 
   private static final long serialVersionUID = 1L;
 
-  private static final String FIELD_OLD = "old";
   private static final String OP_INSERT = "INSERT";
   private static final String OP_UPDATE = "UPDATE";
   private static final String OP_DELETE = "DELETE";
@@ -55,7 +62,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
   private final long startTs;
 
   /** The deserializer to deserialize Canal JSON data. */
-  private final JsonRowDataDeserializationSchema jsonDeserializer;
+  private JsonRowDataDeserializationSchema jsonDeserializer;
 
   /** {@link TypeInformation} of the produced {@link RowData} (physical + meta data). */
   private final TypeInformation<RowData> producedTypeInfo;
@@ -66,8 +73,14 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
   /** Names of fields. */
   private final List<String> fieldNames;
 
+  private final List<DataType> fieldTypes;
+
   /** Number of fields. */
   private final int fieldCount;
+
+  private final TimestampFormat timestampFormat;
+
+  private final Map<String, Integer> nameIndex;
 
   public TiDBCanalJsonDeserializationSchema(
       DataType physicalDataType,
@@ -82,21 +95,20 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     this.tables = tables;
     this.metadata = metadata;
     this.startTs = startTs;
-    final RowType jsonRowType = createJsonRowType(physicalDataType);
+    this.timestampFormat = timestampFormat;
     this.jsonDeserializer =
-        new JsonRowDataDeserializationSchema(
-            jsonRowType,
-            // the result type is never used, so it's fine to pass in the produced type info
-            producedTypeInfo,
-            false, // ignoreParseErrors already contains the functionality of
-            // failOnMissingField
-            ignoreParseErrors,
-            timestampFormat);
+        createJsonRowDataDeserializationSchema(
+            physicalDataType, producedTypeInfo, ignoreParseErrors, timestampFormat);
     this.producedTypeInfo = producedTypeInfo;
     this.ignoreParseErrors = ignoreParseErrors;
     final RowType physicalRowType = ((RowType) physicalDataType.getLogicalType());
-    this.fieldNames = physicalRowType.getFieldNames();
+    this.fieldNames = new ArrayList<>(physicalRowType.getFieldNames());
+    this.fieldTypes = new ArrayList<>(physicalDataType.getChildren());
     this.fieldCount = physicalRowType.getFieldCount();
+    this.nameIndex =
+        IntStream.range(0, fieldNames.size())
+            .boxed()
+            .collect(Collectors.toMap(fieldNames::get, i -> i));
   }
 
   // ------------------------------------------------------------------------------------------
@@ -124,15 +136,30 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
         return;
       }
       TiTimestamp timestamp = new TiTimestamp(tso >> 18, tso & 0x3FFFF);
+      String schema =
+          Optional.ofNullable(root.get(DATABASE))
+              .map(JsonNode::asText)
+              .map(String::toLowerCase)
+              .orElse(null);
       if (schemas != null && schemas.size() > 0) {
-        if (!schemas.contains(root.get(DATABASE).asText())) {
+        if (!schemas.contains(schema)) {
           return;
         }
       }
+      String table =
+          Optional.ofNullable(root.get(TABLE))
+              .map(JsonNode::asText)
+              .map(String::toLowerCase)
+              .orElse(null);
       if (tables != null && tables.size() > 0) {
-        if (!tables.contains(root.get(TABLE).asText())) {
+        if (!tables.contains(table)) {
           return;
         }
+      }
+
+      if (nameIndex.size() != 0) {
+        Optional.ofNullable(root.get(DATA)).ifPresent(this::updateJsonDeserializerOrNot);
+        Optional.ofNullable(root.get(OLD)).ifPresent(this::updateJsonDeserializerOrNot);
       }
 
       final GenericRowData row = (GenericRowData) jsonDeserializer.convertToRowData(root);
@@ -154,7 +181,7 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
           // the underlying JSON deserialization schema always produce GenericRowData.
           GenericRowData after = (GenericRowData) data.getRow(i, fieldCount);
           GenericRowData before = (GenericRowData) old.getRow(i, fieldCount);
-          final JsonNode oldField = root.get(FIELD_OLD);
+          final JsonNode oldField = root.get(OLD);
           for (int f = 0; f < fieldCount; f++) {
             if (before.isNullAt(f) && oldField.findValue(fieldNames.get(f)) == null) {
               // fields in "old" (before) means the fields are changed
@@ -196,6 +223,45 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     }
   }
 
+  // Create a new json deserializer using cdc column names
+  private void updateJsonDeserializer() {
+    Field[] fields =
+        IntStream.range(0, fieldNames.size())
+            .boxed()
+            .map(i -> DataTypes.FIELD(fieldNames.get(i), fieldTypes.get(i)))
+            .toArray(Field[]::new);
+    DataType dataType = DataTypes.ROW(fields);
+    this.jsonDeserializer =
+        createJsonRowDataDeserializationSchema(
+            dataType, producedTypeInfo, ignoreParseErrors, timestampFormat);
+  }
+
+  private void updateJsonDeserializerOrNot(JsonNode data) {
+    if (nameIndex.size() == 0) {
+      return;
+    }
+    Iterator<JsonNode> iterator = data.elements();
+    while (iterator.hasNext()) {
+      JsonNode jsonNode = iterator.next();
+      Iterator<String> names = jsonNode.fieldNames();
+      while (names.hasNext()) {
+        String name = names.next();
+        Integer index = nameIndex.remove(name.toLowerCase());
+        if (index == null) {
+          continue;
+        }
+        String lowercaseName = fieldNames.get(index);
+        if (!lowercaseName.equals(name)) {
+          fieldNames.set(index, name);
+          updateJsonDeserializer();
+          if (nameIndex.size() == 0) {
+            return;
+          }
+        }
+      }
+    }
+  }
+
   private void emitRow(GenericRowData physicalRow, Collector<RowData> out, TiTimestamp timestamp) {
     if (metadata.length == 0) {
       out.collect(physicalRow);
@@ -209,12 +275,16 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
     }
     while (i <= physicalRow.getArity() + metadata.length - 1) {
       CDCMetadata cdcMetadata = metadata[i - physicalRow.getArity()];
-      TiDBMetadata tiDBMetadata =
-          cdcMetadata
-              .toTiDBMetadata()
-              .orElseThrow(
-                  () -> new IllegalArgumentException("Unsupported metadata: " + cdcMetadata));
-      rowData.setField(i, tiDBMetadata.extract(timestamp));
+      if (cdcMetadata == CDCMetadata.SOURCE_EVENT) {
+        rowData.setField(i, StringData.fromString(CDCMetadata.STREAMING));
+      } else {
+        TiDBMetadata tiDBMetadata =
+            cdcMetadata
+                .toTiDBMetadata()
+                .orElseThrow(
+                    () -> new IllegalArgumentException("Unsupported metadata: " + cdcMetadata));
+        rowData.setField(i, tiDBMetadata.extract(timestamp));
+      }
       i++;
     }
     out.collect(rowData);
@@ -250,5 +320,31 @@ public final class TiDBCanalJsonDeserializationSchema implements Deserialization
             DataTypes.FIELD(TABLE, DataTypes.STRING()),
             DataTypes.FIELD(DATABASE, DataTypes.STRING()));
     return (RowType) root.getLogicalType();
+  }
+
+  private JsonRowDataDeserializationSchema createJsonRowDataDeserializationSchema(
+      DataType physicalDataType,
+      TypeInformation<RowData> producedTypeInfo,
+      boolean ignoreParseErrors,
+      TimestampFormat timestampFormat) {
+    final RowType jsonRowType = createJsonRowType(physicalDataType);
+    return new JsonRowDataDeserializationSchema(
+        jsonRowType,
+        // the result type is never used, so it's fine to pass in the produced type info
+        producedTypeInfo,
+        false, // ignoreParseErrors already contains the functionality of
+        // failOnMissingField
+        ignoreParseErrors,
+        timestampFormat);
+  }
+
+  @VisibleForTesting
+  protected JsonRowDataDeserializationSchema getJsonDeserializer() {
+    return jsonDeserializer;
+  }
+
+  @VisibleForTesting
+  protected List<String> getFieldNames() {
+    return fieldNames;
   }
 }

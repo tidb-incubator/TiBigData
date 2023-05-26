@@ -46,6 +46,7 @@ public enum TiDBMetadata {
       tiTimestamp -> StringData.fromString("SNAPSHOT"),
       CDCMetadata.SOURCE_EVENT);
 
+  public static final String SNAPSHOT = "SNAPSHOT";
   private static final TiDBMetadata[] EMPTY = new TiDBMetadata[0];
 
   private final String key;

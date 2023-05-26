@@ -111,17 +111,18 @@ public class TiDBRecordReader<T extends TiDBWritable> extends RecordReader<LongW
       key = new LongWritable();
     }
     if (cursor == null) {
-      RecordSetInternal recordSetInternal =
-          new RecordSetInternal(
-              clientSession,
-              splitInternals,
-              Arrays.stream(projectedFieldIndexes)
-                  .mapToObj(columnHandleInternals::get)
-                  .collect(Collectors.toList()),
-              Optional.empty(),
-              Optional.ofNullable(timestamp),
-              Optional.of(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit));
-      cursor = recordSetInternal.cursor();
+      List<ColumnHandleInternal> columns =
+          Arrays.stream(projectedFieldIndexes)
+              .mapToObj(columnHandleInternals::get)
+              .collect(Collectors.toList());
+      cursor =
+          RecordSetInternal.builder(clientSession, splitInternals, columns)
+              .withExpression(null)
+              .withTimestamp(timestamp)
+              .withLimit(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit)
+              .withQueryHandle(false)
+              .build()
+              .cursor();
     }
     if (!cursor.advanceNextPosition()) {
       return false;

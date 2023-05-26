@@ -52,7 +52,7 @@ public class TiDBCatalogFactory implements CatalogFactory {
         TiDBOptions.DNS_SEARCH,
         TiDBOptions.SNAPSHOT_TIMESTAMP,
         TiDBOptions.SNAPSHOT_VERSION,
-        TiDBOptions.SOURCE_FAILOVER);
+        TiDBOptions.SOURCE_SEMANTIC);
   }
 
   @Override

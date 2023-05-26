@@ -36,7 +36,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -93,18 +92,14 @@ public class RangeColumnPartitionPruner
     String colRefName = predicate.getColumnRef().getName();
     List<Expression> partExprs = partExprsPerColumnRef.get(colRefName);
     Set<Integer> partDefs = new HashSet<>();
+    // For filter with column which is not partitioned columns, we can't locate the physical table,
+    // so we just return all partitionDefs.
     if (partExprs == null) {
-      switch (parent.getCompType()) {
-        case OR:
-          return partDefs;
-        case AND:
-          for (int i = 0; i < partsSize; i++) {
-            partDefs.add(i);
-          }
-          return partDefs;
+      for (int i = 0; i < partsSize; i++) {
+        partDefs.add(i);
       }
+      return partDefs;
     }
-    Objects.requireNonNull(partExprs, "partition expression cannot be null");
     for (int i = 0; i < partsSize; i++) {
       PrunedPartitionBuilder rangeBuilder =
           new PrunedPartitionBuilder(ImmutableSet.of(predicate.getColumnRef()));

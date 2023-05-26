@@ -22,15 +22,16 @@ import static io.tidb.bigdata.flink.tidb.TypeUtils.getObjectWithDataType;
 import static io.tidb.bigdata.flink.tidb.TypeUtils.toRowDataType;
 import static java.lang.String.format;
 
+import com.google.common.collect.ImmutableList;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.RecordCursorInternal;
 import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
@@ -40,7 +41,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -117,16 +117,11 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
     final TiTimestamp splitSnapshotVersion;
     // get split
     try (ClientSession splitSession = ClientSession.create(new ClientConfig(properties))) {
-      // check exist
-      splitSession.getTableMust(databaseName, tableName);
+      TiTableInfo tiTableInfo = splitSession.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
-          new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
-      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(splitSession);
-      this.splits = splitManagerInternal.getSplits(tableHandleInternal);
-      columns =
-          splitSession
-              .getTableColumns(tableHandleInternal)
-              .orElseThrow(() -> new NullPointerException("columnHandleInternals is null"));
+          new TableHandleInternal(this.databaseName, tiTableInfo);
+      this.splits = splitSession.getSplits(tableHandleInternal);
+      columns = ClientSession.getTableColumns(tiTableInfo);
       IntStream.range(0, columns.size())
           .forEach(i -> nameAndIndex.put(columns.get(i).getName(), i));
       splitSnapshotVersion = splitSession.getSnapshotVersion();
@@ -216,17 +211,18 @@ public abstract class TiDBBaseRowDataInputFormat extends RichInputFormat<RowData
       return;
     }
     SplitInternal splitInternal = splits.get(split.getSplitNumber());
-    RecordSetInternal recordSetInternal =
-        new RecordSetInternal(
-            clientSession,
-            splitInternal,
-            Arrays.stream(projectedFieldIndexes)
-                .mapToObj(columnHandleInternals::get)
-                .collect(Collectors.toList()),
-            Optional.ofNullable(expression),
-            Optional.ofNullable(timestamp),
-            limit > Integer.MAX_VALUE ? Optional.empty() : Optional.of((int) limit));
-    cursor = recordSetInternal.cursor();
+    List<ColumnHandleInternal> columns =
+        Arrays.stream(projectedFieldIndexes)
+            .mapToObj(columnHandleInternals::get)
+            .collect(Collectors.toList());
+    cursor =
+        RecordSetInternal.builder(clientSession, ImmutableList.of(splitInternal), columns)
+            .withExpression(expression)
+            .withTimestamp(timestamp)
+            .withLimit(limit > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) limit)
+            .withQueryHandle(false)
+            .build()
+            .cursor();
   }
 
   @Override

@@ -20,7 +20,7 @@ import static com.google.common.base.MoreObjects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
-import io.tidb.bigdata.tidb.operation.iterator.CoprocessorIterator;
+import io.tidb.bigdata.tidb.handle.Handle;
 import io.tidb.bigdata.tidb.row.Row;
 import io.tidb.bigdata.tidb.types.DataType;
 import java.math.BigDecimal;
@@ -28,15 +28,19 @@ import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Supplier;
+import org.tikv.common.util.Pair;
 
 public class RecordCursorInternal {
 
   private final List<ColumnHandleInternal> columnHandles;
-  private final CoprocessorIterator<Row> iterator;
+  private final RowHandleIterator iterator;
   private Row row = null;
+  private Supplier<Handle> handle = null;
 
   public RecordCursorInternal(
-      List<ColumnHandleInternal> columnHandles, CoprocessorIterator<Row> iterator) {
+      List<ColumnHandleInternal> columnHandles, RowHandleIterator iterator) {
     this.columnHandles = columnHandles;
     this.iterator = iterator;
   }
@@ -48,7 +52,9 @@ public class RecordCursorInternal {
 
   public boolean advanceNextPosition() {
     if (iterator.hasNext()) {
-      row = iterator.next();
+      Pair<Row, Supplier<Handle>> pair = iterator.next();
+      row = pair.first;
+      handle = pair.second;
       return true;
     } else {
       return false;
@@ -123,6 +129,10 @@ public class RecordCursorInternal {
 
   public Row getRow() {
     return row;
+  }
+
+  public Optional<Handle> getHandle() {
+    return Optional.ofNullable(handle.get());
   }
 
   public int fieldCount() {

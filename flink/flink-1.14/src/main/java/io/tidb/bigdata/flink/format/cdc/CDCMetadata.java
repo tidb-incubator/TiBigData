@@ -46,6 +46,7 @@ public enum CDCMetadata {
   SOURCE_EVENT(
       "source_event", DataTypes.STRING().notNull(), event -> StringData.fromString("STREAMING"));
 
+  public static final String STREAMING = "STREAMING";
   private static final CDCMetadata[] EMPTY = new CDCMetadata[0];
   private static final JacksonFactory flinkShadedJackson =
       JacksonFactory.create("org.apache.flink.shaded.jackson2");

@@ -16,8 +16,8 @@
 
 package io.tidb.bigdata.flink.connector.source.reader;
 
-import static io.tidb.bigdata.flink.connector.source.TiDBOptions.SOURCE_FAILOVER;
-
+import com.google.common.collect.ImmutableList;
+import io.tidb.bigdata.flink.connector.source.SnapshotSourceSemantic;
 import io.tidb.bigdata.flink.connector.source.TiDBSchemaAdapter;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
 import io.tidb.bigdata.tidb.ClientConfig;
@@ -27,13 +27,15 @@ import io.tidb.bigdata.tidb.RecordSetInternal;
 import io.tidb.bigdata.tidb.SplitInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
+import io.tidb.bigdata.tidb.handle.Handle;
+import io.tidb.bigdata.tidb.key.RowKey;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import org.apache.flink.api.connector.source.ReaderOutput;
@@ -51,7 +53,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   private final TiDBSchemaAdapter schema;
   private final Expression expression;
   private final Integer limit;
-  private final FailoverType failoverType;
+  private final SnapshotSourceSemantic semantic;
 
   private ClientSession session;
 
@@ -59,7 +61,6 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   private CompletableFuture<Void> availability;
 
   private TiDBSourceSplit currentSplit;
-  private long offset;
   private RecordCursorInternal cursor;
 
   private boolean noMoreSplits;
@@ -70,7 +71,8 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
       List<ColumnHandleInternal> columns,
       TiDBSchemaAdapter schema,
       Expression expression,
-      Integer limit) {
+      Integer limit,
+      SnapshotSourceSemantic semantic) {
     this.context = context;
     this.properties = properties;
     this.columns = columns;
@@ -79,9 +81,7 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     this.limit = limit;
     this.availability = new CompletableFuture<>();
     this.remainingSplits = new ArrayDeque<>();
-    this.failoverType =
-        FailoverType.fromString(
-            properties.getOrDefault(SOURCE_FAILOVER.key(), SOURCE_FAILOVER.defaultValue()));
+    this.semantic = semantic;
   }
 
   @Override
@@ -111,22 +111,14 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     currentSplit = remainingSplits.poll();
     if (currentSplit != null) {
       SplitInternal split = currentSplit.getSplit();
-      offset = currentSplit.getOffset();
       cursor =
-          new RecordSetInternal(
-                  session,
-                  split,
-                  columns,
-                  Optional.ofNullable(expression),
-                  Optional.ofNullable(split.getTimestamp()),
-                  Optional.ofNullable(limit))
+          RecordSetInternal.builder(session, ImmutableList.of(split), columns)
+              .withExpression(expression)
+              .withTimestamp(split.getTimestamp())
+              .withLimit(limit)
+              .withQueryHandle(semantic == SnapshotSourceSemantic.EXACTLY_ONCE)
+              .build()
               .cursor();
-      // skip offset
-      for (int i = 0; i < offset; i++) {
-        if (!cursor.advanceNextPosition()) {
-          break;
-        }
-      }
       return InputStatus.MORE_AVAILABLE;
     } else if (noMoreSplits) {
       return InputStatus.END_OF_INPUT;
@@ -142,13 +134,32 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
   @Override
   public InputStatus pollNext(ReaderOutput<RowData> output) throws Exception {
     if (cursor != null && cursor.advanceNextPosition()) {
-      offset++;
       output.collect(schema.convert(currentSplit.getSplit().getTimestamp(), cursor));
       return InputStatus.MORE_AVAILABLE;
     } else {
       finishSplit();
     }
     return tryMoveToNextSplit();
+  }
+
+  private TiDBSourceSplit createNewSplit() {
+    SplitInternal splitInternal = currentSplit.getSplit();
+    Handle handle =
+        cursor.getHandle().orElseThrow(() -> new IllegalStateException("Can not get handle"));
+    TiTableInfo tiTableInfo =
+        session.getTableMust(
+            splitInternal.getTable().getSchemaName(), splitInternal.getTable().getTableName());
+    RowKey rowKey = RowKey.toRowKey(tiTableInfo.getId(), handle);
+    // get next row key
+    byte[] bytes = rowKey.nextPrefix().getBytes();
+    String startKey = Base64.getEncoder().encodeToString(bytes);
+    SplitInternal newSplitInternal =
+        new SplitInternal(
+            splitInternal.getTable(),
+            startKey,
+            splitInternal.getEndKey(),
+            splitInternal.getTimestamp());
+    return new TiDBSourceSplit(newSplitInternal);
   }
 
   @Override
@@ -159,10 +170,12 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     final ArrayList<TiDBSourceSplit> splits = new ArrayList<>(1 + remainingSplits.size());
     if (currentSplit != null) {
       // Add back to snapshot
-      if (failoverType == FailoverType.SPLIT) {
+      if (semantic == SnapshotSourceSemantic.AT_LEAST_ONCE
+          || cursor == null
+          || cursor.getRow() == null) {
         splits.add(currentSplit);
       } else {
-        splits.add(new TiDBSourceSplit(currentSplit.getSplit(), offset));
+        splits.add(createNewSplit());
       }
     }
     splits.addAll(remainingSplits);
@@ -195,18 +208,6 @@ public class TiDBSourceReader implements SourceReader<RowData, TiDBSourceSplit> 
     }
     if (session != null) {
       session.close();
-    }
-  }
-
-  public enum FailoverType {
-    SPLIT,
-    OFFSET;
-
-    public static FailoverType fromString(String s) {
-      return Arrays.stream(values())
-          .filter(value -> value.name().equalsIgnoreCase(s))
-          .findFirst()
-          .orElseThrow(() -> new IllegalArgumentException("Unsupported failover type: " + s));
     }
   }
 }

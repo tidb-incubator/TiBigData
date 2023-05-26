@@ -32,7 +32,11 @@ import io.tidb.bigdata.tidb.parser.MySqlParser.ExpressionContext;
 import io.tidb.bigdata.tidb.parser.MySqlParser.FunctionNameBaseContext;
 import io.tidb.bigdata.tidb.types.IntegerType;
 import io.tidb.bigdata.tidb.types.RealType;
+import io.tidb.bigdata.tidb.types.StringType;
+import java.nio.charset.StandardCharsets;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.tikv.common.exception.UnsupportedSyntaxException;
 
 // AstBuilder will convert ParseTree into Ast Node.
@@ -40,7 +44,7 @@ import org.tikv.common.exception.UnsupportedSyntaxException;
 // which is used by partition pruning.
 public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
 
-  private TiTableInfo tableInfo;
+  protected TiTableInfo tableInfo;
 
   public AstBuilder() {}
 
@@ -60,7 +64,7 @@ public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
     throw new UnsupportedSyntaxException(ctx.getParent().toString() + ": it is not supported");
   }
 
-  private Expression createColRef(String id) {
+  protected Expression createColRef(String id) {
     if (tableInfo != null) {
       return ColumnRef.create(id, tableInfo);
     } else {
@@ -93,7 +97,7 @@ public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
     return visitUid(ctx.uid());
   }
 
-  private Expression parseIntOrLongOrDec(String val) {
+  protected Expression parseIntOrLongOrDec(String val) {
     try {
       return Constant.create(Integer.parseInt(val), IntegerType.INT);
     } catch (Exception e) {
@@ -149,6 +153,23 @@ public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
   }
 
   @Override
+  public Expression visitHexadecimalLiteral(MySqlParser.HexadecimalLiteralContext ctx) {
+    if (ctx.HEXADECIMAL_LITERAL() != null) {
+      String text = ctx.HEXADECIMAL_LITERAL().getSymbol().getText();
+      text = text.substring(2, text.length() - 1);
+      try {
+        // use String to compare with hexadecimal literal.
+        return Constant.create(
+            new String(Hex.decodeHex(text), StandardCharsets.UTF_8), StringType.VARCHAR);
+      } catch (DecoderException e) {
+        throw new RuntimeException(e);
+      }
+    } else {
+      throw new UnsupportedSyntaxException(ctx.toString() + " is not supported yet");
+    }
+  }
+
+  @Override
   public Expression visitConstant(MySqlParser.ConstantContext ctx) {
     if (ctx.nullLiteral != null) {
       return Constant.create(null);
@@ -169,6 +190,10 @@ public class AstBuilder extends MySqlParserBaseVisitor<Expression> {
     if (ctx.REAL_LITERAL() != null) {
       return Constant.create(
           Doubles.tryParse(ctx.REAL_LITERAL().getSymbol().getText()), RealType.REAL);
+    }
+
+    if (ctx.hexadecimalLiteral() != null) {
+      return visitHexadecimalLiteral(ctx.hexadecimalLiteral());
     }
 
     throw new UnsupportedSyntaxException(ctx.toString() + "not supported constant");

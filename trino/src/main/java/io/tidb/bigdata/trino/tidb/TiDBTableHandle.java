@@ -31,8 +31,12 @@ public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
   public TiDBTableHandle(
       @JsonProperty("connectorId") String connectorId,
       @JsonProperty("schemaName") String schemaName,
-      @JsonProperty("tableName") String tableName) {
-    super(new TableHandleInternal(connectorId, schemaName, tableName));
+      @JsonProperty("tiTableInfoBase64String") String tiTableInfoBase64String) {
+    super(
+        new TableHandleInternal(
+            connectorId,
+            schemaName,
+            TableHandleInternal.decodeTiTableInfo(tiTableInfoBase64String)));
   }
 
   TiDBTableHandle(TableHandleInternal internal) {
@@ -52,5 +56,10 @@ public final class TiDBTableHandle extends Wrapper<TableHandleInternal>
   @JsonProperty
   public String getTableName() {
     return getInternal().getTableName();
+  }
+
+  @JsonProperty
+  public String getTiTableInfoBase64String() {
+    return getInternal().getTiTableInfoBase64String();
   }
 }

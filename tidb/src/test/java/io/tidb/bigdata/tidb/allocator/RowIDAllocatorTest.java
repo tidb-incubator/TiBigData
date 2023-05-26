@@ -21,6 +21,7 @@ import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.ConfigUtils;
 import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -91,12 +92,14 @@ public class RowIDAllocatorTest {
       session.sqlUpdate(
           String.format("DROP TABLE IF EXISTS `%s`.`%s`", databaseName, tableName),
           String.format(createTableSql, databaseName, tableName));
+
+      TiTableInfo tiTableInfo = session.getTableMust(databaseName, tableName);
       List<FutureTask<RowIDAllocator>> tasks = new ArrayList<>();
 
       for (int i = 1; i <= count; i++) {
         FutureTask<RowIDAllocator> task =
             new FutureTask<>(
-                () -> session.createRowIdAllocator(databaseName, tableName, step, type));
+                () -> session.createRowIdAllocator(databaseName, tiTableInfo, step, type));
         tasks.add(task);
         executorService.submit(task);
       }

@@ -16,6 +16,8 @@
 
 package io.tidb.bigdata.flink.connector.source;
 
+import static io.tidb.bigdata.flink.connector.TiDBOptions.SOURCE_SEMANTIC;
+
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumState;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumStateSerializer;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
@@ -24,16 +26,16 @@ import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplit;
 import io.tidb.bigdata.flink.connector.source.split.TiDBSourceSplitSerializer;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.expression.Expression;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
@@ -61,6 +63,7 @@ public class SnapshotSource
   private final List<ColumnHandleInternal> columns;
   private final TiTimestamp timestamp;
   private final List<TiDBSourceSplit> splits;
+  private final SnapshotSourceSemantic semantic;
 
   public SnapshotSource(
       String databaseName,
@@ -76,27 +79,22 @@ public class SnapshotSource
     this.expression = expression;
     this.limit = limit;
     try (ClientSession session = ClientSession.create(new ClientConfig(properties))) {
+      TiTableInfo tiTableInfo = session.getTableMust(databaseName, tableName);
       this.columns =
-          session
-              .getTableColumns(databaseName, tableName, schema.getPhysicalFieldNamesWithoutMeta())
-              .orElseThrow(
-                  () ->
-                      new NullPointerException(
-                          "Could not get columns for TiDB table:"
-                              + databaseName
-                              + "."
-                              + tableName));
+          ClientSession.getTableColumns(
+              tiTableInfo, Arrays.asList(schema.getPhysicalFieldNamesWithoutMeta()));
       this.timestamp =
           getOptionalVersion()
               .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
-      session.getTableMust(databaseName, tableName);
       TableHandleInternal tableHandleInternal =
-          new TableHandleInternal(UUID.randomUUID().toString(), this.databaseName, this.tableName);
-      SplitManagerInternal splitManagerInternal = new SplitManagerInternal(session);
+          new TableHandleInternal(this.databaseName, tiTableInfo);
       this.splits =
-          splitManagerInternal.getSplits(tableHandleInternal, timestamp).stream()
-              .map(split -> new TiDBSourceSplit(split, 0))
+          session.getSplits(tableHandleInternal, timestamp).stream()
+              .map(TiDBSourceSplit::new)
               .collect(Collectors.toList());
+      this.semantic =
+          SnapshotSourceSemantic.fromString(
+              properties.getOrDefault(SOURCE_SEMANTIC.key(), SOURCE_SEMANTIC.defaultValue()));
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
@@ -110,7 +108,7 @@ public class SnapshotSource
   @Override
   public SourceReader<RowData, TiDBSourceSplit> createReader(SourceReaderContext context)
       throws Exception {
-    return new TiDBSourceReader(context, properties, columns, schema, expression, limit);
+    return new TiDBSourceReader(context, properties, columns, schema, expression, limit, semantic);
   }
 
   @Override
@@ -148,7 +146,7 @@ public class SnapshotSource
 
   private Optional<TiTimestamp> getOptionalVersion() {
     return Optional.ofNullable(properties.get(ClientConfig.SNAPSHOT_VERSION))
-        .filter(StringUtils::isNoneEmpty)
+        .filter(StringUtils::isNotEmpty)
         .map(Long::parseUnsignedLong)
         .map(tso -> new TiTimestamp(tso >> 18, tso & 0x3FFFF));
   }

@@ -96,7 +96,15 @@ public class Catalog implements AutoCloseable {
     return getTable(database, tableName);
   }
 
-  public TiTableInfo getTable(TiDBInfo database, String tableName) {
+  public TiTableInfo getTable(String dbName, String tableName, boolean showRowId) {
+    TiDBInfo database = getDatabase(dbName);
+    if (database == null) {
+      return null;
+    }
+    return getTable(database, tableName, showRowId);
+  }
+
+  public TiTableInfo getTable(TiDBInfo database, String tableName, boolean showRowId) {
     Objects.requireNonNull(database, "database is null");
     Objects.requireNonNull(tableName, "tableName is null");
     reloadCache(true);
@@ -106,6 +114,10 @@ public class Catalog implements AutoCloseable {
     } else {
       return table;
     }
+  }
+
+  public TiTableInfo getTable(TiDBInfo database, String tableName) {
+    return getTable(database, tableName, showRowId);
   }
 
   @VisibleForTesting

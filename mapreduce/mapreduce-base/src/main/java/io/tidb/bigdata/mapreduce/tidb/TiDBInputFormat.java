@@ -22,16 +22,15 @@ import static io.tidb.bigdata.mapreduce.tidb.TiDBConfiguration.REGIONS_PER_SPLIT
 import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.ColumnHandleInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -73,8 +72,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
    */
   @Override
   public List<InputSplit> getSplits(JobContext job) {
-    SplitManagerInternal splitManagerInternal = new SplitManagerInternal(clientSession);
-    List<SplitInternal> splitInternals = splitManagerInternal.getSplits(tableHandleInternal);
+    List<SplitInternal> splitInternals = clientSession.getSplits(tableHandleInternal);
     int regionsPerSplit =
         job.getConfiguration().getInt(REGIONS_PER_SPLIT, REGIONS_PER_SPLIT_DEFAULT);
     return Lists.partition(splitInternals, regionsPerSplit).stream()
@@ -103,17 +101,15 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
 
     String tableName = dbConf.getInputTableName();
 
-    // check database and table
-    clientSession.getTableMust(databaseName, tableName);
+    TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
 
-    this.tableHandleInternal =
-        new TableHandleInternal(UUID.randomUUID().toString(), databaseName, tableName);
+    this.tableHandleInternal = new TableHandleInternal(databaseName, tiTableInfo);
 
     String[] fieldNames =
         Arrays.stream(dbConf.getInputFieldNames()).map(String::toLowerCase).toArray(String[]::new);
 
     if (1 == fieldNames.length && "*".equals(fieldNames[0])) {
-      this.columnHandleInternals = clientSession.getTableColumnsMust(databaseName, tableName);
+      this.columnHandleInternals = ClientSession.getTableColumns(tiTableInfo);
       fieldNames =
           columnHandleInternals.stream()
               .map(ColumnHandleInternal::getName)
@@ -122,9 +118,7 @@ public class TiDBInputFormat<T extends TiDBWritable> extends InputFormat<LongWri
       dbConf.setInputFieldNames(fieldNames);
     } else {
       this.columnHandleInternals =
-          clientSession
-              .getTableColumns(tableHandleInternal, Arrays.asList(fieldNames))
-              .orElseThrow(() -> new IllegalStateException("Can not get columns"));
+          ClientSession.getTableColumns(tiTableInfo, Arrays.asList(fieldNames));
     }
 
     conf.setStrings(

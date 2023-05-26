@@ -17,7 +17,6 @@
 package io.tidb.bigdata.hive;
 
 import static io.tidb.bigdata.hive.TiDBConstant.DATABASE_NAME;
-import static io.tidb.bigdata.hive.TiDBConstant.EMPTY_STRING;
 import static io.tidb.bigdata.hive.TiDBConstant.REGIONS_PER_SPLIT;
 import static io.tidb.bigdata.hive.TiDBConstant.TABLE_NAME;
 
@@ -25,8 +24,8 @@ import com.google.common.collect.Lists;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
 import io.tidb.bigdata.tidb.SplitInternal;
-import io.tidb.bigdata.tidb.SplitManagerInternal;
 import io.tidb.bigdata.tidb.handle.TableHandleInternal;
+import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -54,11 +53,11 @@ public class TiDBHiveInputFormat implements InputFormat<LongWritable, MapWritabl
           Objects.requireNonNull(jobConf.get(DATABASE_NAME), DATABASE_NAME + " can not be null");
       Integer regionNumPerSplit = jobConf.getInt(REGIONS_PER_SPLIT, 1);
 
-      TableHandleInternal tableHandle =
-          new TableHandleInternal(EMPTY_STRING, databaseName, tableName);
+      TiTableInfo tiTableInfo = clientSession.getTableMust(databaseName, tableName);
+      TableHandleInternal tableHandle = new TableHandleInternal(databaseName, tiTableInfo);
       Path path = FileInputFormat.getInputPaths(jobConf)[0];
 
-      List<SplitInternal> splits = new SplitManagerInternal(clientSession).getSplits(tableHandle);
+      List<SplitInternal> splits = clientSession.getSplits(tableHandle);
       List<List<SplitInternal>> splitPartition = Lists.partition(splits, regionNumPerSplit);
 
       return splitPartition.stream()

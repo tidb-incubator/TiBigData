@@ -27,6 +27,8 @@ import io.tidb.bigdata.flink.connector.utils.TiDBRowConverter;
 import io.tidb.bigdata.flink.telemetry.AsyncTelemetry;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.ClientSession;
+import io.tidb.bigdata.tidb.allocator.DynamicRowIDAllocator.RowIDAllocatorType;
+import io.tidb.bigdata.tidb.allocator.RowIDAllocator;
 import io.tidb.bigdata.tidb.meta.TiTableInfo;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -462,6 +464,13 @@ public class TiDBCatalog extends AbstractCatalog {
 
   public int queryIndexCount(String databaseName, String tableName, String indexName) {
     return getClientSession().queryIndexCount(databaseName, tableName, indexName);
+  }
+
+  // Only use it for testing
+  public RowIDAllocator createRowIDAllocator(
+      String databaseName, String tableName, long step, RowIDAllocatorType allocatorType) {
+    TiTableInfo tiTableInfo = getClientSession().getTableMust(databaseName, tableName);
+    return getClientSession().createRowIdAllocator(databaseName, tiTableInfo, step, allocatorType);
   }
 
   private ClientSession getClientSession() {

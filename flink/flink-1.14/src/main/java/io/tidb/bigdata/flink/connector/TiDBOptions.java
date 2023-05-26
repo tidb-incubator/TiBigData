@@ -28,6 +28,7 @@ import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_MA
 import static org.apache.flink.connector.jdbc.table.JdbcConnectorOptions.SINK_PARALLELISM;
 
 import com.google.common.collect.ImmutableSet;
+import io.tidb.bigdata.flink.connector.source.SnapshotSourceSemantic;
 import io.tidb.bigdata.tidb.ClientConfig;
 import java.util.Arrays;
 import java.util.Set;
@@ -135,9 +136,8 @@ public class TiDBOptions {
           .defaultValue(false)
           .withDescription("Whether enable delete RowKind");
 
-  // split or offset
-  public static final ConfigOption<String> SOURCE_FAILOVER =
-      optional("tidb.source.failover", "split");
+  public static final ConfigOption<String> SOURCE_SEMANTIC =
+      optional("tidb.source.semantic", SnapshotSourceSemantic.AT_LEAST_ONCE.getSemantic());
 
   public static final ConfigOption<String> STREAMING_SOURCE = optional("tidb.streaming.source");
 
@@ -223,7 +223,7 @@ public class TiDBOptions {
             ROW_ID_ALLOCATOR_STEP,
             IGNORE_AUTOINCREMENT_COLUMN_VALUE,
             DEDUPLICATE,
-            SOURCE_FAILOVER,
+            SOURCE_SEMANTIC,
             CLUSTER_TLS_ENABLE,
             CLUSTER_TLS_CA,
             CLUSTER_TLS_KEY,
