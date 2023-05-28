@@ -492,6 +492,17 @@ public final class ClientSession implements AutoCloseable {
     return session.getTimestamp();
   }
 
+  /**
+   * Most of the time, if the user does not explicitly specify a snapshot time, we don't need to
+   * fetch the latest snapshot. A "relatively recent" snapshot is sufficient, which is crucial for
+   * merging CDC data.
+   *
+   * @return Current version with zero logical time.
+   */
+  public TiTimestamp getApproximateSnapshotVersion() {
+    return new TiTimestamp(session.getTimestamp().getPhysical(), 0);
+  }
+
   public TiSession getTiSession() {
     return session;
   }

@@ -150,8 +150,13 @@ public class TiDBOptions {
   public static final String STREAMING_CODEC_JSON = "json";
   public static final String STREAMING_CODEC_CRAFT = "craft";
   public static final String STREAMING_CODEC_CANAL_JSON = "canal-json";
+  public static final String STREAMING_CODEC_CANAL_PROTOBUF = "canal-protobuf";
   public static final Set<String> VALID_STREAMING_CODECS =
-      ImmutableSet.of(STREAMING_CODEC_CRAFT, STREAMING_CODEC_JSON, STREAMING_CODEC_CANAL_JSON);
+      ImmutableSet.of(
+          STREAMING_CODEC_CRAFT,
+          STREAMING_CODEC_JSON,
+          STREAMING_CODEC_CANAL_JSON,
+          STREAMING_CODEC_CANAL_PROTOBUF);
 
   // Options for catalog
   public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS =
@@ -184,6 +189,12 @@ public class TiDBOptions {
   // 'tidb.metadata.included' = 'commit_timestamp=_commit_timestamp,commit_version=_commit_version'
   public static final String METADATA_INCLUDED = "tidb.metadata.included";
   public static final String METADATA_INCLUDED_ALL = "*";
+
+  // During the streaming phase, set a timestamp to avoid consuming expired data,
+  // with the default being one minute subtracted from the snapshot time.
+  // Additionally, we can set this value to less than or equal to 0 to disable this feature.
+  public static final String STARTING_OFFSETS_TS = "tidb.streaming.source.starting.offsets.ts";
+  public static final long MINUTE = 60 * 1000L;
 
   /**
    * see {@link org.apache.flink.connector.jdbc.table.JdbcConnectorOptions}
