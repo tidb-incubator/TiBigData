@@ -166,25 +166,26 @@ Keypoints
 
 In addition to supporting the configuration in [TiDB Batch Mode](./README.md), the streaming mode adds the following configuration:
 
-| Configuration                          | Default Value | Description                                                                                                                                       |
-|:---------------------------------------|:--------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
-| tidb.source.semantic                   | at-least-once | TiDB batch stage consumption semantics, which takes effect when the read data fails, optionally at-least-once and exactly-once.                   |
-| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later.          |
-| tidb.streaming.codec                   | craft         | TiDB's change log encoding method, currently supports json(called default in the lower version of tidb), craft, canal-json. See [Codec](#8-Codec) |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                              |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                       |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                    |
-| tidb.streaming.ignore-parse-errors     | false         | Whether to ignore exceptions in case of decoding failure                                                                                          |
-| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#9-TiDB-Metadata)                                                                                              |
-| tikv.sink.delete_enable                | false         | Whether enable delete in streaming, this config only works in `tidb.sink.impl=TIKV`                                                               |
+| Configuration                          | Default Value | Description                                                                                                                                                       |
+|:---------------------------------------|:--------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| tidb.source.semantic                   | at-least-once | TiDB batch stage consumption semantics, which takes effect when the read data fails, optionally at-least-once and exactly-once.                                   |
+| tidb.streaming.source                  | -             | The data source(messaging system) where TiDB's change logs are stored, currently only supports Kafka and Pulsar will be supported later.                          |
+| tidb.streaming.codec                   | craft         | TiDB's change log encoding method, currently supports json(called default in the lower version of tidb), craft, canal-json, canal-protobuf. See [Codec](#8-Codec) |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server address                                                                                                                                              |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                                                                       |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                                                                    |
+| tidb.streaming.ignore-parse-errors     | false         | Whether to ignore exceptions in case of decoding failure                                                                                                          |
+| tidb.metadata.included                 | -             | TiDB Metadata, see [TiDB Metadata](#9-TiDB-Metadata)                                                                                                              |
+| tikv.sink.delete_enable                | false         | Whether enable delete in streaming, this config only works in `tidb.sink.impl=TIKV`                                                                               |
 
 ## 8 Codec
 
-TiBigData supports several TiCDC encoding types, namely json(called default in the lower version of tidb), craft, and canal-json.
+TiBigData supports several TiCDC encoding types, namely json(called default in the lower version of tidb), craft, and canal-json, canal-protobuf.
 
 1. json is the default implementation of TiCDC and is highly readable;
 2. craft sacrifices readability, is fully binary encoded, has higher compression, and requires a high version of TiDB(5.x). Currently, craft is still incubating, but it is working properly;
-3. canal-json is compatible with canal and must be used with the TiDB extension field enabled to read `commitTs`. Lower versions of TiDB do not have `commitTs`, so it cannot be used.
+3. canal-json is the compatibility for the canal json format;
+4. canal-protobuf is the compatibility for the canal protobuf format;
 
 ## 9 TiDB Metadata
 

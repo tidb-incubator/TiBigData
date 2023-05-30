@@ -26,7 +26,9 @@ mvn com.coveo:fmt-maven-plugin:format
 
 **Compiling TiBigData requires git and downloading source code directly is not supported.**
 
-[Flink-TiDB-Connector](./flink/README.md)
+[Flink-TiDB-Connector(Batch)](./flink/README.md)
+
+[Flink-TiDB-Connector(Unified Batch & Streaming)](./flink/README_unified_batch_streaming.md)
 
 [PrestoSQL-TiDB-Connector](./prestosql/README.md)
 

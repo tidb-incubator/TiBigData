@@ -26,7 +26,9 @@ mvn com.coveo:fmt-maven-plugin:format
 
 **编译 TiBigData 需要 git， 直接下载源码编译暂不支持。**
 
-[TiDB 与 Flink 集成](./flink/README_zh_CN.md)
+[TiDB 与 Flink 集成（批处理）](./flink/README_zh_CN.md)
+
+[TiDB 与 Flink 集成（流批一体）](./flink/README_unified_batch_streaming_zh_CN.md)
 
 [TiDB 与 PrestoSQL 集成 ***- 已废弃***](./prestosql/README_zh_CN.md)
 
