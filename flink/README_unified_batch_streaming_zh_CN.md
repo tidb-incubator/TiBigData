@@ -168,25 +168,26 @@ DELETE FROM `test`.`source_table` WHERE id = 1 or id = 2;
 
 除了支持 [TiDB 批模式](./README_zh_CN.md) 中的配置外，流模式新增了以下配置：
 
-| Configuration                          | Default Value | Description                                                                                    |
-|:---------------------------------------|:--------------|:-----------------------------------------------------------------------------------------------|
-| tidb.source.semantic                   | at-least-once | TiDB 批阶段的消费语义，读取数据失败时才会生效，可选 at-least-once 与 exactly-once。                                     |
-| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar。                                             |
-| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json 三种格式，详细信息参考 [Codec](#8-Codec) |
-| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                |
-| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                    |
-| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                 |
-| tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                  |
-| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#9-TiDB-Metadata)                                             |
-| tidb.sink.delete_enable                | false         | 是否在流模式中开启删除，这个配置只有当 `tidb.sink.impl=TIKV` 时才会生效                                                |
+| Configuration                          | Default Value | Description                                                                                                   |
+|:---------------------------------------|:--------------|:--------------------------------------------------------------------------------------------------------------|
+| tidb.source.semantic                   | at-least-once | TiDB 批阶段的消费语义，读取数据失败时才会生效，可选 at-least-once 与 exactly-once。                                                    |
+| tidb.streaming.source                  | -             | TiDB 的变更日志存放的数据源（消息系统），当前只支持配置 Kafka，后续会支持 Pulsar。                                                            |
+| tidb.streaming.codec                   | craft         | TiDB 的变更日志选取的编码方式，当前支持 json(低版本 TiDB 叫 default)，craft，canal-json，canal-protobuf 四种格式，详细信息参考 [Codec](#8-Codec) |
+| tidb.streaming.kafka.bootstrap.servers | -             | Kafka server 地址                                                                                               |
+| tidb.streaming.kafka.topic             | -             | Kafka topic                                                                                                   |
+| tidb.streaming.kafka.group.id          | -             | Kafka group id                                                                                                |
+| tidb.streaming.ignore-parse-errors     | false         | 在解码失败时，是否忽略异常                                                                                                 |
+| tidb.metadata.included                 | -             | TiDB 元数据列，详细信息参考 [TiDB Metadata](#9-TiDB-Metadata)                                                            |
+| tidb.sink.delete_enable                | false         | 是否在流模式中开启删除，这个配置只有当 `tidb.sink.impl=TIKV` 时才会生效                                                               |
 
 ## 8 Codec
 
-TiBigData 支持多种 TiCDC 的编码类型，分别是 json(低版本 TiDB 叫 default)，craft，canal-json.
+TiBigData 支持多种 TiCDC 的编码类型，分别是 json(低版本 TiDB 叫 default)，craft，canal-json，canal-protobuf.
 
 1. json 是 TiCDC 的默认实现，具有很强的可读性；
 2. craft 牺牲了可读性，是完全二进制的编码方式，具有更高的压缩率，需要高版本 TiDB(5.x)，当前还在孵化中，但是已经能够正常使用；
-3. canal-json 是对 canal 的兼容，使用时必须开启 TiDB 扩展字段以读取 commitTs，低版本的 TiDB 没有这个字段，所以不能使用。
+3. canal-json 是对 canal json 格式的兼容；
+4. canal-protobuf 是对 canal protobuf 格式的兼容。
 
 ## 9 TiDB Metadata
 

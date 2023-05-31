@@ -37,7 +37,9 @@ jobs:
           kafka/bin/kafka-server-start.sh kafka/config/server.properties &
 
       - name: deploy ticdc
-        run:  /home/runner/.tiup/bin/tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
+        run:  |
+          /home/runner/.tiup/bin/tiup cdc server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
+          sleep 10
 
       - name: create cdc changefeed
         run: |

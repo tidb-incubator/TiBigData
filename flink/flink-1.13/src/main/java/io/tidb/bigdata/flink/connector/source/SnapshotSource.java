@@ -85,7 +85,8 @@ public class SnapshotSource
               tiTableInfo, Arrays.asList(schema.getPhysicalFieldNamesWithoutMeta()));
       this.timestamp =
           getOptionalVersion()
-              .orElseGet(() -> getOptionalTimestamp().orElseGet(session::getSnapshotVersion));
+              .orElseGet(
+                  () -> getOptionalTimestamp().orElseGet(session::getApproximateSnapshotVersion));
       TableHandleInternal tableHandleInternal =
           new TableHandleInternal(this.databaseName, tiTableInfo);
       this.splits =

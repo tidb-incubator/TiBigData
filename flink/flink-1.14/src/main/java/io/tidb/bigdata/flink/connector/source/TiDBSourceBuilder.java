@@ -20,6 +20,7 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.DATABASE_NAME;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.IGNORE_PARSE_ERRORS;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_CANAL_JSON;
+import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_CANAL_PROTOBUF;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_CRAFT;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_CODEC_JSON;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.STREAMING_SOURCE;
@@ -28,6 +29,7 @@ import static io.tidb.bigdata.flink.connector.TiDBOptions.TABLE_NAME;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.VALID_STREAMING_CODECS;
 import static io.tidb.bigdata.flink.connector.TiDBOptions.VALID_STREAMING_SOURCES;
 
+import io.tidb.bigdata.flink.connector.TiDBOptions;
 import io.tidb.bigdata.flink.connector.source.enumerator.TiDBSourceSplitEnumerator;
 import io.tidb.bigdata.tidb.ClientConfig;
 import io.tidb.bigdata.tidb.expression.Expression;
@@ -35,6 +37,7 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.api.connector.source.Source;
 import org.apache.flink.connector.base.source.hybrid.HybridSource;
@@ -102,9 +105,17 @@ public class TiDBSourceBuilder implements Serializable {
     return this;
   }
 
+  private long getStartingOffsetTs(TiTimestamp timestamp) {
+    return Optional.ofNullable(properties.get(TiDBOptions.STARTING_OFFSETS_TS))
+        .filter(StringUtils::isNotEmpty)
+        .map(Long::parseLong)
+        .orElse(timestamp.getPhysical() - TiDBOptions.MINUTE);
+  }
+
   private CDCSourceBuilder<?, ?> createCDCBuilder(TiTimestamp timestamp) {
     if (streamingSource.equals(STREAMING_SOURCE_KAFKA)) {
-      return CDCSourceBuilder.kafka(databaseName, tableName, timestamp, schema)
+      return CDCSourceBuilder.kafka(
+              databaseName, tableName, timestamp, schema, getStartingOffsetTs(timestamp))
           .<KafkaCDCSourceBuilder>ignoreParseErrors(ignoreParseErrors)
           .setProperties(properties);
     } else {
@@ -150,6 +161,8 @@ public class TiDBSourceBuilder implements Serializable {
                     return cdcBuilder.json();
                   case STREAMING_CODEC_CANAL_JSON:
                     return cdcBuilder.canalJson();
+                  case STREAMING_CODEC_CANAL_PROTOBUF:
+                    return cdcBuilder.canalProtobuf();
                   default:
                     throw new IllegalArgumentException(
                         "Invalid streaming codec: '" + streamingCodec + "'");

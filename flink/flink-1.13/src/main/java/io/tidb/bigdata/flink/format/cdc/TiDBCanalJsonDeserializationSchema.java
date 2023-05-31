@@ -47,7 +47,7 @@ import org.apache.flink.types.RowKind;
 import org.apache.flink.util.Collector;
 import org.tikv.common.meta.TiTimestamp;
 
-// TODO: use canal native format, rather than json format, to support canal-json/canal-protobuf
+@Deprecated
 public final class TiDBCanalJsonDeserializationSchema implements DeserializationSchema<RowData> {
 
   private static final long serialVersionUID = 1L;

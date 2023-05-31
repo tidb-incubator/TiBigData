@@ -23,6 +23,7 @@ import java.io.Serializable;
 import java.util.Set;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.connector.source.SourceSplit;
+import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
 import org.apache.flink.table.data.RowData;
 import org.tikv.common.meta.TiTimestamp;
@@ -55,6 +56,10 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT>
     return doBuild(builder.canalJson());
   }
 
+  public CDCSource<SplitT, EnumChkT> canalProtobuf() {
+    return doBuild(builder.canalProtobuf());
+  }
+
   private final CDCDeserializationSchemaBuilder builder;
 
   protected CDCSourceBuilder(CDCDeserializationSchemaBuilder builder) {
@@ -62,14 +67,23 @@ public abstract class CDCSourceBuilder<SplitT extends SourceSplit, EnumChkT>
   }
 
   public static KafkaCDCSourceBuilder kafka(
-      String database, String table, TiTimestamp ts, TiDBSchemaAdapter schema) {
-    return new KafkaCDCSourceBuilder(
-        new CDCDeserializationSchemaBuilder(
-                schema.getPhysicalRowDataType(), schema.getCDCMetadata())
-            .startTs(ts.getVersion())
-            .types(ROW_CHANGED_EVENT)
-            .schemas(ImmutableSet.of(database))
-            .tables(ImmutableSet.of(table)));
+      String database,
+      String table,
+      TiTimestamp ts,
+      TiDBSchemaAdapter schema,
+      long startingOffsetTs) {
+    KafkaCDCSourceBuilder kafkaCDCSourceBuilder =
+        new KafkaCDCSourceBuilder(
+            new CDCDeserializationSchemaBuilder(
+                    schema.getPhysicalRowDataType(), schema.getCDCMetadata())
+                .startTs(ts.getVersion())
+                .types(ROW_CHANGED_EVENT)
+                .schemas(ImmutableSet.of(database))
+                .tables(ImmutableSet.of(table)));
+    if (startingOffsetTs > 0) {
+      kafkaCDCSourceBuilder.setStartingOffsets(OffsetsInitializer.timestamp(startingOffsetTs));
+    }
+    return kafkaCDCSourceBuilder;
   }
 
   @SuppressWarnings("unchecked")

@@ -18,9 +18,11 @@ package io.tidb.bigdata.flink.format.cdc;
 
 import com.google.common.base.Preconditions;
 import io.tidb.bigdata.cdc.Key;
+import io.tidb.bigdata.flink.format.canal.CanalDeserializationSchema;
+import io.tidb.bigdata.flink.format.canal.CanalJsonDeserializationSchema;
+import io.tidb.bigdata.flink.format.canal.CanalProtobufDeserializationSchema;
 import java.util.Set;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.formats.common.TimestampFormat;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.types.DataType;
 
@@ -87,15 +89,13 @@ public class CDCDeserializationSchemaBuilder {
   }
 
   // We use a new decoder, since canal does not follow TiCDC open protocol.
-  public TiDBCanalJsonDeserializationSchema canalJson() {
-    return new TiDBCanalJsonDeserializationSchema(
-        physicalDataType,
-        schemas,
-        tables,
-        metadata,
-        startTs,
-        typeInformation,
-        ignoreParseErrors,
-        TimestampFormat.SQL);
+  public CanalDeserializationSchema canalJson() {
+    return new CanalJsonDeserializationSchema(
+        physicalDataType, schemas, tables, metadata, startTs, typeInformation, ignoreParseErrors);
+  }
+
+  public CanalDeserializationSchema canalProtobuf() {
+    return new CanalProtobufDeserializationSchema(
+        physicalDataType, schemas, tables, metadata, startTs, typeInformation, ignoreParseErrors);
   }
 }
