@@ -64,7 +64,7 @@
   </parent>
 
   <properties>
-    <dep.jackson.version>2.13.4.1</dep.jackson.version>
+    <dep.jackson.version>2.13.4.2</dep.jackson.version>
   </properties>
 
   <url>https://github.com/tidb-incubator/TiBigData</url>
