@@ -16,7 +16,7 @@
 
   <properties>
     <dep.tikv-client.version>3.3.2</dep.tikv-client.version>
-    <dep.guava.version>30.1.1-jre</dep.guava.version>
+    <dep.guava.version>32.0.0-jre</dep.guava.version>
     <dep.HikariCP.version>3.4.5</dep.HikariCP.version>
     <protobuf.version>3.5.1</protobuf.version>
     <grpc.version>1.38.0</grpc.version>
