@@ -1,5 +1,7 @@
 package io.tidb.bigdata.tidb.meta;
 
+import static org.junit.Assert.assertEquals;
+
 import io.tidb.bigdata.tidb.types.TimestampType;
 import org.junit.Test;
 
@@ -15,12 +17,13 @@ public class TiColumnInfoTest {
             TimestampType.TIMESTAMP,
             SchemaState.StatePublic,
             "0000-00-00 00:00:00",
-            "0000-00-00 00:00:00",
+            "2024-04-01 00:00:00",
             "0000-00-00 00:00:00",
             "timestamp",
             1,
             "",
             false);
-    System.out.println(columnInfo.getOriginDefaultValueAsByteString());
+    assertEquals(
+        "\000", columnInfo.getOriginDefaultValueAsByteString().toStringUtf8());
   }
 }

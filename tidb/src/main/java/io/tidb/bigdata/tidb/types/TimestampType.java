@@ -98,7 +98,7 @@ public class TimestampType extends AbstractDateTimeType {
   @Override
   public Object getOriginDefaultValue(String value, long version) {
     // avoid exception: org.joda.time.IllegalFieldValueException: Cannot parse "0000-00-00 00:00:00": Value 0 for monthOfYear must be in the range [1,12]
-    if (value != null && value.equals(TIMESTAMP_NULL_DEFAULT)) {
+    if (TIMESTAMP_NULL_DEFAULT.equals(value)) {
       value = null;
     }
     return super.getOriginDefaultValue(value, version);
