@@ -39,7 +39,6 @@ public class TiColumnInfoTest {
             1,
             "",
             false);
-    assertEquals(
-        "\000", columnInfo.getOriginDefaultValueAsByteString().toStringUtf8());
+    assertEquals("\000", columnInfo.getOriginDefaultValueAsByteString().toStringUtf8());
   }
 }
