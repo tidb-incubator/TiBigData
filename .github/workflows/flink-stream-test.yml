@@ -25,7 +25,7 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -sSf https://tiup-mirrors.pingcap.com/install.sh | sh
 
       - name: deploy TiDB
-        run: /home/runner/.tiup/bin/tiup playground v7.5.0 --without-monitor &
+        run: /home/runner/.tiup/bin/tiup playground v7.1.0 --without-monitor &
 
       - name: deploy kafka
         run: |
@@ -38,16 +38,16 @@ jobs:
 
       - name: deploy ticdc
         run:  |
-          /home/runner/.tiup/bin/tiup cdc:v7.5.0 server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
+          /home/runner/.tiup/bin/tiup cdc:v7.1.0 server --pd=http://localhost:2379 --log-file=/tmp/ticdc/ticdc.log --addr=0.0.0.0:8301 --advertise-addr=127.0.0.1:8301 --data-dir=/tmp/log/ticdc &
           sleep 10
 
       - name: create cdc changefeed
         run: |
-          /home/runner/.tiup/bin/tiup cdc:v7.5.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=default"
+          /home/runner/.tiup/bin/tiup cdc:v7.1.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=default"
           sleep 10
-          /home/runner/.tiup/bin/tiup cdc:v7.5.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=craft"
+          /home/runner/.tiup/bin/tiup cdc:v7.1.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_craft?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=craft"
           sleep 10
-          /home/runner/.tiup/bin/tiup cdc:v7.5.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json&enable-tidb-extension=true"
+          /home/runner/.tiup/bin/tiup cdc:v7.1.0 cli changefeed create --pd=http://127.0.0.1:2379 --sink-uri="kafka://127.0.0.1:9092/tidb_test_canal_json?kafka-version=3.2.0&partition-num=1&max-message-bytes=67108864&replication-factor=1&protocol=canal-json&enable-tidb-extension=true"
 
       - name: test flink-connector-1.14 stream
         run: mvn clean test-compile failsafe:integration-test failsafe:verify -B -am -pl flink/flink-1.14 -DIntegrationTestsGroup=io.tidb.bigdata.test.StreamIntegrationTest
