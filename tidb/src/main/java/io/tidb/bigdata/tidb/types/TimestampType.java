@@ -48,6 +48,9 @@ public class TimestampType extends AbstractDateTimeType {
 
   public static final MySQLType[] subTypes = new MySQLType[] {MySQLType.TypeTimestamp};
 
+  /** Default value for timestamp type is 0000-00-00 00:00:00 */
+  public static final String TIMESTAMP_NULL_DEFAULT = "0000-00-00 00:00:00";
+
   TimestampType(MySQLType tp) {
     super(tp);
   }
@@ -88,6 +91,16 @@ public class TimestampType extends AbstractDateTimeType {
   @Override
   protected Timestamp decodeNotNullForBatchWrite(int flag, CodecDataInput cdi) {
     return decodeDateTimeForBatchWrite(flag, cdi);
+  }
+
+  @Override
+  public Object getOriginDefaultValue(String value, long version) {
+    // avoid exception: org.joda.time.IllegalFieldValueException: Cannot parse "0000-00-00
+    // 00:00:00": Value 0 for monthOfYear must be in the range [1,12]
+    if (TIMESTAMP_NULL_DEFAULT.equals(value)) {
+      value = null;
+    }
+    return super.getOriginDefaultValue(value, version);
   }
 
   @Override

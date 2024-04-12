@@ -215,7 +215,8 @@ public class TiColumnInfo implements Serializable {
     }
   }
 
-  private ByteString getOriginDefaultValueAsByteString() {
+  @VisibleForTesting
+  public ByteString getOriginDefaultValueAsByteString() {
     CodecDataOutput cdo = new CodecDataOutput();
     type.encode(
         cdo, EncodeType.VALUE, type.getOriginDefaultValue(getOriginDefaultValue(), version));
